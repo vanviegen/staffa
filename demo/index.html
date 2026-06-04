@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Skye component demo</title>
+        <!--
+  No bundler needed: the import map resolves the bare "aberdeen" and "skye"
+  specifiers to their built ESM files, and the UI itself lives in demo.ts
+  (compiled to demo.js). Serve the project root over HTTP, e.g.:
+      npx serve .      (then open /demo/)
+  Make sure you've run `npm run build` first, so both
+  dist/ and demo/demo.js exist.
+-->
+        <script type="importmap">
+            {
+                "imports": {
+                    "aberdeen": "../node_modules/aberdeen/dist/src/aberdeen.js",
+                    "aberdeen/": "../node_modules/aberdeen/dist/src/",
+                    "skye": "../dist/index.js"
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <script type="module" src="./demo.js"></script>
+    </body>
+</html>
