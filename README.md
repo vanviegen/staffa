@@ -80,8 +80,17 @@ e.g. `"display:flex gap:$3 .my-class"`. (Write `display:flex`, not bare `flex`.)
   `number`, `tel`, `url`, `search`, dates, ...).
 - **`S.textarea(opts)`** — multi-line input.
 - **`S.checkbox(opts)`** — labelled checkbox.
+- **`S.select(opts)`** — single-select dropdown backed by a native `<select>`.
+  The control is styled; the OS renders the drop-down list.
 - **`S.autocomplete(opts)`** — a type-ahead combobox; supports `multi` (chips),
   `allowCustom` (free text), `required`, and dynamic `options`.
+
+### Dialogs
+
+- **`S.modal(opts)`** — dialog rendered into `document.body`, with a dimming
+  backdrop and fade transition. Lifecycle is tied to the calling reactive scope
+  (the modal disappears when that scope is cleaned up). The `content` callback
+  receives a `close()` function. Nested modals stack correctly.
 
 ### Actions
 
@@ -125,6 +134,31 @@ real CSS variables, changes apply instantly to everything on screen.
 
 All Skye styles are **global** and use `S_`-prefixed class names, so you can
 also override anything from your own stylesheet.
+
+## Browser (no bundler)
+
+`skye/all.js` is a pre-built ESM bundle that includes all of Skye but keeps
+Aberdeen external. Use an [import map](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/script/type/importmap)
+to tell the browser where to find both:
+
+```html
+<script type="importmap">
+{
+  "imports": {
+    "aberdeen": "https://cdn.jsdelivr.net/npm/aberdeen/dist/src/aberdeen.js",
+    "skye/all.js": "https://cdn.jsdelivr.net/npm/skye/dist/skye.esm.js"
+  }
+}
+</script>
+<script type="module">
+  import A from "aberdeen";
+  import S from "skye/all.js";
+  // ...
+</script>
+```
+
+Aberdeen stays external so if your app already loads it you won't get two
+independent copies.
 
 ## Demo & development
 

@@ -55,6 +55,7 @@ A.insertGlobalCss({
 			"bg:$sSurfaceHi border-top: 1px solid $sBorder; flex-shrink:0",
 		"> div": "p:$3 gap:$3 display:flex flex-direction:column overflow-y:auto flex:1 min-height:0",
 		"&.hidden": "opacity:0 pointer-events:none transform: translate(-50%, calc(-50% + 20px));",
+		"&.hidden *": "pointer-events:none",
 	},
 });
 
