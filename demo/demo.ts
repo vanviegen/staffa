@@ -110,7 +110,7 @@ function drawForm() {
 					S.button({ text: "Cancel", variant: "tonal", color: "neutral" });
 				},
 				submit: (data) => {
-					S.modal({
+					S.dialog({
 						header: "Submitted data",
 						allowCancel: true,
 						content: (close) => {
@@ -184,6 +184,24 @@ function drawButtons() {
 				{ text: "Delete", variant: "outlined", color: "danger" },
 				{ text: "Disabled", disabled: true },
 			],
+		});
+
+		A("h4 mb:0 #Dialog shortcuts");
+		const $result = A.proxy({ value: "" });
+		A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
+			S.button({ text: "alert()", click: async () => {
+				await S.alert("File saved successfully.");
+				$result.value = "alert: dismissed";
+			}});
+			S.button({ text: "confirm()", variant: "tonal", color: "neutral", click: async () => {
+				const ok = await S.confirm("Delete this item?");
+				$result.value = `confirm → ${ok}`;
+			}});
+			S.button({ text: "prompt()", variant: "outlined", click: async () => {
+				const name = await S.prompt("Enter your name:", "Alice");
+				$result.value = name === null ? "prompt → cancelled" : `prompt → "${name}"`;
+			}});
+			A(() => { if ($result.value) A("code #", $result.value); });
 		});
 	});
 }

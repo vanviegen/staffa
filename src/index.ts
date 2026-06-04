@@ -38,7 +38,7 @@ import { buttonGroup } from "./components/buttonGroup.js";
 import { checkbox } from "./components/checkbox.js";
 import { form } from "./components/form.js";
 import { main } from "./components/main.js";
-import { modal } from "./components/modal.js";
+import { dialog, alert, confirm, prompt } from "./components/dialog.js";
 import { select } from "./components/select.js";
 import { tabs } from "./components/tabs.js";
 import { textarea } from "./components/textarea.js";
@@ -52,7 +52,10 @@ initTheme();
 export const S = {
 	main,
 	box,
-	modal,
+	dialog,
+	alert,
+	confirm,
+	prompt,
 	form,
 	textline,
 	textarea,
@@ -90,4 +93,4 @@ export type { ButtonOptions, ButtonVariant, ButtonColor } from "./components/but
 export type { ButtonGroupOptions } from "./components/buttonGroup.js";
 export type { AutocompleteOptions, AutocompleteOptionInput } from "./components/autocomplete.js";
 export type { SelectOptions, SelectOptionInput } from "./components/select.js";
-export type { ModalOptions } from "./components/modal.js";
+export type { DialogOptions } from "./components/dialog.js";
