@@ -1,9 +1,9 @@
 import A from "aberdeen";
-import S, { setTheme } from "skye";
+import S from "skye";
 import type { ButtonColor, ButtonVariant } from "skye";
 
-// Try a custom accent to show theming (setTheme is imported for this):
-// setTheme({ sPrimary: "#28c4a0", sPrimaryFg: "#08110d" });
+// Try a custom accent to show theming, e.g.:
+// S.darkTheme.sPrimary = "#28c4a0"; S.darkTheme.sPrimaryFg = "#08110d";
 
 const $user = A.proxy({
 	name: "Frank",
@@ -26,6 +26,8 @@ A.mount(document.body, () => {
 		subtitle: "components for Aberdeen",
 		maxWidth: "52rem",
 		menu: () => {
+			drawThemeChooser();
+			drawAccentPicker();
 			S.button({ text: "Docs", variant: "outlined", href: "https://aberdeenjs.org" });
 			S.button({ text: "New" });
 		},
@@ -47,6 +49,38 @@ A.mount(document.body, () => {
 		},
 	});
 });
+
+// A segmented light / auto / dark control. The active segment is highlighted
+// reactively: clicking one calls S.setDarkMode, which re-runs this scope via
+// getDarkMode(true) (true = report "auto" as undefined rather than resolving it).
+function drawAccentPicker() {
+	const $accent = A.proxy({ value: A.peek(S.getDarkMode() ? S.darkTheme : S.lightTheme, 'sPrimary') });
+	A(() => {
+		(S.getDarkMode() ? S.darkTheme : S.lightTheme).sPrimary = $accent.value;
+	});
+	A(`input type=color cursor:pointer title="Accent color" bind=`, $accent);
+}
+
+function drawThemeChooser() {
+	const modes: Array<{ label: string; value: boolean | undefined; aria: string }> = [
+		{ label: "☀", value: false, aria: "Light theme" },
+		{ label: "Auto", value: undefined, aria: "Follow system theme" },
+		{ label: "☾", value: true, aria: "Dark theme" },
+	];
+	A(() => {
+		const active = S.getDarkMode(true);
+		S.buttonGroup({
+			buttons: modes.map((m) => ({
+				text: m.label,
+				ariaLabel: m.aria,
+				size: "sm",
+				variant: m.value === active ? "filled" : "outlined",
+				color: m.value === active ? "primary" : "neutral",
+				click: () => S.setDarkMode(m.value),
+			})),
+		});
+	});
+}
 
 function drawForm() {
 	const $layout = A.proxy("grid") as {value: "stacked" | "grid"};

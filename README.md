@@ -34,6 +34,8 @@ A.mount(document.body, () => {
 
 Skye ships a **dark theme** by default and looks reasonable out of the box.
 
+> **Pre-1.0 notice:** Skye's API is likely to change fairly often before stabilising as 1.0. That shouldn't stop you from using it — the library is small enough that any breaking changes are easy to adapt to yourself.
+
 ## Install
 
 ```sh
@@ -116,21 +118,32 @@ $opts.disabled = true;   // the button updates, nothing else re-renders
 
 ## Theming
 
-Skye is themed via CSS custom properties. Override any subset with `setTheme`:
+Skye is themed via CSS custom properties. `S.darkTheme` and `S.lightTheme` are
+live Aberdeen proxies — mutate them to restyle either scheme; changes flow into
+the CSS variables immediately:
 
 ```ts
-import { setTheme } from "skye";
-
-setTheme({
-  sPrimary: "#28c4a0",
-  sPrimaryFg: "#08110d",
-  sRadius: "6px",
-});
+S.darkTheme.sPrimary = "#28c4a0";
+S.darkTheme.sPrimaryFg = "#08110d";
+S.lightTheme.sRadius = "6px";
 ```
 
 See the `Theme` type for all variables (`sBg`, `sSurface`, `sFg`, `sBorder`,
-`sPrimary`, `sDanger`, `sSuccess`, `sRadius`, `sShadow`, ...). Because they're
-real CSS variables, changes apply instantly to everything on screen.
+`sPrimary`, `sDanger`, `sSuccess`, `sRadius`, `sShadow`, ...).
+
+### Dark / light mode
+
+Skye follows the OS preference by default. Override it at runtime:
+
+```ts
+S.setDarkMode(true);      // force dark
+S.setDarkMode(false);     // force light
+S.setDarkMode(undefined); // follow OS again
+```
+
+The choice is persisted to `localStorage` and applied before the first paint
+(no flash). `S.getDarkMode()` returns the resolved boolean; pass `true` to get
+`undefined` when in "auto" mode (useful for a dark/light/auto control).
 
 All Skye styles are **global** and use `S_`-prefixed class names, so you can
 also override anything from your own stylesheet.

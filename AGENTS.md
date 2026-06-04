@@ -169,17 +169,19 @@ autocomplete (`role=combobox`/`listbox`/`option`, `aria-expanded`,
 ```
 src/
   core.ts                 # option hierarchy + tiny helpers (drawSlot, uniqueId)
-  theme.ts                # Theme type, defaultTheme, setTheme, initTheme + base reset CSS
+  theme.ts                # Theme type, darkTheme/lightTheme proxies, setDarkMode/getDarkMode + base reset CSS
   components/
     field.ts              # FieldOptions, drawField(), applyControlAttrs() — shared form chrome
     main.ts box.ts form.ts
     textline.ts textarea.ts checkbox.ts
     tabs.ts button.ts buttonGroup.ts autocomplete.ts
-  index.ts                # assembles `S`, calls initTheme(), re-exports types
+  index.ts                # assembles `S`, re-exports types
 ```
 
-`initTheme()` runs on import (installs spacing vars + default dark theme + base
-CSS). Users override with `setTheme({ sPrimary: "..." })`.
+Importing `theme.ts` installs the spacing scale, sets up a reactive scope that
+merges the active theme (`darkTheme` or `lightTheme`) into `A.cssVars`, and
+registers the base reset CSS — all at module load, before the first paint.
+Users customize the theme by mutating `S.darkTheme` / `S.lightTheme` directly.
 
 ## Adding a new component — checklist
 

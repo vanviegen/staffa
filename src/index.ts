@@ -29,7 +29,9 @@
  * which case the component re-renders the affected parts in place when you
  * mutate it. See `AGENTS.md` for the design philosophy.
  */
-import { initTheme } from "./theme.js";
+// Importing the theme module installs spacing vars, the reactive theme and the
+// base stylesheet. Customise by mutating S.darkTheme / S.lightTheme.
+import { darkTheme, lightTheme, setDarkMode, getDarkMode } from "./theme.js";
 
 import { autocomplete } from "./components/autocomplete.js";
 import { box } from "./components/box.js";
@@ -43,10 +45,6 @@ import { select } from "./components/select.js";
 import { tabs } from "./components/tabs.js";
 import { textarea } from "./components/textarea.js";
 import { textline } from "./components/textline.js";
-
-// Install spacing vars, the default theme and the base stylesheet on import.
-// Call `setTheme(...)` afterwards to customise.
-initTheme();
 
 /** The Skye component namespace. */
 export const S = {
@@ -65,12 +63,16 @@ export const S = {
 	buttonGroup,
 	autocomplete,
 	select,
+	darkTheme,
+	lightTheme,
+	setDarkMode,
+	getDarkMode,
 };
 
 export default S;
 
 // Re-export theming and shared types for advanced use.
-export { type Theme, defaultTheme, setTheme, initTheme } from "./theme.js";
+export { type Theme, darkTheme, lightTheme, setDarkMode, getDarkMode } from "./theme.js";
 export type {
 	BaseOptions,
 	ContentOptions,
