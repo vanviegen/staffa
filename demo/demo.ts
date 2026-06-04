@@ -12,10 +12,12 @@ const $user = A.proxy({
 	remember: true,
 	newsletter: false,
 	country: "",
+	language: "",
 	tags: ["aberdeen", "ui"],
 });
 
 const knownTags = ["aberdeen", "ui", "ux", "reactive", "typescript", "css"];
+const knownLanguages = ["TypeScript", "JavaScript", "Python", "Rust", "Go", "Java", "C#", "C++"];
 
 A.mount(document.body, () => {
 	S.main({
@@ -47,30 +49,44 @@ A.mount(document.body, () => {
 });
 
 function drawForm() {
-	const mode = A.proxy("stacked") as {value: "stacked" | "grid"};
+	const $layout = A.proxy("grid") as {value: "stacked" | "grid"};
 	S.box({
 		header: "Account",
 		content: () => {
 			S.form({
-				layout: mode.value,
+				// Getter: $layout.value is read inside the form's own reactive scope,
+				// so the box's content scope doesn't subscribe and won't recreate
+				// all fields when the layout changes.
+				get layout() { return $layout.value; },
 				content: () => {
-					S.autocomplete({label: "Form mode", options: ["stacked", "grid"], bind: mode});
-					S.textline({ label: "Name", required: true, bind: A.ref($user, "name") });
+					S.select({label: "Form layout", options: ["stacked", "grid"], bind: $layout});
+					S.textline({ label: "Name", name: "name", required: true, bind: A.ref($user, "name") });
 					S.textline({
 						label: "Email",
+						name: "email",
 						type: "email",
 						placeholder: "you@example.com",
 						help: "We never share it.",
 						bind: A.ref($user, "email"),
 					});
-					S.autocomplete({
+					S.select({
 						label: "Country",
+						name: "country",
 						options: ["Belgium", "Netherlands", "Germany", "France", "Spain"],
 						bind: A.ref($user, "country"),
 						placeholder: "Pick one…",
 					});
 					S.autocomplete({
+						label: "Language",
+						name: "language",
+						options: knownLanguages,
+						bind: A.ref($user, "language"),
+						placeholder: "Type to search…",
+						help: "Filtered by what you type.",
+					});
+					S.autocomplete({
 						label: "Tags",
+						name: "tags",
 						multi: true,
 						allowCustom: true,
 						options: knownTags,
@@ -80,17 +96,30 @@ function drawForm() {
 					});
 					S.textarea({
 						label: "Bio",
+						name: "bio",
 						rows: 3,
 						placeholder: "Tell us about yourself",
 						bind: A.ref($user, "bio"),
 						root: ".S_wide",
 					});
-					S.checkbox({ label: "Remember me", bind: A.ref($user, "remember") });
-					S.checkbox({ label: "Subscribe to the newsletter", bind: A.ref($user, "newsletter") });
+					S.checkbox({ label: "Remember me", name: "remember", bind: A.ref($user, "remember") });
+					S.checkbox({ label: "Subscribe to the newsletter", name: "newsletter", bind: A.ref($user, "newsletter") });
 				},
 				actions: () => {
 					S.button({ text: "Save", type: "submit" });
 					S.button({ text: "Cancel", variant: "tonal", color: "neutral" });
+				},
+				submit: (data) => {
+					S.modal({
+						header: "Submitted data",
+						allowCancel: true,
+						content: (close) => {
+							A("pre", () => A("#", JSON.stringify(data, null, 2)));
+							A("div display:flex gap:$2 justify-content:flex-end", () => {
+								S.button({ text: "Close", click: close });
+							});
+						},
+					});
 				},
 			});
 		},

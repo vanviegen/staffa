@@ -29,7 +29,7 @@ export interface MainOptions extends BaseOptions {
 
 A.insertGlobalCss({
 	".S_main": {
-		"&": "display:flex flex-direction:column min-height:100vh bg:$sBg fg:$sFg",
+		"&": "display:flex flex-direction:column min-height:100vh max-height:100vh bg:$sBg fg:$sFg",
 		"> header": "display:flex align-items:center gap:$3 padding: $2 $3; bg:$sSurfaceHi border-bottom: 1px solid $sBorder; position:sticky top:0 z-index:10",
 		"> header .S_icon": "display:flex align-items:center font-size:1.4em",
 		"> header .S_titles": "display:flex flex-direction:column min-width:0 flex:1",

@@ -26,7 +26,7 @@ export interface AutocompleteOptions extends FieldOptions {
 	bind?: Bindable<string | string[]>;
 	/** Allow selecting several values, shown as removable chips. */
 	multi?: boolean;
-	/** Allow committing free text that isn't in the options list. */
+	/** Allow committing free text that isn't in the options list. Defaults to `true`. */
 	allowCustom?: boolean;
 	/** Placeholder for the text input. */
 	placeholder?: string;
@@ -65,8 +65,8 @@ function normOption(o: AutocompleteOptionInput): AcOption {
  * // Single select from a fixed list
  * S.autocomplete({ label: "Country", options: ["Belgium", "Netherlands"], bind: $sel });
  *
- * // Multi-select with custom tags allowed
- * S.autocomplete({ label: "Tags", multi: true, allowCustom: true,
+ * // Multi-select, disallowing custom items
+ * S.autocomplete({ label: "Tags", multi: true, allowCustom: false,
  *   options: knownTags, bind: A.ref($post, "tags") });
  * ```
  */
@@ -87,20 +87,20 @@ export function autocomplete(opts: AutocompleteOptions): void {
 
 	// Seed the input with the current single-selection's label.
 	if (!opts.multi) {
-		const v = opts.bind?.value;
+		const v = opts.bind ? A.peek(opts.bind, 'value') : undefined;
 		if (typeof v === "string" && v) $st.query = A.peek(() => labelFor(v));
 	}
 
 	const filtered = (): AcOption[] => {
-		const q = $st.query.trim().toLowerCase();
 		const sel = new Set(selectedValues());
 		let list = getOptions();
 		if (opts.multi) list = list.filter((o) => !sel.has(o.value));
+		const q = $st.query.trim().toLowerCase();
 		if (q) list = list.filter((o) => o.label.toLowerCase().includes(q));
 		return list;
 	};
 
-	const commit = (value: string) => {
+	const commit = (value: string, inputEl?: HTMLInputElement) => {
 		if (opts.multi) {
 			const arr = Array.isArray(opts.bind?.value) ? [...(opts.bind.value as string[])] : [];
 			if (!arr.includes(value)) arr.push(value);
@@ -112,6 +112,8 @@ export function autocomplete(opts: AutocompleteOptions): void {
 			$st.open = false;
 		}
 		$st.active = 0;
+		// Keep focus on the input so the user can Tab to the next field.
+		inputEl?.focus();
 	};
 
 	const remove = (value: string) => {
@@ -170,7 +172,7 @@ export function autocomplete(opts: AutocompleteOptions): void {
 						// Delay so option mousedown/click can run first.
 						setTimeout(() => onBlur(), 150);
 					});
-					A("keydown=", (e: KeyboardEvent) => onKey(e));
+					A("keydown=", (e: KeyboardEvent) => onKey(e, inputEl));
 				}) as HTMLInputElement;
 			});
 
@@ -179,7 +181,7 @@ export function autocomplete(opts: AutocompleteOptions): void {
 				if (!$st.open) return;
 				const list = filtered();
 				const q = $st.query.trim();
-				const showAdd = opts.allowCustom && q !== "" && !list.some((o) => o.label.toLowerCase() === q.toLowerCase());
+				const showAdd = opts.allowCustom !== false && q !== "" && !list.some((o) => o.label.toLowerCase() === q.toLowerCase());
 
 				A("ul.S_menu role=listbox", `id=${menuId}`, () => {
 					list.forEach((option, i) => {
@@ -187,7 +189,7 @@ export function autocomplete(opts: AutocompleteOptions): void {
 							A(() => A("aria-selected=", $st.active === i ? "true" : "false"));
 							A("#", option.label);
 							A("mousedown=", (e: Event) => e.preventDefault());
-							A("click=", () => commit(option.value));
+							A("click=", () => commit(option.value, inputEl));
 							A("mousemove=", () => {
 								$st.active = i;
 							});
@@ -197,7 +199,7 @@ export function autocomplete(opts: AutocompleteOptions): void {
 						A("li.S_option.S_add role=option", () => {
 							A("#", `Add "${q}"`);
 							A("mousedown=", (e: Event) => e.preventDefault());
-							A("click=", () => commit(q));
+							A("click=", () => commit(q, inputEl));
 						});
 					}
 					if (list.length === 0 && !showAdd) {
@@ -205,10 +207,28 @@ export function autocomplete(opts: AutocompleteOptions): void {
 					}
 				});
 			});
+
+			// Hidden inputs so the selection participates in native FormData.
+			A(() => {
+				if (!opts.name) return;
+				if (opts.multi) {
+					for (const val of selectedValues()) {
+						A("input type=hidden", () => {
+							A("name=", opts.name!);
+							A("value=", val);
+						});
+					}
+				} else {
+					A("input type=hidden", () => {
+						A("name=", opts.name!);
+						A("value=", selectedValues()[0] ?? "");
+					});
+				}
+			});
 		});
 	});
 
-	function onKey(e: KeyboardEvent) {
+	function onKey(e: KeyboardEvent, inputEl?: HTMLInputElement) {
 		const list = filtered();
 		const max = list.length - 1;
 		if (e.key === "ArrowDown") {
@@ -219,13 +239,15 @@ export function autocomplete(opts: AutocompleteOptions): void {
 			e.preventDefault();
 			$st.active = Math.max(0, $st.active - 1);
 		} else if (e.key === "Enter") {
+			// Always prevent default to avoid accidental form submission.
+			e.preventDefault();
 			const chosen = list[$st.active];
 			if (chosen) {
-				e.preventDefault();
-				commit(chosen.value);
-			} else if (opts.allowCustom && $st.query.trim()) {
-				e.preventDefault();
-				commit($st.query.trim());
+				commit(chosen.value, inputEl);
+			} else if (opts.allowCustom !== false && $st.query.trim()) {
+				commit($st.query.trim(), inputEl);
+			} else if ($st.open) {
+				$st.open = false;
 			}
 		} else if (e.key === "Escape") {
 			$st.open = false;
@@ -240,7 +262,7 @@ export function autocomplete(opts: AutocompleteOptions): void {
 		$st.open = false;
 		if (opts.multi) {
 			$st.query = "";
-		} else if (opts.allowCustom && $st.query.trim()) {
+		} else if (opts.allowCustom !== false && $st.query.trim()) {
 			commit($st.query.trim());
 		} else {
 			// Revert to the committed selection's label.

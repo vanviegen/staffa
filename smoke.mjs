@@ -119,7 +119,7 @@ const checks = {
 	"top bar title": html.includes("Skye Smoke Test"),
 	"framed content": html.includes("S_framed"),
 	box: html.includes("S_box") && html.includes("<header"),
-	"form grid": html.includes("S_grid"),
+	"form grid": html.includes("grid"),
 	textline: html.includes("S_input"),
 	"field error": html.includes("Too young"),
 	checkbox: html.includes('type="checkbox"'),

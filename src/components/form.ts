@@ -4,10 +4,11 @@ import { type Content, type ContentOptions, type Styling } from "../core.js";
 /** Options for {@link form}. */
 export interface FormOptions extends ContentOptions {
 	/**
-	 * Submit handler. The native event is passed and `preventDefault()` is called
-	 * automatically, so you can drive submission from your own state.
+	 * Submit handler. Called with collected form data (keyed by each field's
+	 * `name`) and the original event. `preventDefault()` is already called.
+	 * Multi-value fields (e.g. multi-select) produce a `string[]`.
 	 */
-	submit?: (event: SubmitEvent) => void;
+	submit?: (data: Record<string, string | string[]>, event: SubmitEvent) => void;
 	/**
 	 * Layout of fields. `"stacked"` (default) is a single column; `"grid"` packs
 	 * fields into a responsive multi-column grid. A field can span the full grid
@@ -23,8 +24,8 @@ export interface FormOptions extends ContentOptions {
 A.insertGlobalCss({
 	".S_form": {
 		"&": "display:flex flex-direction:column gap:$3",
-		"&.S_grid": "display:grid grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap:$3",
-		"&.S_grid > .S_wide, &.S_grid > footer": "grid-column: 1 / -1;",
+		"&.grid": "display:grid grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap:$3",
+		"&.grid > .S_wide, &.grid > footer": "grid-column: 1 / -1;",
 		"> footer": "display:flex align-items:center gap:$2 flex-wrap:wrap margin-top:$1",
 	},
 });
@@ -52,12 +53,25 @@ A.insertGlobalCss({
  */
 export function form(opts: FormOptions | Content = {}): void {
 	const o: FormOptions = typeof opts === "function" ? { content: opts } : opts;
-	const cls = o.layout === "grid" ? ".S_grid" : "";
 
-	A(`form.S_form${cls}`, o.root, o.inner, () => {
+	A(`form.S_form`, o.root, o.inner, () => {
+		// Toggle grid class in its own scope so changing layout doesn't recreate
+		// the fields (which would lose focus / input state).
+		A(() => {
+			A(".grid=", o.layout === 'grid');
+		});
+
 		A("submit=", (event: SubmitEvent) => {
 			event.preventDefault();
-			o.submit?.(event);
+			if (o.submit) {
+				const fd = new FormData(event.target as HTMLFormElement);
+				const data: Record<string, string | string[]> = {};
+				for (const key of new Set(fd.keys())) {
+					const vals = fd.getAll(key) as string[];
+					data[key] = vals.length === 1 ? vals[0]! : vals;
+				}
+				o.submit(data, event);
+			}
 		});
 
 		if (o.content) o.content();

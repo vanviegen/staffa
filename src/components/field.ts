@@ -34,7 +34,7 @@ export interface FieldOptions extends BaseOptions {
 A.insertGlobalCss({
 	".S_field": {
 		"&": "display:flex flex-direction:column gap:$1",
-		"> label": "font-weight:600 font-size:0.9em fg:$sFg",
+		"> label": "font-weight:600 font-size:0.9em fg:$sFg user-select:none",
 	},
 	// Shared, reusable bits (also used by checkbox & autocomplete).
 	".S_req": "fg:$sDanger margin-left:2px",

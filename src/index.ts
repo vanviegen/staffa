@@ -38,6 +38,8 @@ import { buttonGroup } from "./components/buttonGroup.js";
 import { checkbox } from "./components/checkbox.js";
 import { form } from "./components/form.js";
 import { main } from "./components/main.js";
+import { modal } from "./components/modal.js";
+import { select } from "./components/select.js";
 import { tabs } from "./components/tabs.js";
 import { textarea } from "./components/textarea.js";
 import { textline } from "./components/textline.js";
@@ -50,6 +52,7 @@ initTheme();
 export const S = {
 	main,
 	box,
+	modal,
 	form,
 	textline,
 	textarea,
@@ -58,6 +61,7 @@ export const S = {
 	button,
 	buttonGroup,
 	autocomplete,
+	select,
 };
 
 export default S;
@@ -85,3 +89,5 @@ export type { Tab, TabsOptions } from "./components/tabs.js";
 export type { ButtonOptions, ButtonVariant, ButtonColor } from "./components/button.js";
 export type { ButtonGroupOptions } from "./components/buttonGroup.js";
 export type { AutocompleteOptions, AutocompleteOptionInput } from "./components/autocomplete.js";
+export type { SelectOptions, SelectOptionInput } from "./components/select.js";
+export type { ModalOptions } from "./components/modal.js";
