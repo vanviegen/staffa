@@ -14,7 +14,7 @@ export interface BoxOptions extends ContentOptions {
 }
 
 A.insertGlobalCss({
-	".S_box": {
+	".s-box": {
 		"&": "display:flex flex-direction:column bg:$sSurface border: 1px solid $sBorder; r:$sRadius overflow:hidden",
 		"> header": "display:flex align-items:center gap:$2 padding: $2 $3; bg:$sSurfaceHi border-bottom: 1px solid $sBorder; font-weight:600",
 		"> footer": "display:flex align-items:center gap:$2 padding: $2 $3; bg:$sSurfaceHi border-top: 1px solid $sBorder;",
@@ -44,7 +44,7 @@ A.insertGlobalCss({
 export function box(opts: BoxOptions | Content = {}): void {
 	const o: BoxOptions = typeof opts === "function" ? { content: opts } : opts;
 
-	A("section.S_box", o.root, () => {
+	A("section.s-box", o.root, () => {
 		// Header and footer get their own scopes so toggling them doesn't recreate
 		// the body (which may hold focused inputs / lots of content).
 		A(() => {

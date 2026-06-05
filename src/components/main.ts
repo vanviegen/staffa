@@ -28,18 +28,18 @@ export interface MainOptions extends BaseOptions {
 }
 
 A.insertGlobalCss({
-	".S_main": {
+	".s-main": {
 		"&": "display:flex flex-direction:column min-height:100vh max-height:100vh bg:$sBg fg:$sFg",
 		"> header": "display:flex align-items:center gap:$3 padding: $2 $3; bg:$sSurfaceHi border-bottom: 1px solid $sBorder; position:sticky top:0 z-index:10",
-		"> header .S_icon": "display:flex align-items:center font-size:1.4em",
-		"> header .S_titles": "display:flex flex-direction:column min-width:0 flex:1",
-		"> header .S_title": "font-weight:700 font-size:1.1em line-height:1.2 overflow:hidden text-overflow:ellipsis white-space:nowrap",
-		"> header .S_subtitle": "fg:$sFgMuted font-size:0.85em overflow:hidden text-overflow:ellipsis white-space:nowrap",
-		"> header .S_menu": "display:flex align-items:center gap:$2",
+		"> header .s-icon": "display:flex align-items:center font-size:1.4em",
+		"> header .s-titles": "display:flex flex-direction:column min-width:0 flex:1",
+		"> header .s-title": "font-weight:700 font-size:1.1em line-height:1.2 overflow:hidden text-overflow:ellipsis white-space:nowrap",
+		"> header .s-subtitle": "fg:$sFgMuted font-size:0.85em overflow:hidden text-overflow:ellipsis white-space:nowrap",
+		"> header .s-menu": "display:flex align-items:center gap:$2",
 		"> main": "flex:1 overflow-y:auto display:flex flex-direction:column",
-		"> main > .S_content": "width:100% flex:1",
-		"> main > .S_content.S_framed": "margin: $3 auto; bg:$sSurface border: 1px solid $sBorder; r:$sRadiusLg box-shadow:$sShadow p:$4",
-		"> main > .S_content.S_plain": "p:$3",
+		"> main > .s-content": "width:100% flex:1",
+		"> main > .s-content.s-framed": "margin: $3 auto; bg:$sSurface border: 1px solid $sBorder; r:$sRadiusLg box-shadow:$sShadow p:$4",
+		"> main > .s-content.s-plain": "p:$3",
 		"> footer": "display:flex align-items:center gap:$2 padding: $2 $3; bg:$sSurfaceHi border-top: 1px solid $sBorder; fg:$sFgMuted",
 	},
 });
@@ -65,38 +65,38 @@ A.insertGlobalCss({
  * ```
  */
 export function main(opts: MainOptions = {}): void {
-	A("div.S_main", opts.root, () => {
+	A("div.s-main", opts.root, () => {
 		// Top bar — only rendered when there's something to show in it.
 		A(() => {
 			const hasBar = opts.title != null || opts.subtitle != null || opts.icon != null || opts.menu != null;
 			if (!hasBar) return;
 			A("header", opts.topbarInner, () => {
 				A(() => {
-					if (opts.icon != null) A("div.S_icon", () => drawSlot(opts.icon));
+					if (opts.icon != null) A("div.s-icon", () => drawSlot(opts.icon));
 				});
-				A("div.S_titles", () => {
+				A("div.s-titles", () => {
 					A(() => {
-						if (opts.title != null) A("div.S_title", () => drawSlot(opts.title));
+						if (opts.title != null) A("div.s-title", () => drawSlot(opts.title));
 					});
 					A(() => {
-						if (opts.subtitle != null) A("div.S_subtitle", () => drawSlot(opts.subtitle));
+						if (opts.subtitle != null) A("div.s-subtitle", () => drawSlot(opts.subtitle));
 					});
 				});
 				A(() => {
-					if (opts.menu) A("div.S_menu", () => opts.menu?.());
+					if (opts.menu) A("div.s-menu", () => opts.menu?.());
 				});
 			});
 		});
 
 		// Scrollable main region with the (optionally framed) content sheet.
 		A("main", () => {
-			A("div.S_content", opts.inner, () => {
+			A("div.s-content", opts.inner, () => {
 				// Framing applied in its own scope so changing maxWidth doesn't
 				// recreate the content (which holds the whole page).
 				A(() => {
 					const max = opts.maxWidth;
-					if (max != null) A(".S_framed max-width:", max);
-					else A(".S_plain");
+					if (max != null) A(".s-framed max-width:", max);
+					else A(".s-plain");
 				});
 				if (opts.content) opts.content();
 			});

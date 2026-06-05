@@ -126,7 +126,7 @@ function drawForm() {
 						options: knownTags,
 						bind: A.ref($user, "tags"),
 						help: "Type to filter; Enter adds custom tags.",
-						root: ".S_wide",
+						root: ".s-wide",
 					});
 					S.textarea({
 						label: "Bio",
@@ -134,7 +134,7 @@ function drawForm() {
 						rows: 3,
 						placeholder: "Tell us about yourself",
 						bind: A.ref($user, "bio"),
-						root: ".S_wide",
+						root: ".s-wide",
 					});
 					S.checkbox({ label: "Remember me", name: "remember", bind: A.ref($user, "remember") });
 					S.checkbox({ label: "Subscribe to the newsletter", name: "newsletter", bind: A.ref($user, "newsletter") });

@@ -12,7 +12,7 @@ export interface FormOptions extends ContentOptions {
 	/**
 	 * Layout of fields. `"stacked"` (default) is a single column; `"grid"` packs
 	 * fields into a responsive multi-column grid. A field can span the full grid
-	 * width by adding the `.S_wide` class (e.g. `root: ".S_wide"`).
+	 * width by adding the `.s-wide` class (e.g. `root: ".s-wide"`).
 	 */
 	layout?: "stacked" | "grid";
 	/** Aberdeen attr/style string for the action bar. */
@@ -22,10 +22,10 @@ export interface FormOptions extends ContentOptions {
 }
 
 A.insertGlobalCss({
-	".S_form": {
+	".s-form": {
 		"&": "display:flex flex-direction:column gap:$3",
 		"&.grid": "display:grid grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap:$3",
-		"&.grid > .S_wide, &.grid > footer": "grid-column: 1 / -1;",
+		"&.grid > .s-wide, &.grid > footer": "grid-column: 1 / -1;",
 		"> footer": "display:flex align-items:center gap:$2 flex-wrap:wrap margin-top:$1",
 	},
 });
@@ -54,7 +54,7 @@ A.insertGlobalCss({
 export function form(opts: FormOptions | Content = {}): void {
 	const o: FormOptions = typeof opts === "function" ? { content: opts } : opts;
 
-	A(`form.S_form`, o.root, o.inner, () => {
+	A(`form.s-form`, o.root, o.inner, () => {
 		// Toggle grid class in its own scope so changing layout doesn't recreate
 		// the fields (which would lose focus / input state).
 		A(() => {

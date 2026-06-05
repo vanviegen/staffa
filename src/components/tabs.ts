@@ -31,26 +31,26 @@ export interface TabsOptions extends BaseOptions {
 }
 
 A.insertGlobalCss({
-	".S_tabs": {
+	".s-tabs": {
 		"&": "display:flex flex-direction:column gap:$3",
-		".S_tablist": "display:flex gap:$1 align-items:stretch",
-		".S_tab":
+		".s-tablist": "display:flex gap:$1 align-items:stretch",
+		".s-tab":
 			"display:inline-flex align-items:center gap:$2 cursor:pointer background:transparent " +
 			"border:0 fg:$sFgMuted font-weight:600 padding: 0.6em 0.9em; " +
 			"transition: color 0.15s, background 0.15s, border-color 0.15s;",
-		".S_tab:hover:not(:disabled)": "fg:$sFg",
-		".S_tab:disabled": "opacity:0.5 cursor:not-allowed",
-		".S_tab:focus-visible": "outline:none box-shadow: 0 0 0 3px $sFocus; r:$sRadius",
+		".s-tab:hover:not(:disabled)": "fg:$sFg",
+		".s-tab:disabled": "opacity:0.5 cursor:not-allowed",
+		".s-tab:focus-visible": "outline:none box-shadow: 0 0 0 3px $sFocus; r:$sRadius",
 		// Underline variant.
-		"&.S_underline .S_tablist": "border-bottom: 1px solid $sBorder;",
-		"&.S_underline .S_tab": "border-bottom: 2px solid transparent; margin-bottom:-1px",
-		"&.S_underline .S_tab[aria-selected=true]": "fg:$sFg border-bottom-color:$sPrimary",
+		"&.s-underline .s-tablist": "border-bottom: 1px solid $sBorder;",
+		"&.s-underline .s-tab": "border-bottom: 2px solid transparent; margin-bottom:-1px",
+		"&.s-underline .s-tab[aria-selected=true]": "fg:$sFg border-bottom-color:$sPrimary",
 		// Pills variant.
-		"&.S_pills .S_tab": "r:$sRadius",
-		"&.S_pills .S_tab[aria-selected=true]": "fg:$sPrimaryFg background:$sPrimary",
+		"&.s-pills .s-tab": "r:$sRadius",
+		"&.s-pills .s-tab[aria-selected=true]": "fg:$sPrimaryFg background:$sPrimary",
 		// The panel has no enclosing box, so no default padding — its content
 		// aligns flush with the tab strip. Callers add padding/flex via `inner`.
-		".S_tabpanel": "display:block",
+		".s-tabpanel": "display:block",
 	},
 });
 
@@ -81,11 +81,11 @@ export function tabs(opts: TabsOptions): void {
 		$sel.value = keyOf(tab, index);
 	};
 
-	A(`div.S_tabs.S_${variant}`, opts.root, () => {
-		A("div.S_tablist role=tablist", () => {
+	A(`div.s-tabs.s-${variant}`, opts.root, () => {
+		A("div.s-tablist role=tablist", () => {
 			opts.tabs.forEach((tab, index) => {
 				const key = keyOf(tab, index);
-				A("button.S_tab type=button role=tab", () => {
+				A("button.s-tab type=button role=tab", () => {
 					A(`id=${groupId}-tab-${key} aria-controls=${groupId}-panel-${key}`);
 					A(() => {
 						const selected = $sel.value === key;
@@ -101,7 +101,7 @@ export function tabs(opts: TabsOptions): void {
 			});
 		});
 
-		A("div.S_tabpanel role=tabpanel", opts.inner, () => {
+		A("div.s-tabpanel role=tabpanel", opts.inner, () => {
 			A(() => {
 				const selKey = $sel.value;
 				const index = opts.tabs.findIndex((t, i) => keyOf(t, i) === selKey);

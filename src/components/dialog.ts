@@ -38,17 +38,17 @@ export interface DialogOptions {
 }
 
 // Transition helper classes.
-// `.S_backdrop` = backdrop, hidden when another backdrop follows it in the DOM.
-// `.S_dialog`   = dialog box, slides + fades in/out.
+// `.s-backdrop` = backdrop, hidden when another backdrop follows it in the DOM.
+// `.s-dialog`   = dialog box, slides + fades in/out.
 A.insertGlobalCss({
-	".S_backdrop": {
+	".s-backdrop": {
 		"&": "position:fixed inset:0 z-index:200; background: rgba(0,0,0,0.55); transition: opacity 0.2s ease;",
-		"&:not(:has(~ .S_backdrop))": "display:block",
-		"&:not(:has(~ .S_backdrop)) + .S_dialog": "display:flex flex-direction:column",
+		"&:not(:has(~ .s-backdrop))": "display:block",
+		"&:not(:has(~ .s-backdrop)) + .s-dialog": "display:flex flex-direction:column",
 		// Transition states: applied momentarily on create; re-applied on destroy.
 		"&.hidden": "opacity:0 pointer-events:none",
 	},
-	".S_dialog": {
+	".s-dialog": {
 		"&":
 			"position:fixed z-index:201 top:50% left:50% " +
 			"transform:translate(-50%,-50%) " +
@@ -124,14 +124,14 @@ export function dialog(opts: DialogOptions): Promise<void> {
 			});
 
 			// Backdrop: fades in on creation, fades out on removal.
-			A("div.S_backdrop create=hidden destroy=hidden", () => {
+			A("div.s-backdrop create=hidden destroy=hidden", () => {
 				A("click=", () => {
 					if (opts.allowCancel !== false) close();
 				});
 			});
 
 			// Dialog panel: fades + slides in/out.
-			A("div.S_dialog create=hidden destroy=hidden", opts.root, () => {
+			A("div.s-dialog create=hidden destroy=hidden", opts.root, () => {
 				A(() => {
 					if (opts.header != null) {
 						A("header", opts.headerInner, () => drawSlot(opts.header));

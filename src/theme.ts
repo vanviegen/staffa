@@ -8,7 +8,7 @@ import A from "aberdeen";
  * changing a single variable restyles the whole app — at runtime, reactively.
  *
  * Unlike typical Aberdeen apps (which use component-local `insertCss`), Staffa uses
- * **global** CSS (`insertGlobalCss`) with class names prefixed `S_`. This is a
+ * **global** CSS (`insertGlobalCss`) with class names prefixed `s-`. This is a
  * deliberate trade-off: it lets application authors override any Staffa style from
  * their own stylesheet without fighting scoped class names.
  */

@@ -32,16 +32,16 @@ export interface FieldOptions extends BaseOptions {
 }
 
 A.insertGlobalCss({
-	".S_field": {
+	".s-field": {
 		"&": "display:flex flex-direction:column gap:$1",
 		"> label": "font-weight:600 font-size:0.9em fg:$sFg user-select:none",
 	},
 	// Shared, reusable bits (also used by checkbox & autocomplete).
-	".S_req": "fg:$sDanger margin-left:2px",
-	".S_help": "font-size:0.82em fg:$sFgMuted",
-	".S_error": "font-size:0.82em fg:$sDanger",
+	".s-req": "fg:$sDanger margin-left:2px",
+	".s-help": "font-size:0.82em fg:$sFgMuted",
+	".s-error": "font-size:0.82em fg:$sDanger",
 	// Shared look for text-like controls.
-	".S_input": {
+	".s-input": {
 		"&": "w:100% bg:$sSurface fg:$sFg border: 1px solid $sBorder; r:$sRadius padding: 0.55em 0.7em; transition: border-color 0.15s, box-shadow 0.15s;",
 		"&:hover:not(:disabled)": "border-color:$sBorderStrong",
 		"&:focus-visible": "border-color:$sPrimary box-shadow: 0 0 0 3px $sFocus; outline:none",
@@ -60,7 +60,7 @@ A.insertGlobalCss({
  *
  * @param opts The field options.
  * @param drawControl Receives the resolved `id` and the live "invalid" getter,
- *   and must draw the actual control element (using class `S_input` where
+ *   and must draw the actual control element (using class `s-input` where
  *   appropriate, and passing `opts.control` as an arg for caller styling).
  */
 export function drawField(
@@ -70,12 +70,12 @@ export function drawField(
 	const id = opts.id ?? uniqueId("field");
 	const isInvalid = () => !!opts.error;
 
-	A("div.S_field", opts.root, () => {
+	A("div.s-field", opts.root, () => {
 		A(() => {
 			if (opts.label != null) {
 				A(`label for=${id}`, () => {
 					drawSlot(opts.label);
-					if (opts.required) A("span.S_req aria-hidden=true #*");
+					if (opts.required) A("span.s-req aria-hidden=true #*");
 				});
 			}
 		});
@@ -83,10 +83,10 @@ export function drawField(
 		drawControl(id, isInvalid);
 
 		A(() => {
-			if (opts.help != null && !opts.error) A("div.S_help", () => drawSlot(opts.help));
+			if (opts.help != null && !opts.error) A("div.s-help", () => drawSlot(opts.help));
 		});
 		A(() => {
-			if (opts.error) A("div.S_error role=alert #", opts.error);
+			if (opts.error) A("div.s-error role=alert #", opts.error);
 		});
 	});
 }

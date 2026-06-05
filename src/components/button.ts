@@ -57,7 +57,7 @@ export interface ButtonOptions extends BaseOptions {
 // The color role sets a local `--c` (and `--cfg` for text on filled); the
 // variant rules consume them, so we avoid writing colour×variant rules.
 A.insertGlobalCss({
-	".S_btn": {
+	".s-btn": {
 		"&":
 			"--c:$sPrimary --cfg:$sPrimaryFg " +
 			"display:inline-flex align-items:center justify-content:center gap:$2 " +
@@ -67,19 +67,19 @@ A.insertGlobalCss({
 		"&:focus-visible": "outline:none box-shadow: 0 0 0 3px $sFocus;",
 		"&:disabled, &[aria-disabled=true]": "opacity:0.45 cursor:not-allowed pointer-events:none filter:saturate(0.6)",
 		// Colour roles.
-		"&.S_neutral": "--c:$sBorderStrong --cfg:$sFg",
-		"&.S_danger": "--c:$sDanger --cfg:#fff",
-		"&.S_success": "--c:$sSuccess --cfg:#08110d",
+		"&.s-neutral": "--c:$sBorderStrong --cfg:$sFg",
+		"&.s-danger": "--c:$sDanger --cfg:#fff",
+		"&.s-success": "--c:$sSuccess --cfg:#08110d",
 		// Variants.
-		"&.S_filled": "background:$c color:$cfg border-color:$c",
-		"&.S_filled:hover": "filter:brightness(1.1)",
-		"&.S_tonal": "color:$c background: color-mix(in srgb, $c 20%, transparent); border-color: color-mix(in srgb, $c 30%, transparent);",
-		"&.S_tonal:hover": "background: color-mix(in srgb, $c 30%, transparent);",
-		"&.S_outlined": "color:$c background:transparent border-color: color-mix(in srgb, $c 55%, $sBorder);",
-		"&.S_outlined:hover": "background: color-mix(in srgb, $c 12%, transparent);",
+		"&.s-filled": "background:$c color:$cfg border-color:$c",
+		"&.s-filled:hover": "filter:brightness(1.1)",
+		"&.s-tonal": "color:$c background: color-mix(in srgb, $c 20%, transparent); border-color: color-mix(in srgb, $c 30%, transparent);",
+		"&.s-tonal:hover": "background: color-mix(in srgb, $c 30%, transparent);",
+		"&.s-outlined": "color:$c background:transparent border-color: color-mix(in srgb, $c 55%, $sBorder);",
+		"&.s-outlined:hover": "background: color-mix(in srgb, $c 12%, transparent);",
 		// Sizes.
-		"&.S_sm": "padding: 0.32em 0.7em; font-size:0.85em",
-		"&.S_lg": "padding: 0.66em 1.3em; font-size:1.1em",
+		"&.s-sm": "padding: 0.32em 0.7em; font-size:0.85em",
+		"&.s-lg": "padding: 0.66em 1.3em; font-size:1.1em",
 	},
 });
 
@@ -104,15 +104,15 @@ export function button(opts: ButtonOptions | string | Content = {}): void {
 	const tag = o.href != null ? "a" : "button";
 	const variant = o.variant ?? "filled";
 	const color = o.color ?? "primary";
-	const size = o.size === "sm" || o.size === "lg" ? `.S_${o.size}` : "";
+	const size = o.size === "sm" || o.size === "lg" ? `.s-${o.size}` : "";
 
 	// Semantic roles select a colour class (the CSS sets `--c`/`--cfg`); any other
 	// value is a raw CSS colour we assign to `--c`, which the variant rules consume
 	// via `var(--c)`. (`primary` is the base default — its class is a no-op.)
 	const semantic = color === "primary" || color === "neutral" || color === "danger" || color === "success";
-	const colorCls = semantic ? `.S_${color}` : "";
+	const colorCls = semantic ? `.s-${color}` : "";
 
-	const el = A(`${tag}.S_btn.S_${variant}${colorCls}${size}`, o.root, o.inner, () => {
+	const el = A(`${tag}.s-btn.s-${variant}${colorCls}${size}`, o.root, o.inner, () => {
 		if (o.href != null) {
 			A(`href=${o.href} role=button`);
 			if (o.disabled) A("aria-disabled=true");

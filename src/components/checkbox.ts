@@ -15,7 +15,7 @@ export interface CheckboxOptions extends Omit<FieldOptions, "label"> {
 }
 
 A.insertGlobalCss({
-	".S_check": {
+	".s-check": {
 		"&": "display:flex flex-direction:column gap:$1",
 		"> label": "display:flex align-items:center gap:$2 cursor:pointer user-select:none",
 		"> label:has(input:disabled)": "cursor:not-allowed opacity:0.6",
@@ -37,7 +37,7 @@ A.insertGlobalCss({
 export function checkbox(opts: CheckboxOptions = {}): void {
 	const id = opts.id ?? uniqueId("check");
 
-	A("div.S_check", opts.root, () => {
+	A("div.s-check", opts.root, () => {
 		A(`label for=${id}`, () => {
 			A("input type=checkbox", opts.control, () => {
 				A(`id=${id}`);
@@ -56,15 +56,15 @@ export function checkbox(opts: CheckboxOptions = {}): void {
 			// Own scope so the label text/required marker don't recreate the input.
 			A(() => {
 				if (opts.label != null) drawSlot(opts.label);
-				if (opts.required) A("span.S_req aria-hidden=true #*");
+				if (opts.required) A("span.s-req aria-hidden=true #*");
 			});
 		});
 
 		A(() => {
-			if (opts.help != null && !opts.error) A("div.S_help", () => drawSlot(opts.help));
+			if (opts.help != null && !opts.error) A("div.s-help", () => drawSlot(opts.help));
 		});
 		A(() => {
-			if (opts.error) A("div.S_error role=alert #", opts.error);
+			if (opts.error) A("div.s-error role=alert #", opts.error);
 		});
 	});
 }

@@ -145,7 +145,7 @@ The choice is persisted to `localStorage` and applied before the first paint
 (no flash). `S.getDarkMode()` returns the resolved boolean; pass `true` to get
 `undefined` when in "auto" mode (useful for a dark/light/auto control).
 
-All Staffa styles are **global** and use `S_`-prefixed class names, so you can
+All Staffa styles are **global** and use `s-`-prefixed class names, so you can
 also override anything from your own stylesheet.
 
 ## Browser (no bundler)

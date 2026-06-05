@@ -33,21 +33,21 @@ export interface AutocompleteOptions extends FieldOptions {
 }
 
 A.insertGlobalCss({
-	".S_ac": {
+	".s-ac": {
 		"&": "position:relative",
-		"> .S_control": "display:flex flex-wrap:wrap align-items:center gap:$1 bg:$sSurface fg:$sFg border: 1px solid $sBorder; r:$sRadius padding: 0.3em 0.4em; cursor:text; transition: border-color 0.15s, box-shadow 0.15s;",
-		"> .S_control:hover": "border-color:$sBorderStrong",
-		"> .S_control:focus-within": "border-color:$sPrimary box-shadow: 0 0 0 3px $sFocus;",
-		"&[aria-invalid=true] > .S_control": "border-color:$sDanger",
-		".S_chip": "display:inline-flex align-items:center gap:$1 font-size:0.85em bg:$sSurfaceHi border: 1px solid $sBorder; r:$sRadius padding: 0.1em 0.2em 0.1em 0.5em;",
-		".S_chip > button": "cursor:pointer border:0 background:transparent fg:$sFgMuted font-size:1.1em line-height:1 padding: 0 0.2em; r:4px",
-		".S_chip > button:hover": "fg:$sFg background:$sBorder",
+		"> .s-control": "display:flex flex-wrap:wrap align-items:center gap:$1 bg:$sSurface fg:$sFg border: 1px solid $sBorder; r:$sRadius padding: 0.3em 0.4em; cursor:text; transition: border-color 0.15s, box-shadow 0.15s;",
+		"> .s-control:hover": "border-color:$sBorderStrong",
+		"> .s-control:focus-within": "border-color:$sPrimary box-shadow: 0 0 0 3px $sFocus;",
+		"&[aria-invalid=true] > .s-control": "border-color:$sDanger",
+		".s-chip": "display:inline-flex align-items:center gap:$1 font-size:0.85em bg:$sSurfaceHi border: 1px solid $sBorder; r:$sRadius padding: 0.1em 0.2em 0.1em 0.5em;",
+		".s-chip > button": "cursor:pointer border:0 background:transparent fg:$sFgMuted font-size:1.1em line-height:1 padding: 0 0.2em; r:4px",
+		".s-chip > button:hover": "fg:$sFg background:$sBorder",
 		"input": "flex:1 min-width:6ch border:0 background:transparent color:inherit outline:none padding:0.25em",
-		"> .S_menu": "position:absolute top:100% left:0 right:0 z-index:20 margin-top:4px max-height:15rem overflow-y:auto list-style:none p:$1 margin-bottom:0 bg:$sSurface border: 1px solid $sBorder; r:$sRadius box-shadow:$sShadow",
-		".S_option": "padding: 0.45em 0.6em; r:6px cursor:pointer",
-		".S_option[aria-selected=true]": "background:$sSurfaceHi",
-		".S_add": "fg:$sPrimary font-style:italic",
-		".S_empty": "padding: 0.45em 0.6em; fg:$sFgMuted",
+		"> .s-menu": "position:absolute top:100% left:0 right:0 z-index:20 margin-top:4px max-height:15rem overflow-y:auto list-style:none p:$1 margin-bottom:0 bg:$sSurface border: 1px solid $sBorder; r:$sRadius box-shadow:$sShadow",
+		".s-option": "padding: 0.45em 0.6em; r:6px cursor:pointer",
+		".s-option[aria-selected=true]": "background:$sSurfaceHi",
+		".s-add": "fg:$sPrimary font-style:italic",
+		".s-empty": "padding: 0.45em 0.6em; fg:$sFgMuted",
 	},
 });
 
@@ -123,19 +123,19 @@ export function autocomplete(opts: AutocompleteOptions): void {
 	};
 
 	drawField(opts, (id, isInvalid) => {
-		A("div.S_ac", opts.control, () => {
+		A("div.s-ac", opts.control, () => {
 			A(() => A("aria-invalid=", isInvalid() ? "true" : "false"));
 
 			let inputEl: HTMLInputElement | undefined;
 
-			A("div.S_control", () => {
+			A("div.s-control", () => {
 				A("click=", () => inputEl?.focus());
 
 				// Chips for multi-select.
 				A(() => {
 					if (!opts.multi) return;
 					for (const value of selectedValues()) {
-						A("span.S_chip", () => {
+						A("span.s-chip", () => {
 							A("span #", A.peek(() => labelFor(value)));
 							A("button type=button aria-label=", `Remove ${value}`, () => {
 								A("#×");
@@ -183,9 +183,9 @@ export function autocomplete(opts: AutocompleteOptions): void {
 				const q = $st.query.trim();
 				const showAdd = opts.allowCustom !== false && q !== "" && !list.some((o) => o.label.toLowerCase() === q.toLowerCase());
 
-				A("ul.S_menu role=listbox", `id=${menuId}`, () => {
+				A("ul.s-menu role=listbox", `id=${menuId}`, () => {
 					list.forEach((option, i) => {
-						A("li.S_option role=option", `id=${menuId}-opt-${i}`, () => {
+						A("li.s-option role=option", `id=${menuId}-opt-${i}`, () => {
 							A(() => A("aria-selected=", $st.active === i ? "true" : "false"));
 							A("#", option.label);
 							A("mousedown=", (e: Event) => e.preventDefault());
@@ -196,14 +196,14 @@ export function autocomplete(opts: AutocompleteOptions): void {
 						});
 					});
 					if (showAdd) {
-						A("li.S_option.S_add role=option", () => {
+						A("li.s-option.s-add role=option", () => {
 							A("#", `Add "${q}"`);
 							A("mousedown=", (e: Event) => e.preventDefault());
 							A("click=", () => commit(q, inputEl));
 						});
 					}
 					if (list.length === 0 && !showAdd) {
-						A("li.S_empty #No matches");
+						A("li.s-empty #No matches");
 					}
 				});
 			});

@@ -69,7 +69,7 @@ The default, simple style is to **pass option strings straight to `A` as
 positional args**:
 
 ```ts
-A("header.S_topbar", opts.topbarInner, () => { ... });
+A("header.s-topbar", opts.topbarInner, () => { ... });
 ```
 
 Reading `opts.topbarInner` here happens in the *caller's* scope, so if it changes
@@ -104,12 +104,12 @@ comment — not by default.
    supports nested objects (`&` = the element, a bare key = a descendant). Style
    structural children with **element / structural selectors**, not new classes:
    ```ts
-   ".S_check": { "&": "...", "> label": "...", "input": "..." }
+   ".s-check": { "&": "...", "> label": "...", "input": "..." }
    ```
-   When you do need a class, prefix it `S_`. Prefer **generic modifier classes
+   When you do need a class, prefix it `s-`. Prefer **generic modifier classes
    matched in combination** over per-component ones: a button is
-   `.S_btn.S_filled.S_primary`, styled via nested `"&.S_filled"`, `"&.S_primary"`
-   — not `S_btn-filled`. Reusable bits like `.S_req`/`.S_help`/`.S_error` are
+   `.s-btn.s-filled.s-primary`, styled via nested `"&.s-filled"`, `"&.s-primary"`
+   — not `s-btn-filled`. Reusable bits like `.s-req`/`.s-help`/`.s-error` are
    shared across field components.
 3. **Use Aberdeen's CSS shorthand.** In style strings prefer the short forms:
    `p`/`m`/`r`/`bg`/`fg`/`w`/`h`/`gap`, the spacing scale `$1`..`$12`, and `$var`

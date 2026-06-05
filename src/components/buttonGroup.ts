@@ -19,23 +19,23 @@ export interface ButtonGroupOptions extends ContentOptions {
 }
 
 A.insertGlobalCss({
-	".S_bgroup": {
+	".s-bgroup": {
 		"&": "display:inline-flex align-items:stretch",
-		"&.S_spaced": "gap:$2 flex-wrap:wrap",
-		"&.S_vertical": "flex-direction:column",
-		"&.S_attached": "gap:0",
+		"&.s-spaced": "gap:$2 flex-wrap:wrap",
+		"&.s-vertical": "flex-direction:column",
+		"&.s-attached": "gap:0",
 		// When attached, collapse the shared border and square off the touching
 		// corners, keeping only the outer ends of the group rounded.
-		"&.S_attached:not(.S_vertical) > .S_btn:not(:first-child)": "margin-left:-1px",
-		"&.S_attached:not(.S_vertical) > .S_btn:not(:first-child):not(:last-child)": "r:0",
-		"&.S_attached:not(.S_vertical) > .S_btn:first-child:not(:last-child)": "border-top-right-radius:0 border-bottom-right-radius:0",
-		"&.S_attached:not(.S_vertical) > .S_btn:last-child:not(:first-child)": "border-top-left-radius:0 border-bottom-left-radius:0",
-		"&.S_attached.S_vertical > .S_btn:not(:first-child)": "margin-top:-1px",
-		"&.S_attached.S_vertical > .S_btn:not(:first-child):not(:last-child)": "r:0",
-		"&.S_attached.S_vertical > .S_btn:first-child:not(:last-child)": "border-bottom-left-radius:0 border-bottom-right-radius:0",
-		"&.S_attached.S_vertical > .S_btn:last-child:not(:first-child)": "border-top-left-radius:0 border-top-right-radius:0",
+		"&.s-attached:not(.s-vertical) > .s-btn:not(:first-child)": "margin-left:-1px",
+		"&.s-attached:not(.s-vertical) > .s-btn:not(:first-child):not(:last-child)": "r:0",
+		"&.s-attached:not(.s-vertical) > .s-btn:first-child:not(:last-child)": "border-top-right-radius:0 border-bottom-right-radius:0",
+		"&.s-attached:not(.s-vertical) > .s-btn:last-child:not(:first-child)": "border-top-left-radius:0 border-bottom-left-radius:0",
+		"&.s-attached.s-vertical > .s-btn:not(:first-child)": "margin-top:-1px",
+		"&.s-attached.s-vertical > .s-btn:not(:first-child):not(:last-child)": "r:0",
+		"&.s-attached.s-vertical > .s-btn:first-child:not(:last-child)": "border-bottom-left-radius:0 border-bottom-right-radius:0",
+		"&.s-attached.s-vertical > .s-btn:last-child:not(:first-child)": "border-top-left-radius:0 border-top-right-radius:0",
 		// Keep the hovered/focused button's border above its neighbours.
-		"&.S_attached > .S_btn:hover, &.S_attached > .S_btn:focus-visible": "z-index:1",
+		"&.s-attached > .s-btn:hover, &.s-attached > .s-btn:focus-visible": "z-index:1",
 	},
 });
 
@@ -54,9 +54,9 @@ A.insertGlobalCss({
  */
 export function buttonGroup(opts: ButtonGroupOptions = {}): void {
 	const layout = opts.layout ?? "attached";
-	const cls = `.S_${layout}${opts.vertical ? ".S_vertical" : ""}`;
+	const cls = `.s-${layout}${opts.vertical ? ".s-vertical" : ""}`;
 
-	A(`div.S_bgroup${cls} role=group`, opts.root, opts.inner, () => {
+	A(`div.s-bgroup${cls} role=group`, opts.root, opts.inner, () => {
 		if (opts.buttons) for (const b of opts.buttons) button(b);
 		if (opts.content) opts.content();
 	});

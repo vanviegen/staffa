@@ -17,7 +17,7 @@ export interface SelectOptions extends FieldOptions {
 
 // Wrapper provides the chevron via ::after (pseudo-elements on <select> are unreliable).
 A.insertGlobalCss({
-	".S_select_wrap": {
+	".s-select_wrap": {
 		"&": "position:relative display:block",
 		"select": "w:100% cursor:pointer padding-right:2.2em; appearance:none",
 		"&::after": "content: '▾'; position:absolute right:0.7em top:50%; transform: translateY(-50%); pointer-events:none fg:$sFgMuted font-size:0.85em",
@@ -36,8 +36,8 @@ A.insertGlobalCss({
  */
 export function select(opts: SelectOptions): void {
 	drawField(opts, (id, isInvalid) => {
-		A("div.S_select_wrap", opts.control, () => {
-			A("select.S_input", () => {
+		A("div.s-select_wrap", opts.control, () => {
+			A("select.s-input", () => {
 				applyControlAttrs(opts, id, isInvalid);
 
 				A("change=", (e: Event) => {

@@ -23,8 +23,8 @@ export interface TextareaOptions extends FieldOptions {
 }
 
 A.insertGlobalCss({
-	"textarea.S_input": "resize:vertical min-height:3em line-height:1.45",
-	"textarea.S_input.S_autoGrow": "resize:none min-height:2.5em overflow-y:hidden",
+	"textarea.s-input": "resize:vertical min-height:3em line-height:1.45",
+	"textarea.s-input.s-autoGrow": "resize:none min-height:2.5em overflow-y:hidden",
 });
 
 /**
@@ -40,9 +40,9 @@ export function textarea(opts: TextareaOptions = {}): void {
 	const grow = opts.autoGrow !== false;
 
 	drawField(opts, (id, isInvalid) => {
-		const el = A("textarea.S_input", opts.control, () => {
+		const el = A("textarea.s-input", opts.control, () => {
 			if (grow) {
-				A(".S_autoGrow");
+				A(".s-autoGrow");
 				A("input=", (e: Event) => {
 					fitToContent(e.currentTarget as HTMLTextAreaElement);
 					if (opts.input) opts.input(e);
