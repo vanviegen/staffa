@@ -1,6 +1,6 @@
-# Skye — agent & contributor guide
+# Staffa — agent & contributor guide
 
-Skye is a small, opinionated **component library for [Aberdeen](https://aberdeenjs.org)**,
+Staffa is a small, opinionated **component library for [Aberdeen](https://aberdeenjs.org)**,
 the fine-grained reactive UI library. This document explains the philosophy and
 the conventions every component follows, so you can extend the library without
 re-deriving the design from scratch.
@@ -11,7 +11,7 @@ and re-runs the *smallest enclosing* `A(() => ...)` scope when a read value
 changes. No virtual DOM, no diffing — you choose the update granularity by where
 you read reactive data.
 
-## What a Skye component *is*
+## What a Staffa component *is*
 
 > A component is just a plain function that takes **one typed options object**
 > and draws DOM via Aberdeen.
@@ -92,7 +92,7 @@ comment — not by default.
 ## Styling rules
 
 1. **Global CSS at file top level.** Unlike typical Aberdeen code (`insertCss`),
-   Skye uses `A.insertGlobalCss({...})` so application authors can override
+   Staffa uses `A.insertGlobalCss({...})` so application authors can override
    anything. Call it **once as a module-level statement** in each component file
    — *never* inside a draw function. `insertGlobalCss` registers its cleanup
    (`delete cssSnippets[n]`) on the *current reactive scope*; if you call it
@@ -211,5 +211,5 @@ Users customize the theme by mutating `S.darkTheme` / `S.lightTheme` directly.
 
 `m3e/` is a vendored copy of the Material 3 *web-component* library. It's **only
 a last-resort source of inspiration** (e.g. for the ARIA shape of a complex
-widget). Skye's API and implementation are entirely different — function calls
+widget). Staffa's API and implementation are entirely different — function calls
 that do Aberdeen draws, not web components — so do **not** port its code or API.

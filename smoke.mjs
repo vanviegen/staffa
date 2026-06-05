@@ -21,7 +21,7 @@ const $form = A.proxy({ name: "Frank", email: "", bio: "", remember: false, tags
 A.mount(document.body, () => {
 	S.main({
 		icon: "✦",
-		title: "Skye Smoke Test",
+		title: "Staffa Smoke Test",
 		subtitle: "rendering everything",
 		maxWidth: "56rem",
 		menu: () => S.button({ text: "New", size: "sm" }),
@@ -116,7 +116,7 @@ A.runQueue?.();
 
 const html = document.body.innerHTML;
 const checks = {
-	"top bar title": html.includes("Skye Smoke Test"),
+	"top bar title": html.includes("Staffa Smoke Test"),
 	"framed content": html.includes("S_framed"),
 	box: html.includes("S_box") && html.includes("<header"),
 	"form grid": html.includes("grid"),

@@ -26,7 +26,7 @@ A.insertGlobalCss({
 
 /**
  * A single-select dropdown backed by a native `<select>` element. Looks like the
- * other Skye inputs but delegates all focus management, keyboard navigation, and
+ * other Staffa inputs but delegates all focus management, keyboard navigation, and
  * mobile-native picker behaviour to the browser.
  *
  * @example

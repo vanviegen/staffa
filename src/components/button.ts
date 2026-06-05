@@ -7,7 +7,7 @@ import { type BaseOptions, type Content, type Slot, type Styling, drawSlot } fro
  * - `tonal`: soft tinted background, medium emphasis.
  * - `outlined`: bordered, transparent background, lowest emphasis.
  *
- * Every variant carries at least a visible border, per Skye's "everything is
+ * Every variant carries at least a visible border, per Staffa's "everything is
  * legible at a glance" principle.
  */
 export type ButtonVariant = "filled" | "tonal" | "outlined";

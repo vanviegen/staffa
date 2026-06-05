@@ -1,20 +1,20 @@
 import A from "aberdeen";
 
 /**
- * Theming and global base styles for Skye.
+ * Theming and global base styles for Staffa.
  *
- * Skye is themed entirely through CSS custom properties (via Aberdeen's
+ * Staffa is themed entirely through CSS custom properties (via Aberdeen's
  * {@link A.cssVars}). Components reference these with `var(--sPrimary)` etc., so
  * changing a single variable restyles the whole app — at runtime, reactively.
  *
- * Unlike typical Aberdeen apps (which use component-local `insertCss`), Skye uses
+ * Unlike typical Aberdeen apps (which use component-local `insertCss`), Staffa uses
  * **global** CSS (`insertGlobalCss`) with class names prefixed `S_`. This is a
- * deliberate trade-off: it lets application authors override any Skye style from
+ * deliberate trade-off: it lets application authors override any Staffa style from
  * their own stylesheet without fighting scoped class names.
  */
 
 /**
- * The set of CSS custom properties Skye understands. All are plain CSS color /
+ * The set of CSS custom properties Staffa understands. All are plain CSS color /
  * length strings. Override any subset by mutating {@link darkTheme} /
  * {@link lightTheme}.
  */
@@ -58,7 +58,7 @@ export interface Theme {
 }
 
 /**
- * The default dark Skye theme: modern and intentionally a little vivid so it
+ * The default dark Staffa theme: modern and intentionally a little vivid so it
  * stands out of the box.
  *
  * This is a live Aberdeen proxy — mutate it (e.g. `darkTheme.sPrimary = "..."`)
@@ -87,7 +87,7 @@ export const darkTheme: Theme = A.proxy<Theme>({
 });
 
 /**
- * The light Skye theme — the same lavender brand, retuned for a bright,
+ * The light Staffa theme — the same lavender brand, retuned for a bright,
  * modern surface: white cards on a soft grey page, a deeper primary so it
  * reads well on light backgrounds, and a softer elevation shadow.
  *
@@ -114,7 +114,7 @@ export const lightTheme: Theme = A.proxy<Theme>({
 	sShadow: "0 6px 24px rgba(20, 24, 40, 0.12)",
 });
 
-const STORAGE_KEY = "skye:darkMode";
+const STORAGE_KEY = "staffa:darkMode";
 
 /**
  * The explicit dark-mode choice — `true` (force dark), `false` (force light) or

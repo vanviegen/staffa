@@ -55,7 +55,7 @@ A.insertGlobalCss({
  * ```ts
  * S.main({
  *   icon: "✦",
- *   title: "Skye Demo",
+ *   title: "Staffa Demo",
  *   subtitle: "Component playground",
  *   maxWidth: "56rem",
  *   menu: () => S.button({ text: "New", size: "sm" }),

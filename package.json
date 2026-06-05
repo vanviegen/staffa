@@ -1,5 +1,5 @@
 {
-  "name": "skye",
+  "name": "staffa",
   "version": "0.1.0",
   "description": "An opinionated component library for the Aberdeen reactive UI library.",
   "license": "ISC",
@@ -12,14 +12,14 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./all.js": "./dist/skye.esm.js"
+    "./all.js": "./dist/staffa.esm.js"
   },
   "files": [
     "dist",
     "src"
   ],
   "scripts": {
-    "build": "tsc && tsc -p demo && esbuild src/index.ts --bundle --external:aberdeen --minify --format=esm --outfile=dist/skye.esm.js",
+    "build": "tsc && tsc -p demo && esbuild src/index.ts --bundle --external:aberdeen --minify --format=esm --outfile=dist/staffa.esm.js",
     "typecheck": "tsc --noEmit && tsc -p demo --noEmit",
     "smoke": "tsc && node smoke.mjs"
   },

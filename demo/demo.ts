@@ -1,6 +1,6 @@
 import A from "aberdeen";
-import S from "skye";
-import type { ButtonColor, ButtonVariant } from "skye";
+import S from "staffa";
+import type { ButtonColor, ButtonVariant } from "staffa";
 
 // Try a custom accent to show theming, e.g.:
 // S.darkTheme.sPrimary = "#28c4a0"; S.darkTheme.sPrimaryFg = "#08110d";
@@ -22,7 +22,7 @@ const knownLanguages = ["TypeScript", "JavaScript", "Python", "Rust", "Go", "Jav
 A.mount(document.body, () => {
 	S.main({
 		icon: "✦",
-		title: "Skye",
+		title: "Staffa",
 		subtitle: "components for Aberdeen",
 		maxWidth: "52rem",
 		menu: () => {
@@ -31,7 +31,7 @@ A.mount(document.body, () => {
 			S.button({ text: "Docs", variant: "outlined", href: "https://aberdeenjs.org" });
 			S.button({ text: "New" });
 		},
-		footer: () => A("span rich='Built with **Skye** · © 2026'"),
+		footer: () => A("span rich='Built with **Staffa** · © 2026'"),
 		content: () => {
 			S.tabs({
 				tabs: [
@@ -41,7 +41,7 @@ A.mount(document.body, () => {
 						label: "About",
 						content: () =>
 							A(
-								"p rich='Skye is a tiny, opinionated component set for [Aberdeen](https://aberdeenjs.org). Toggle your OS dark mode — it ships dark by default.'",
+								"p rich='Staffa is a tiny, opinionated component set for [Aberdeen](https://aberdeenjs.org). Toggle your OS dark mode — it ships dark by default.'",
 							),
 					},
 				],

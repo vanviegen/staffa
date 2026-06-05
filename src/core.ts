@@ -1,9 +1,9 @@
 import A from "aberdeen";
 
 /**
- * Shared building blocks for the Skye component library.
+ * Shared building blocks for the Staffa component library.
  *
- * Every component in Skye is "just an Aberdeen draw function": a plain function
+ * Every component in Staffa is "just an Aberdeen draw function": a plain function
  * that takes a single, strongly typed options object and emits DOM through
  * Aberdeen's {@link A} function. This module defines the option-type hierarchy
  * that all components build on, plus a couple of tiny helpers.
@@ -35,7 +35,7 @@ export type Content = () => void;
 export type Slot = string | Content;
 
 /**
- * Options shared by *every* Skye component.
+ * Options shared by *every* Staffa component.
  *
  * The {@link BaseOptions.root | root} string is applied to the outermost element
  * of the widget, letting callers tweak layout, spacing or add classes without

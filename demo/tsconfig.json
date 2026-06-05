@@ -1,6 +1,6 @@
 {
-  // Type-checks and compiles the demo against Skye's *built* types, mirroring the
-  // import map in index.html (which resolves "skye" -> ../dist/index.js at
+  // Type-checks and compiles the demo against Staffa's *built* types, mirroring the
+  // import map in index.html (which resolves "staffa" -> ../dist/index.js at
   // runtime). Run `npm run build` first so ../dist exists.
   //
   // Self-contained (rather than extending ../tsconfig.json) because the demo
@@ -16,7 +16,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
-      "skye": ["../dist/index.d.ts"]
+      "staffa": ["../dist/index.d.ts"]
     }
   },
   "include": ["demo.ts"]

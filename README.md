@@ -1,15 +1,15 @@
-# Skye
+# Staffa
 
 A small, opinionated component library for the
 [Aberdeen](https://aberdeenjs.org) reactive UI library.
 
-Skye components are **plain functions** that draw DOM through Aberdeen — no JSX,
+Staffa components are **plain functions** that draw DOM through Aberdeen — no JSX,
 no web components, no build step required. You import a single `S` object and
 call its methods:
 
 ```ts
 import A from "aberdeen";
-import S from "skye";
+import S from "staffa";
 
 const $user = A.proxy({ name: "", email: "", subscribe: false });
 
@@ -32,21 +32,21 @@ A.mount(document.body, () => {
 });
 ```
 
-Skye ships a **dark theme** by default and looks reasonable out of the box.
+Staffa ships a **dark theme** by default and looks reasonable out of the box.
 
-> **Pre-1.0 notice:** Skye's API is likely to change fairly often before stabilising as 1.0. That shouldn't stop you from using it — the library is small enough that any breaking changes are easy to adapt to yourself.
+> **Pre-1.0 notice:** Staffa's API is likely to change fairly often before stabilising as 1.0. That shouldn't stop you from using it — the library is small enough that any breaking changes are easy to adapt to yourself.
 
 ## Install
 
 ```sh
-npm install skye aberdeen
+npm install staffa aberdeen
 ```
 
-Aberdeen is a **peer dependency** — Skye builds on your app's single copy of
+Aberdeen is a **peer dependency** — Staffa builds on your app's single copy of
 Aberdeen rather than bundling its own (two copies of Aberdeen would mean two
-independent reactivity systems). So install `aberdeen` alongside `skye`.
+independent reactivity systems). So install `aberdeen` alongside `staffa`.
 
-Skye is published as ESM with TypeScript types.
+Staffa is published as ESM with TypeScript types.
 
 ## Components
 
@@ -118,7 +118,7 @@ $opts.disabled = true;   // the button updates, nothing else re-renders
 
 ## Theming
 
-Skye is themed via CSS custom properties. `S.darkTheme` and `S.lightTheme` are
+Staffa is themed via CSS custom properties. `S.darkTheme` and `S.lightTheme` are
 live Aberdeen proxies — mutate them to restyle either scheme; changes flow into
 the CSS variables immediately:
 
@@ -133,7 +133,7 @@ See the `Theme` type for all variables (`sBg`, `sSurface`, `sFg`, `sBorder`,
 
 ### Dark / light mode
 
-Skye follows the OS preference by default. Override it at runtime:
+Staffa follows the OS preference by default. Override it at runtime:
 
 ```ts
 S.setDarkMode(true);      // force dark
@@ -145,12 +145,12 @@ The choice is persisted to `localStorage` and applied before the first paint
 (no flash). `S.getDarkMode()` returns the resolved boolean; pass `true` to get
 `undefined` when in "auto" mode (useful for a dark/light/auto control).
 
-All Skye styles are **global** and use `S_`-prefixed class names, so you can
+All Staffa styles are **global** and use `S_`-prefixed class names, so you can
 also override anything from your own stylesheet.
 
 ## Browser (no bundler)
 
-`skye/all.js` is a pre-built ESM bundle that includes all of Skye but keeps
+`staffa/all.js` is a pre-built ESM bundle that includes all of Staffa but keeps
 Aberdeen external. Use an [import map](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/script/type/importmap)
 to tell the browser where to find both:
 
@@ -159,13 +159,13 @@ to tell the browser where to find both:
 {
   "imports": {
     "aberdeen": "https://cdn.jsdelivr.net/npm/aberdeen/dist/src/aberdeen.js",
-    "skye/all.js": "https://cdn.jsdelivr.net/npm/skye/dist/skye.esm.js"
+    "staffa/all.js": "https://cdn.jsdelivr.net/npm/staffa/dist/staffa.esm.js"
   }
 }
 </script>
 <script type="module">
   import A from "aberdeen";
-  import S from "skye/all.js";
+  import S from "staffa/all.js";
   // ...
 </script>
 ```
@@ -182,5 +182,5 @@ npx serve .        # then open /demo/ in a browser
 
 `npm run smoke` builds and renders every component in jsdom as a quick check.
 
-Contributing or extending Skye? See [`AGENTS.md`](./AGENTS.md) for the design
+Contributing or extending Staffa? See [`AGENTS.md`](./AGENTS.md) for the design
 philosophy and the add-a-component checklist.

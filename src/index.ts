@@ -1,11 +1,11 @@
 /**
- * Skye — a small, opinionated component library for the
+ * Staffa — a small, opinionated component library for the
  * {@link https://aberdeenjs.org | Aberdeen} reactive UI library.
  *
  * Import the default `S` object and call its component functions:
  *
  * ```ts
- * import S from "skye";
+ * import S from "staffa";
  *
  * S.main({
  *   title: "Hello",
@@ -46,7 +46,7 @@ import { tabs } from "./components/tabs.js";
 import { textarea } from "./components/textarea.js";
 import { textline } from "./components/textline.js";
 
-/** The Skye component namespace. */
+/** The Staffa component namespace. */
 export const S = {
 	main,
 	box,
