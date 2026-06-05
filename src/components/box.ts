@@ -13,11 +13,15 @@ export interface BoxOptions extends ContentOptions {
 	footerInner?: Styling;
 }
 
+// The box itself is a filled `.s-panel`; its header/footer are filled
+// `.s-raised` (classes set on the elements in `box()` below). Colours and
+// borders come from the contextual tokens, so a box stays legible on whatever
+// surface it's nested in.
 A.insertGlobalCss({
 	".s-box": {
-		"&": "display:flex flex-direction:column bg:$sSurface border: 1px solid $sBorder; r:$sRadius overflow:hidden",
-		"> header": "display:flex align-items:center gap:$2 padding: $2 $3; bg:$sSurfaceHi border-bottom: 1px solid $sBorder; font-weight:600",
-		"> footer": "display:flex align-items:center gap:$2 padding: $2 $3; bg:$sSurfaceHi border-top: 1px solid $sBorder;",
+		"&": "display:flex flex-direction:column border: 1px solid $s-border; r: $s-radius; overflow:hidden",
+		"> header": "display:flex align-items:center gap:$2 padding: $2 $3; border-bottom: 1px solid $s-border; font-weight:600",
+		"> footer": "display:flex align-items:center gap:$2 padding: $2 $3; border-top: 1px solid $s-border;",
 		// The body is the only plain <div> child; give it the default padding+gap.
 		"> div": "p:$3 gap:$3",
 	},
@@ -44,11 +48,11 @@ A.insertGlobalCss({
 export function box(opts: BoxOptions | Content = {}): void {
 	const o: BoxOptions = typeof opts === "function" ? { content: opts } : opts;
 
-	A("section.s-box", o.root, () => {
+	A("section.s-box.s-panel.s-filled", o.root, () => {
 		// Header and footer get their own scopes so toggling them doesn't recreate
 		// the body (which may hold focused inputs / lots of content).
 		A(() => {
-			if (o.header != null) A("header", o.headerInner, () => drawSlot(o.header));
+			if (o.header != null) A("header.s-raised.s-filled", o.headerInner, () => drawSlot(o.header));
 		});
 
 		A("div", o.inner, () => {
@@ -56,7 +60,7 @@ export function box(opts: BoxOptions | Content = {}): void {
 		});
 
 		A(() => {
-			if (o.footer != null) A("footer", o.footerInner, () => drawSlot(o.footer));
+			if (o.footer != null) A("footer.s-raised.s-filled", o.footerInner, () => drawSlot(o.footer));
 		});
 	});
 }

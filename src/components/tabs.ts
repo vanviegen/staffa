@@ -36,18 +36,19 @@ A.insertGlobalCss({
 		".s-tablist": "display:flex gap:$1 align-items:stretch",
 		".s-tab":
 			"display:inline-flex align-items:center gap:$2 cursor:pointer background:transparent " +
-			"border:0 fg:$sFgMuted font-weight:600 padding: 0.6em 0.9em; " +
+			"border:0 color: $s-fg-muted; font-weight:600 padding: 0.6em 0.9em; " +
 			"transition: color 0.15s, background 0.15s, border-color 0.15s;",
-		".s-tab:hover:not(:disabled)": "fg:$sFg",
+		".s-tab:hover:not(:disabled)": "color: $s-fg;",
 		".s-tab:disabled": "opacity:0.5 cursor:not-allowed",
-		".s-tab:focus-visible": "outline:none box-shadow: 0 0 0 3px $sFocus; r:$sRadius",
-		// Underline variant.
-		"&.s-underline .s-tablist": "border-bottom: 1px solid $sBorder;",
+		".s-tab:focus-visible": "outline:none box-shadow: 0 0 0 3px $s-focus; r: $s-radius;",
+		// Underline variant — the active marker uses the contextual brand accent.
+		"&.s-underline .s-tablist": "border-bottom: 1px solid $s-border;",
 		"&.s-underline .s-tab": "border-bottom: 2px solid transparent; margin-bottom:-1px",
-		"&.s-underline .s-tab[aria-selected=true]": "fg:$sFg border-bottom-color:$sPrimary",
-		// Pills variant.
-		"&.s-pills .s-tab": "r:$sRadius",
-		"&.s-pills .s-tab[aria-selected=true]": "fg:$sPrimaryFg background:$sPrimary",
+		"&.s-underline .s-tab[aria-selected=true]": "color: $s-fg; border-bottom-color: $s-accent;",
+		// Pills variant — the active pill gets the `.s-primary` class (added in
+		// tabs()), so its `--s-bg`/`--s-fg` are the brand surface's; we just paint.
+		"&.s-pills .s-tab": "r: $s-radius;",
+		"&.s-pills .s-tab[aria-selected=true]": "background: $s-bg; color: $s-fg;",
 		// The panel has no enclosing box, so no default padding — its content
 		// aligns flush with the tab strip. Callers add padding/flex via `inner`.
 		".s-tabpanel": "display:block",
@@ -91,6 +92,9 @@ export function tabs(opts: TabsOptions): void {
 						const selected = $sel.value === key;
 						A("aria-selected=", selected ? "true" : "false");
 						A("tabindex=", selected ? "0" : "-1");
+						// The active pill is a filled brand surface; the classes flip
+						// with selection (Aberdeen removes them when this scope re-runs).
+						if (selected && variant === "pills") A(".s-primary.s-filled");
 					});
 					if (tab.disabled) A("disabled=true");
 					A("click=", () => select(tab, index));

@@ -53,15 +53,16 @@ A.insertGlobalCss({
 			"position:fixed z-index:201 top:50% left:50% " +
 			"transform:translate(-50%,-50%) " +
 			"min-width:20rem max-width:min(90vw,44rem) max-height:min(88vh,800px) " +
-			"bg:$sSurface border: 1px solid $sBorder; r:$sRadiusLg box-shadow:$sShadow overflow:hidden " +
+			"border: 1px solid $s-border; r: $s-radius-lg; box-shadow: $s-shadow; overflow:hidden " +
 			"transition: opacity 0.2s ease, transform 0.2s ease;",
 		// Header and footer are fixed; only the content <div> scrolls.
+		// Background is handled by the .s-raised surface class added in dialog().
 		"> header":
 			"display:flex align-items:center gap:$2 padding: $2 $3; " +
-			"bg:$sSurfaceHi border-bottom: 1px solid $sBorder; font-weight:600 flex-shrink:0",
+			"border-bottom: 1px solid $s-border; font-weight:600 flex-shrink:0",
 		"> footer":
 			"display:flex align-items:center gap:$2 padding: $2 $3; " +
-			"bg:$sSurfaceHi border-top: 1px solid $sBorder; flex-shrink:0",
+			"border-top: 1px solid $s-border; flex-shrink:0",
 		"> div": "p:$3 gap:$3 display:flex flex-direction:column overflow-y:auto flex:1 min-height:0",
 		"&.hidden": "opacity:0 pointer-events:none transform: translate(-50%, calc(-50% + 20px));",
 		"&.hidden *": "pointer-events:none",
@@ -87,7 +88,7 @@ A.insertGlobalCss({
  *   content: (close) => {
  *     A("p #Are you sure?");
  *     S.button({ text: "Yes", click: () => { doIt(); close(); } });
- *     S.button({ text: "Cancel", variant: "outlined", click: close });
+ *     S.button({ text: "Cancel", look: "neutral-outlined", click: close });
  *   },
  * });
  * ```
@@ -131,10 +132,10 @@ export function dialog(opts: DialogOptions): Promise<void> {
 			});
 
 			// Dialog panel: fades + slides in/out.
-			A("div.s-dialog create=hidden destroy=hidden", opts.root, () => {
+			A("div.s-dialog.s-panel.s-filled create=hidden destroy=hidden", opts.root, () => {
 				A(() => {
 					if (opts.header != null) {
-						A("header", opts.headerInner, () => drawSlot(opts.header));
+						A("header.s-raised.s-filled", opts.headerInner, () => drawSlot(opts.header));
 					}
 				});
 
@@ -144,7 +145,7 @@ export function dialog(opts: DialogOptions): Promise<void> {
 
 				A(() => {
 					if (opts.footer != null) {
-						A("footer", opts.footerInner, () => drawSlot(opts.footer));
+						A("footer.s-raised.s-filled", opts.footerInner, () => drawSlot(opts.footer));
 					}
 				});
 			});
@@ -198,7 +199,7 @@ export function confirm(message: string, opts: Partial<DialogOptions> = {}): Pro
 			content: (close) => {
 				A("p", () => { A("#", message); });
 				buttonGroup({ layout: "spaced", root: "align-self:flex-end", content: () => {
-					button({ text: "Cancel", variant: "outlined", color: "neutral", click: close });
+					button({ text: "Cancel", look: "neutral-outlined", click: close });
 					button({ text: "OK", click: () => { confirmed = true; close(); } });
 				}});
 			},
@@ -242,7 +243,7 @@ export function prompt(message: string, defaultValue = "", opts: Partial<DialogO
 					});
 					textline({ bind: A.ref($v, "value") });
 					buttonGroup({ layout: "spaced", root: "align-self:flex-end", content: () => {
-						button({ text: "Cancel", variant: "outlined", color: "neutral", type: "button", click: close });
+						button({ text: "Cancel", look: "neutral-outlined", type: "button", click: close });
 						button({ text: "OK", type: "submit" });
 					}});
 				});

@@ -30,8 +30,9 @@
  * mutate it. See `AGENTS.md` for the design philosophy.
  */
 // Importing the theme module installs spacing vars, the reactive theme and the
-// base stylesheet. Customise by mutating S.darkTheme / S.lightTheme.
-import { darkTheme, lightTheme, setDarkMode, getDarkMode } from "./theme.js";
+// base stylesheet. Customise it from your app with A.insertGlobalCss (see
+// theme.ts); toggle modes with setDarkMode / getDarkMode.
+import { setDarkMode, getDarkMode } from "./theme.js";
 
 import { autocomplete } from "./components/autocomplete.js";
 import { box } from "./components/box.js";
@@ -63,8 +64,6 @@ export const S = {
 	buttonGroup,
 	autocomplete,
 	select,
-	darkTheme,
-	lightTheme,
 	setDarkMode,
 	getDarkMode,
 };
@@ -72,7 +71,8 @@ export const S = {
 export default S;
 
 // Re-export theming and shared types for advanced use.
-export { type Theme, darkTheme, lightTheme, setDarkMode, getDarkMode } from "./theme.js";
+export { setDarkMode, getDarkMode } from "./theme.js";
+export type { Look, SurfaceRole, Variant } from "./theme.js";
 export type {
 	BaseOptions,
 	ContentOptions,
@@ -91,7 +91,7 @@ export type { TextlineOptions, TextlineType } from "./components/textline.js";
 export type { TextareaOptions } from "./components/textarea.js";
 export type { CheckboxOptions } from "./components/checkbox.js";
 export type { Tab, TabsOptions } from "./components/tabs.js";
-export type { ButtonOptions, ButtonVariant, ButtonColor } from "./components/button.js";
+export type { ButtonOptions } from "./components/button.js";
 export type { ButtonGroupOptions } from "./components/buttonGroup.js";
 export type { AutocompleteOptions, AutocompleteOptionInput } from "./components/autocomplete.js";
 export type { SelectOptions, SelectOptionInput } from "./components/select.js";

@@ -29,7 +29,7 @@ A.mount(document.body, () => {
 		content: () => {
 			S.box({
 				header: "Account",
-				footer: () => S.button({ text: "Footer button", variant: "text" }),
+				footer: () => S.button({ text: "Footer button", look: "neutral-outlined" }),
 				content: () => {
 					S.form({
 						layout: "grid",
@@ -57,14 +57,13 @@ A.mount(document.body, () => {
 
 			S.buttonGroup({
 				buttons: [
-					{ text: "Day", variant: "outlined", color: "neutral" },
-					{ text: "Week", variant: "outlined", color: "neutral" },
-					{ text: "Month", variant: "outlined", color: "neutral" },
+					{ text: "Day", look: "neutral-outlined" },
+					{ text: "Week", look: "neutral-outlined" },
+					{ text: "Month", look: "neutral-outlined" },
 				],
 			});
 
-			["filled", "tonal", "outlined"].forEach((variant) => S.button({ text: variant, variant }));
-			S.button({ text: "Custom", color: "#ef6b00" }); // non-semantic colour -> inline --c
+			["primary-tonal", "primary-outlined"].forEach((look) => S.button({ text: look, look }));
 			S.button({ text: "disabled", disabled: true });
 			S.button("Shorthand string");
 			S.box(() => A("p#Box shorthand content"));
@@ -99,7 +98,7 @@ await flush(); // rebuild panel A — styles must still be present
 const headCss = document.head.textContent || "";
 
 // A proxied options object — mutating it should update the DOM in place.
-const $btn = A.proxy({ text: "Before", variant: "filled", root: "data-tag=t1" });
+const $btn = A.proxy({ text: "Before", look: "primary", root: "data-tag=t1" });
 A.mount(document.body, () => S.button($btn));
 
 // Flush Aberdeen's async queue.
@@ -126,7 +125,6 @@ const checks = {
 	tabs: html.includes('role="tablist"'),
 	buttonGroup: html.includes("s-bgroup"),
 	"button variants": html.includes("s-tonal") && html.includes("s-outlined"),
-	"custom button colour": html.includes("--c") && html.includes("#ef6b00"),
 	"disabled button": html.includes("disabled"),
 	autocomplete: html.includes("s-control"),
 	"multi chip": html.includes("s-chip"),

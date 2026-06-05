@@ -1,9 +1,6 @@
 import A from "aberdeen";
 import S from "staffa";
-import type { ButtonColor, ButtonVariant } from "staffa";
-
-// Try a custom accent to show theming, e.g.:
-// S.darkTheme.sPrimary = "#28c4a0"; S.darkTheme.sPrimaryFg = "#08110d";
+import type { Look, SurfaceRole } from "staffa";
 
 const $user = A.proxy({
 	name: "Frank",
@@ -27,8 +24,7 @@ A.mount(document.body, () => {
 		maxWidth: "52rem",
 		menu: () => {
 			drawThemeChooser();
-			drawAccentPicker();
-			S.button({ text: "Docs", variant: "outlined", href: "https://aberdeenjs.org" });
+			S.button({ text: "Docs", look: "neutral-outlined", href: "https://aberdeenjs.org" });
 			S.button({ text: "New" });
 		},
 		footer: () => A("span rich='Built with **Staffa** · © 2026'"),
@@ -37,6 +33,7 @@ A.mount(document.body, () => {
 				tabs: [
 					{ label: "Form", content: drawForm },
 					{ label: "Buttons", content: drawButtons },
+					{ label: "Surfaces", content: drawSurfaces },
 					{
 						label: "About",
 						content: () =>
@@ -49,17 +46,6 @@ A.mount(document.body, () => {
 		},
 	});
 });
-
-// A segmented light / auto / dark control. The active segment is highlighted
-// reactively: clicking one calls S.setDarkMode, which re-runs this scope via
-// getDarkMode(true) (true = report "auto" as undefined rather than resolving it).
-function drawAccentPicker() {
-	const $accent = A.proxy({ value: A.peek(S.getDarkMode() ? S.darkTheme : S.lightTheme, 'sPrimary') });
-	A(() => {
-		(S.getDarkMode() ? S.darkTheme : S.lightTheme).sPrimary = $accent.value;
-	});
-	A(`input type=color cursor:pointer title="Accent color" bind=`, $accent);
-}
 
 function drawThemeChooser() {
 	const modes: Array<{ label: string; value: boolean | undefined; aria: string }> = [
@@ -74,8 +60,7 @@ function drawThemeChooser() {
 				text: m.label,
 				ariaLabel: m.aria,
 				size: "sm",
-				variant: m.value === active ? "filled" : "outlined",
-				color: m.value === active ? "primary" : "neutral",
+				look: (m.value === active ? "primary" : "neutral-outlined") as Look,
 				click: () => S.setDarkMode(m.value),
 			})),
 		});
@@ -88,9 +73,6 @@ function drawForm() {
 		header: "Account",
 		content: () => {
 			S.form({
-				// Getter: $layout.value is read inside the form's own reactive scope,
-				// so the box's content scope doesn't subscribe and won't recreate
-				// all fields when the layout changes.
 				get layout() { return $layout.value; },
 				content: () => {
 					S.select({label: "Form layout", options: ["stacked", "grid"], bind: $layout});
@@ -141,7 +123,7 @@ function drawForm() {
 				},
 				actions: () => {
 					S.button({ text: "Save", type: "submit" });
-					S.button({ text: "Cancel", variant: "tonal", color: "neutral" });
+					S.button({ text: "Cancel", look: "neutral-tonal" });
 				},
 				submit: (data) => {
 					S.dialog({
@@ -159,7 +141,6 @@ function drawForm() {
 		},
 	});
 
-	// Live state, to show reactivity.
 	S.box({
 		header: "Live state",
 		root: "mt:$3",
@@ -168,31 +149,19 @@ function drawForm() {
 }
 
 function drawButtons() {
-	// Typed as the library's literal-union types, so the IDE checks the values
-	// below and autocompletes them.
-	const variants: ButtonVariant[] = ["filled", "tonal", "outlined"];
-	const colors: ButtonColor[] = ["primary", "neutral", "danger", "success"];
+	const roles: SurfaceRole[] = ["primary", "neutral", "danger", "success"];
+	const mods = ["", "-tonal", "-outlined"] as const;
 
 	A("div display:flex flex-direction:column gap:$3", () => {
-		for (const variant of variants) {
+		for (const mod of mods) {
 			A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
-				A("code w:5rem text=", variant);
-				for (const color of colors) {
-					S.button({ text: color, variant, color });
+				A("code w:5rem text=", mod || "filled");
+				for (const role of roles) {
+					S.button({ text: role, look: `${role}${mod}` as Look });
 				}
-				// Disabled example for this variant.
-				S.button({ text: "disabled", variant, disabled: true });
+				S.button({ text: "disabled", look: `primary${mod}` as Look, disabled: true });
 			});
 		}
-
-		// `color` also accepts any CSS colour: a hex/rgb literal or a `$var`
-		// reference to a theme custom property.
-		A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
-			A("code w:5rem #custom");
-			S.button({ text: "#ef6b00", color: "#ef6b00" });
-			S.button({ text: "$sWarning", color: "$sWarning" });
-			S.button({ text: "tonal teal", color: "#13a89e", variant: "tonal" });
-		});
 
 		A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
 			A("code w:5rem #sizes");
@@ -204,8 +173,8 @@ function drawButtons() {
 		A("h4 mb:0 #Segmented group (attached)");
 		S.buttonGroup({
 			buttons: [
-				{ text: "Day", variant: "outlined", color: "neutral" },
-				{ text: "Week", variant: "tonal", color: "danger" },
+				{ text: "Day", look: "neutral-outlined" },
+				{ text: "Week", look: "danger-tonal" },
 				{ text: "Month" },
 			],
 		});
@@ -215,7 +184,7 @@ function drawButtons() {
 			layout: "spaced",
 			buttons: [
 				{ text: "Save" },
-				{ text: "Delete", variant: "outlined", color: "danger" },
+				{ text: "Delete", look: "danger-outlined" },
 				{ text: "Disabled", disabled: true },
 			],
 		});
@@ -227,15 +196,101 @@ function drawButtons() {
 				await S.alert("File saved successfully.");
 				$result.value = "alert: dismissed";
 			}});
-			S.button({ text: "confirm()", variant: "tonal", color: "neutral", click: async () => {
+			S.button({ text: "confirm()", look: "neutral-tonal", click: async () => {
 				const ok = await S.confirm("Delete this item?");
 				$result.value = `confirm → ${ok}`;
 			}});
-			S.button({ text: "prompt()", variant: "outlined", click: async () => {
+			S.button({ text: "prompt()", look: "neutral-outlined", click: async () => {
 				const name = await S.prompt("Enter your name:", "Alice");
 				$result.value = name === null ? "prompt → cancelled" : `prompt → "${name}"`;
 			}});
 			A(() => { if ($result.value) A("code #", $result.value); });
+		});
+	});
+}
+
+function drawSurfaces() {
+	const levels = ["base", "panel", "raised"];
+	const roles = ["neutral", "primary", "danger", "success", "warning"];
+
+	A("div display:flex flex-direction:column gap:$3", () => {
+
+		S.box({
+			header: "Surfaces (shown filled)",
+			content: () => {
+				A("div display:flex flex-direction:column gap:$1", () => {
+					for (const name of [...levels, ...roles]) {
+						A(`div.s-${name}.s-filled padding: $2 $3; r: $s-radius; display:flex gap:$3 align-items:baseline`, () => {
+							A(`code min-width:6.5rem font-size:0.8em #.s-${name}`);
+							A(`span fg: $s-fg-muted; font-size:0.85em #muted`);
+							A(`span fg: $s-fg-faint; font-size:0.85em #faint`);
+							A(`a href=# font-size:0.85em #link`);
+							A(`span fg: $s-accent; font-weight:600 font-size:0.85em #accent`);
+							A(`span padding: 0.15em 0.4em; r:4px border: 1px solid $s-border; font-size:0.8em #border`);
+						});
+					}
+				});
+			},
+		});
+
+		S.box({
+			header: "Variants: filled, tonal, outlined",
+			content: () => {
+				A("div display:flex flex-direction:column gap:$2", () => {
+					for (const name of roles) {
+						A("div display:flex gap:$2 align-items:stretch", () => {
+							A(`span min-width:4.5rem fg: $s-fg-muted; font-size:0.85em display:flex align-items:center #.s-${name}`);
+							for (const variant of ["filled", "tonal", "outlined"]) {
+								A(`div.s-${name}.s-${variant} padding: $2 $3; r: $s-radius; border: 1px solid $s-border; flex:1 text-align:center`, () => {
+									A(`code font-size:0.8em #${variant}`);
+								});
+							}
+						});
+					}
+				});
+			},
+		});
+
+		S.box({
+			header: "Nesting — tokens resolve to the nearest surface",
+			content: () => {
+				A("div.s-primary.s-filled padding: $3; r: $s-radius;", () => {
+					A("p mt:0 mb:$2 display:flex gap:$2 align-items:center", () => {
+						A("code font-size:0.9em #.s-primary —");
+						A("span fg: $s-fg-muted; #muted ·");
+						A("a href=# #link");
+					});
+					A("div.s-panel.s-filled padding: $2 $3; r: $s-radius;", () => {
+						A("p m:0 display:flex gap:$2 align-items:center", () => {
+							A("code font-size:0.9em #.s-panel inside .s-primary —");
+							A("span fg: $s-fg-muted; #muted ·");
+							A("a href=# #link");
+						});
+					});
+				});
+			},
+		});
+
+		S.box({
+			header: "Using surface tokens in your own widgets",
+			content: () => {
+				A("pre mt:0 mb:$2", () => A("#",
+`/* A role/level class + a variant class set --s-bg, --s-fg and
+   the derived tokens for the subtree. Reference them in CSS: */
+.my-widget {
+  background: $s-bg;
+  color: $s-fg;
+  border: 1px solid $s-border;
+  border-radius: $s-radius;
+}
+.my-widget .note { color: $s-fg-muted; }
+
+/* One-line context override — all children adapt: */
+<div class="s-primary s-filled">  …filled accent…   </div>
+<div class="s-danger s-tonal">    …soft warning…    </div>`
+				));
+				A("p m:0 fg: $s-fg-muted; font-size:0.9em rich='**Tip:** on filled accent surfaces, `--s-link` falls back to the surface ink so links stay legible.'");
+			},
 		});
 	});
 }
