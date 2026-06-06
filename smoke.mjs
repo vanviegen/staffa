@@ -25,6 +25,14 @@ A.mount(document.body, () => {
 		subtitle: "rendering everything",
 		maxWidth: "56rem",
 		menu: () => S.button({ text: "New", size: "sm" }),
+		nav: {
+			items: [
+				{ label: "Home", href: "/" },
+				{ separator: true },
+				{ label: "Settings", href: "/settings" },
+			],
+		},
+		navPosition: "left",
 		footer: "© 2026",
 		content: () => {
 			S.box({
@@ -67,9 +75,28 @@ A.mount(document.body, () => {
 			S.button({ text: "disabled", disabled: true });
 			S.button("Shorthand string");
 			S.box(() => A("p#Box shorthand content"));
+
+			// Tooltip
+			S.tooltip({
+				tip: "Helpful hint",
+				content: () => S.button({ text: "Hover me" }),
+			});
+
+			// Menu trigger
+			S.menu({
+				trigger: { text: "Actions", attrs: ".neutral .outlined" },
+				items: [
+					{ label: "Edit", click: () => {} },
+					{ separator: true },
+					{ label: "Delete", disabled: true },
+				],
+			});
 		},
 	});
 });
+
+// Toast fires into body-level portal
+S.toast({ message: "Smoke test toast", type: "success", duration: 0, dismissible: false });
 
 // Regression: component CSS must survive switching away from and back to a tab.
 // (insertGlobalCss registers cleanup on the current scope; inserting it inside a
@@ -132,6 +159,10 @@ const checks = {
 	"CSS survives tab switch": headCss.includes(".s-box") && headCss.includes(".s-bgroup") && headCss.includes(".s-btn"),
 	"reactive text update": html.includes("After") && !html.includes("Before"),
 	"reactive attrs update": html.includes('data-tag="t2"') && !html.includes('data-tag="t1"'),
+	tooltip: html.includes("s-tt") && html.includes('role="tooltip"'),
+	"menu trigger": html.includes("s-menu-list") || html.includes("Actions"),
+	"nav sidebar": html.includes("s-nav-panel") && html.includes('href="/"'),
+	toast: html.includes("s-toast") && html.includes("Smoke test toast"),
 };
 
 let ok = true;

@@ -13,6 +13,8 @@ const $user = A.proxy({
 	tags: ["aberdeen", "ui"],
 });
 
+const $tab = A.proxy({ value: "form" });
+
 const knownTags = ["aberdeen", "ui", "ux", "reactive", "typescript", "css"];
 const knownLanguages = ["TypeScript", "JavaScript", "Python", "Rust", "Go", "Java", "C#", "C++"];
 
@@ -22,19 +24,33 @@ A.mount(document.body, () => {
 		title: "Staffa",
 		subtitle: "components for Aberdeen",
 		maxWidth: "52rem",
+		nav: {
+			trigger: { size: "sm" },
+			items: [
+				{ label: "Form",     icon: () => A("span aria-hidden=true #📋"), click: () => { $tab.value = "form";     } },
+				{ label: "Buttons",  icon: () => A("span aria-hidden=true #🔘"), click: () => { $tab.value = "buttons";  } },
+				{ label: "Overlays", icon: () => A("span aria-hidden=true #🔔"), click: () => { $tab.value = "overlays"; } },
+				{ label: "Surfaces", icon: () => A("span aria-hidden=true #🎨"), click: () => { $tab.value = "surfaces"; } },
+				{ separator: true },
+				{ label: "Aberdeen", icon: () => A("span aria-hidden=true #↗"), href: "https://aberdeenjs.org", target: "_blank" },
+			],
+		},
+		navPosition: "left",
 		menu: () => {
 			drawThemeChooser();
 			S.button({ text: "Docs", attrs: ".neutral .outlined", href: "https://aberdeenjs.org" });
-			S.button({ text: "New" });
 		},
 		footer: () => A("span rich='Built with **Staffa** · © 2026'"),
 		content: () => {
 			S.tabs({
+				bind: $tab,
 				tabs: [
-					{ label: "Form", content: drawForm },
-					{ label: "Buttons", content: drawButtons },
-					{ label: "Surfaces", content: drawSurfaces },
+					{ id: "form",     label: "Form",     content: drawForm     },
+					{ id: "buttons",  label: "Buttons",  content: drawButtons  },
+					{ id: "overlays", label: "Overlays", content: drawOverlays },
+					{ id: "surfaces", label: "Surfaces", content: drawSurfaces },
 					{
+						id: "about",
 						label: "About",
 						content: () =>
 							A(
@@ -48,7 +64,6 @@ A.mount(document.body, () => {
 });
 
 function drawThemeChooser() {
-	// "light" | "auto" | "dark" — always one selected, maps to setDarkMode(false/undefined/true)
 	const initial = S.getDarkMode(true) === true ? "dark" : S.getDarkMode(true) === false ? "light" : "auto";
 	const $mode = A.proxy<{ value: string | null }>({ value: initial });
 	A(() => S.setDarkMode($mode.value === "dark" ? true : $mode.value === "light" ? false : undefined));
@@ -203,16 +218,14 @@ function drawButtons() {
 				S.dialog({
 					header: "Primary dialog",
 					allowCancel: true,
-					// Smaller, so the inner dialog visibly extends beyond its edges.
 					attrs: "max-width:22rem",
 					content: (closeOuter) => {
-						A("p #This is the primary dialog. It is should be both wider and higher than the secondary dialog.");
+						A("p #This is the primary dialog. It should be both wider and higher than the secondary dialog.");
 						A("p #That allows us to see that there is a backdrop between the two dialogs.")
 						S.button({ text: "Open secondary", click: () => {
 							S.dialog({
 								header: "Secondary dialog",
 								allowCancel: true,
-								// Wider and taller than the outer to make stacking obvious.
 								attrs: "max-width:36rem min-height:14rem",
 								content: (closeInner) => {
 									A("p #Smaller than primary.");
@@ -232,6 +245,133 @@ function drawButtons() {
 				})
 			}});
 		});
+	});
+}
+
+function drawOverlays() {
+	A("div display:flex flex-direction:column gap:$3", () => {
+
+		// ── Toast ──────────────────────────────────────────────────────────────
+		S.box({
+			header: "Toast notifications",
+			content: () => {
+				A("p m:0 fg:$s-fg-muted font-size:0.9em #Click a button to fire a toast.");
+				A("div display:flex gap:$2 flex-wrap:wrap mt:$2", () => {
+					S.button({
+						text: "Neutral",
+						attrs: ".neutral .outlined",
+						click: () => S.toast({ message: "A neutral notification." }),
+					});
+					S.button({
+						text: "Success",
+						attrs: ".success .tonal",
+						click: () => S.toast({ title: "Saved!", message: "Your changes have been saved.", type: "success" }),
+					});
+					S.button({
+						text: "Warning",
+						attrs: ".warning .tonal",
+						click: () => S.toast({ title: "Watch out", message: "This action cannot be undone.", type: "warning" }),
+					});
+					S.button({
+						text: "Danger",
+						attrs: ".danger .tonal",
+						click: () => S.toast({ title: "Error", message: "Something went wrong. Please try again.", type: "danger" }),
+					});
+					S.button({
+						text: "Persistent",
+						attrs: ".neutral .outlined",
+						click: () => {
+							const dismiss = S.toast({ title: "In progress", message: "Dismiss manually or wait 8 s.", duration: 0 });
+							setTimeout(dismiss, 8000);
+						},
+					});
+					S.button({
+						text: "No close button",
+						attrs: ".neutral .outlined",
+						click: () => S.toast({ message: "Auto-dismisses in 2 s.", duration: 2000, dismissible: false }),
+					});
+				});
+			},
+		});
+
+		// ── Tooltip ────────────────────────────────────────────────────────────
+		S.box({
+			header: "Tooltips",
+			content: () => {
+				A("p m:0 fg:$s-fg-muted font-size:0.9em #Hover or focus the buttons to see the tips.");
+				A("div display:flex gap:$4 flex-wrap:wrap align-items:center mt:$2", () => {
+					S.tooltip({
+						tip: "Appears above (default)",
+						content: () => S.button({ text: "Top", attrs: ".neutral .outlined" }),
+					});
+					S.tooltip({
+						placement: "bottom",
+						tip: "Appears below",
+						content: () => S.button({ text: "Bottom", attrs: ".neutral .outlined" }),
+					});
+					S.tooltip({
+						placement: "left",
+						tip: "Appears to the left",
+						content: () => S.button({ text: "Left", attrs: ".neutral .outlined" }),
+					});
+					S.tooltip({
+						placement: "right",
+						tip: "Appears to the right",
+						content: () => S.button({ text: "Right", attrs: ".neutral .outlined" }),
+					});
+					S.tooltip({
+						tip: "Supports **bold** and `code` in tips",
+						content: () => S.button({ text: "Rich tip", attrs: ".neutral .outlined" }),
+					});
+					S.tooltip({
+						tip: "Still describes why it's disabled",
+						content: () => S.button({ text: "Disabled", disabled: true }),
+					});
+				});
+			},
+		});
+
+		// ── Menu ───────────────────────────────────────────────────────────────
+		S.box({
+			header: "Action menus",
+			content: () => {
+				A("p m:0 fg:$s-fg-muted font-size:0.9em #Portal-rendered dropdown — never clipped. Full keyboard nav: arrows, Enter, Escape.");
+				A("div display:flex gap:$3 flex-wrap:wrap align-items:center mt:$2", () => {
+
+					S.menu({
+						trigger: { text: "Actions", attrs: ".neutral .outlined" },
+						items: [
+							{ label: "Edit",      icon: () => A("span aria-hidden=true #✎"), click: () => S.toast({ message: "Edit clicked",      type: "success" }) },
+							{ label: "Duplicate",  icon: () => A("span aria-hidden=true #⎘"), click: () => S.toast({ message: "Duplicated",        type: "neutral" }) },
+							{ separator: true },
+							{ label: "Archive",    icon: () => A("span aria-hidden=true #📦"), click: () => S.toast({ message: "Archived",          type: "warning" }) },
+							{ label: "Delete",     icon: () => A("span aria-hidden=true #🗑"), attrs: "fg:$s-danger", click: () => S.toast({ message: "Deleted!", type: "danger" }) },
+						],
+					});
+
+					S.menu({
+						trigger: { text: "With link & disabled", attrs: ".neutral .tonal" },
+						items: [
+							{ label: "View docs", href: "https://aberdeenjs.org", target: "_blank" },
+							{ label: "Share",     click: () => S.toast({ message: "Link copied!", type: "success" }) },
+							{ separator: true },
+							{ label: "Restricted action", disabled: true },
+						],
+					});
+
+					S.tooltip({
+						tip: "Default ☰ icon trigger",
+						content: () => S.menu({
+							items: [
+								{ label: "Option A", click: () => S.toast({ message: "Option A" }) },
+								{ label: "Option B", click: () => S.toast({ message: "Option B" }) },
+							],
+						}),
+					});
+				});
+			},
+		});
+
 	});
 }
 
