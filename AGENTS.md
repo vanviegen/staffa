@@ -29,19 +29,16 @@ give back.
 
 ## The options-type hierarchy
 
-All option types descend from a shared hierarchy in `src/core.ts`. **Reuse it;
-don't reinvent these fields per component.**
+Shared option types live in `src/core.ts`. **Reuse them; don't reinvent these
+fields per component.** There's no universal base — a component only declares the
+styling hooks it actually has (e.g. a dialog has no single useful "root").
 
-- **`BaseOptions`** — every component has `root?: Styling`, an Aberdeen
-  attr/style string applied to the widget's outermost element. This is the
-  universal escape hatch for layout/spacing/extra classes.
-- **`ContentOptions extends BaseOptions`** — for components that wrap a single
-  block of caller content: `content?: () => void` plus `inner?: Styling` (an
-  attr/style string for the element that actually *holds* the children).
-- **`FieldOptions extends BaseOptions`** (`src/components/field.ts`) — for form
-  controls: `label`, `help`, `error`, `disabled`, `required`, `name`, `id`,
-  `control` (styling for the control element). All field components render
-  through `drawField()` so labels/help/errors look and align identically.
+- **`ContentOptions`** — for components that wrap a single block of caller
+  content: `attrs?: Styling` (the outermost element) plus `content?: () => void`.
+- **`FieldOptions`** (`src/components/field.ts`) — for form controls: `attrs`
+  (the field wrapper), `label`, `help`, `error`, `disabled`, `required`, `name`,
+  `id`, `inputAttrs` (styling for the control element). All field components
+  render through `drawField()` so labels/help/errors look and align identically.
 
 `Styling` is just `string` — an Aberdeen attr/style/class string like
 `"display:flex gap:$3 .my-class"`. `Bindable<T>` is `{ value: T }`, i.e. the
@@ -49,14 +46,18 @@ shape of `A.proxy(x)` / `A.ref(obj, key)`.
 
 ### Naming conventions for option fields
 
-- `root` → outermost element styling (everywhere).
-- `inner` → the children-holding element's styling (content components).
+- `attrs` → outermost element styling. Apply it as the *last* positional arg to
+  `A` so callers can override the component's own classes (incl. surface looks).
+- `contentAttrs` → the children-holding element's styling (content components).
 - `content` → the single content draw-function.
-- `control` → the actual input/control element styling (field components).
-- Sub-region styling is `<region>Inner` (e.g. `headerInner`, `footerInner`,
-  `topbarInner`, `actionsInner`).
-- A piece of renderable content that's "text or a draw function" is a `Slot`
-  (`string | (() => void)`); draw it with `drawSlot()`.
+- `inputAttrs` → the actual input/control element styling (field components).
+- Sub-region styling is `<region>Attrs` (e.g. `headerAttrs`, `footerAttrs`,
+  `topbarAttrs`, `actionsAttrs`).
+- A piece of renderable content that's "text or a draw function" is a `Slot`;
+  draw it with `drawSlot()`. A bare string is drawn as **rich text** (Aberdeen's
+  `rich` markup: `*italic*`, `**bold**`, `` `code` ``, `[links](/path)`). A slot
+  can pass args to its draw function via `Slot<[...]>` (e.g. the dialog body is a
+  `Slot<[close: () => void]>`); `drawSlot(slot, ...args)` forwards them.
 
 ## Reactivity: pragmatic, not maximal
 
@@ -69,10 +70,10 @@ The default, simple style is to **pass option strings straight to `A` as
 positional args**:
 
 ```ts
-A("header.s-topbar", opts.topbarInner, () => { ... });
+A("header.s-topbar", opts.topbarAttrs, () => { ... });
 ```
 
-Reading `opts.topbarInner` here happens in the *caller's* scope, so if it changes
+Reading `opts.topbarAttrs` here happens in the *caller's* scope, so if it changes
 the `<header>` is recreated. That's totally fine for most elements. Only reach
 for a dedicated `A(() => ...)` scope when recreation would be costly or wrong:
 
@@ -106,35 +107,40 @@ comment — not by default.
    ```ts
    ".s-check": { "&": "...", "> label": "...", "input": "..." }
    ```
-   When you do need a class, prefix it `s-`. Prefer **generic modifier classes
-   matched in combination** over per-component ones: a button is
-   `.s-btn.s-filled.s-primary`, styled via nested `"&.s-filled"`, `"&.s-primary"`
-   — not `s-btn-filled`. Reusable bits like `.s-req`/`.s-help`/`.s-error` are
-   shared across field components.
-3. **Use Aberdeen's CSS shorthand.** In style strings prefer the short forms:
+   When you do need a class, prefix it `s-` (e.g. the component's own root class
+   `.s-btn`, sizes `.s-sm`). The exception is **surface modifiers**, which are
+   unprefixed and global by design (`.panel`, `.primary`, `.outlined`, ...) so
+   callers can drop them into `attrs`. Reusable bits like
+   `.s-req`/`.s-help`/`.s-error` are shared across field components.
+3. **Build on surfaces.** Colour comes from the surface system in `theme.ts`
+   (see its top doc-comment): mark an element `.s-s` and add a level/role + variant
+   modifier, e.g. `A("div.s-s.panel.outlined", opts.attrs)`. The element then
+   paints itself and exposes the contextual tokens (`$s-fg`, `$s-bg`,
+   `$s-fg-muted`, `$s-border`, `$s-accent`, ...) for its children. A component's
+   own CSS should consume those tokens rather than re-deriving colours, so it
+   adapts to whatever surface wraps it — and never write colour×variant rules.
+4. **Use Aberdeen's CSS shorthand.** In style strings prefer the short forms:
    `p`/`m`/`r`/`bg`/`fg`/`w`/`h`/`gap`, the spacing scale `$1`..`$12`, and `$var`
-   for custom properties (`r:$sRadius`, `bg:$sSurface`). Short form is
-   space-delimited with **no** semicolons (`"p:$3 gap:$3 r:$sRadius"`); switch to
+   for custom properties (`r:$s-radius`, `bg:$s-bg`). Short form is
+   space-delimited with **no** semicolons (`"p:$3 gap:$3 r:$s-radius"`); switch to
    long form (`key: value;`) only for values containing spaces
-   (`"border: 1px solid $sBorder; transition: all 0.15s;"`). `$name` expands at
+   (`"border: 1px solid $s-border; transition: all 0.15s;"`). `$name` expands at
    the start of a value or after a space, so it works inside `color-mix(in srgb,
-   $c 20%, transparent)` too.
-4. **Theme via CSS custom properties** (defined in `src/theme.ts`). Never
-   hard-code a colour/radius/shadow that should be themeable. A handy trick (see
-   `button.ts`) is to set a local `--c` per colour role and have the variant
-   rules consume it (`$c`), so you avoid writing colour×variant rules.
-5. **No outer margins.** Components never put margin on their own outermost
+   $s-fg 20%, transparent)` too.
+5. **Theme via CSS custom properties** (defined in `src/theme.ts`). Never
+   hard-code a colour/radius/shadow that should be themeable — read the surface
+   tokens or the palette vars instead.
+6. **No outer margins.** Components never put margin on their own outermost
    element — spacing between siblings is the parent's job. Content components
-   *do* set a default `padding` + matching `gap` on their **inner** element (in
-   CSS, e.g. box's `"> div": "p:$3 gap:$3"`); `opts.inner` is passed as an inline
-   arg so it overrides. Add `display:flex` via `inner` if you want flex children.
-   Tab panels are the exception: no enclosing box, so no default padding (content
-   aligns flush with the tab strip).
-6. **Legible at a glance.** Every button variant carries at least a visible
-   border (so even the lowest-emphasis `outlined` button reads as a button);
-   links are underlined; focus states use a visible ring
-   (`box-shadow: 0 0 0 3px $sFocus`). Don't ship an affordance the user can't
-   recognise.
+   *do* set a default `padding` + matching `gap` on their **content** element (in
+   CSS, e.g. box's `"> div": "p:$3 gap:$3"`); `opts.contentAttrs` is passed as an
+   inline arg so it overrides. Add `display:flex` via `contentAttrs` if you want
+   flex children. Tab panels are the exception: no enclosing box, so no default
+   padding (content aligns flush with the tab strip).
+7. **Legible at a glance.** Every button carries at least a visible border (so
+   even the lowest-emphasis `.outlined` button reads as a button); links are
+   underlined; focus states use a visible ring (`box-shadow: 0 0 0 3px $s-focus`).
+   Don't ship an affordance the user can't recognise.
 
 The base stylesheet in `theme.ts` is a *light* reset: box-sizing, body
 bg/fg/font, link/code styling, focus ring. It deliberately does **not** strip
@@ -168,8 +174,8 @@ autocomplete (`role=combobox`/`listbox`/`option`, `aria-expanded`,
 
 ```
 src/
-  core.ts                 # option hierarchy + tiny helpers (drawSlot, uniqueId)
-  theme.ts                # Theme type, darkTheme/lightTheme proxies, setDarkMode/getDarkMode + base reset CSS
+  core.ts                 # option types + tiny helpers (drawSlot, uniqueId)
+  theme.ts                # surface model, palette, SurfaceRole/Variant, setDarkMode/getDarkMode + base reset CSS
   components/
     field.ts              # FieldOptions, drawField(), applyControlAttrs() — shared form chrome
     main.ts box.ts form.ts
@@ -178,22 +184,24 @@ src/
   index.ts                # assembles `S`, re-exports types
 ```
 
-Importing `theme.ts` installs the spacing scale, sets up a reactive scope that
-merges the active theme (`darkTheme` or `lightTheme`) into `A.cssVars`, and
-registers the base reset CSS — all at module load, before the first paint.
-Users customize the theme by mutating `S.darkTheme` / `S.lightTheme` directly.
+Importing `theme.ts` installs the spacing scale, registers the surface system +
+base reset CSS, and sets up a reactive scope that swaps the colour palette on
+`getDarkMode()` changes — all at module load, before the first paint. There's no
+JS theme object: re-skin by overriding the palette custom properties (see the
+`theme.ts` doc-comment).
 
 ## Adding a new component — checklist
 
 1. Create `src/components/<name>.ts`.
-2. Define `<Name>Options` extending the right base (`BaseOptions`,
-   `ContentOptions`, or `FieldOptions`). Add full TSDoc on every option.
-3. Add a module-level `A.insertGlobalCss({...})` using nesting, theme `$var`s and
-   shorthand (see Styling rules 1–4).
-4. Implement the draw function: pass `root`/`inner`/`control` straight to `A` as
-   positional args; reach for a small `A(() => ...)` scope only where it matters
-   (inputs, heavy subtrees — see the Reactivity section). Use semantic HTML and
-   ARIA as needed.
+2. Define `<Name>Options`, extending `ContentOptions` or `FieldOptions` if they
+   fit, otherwise a plain interface. Add full TSDoc on every option, and an
+   `attrs?: Styling` hook wherever there's a sensible root to style.
+3. Add a module-level `A.insertGlobalCss({...})` using nesting, the surface
+   tokens and shorthand (see Styling rules 1–5).
+4. Implement the draw function: pass `attrs`/`contentAttrs`/`inputAttrs` straight
+   to `A` as positional args (with `attrs` *last* so it can override); reach for a
+   small `A(() => ...)` scope only where it matters (inputs, heavy subtrees — see
+   the Reactivity section). Use semantic HTML and ARIA as needed.
 5. For form controls, render through `drawField()` and call
    `applyControlAttrs()` so they match the others.
 6. Add a TSDoc block with an `@example` on the function itself.

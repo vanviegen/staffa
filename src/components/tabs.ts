@@ -1,5 +1,5 @@
 import A from "aberdeen";
-import { type BaseOptions, type Bindable, type Content, type Slot, type Styling, drawSlot, uniqueId } from "../core.js";
+import { type Bindable, type Content, type Slot, type Attributes, drawSlot, uniqueId } from "../core.js";
 
 /** A single tab definition. */
 export interface Tab {
@@ -16,7 +16,9 @@ export interface Tab {
 }
 
 /** Options for {@link tabs}. */
-export interface TabsOptions extends BaseOptions {
+export interface TabsOptions {
+	/** Aberdeen attr/style string applied to the outermost element. */
+	attrs?: Attributes;
 	/** The tabs to display. */
 	tabs: Tab[];
 	/**
@@ -27,7 +29,7 @@ export interface TabsOptions extends BaseOptions {
 	/** Visual style of the tab strip. Defaults to `"underline"`. */
 	variant?: "underline" | "pills";
 	/** Aberdeen attr/style string applied to the active panel. */
-	inner?: Styling;
+	contentAttrs?: Attributes;
 }
 
 A.insertGlobalCss({
@@ -45,8 +47,9 @@ A.insertGlobalCss({
 		"&.s-underline .s-tablist": "border-bottom: 1px solid $s-border;",
 		"&.s-underline .s-tab": "border-bottom: 2px solid transparent; margin-bottom:-1px",
 		"&.s-underline .s-tab[aria-selected=true]": "color: $s-fg; border-bottom-color: $s-accent;",
-		// Pills variant — the active pill gets the `.s-primary` class (added in
-		// tabs()), so its `--s-bg`/`--s-fg` are the brand surface's; we just paint.
+		// Pills variant — the active pill gets the `.s-s.primary` surface (added in
+		// tabs()), so its `--s-bg`/`--s-fg` are the brand surface's; we just paint
+		// (the `.s-tab` rule's transparent background would otherwise win on it).
 		"&.s-pills .s-tab": "r: $s-radius;",
 		"&.s-pills .s-tab[aria-selected=true]": "background: $s-bg; color: $s-fg;",
 		// The panel has no enclosing box, so no default padding — its content
@@ -82,7 +85,7 @@ export function tabs(opts: TabsOptions): void {
 		$sel.value = keyOf(tab, index);
 	};
 
-	A(`div.s-tabs.s-${variant}`, opts.root, () => {
+	A(`div.s-tabs.s-${variant}`, opts.attrs, () => {
 		A("div.s-tablist role=tablist", () => {
 			opts.tabs.forEach((tab, index) => {
 				const key = keyOf(tab, index);
@@ -94,7 +97,7 @@ export function tabs(opts: TabsOptions): void {
 						A("tabindex=", selected ? "0" : "-1");
 						// The active pill is a filled brand surface; the classes flip
 						// with selection (Aberdeen removes them when this scope re-runs).
-						if (selected && variant === "pills") A(".s-primary.s-filled");
+						if (selected && variant === "pills") A(".s-s.primary");
 					});
 					if (tab.disabled) A("disabled=true");
 					A("click=", () => select(tab, index));
@@ -105,7 +108,7 @@ export function tabs(opts: TabsOptions): void {
 			});
 		});
 
-		A("div.s-tabpanel role=tabpanel", opts.inner, () => {
+		A("div.s-tabpanel role=tabpanel", opts.contentAttrs, () => {
 			A(() => {
 				const selKey = $sel.value;
 				const index = opts.tabs.findIndex((t, i) => keyOf(t, i) === selKey);

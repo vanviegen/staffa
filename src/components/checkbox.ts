@@ -20,7 +20,7 @@ A.insertGlobalCss({
 		"> label": "display:flex align-items:center gap:$2 cursor:pointer user-select:none",
 		"> label:has(input:disabled)": "cursor:not-allowed opacity:0.6",
 		// Native control styled with accent-color: accessible and zero-fuss.
-		"input": "width:1.15em height:1.15em accent-color:$sPrimary cursor:inherit m:0",
+		"input": "width:1.15em height:1.15em accent-color:$s-accent cursor:inherit m:0",
 	},
 });
 
@@ -37,9 +37,9 @@ A.insertGlobalCss({
 export function checkbox(opts: CheckboxOptions = {}): void {
 	const id = opts.id ?? uniqueId("check");
 
-	A("div.s-check", opts.root, () => {
+	A("div.s-check", opts.attrs, () => {
 		A(`label for=${id}`, () => {
-			A("input type=checkbox", opts.control, () => {
+			A("input type=checkbox", opts.inputAttrs, () => {
 				A(`id=${id}`);
 				if (opts.name) A(`name=${opts.name}`);
 				// `checked` is a boolean attribute: only set it when actually true.

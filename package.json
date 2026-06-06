@@ -1,6 +1,6 @@
 {
   "name": "staffa",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "description": "An opinionated component library for the Aberdeen reactive UI library.",
   "license": "ISC",
   "author": "",
@@ -21,7 +21,8 @@
   "scripts": {
     "build": "tsc && tsc -p demo && esbuild src/index.ts --bundle --external:aberdeen --minify --format=esm --outfile=dist/staffa.esm.js",
     "typecheck": "tsc --noEmit && tsc -p demo --noEmit",
-    "smoke": "tsc && node smoke.mjs"
+    "smoke": "tsc && node smoke.mjs",
+    "prepublish": "npm run build"
   },
   "peerDependencies": {
     "aberdeen": "^1.15.0"

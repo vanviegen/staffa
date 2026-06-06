@@ -46,9 +46,9 @@ A.insertGlobalCss({
  * @example
  * ```ts
  * S.buttonGroup({ buttons: [
- *   { text: "Day", variant: "outlined", color: "neutral" },
- *   { text: "Week", variant: "outlined", color: "neutral" },
- *   { text: "Month", variant: "outlined", color: "neutral" },
+ *   { text: "Day", attrs: ".neutral .outlined" },
+ *   { text: "Week", attrs: ".neutral .outlined" },
+ *   { text: "Month", attrs: ".neutral .outlined" },
  * ]});
  * ```
  */
@@ -56,7 +56,7 @@ export function buttonGroup(opts: ButtonGroupOptions = {}): void {
 	const layout = opts.layout ?? "attached";
 	const cls = `.s-${layout}${opts.vertical ? ".s-vertical" : ""}`;
 
-	A(`div.s-bgroup${cls} role=group`, opts.root, opts.inner, () => {
+	A(`div.s-bgroup${cls} role=group`, opts.attrs, () => {
 		if (opts.buttons) for (const b of opts.buttons) button(b);
 		if (opts.content) opts.content();
 	});

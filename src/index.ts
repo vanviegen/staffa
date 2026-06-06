@@ -37,6 +37,7 @@ import { setDarkMode, getDarkMode } from "./theme.js";
 import { autocomplete } from "./components/autocomplete.js";
 import { box } from "./components/box.js";
 import { button } from "./components/button.js";
+import { buttonChooser } from "./components/buttonChooser.js";
 import { buttonGroup } from "./components/buttonGroup.js";
 import { checkbox } from "./components/checkbox.js";
 import { form } from "./components/form.js";
@@ -61,6 +62,7 @@ export const S = {
 	checkbox,
 	tabs,
 	button,
+	buttonChooser,
 	buttonGroup,
 	autocomplete,
 	select,
@@ -72,14 +74,13 @@ export default S;
 
 // Re-export theming and shared types for advanced use.
 export { setDarkMode, getDarkMode } from "./theme.js";
-export type { Look, SurfaceRole, Variant } from "./theme.js";
+export type { SurfaceRole, Variant } from "./theme.js";
 export type {
-	BaseOptions,
 	ContentOptions,
 	Bindable,
 	Content,
 	Slot,
-	Styling,
+	Attributes as Styling,
 } from "./core.js";
 export { drawSlot, uniqueId } from "./core.js";
 
@@ -92,6 +93,7 @@ export type { TextareaOptions } from "./components/textarea.js";
 export type { CheckboxOptions } from "./components/checkbox.js";
 export type { Tab, TabsOptions } from "./components/tabs.js";
 export type { ButtonOptions } from "./components/button.js";
+export type { ButtonChooserOptions } from "./components/buttonChooser.js";
 export type { ButtonGroupOptions } from "./components/buttonGroup.js";
 export type { AutocompleteOptions, AutocompleteOptionInput } from "./components/autocomplete.js";
 export type { SelectOptions, SelectOptionInput } from "./components/select.js";

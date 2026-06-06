@@ -1,11 +1,8 @@
 import A from "aberdeen";
-import { type BaseOptions, type Content, type Slot, type Styling, drawSlot } from "../core.js";
-import { type Look, lookClasses } from "../theme.js";
-
-export type { Look };
+import { type Content, type Slot, type Attributes, drawSlot } from "../core.js";
 
 /** Options for {@link button}. */
-export interface ButtonOptions extends BaseOptions {
+export interface ButtonOptions {
 	/** Button label text. */
 	text?: string;
 	/** Custom content (overrides {@link ButtonOptions.text | text}). */
@@ -14,11 +11,6 @@ export interface ButtonOptions extends BaseOptions {
 	icon?: Slot;
 	/** Click handler. */
 	click?: (event: Event) => void;
-	/**
-	 * Visual look: a surface role with an optional modifier, e.g. `"primary"`,
-	 * `"danger-tonal"`, `"neutral-outlined"`. Defaults to `"primary"` (filled).
-	 */
-	look?: Look;
 	/** Size. Defaults to `"md"`. */
 	size?: "sm" | "md" | "lg";
 	/** Disables the button. */
@@ -29,12 +21,17 @@ export interface ButtonOptions extends BaseOptions {
 	href?: string;
 	/** Accessible label, when the button has only an icon. */
 	ariaLabel?: string;
-	/** Aberdeen attr/style string applied to the button element. */
-	inner?: Styling;
+	/**
+	 * Aberdeen attr/style string applied to the button. A button is a surface, so
+	 * pass surface modifier classes here to restyle it, e.g. `".danger"`,
+	 * `".neutral .outlined"`. Defaults to a filled `.primary` surface.
+	 */
+	attrs?: Attributes;
 }
 
-// Color and modifier come entirely from the look's surface classes (defined in
-// theme.ts). This rule only handles layout, border, focus, hover and sizing.
+// The button is a `.s-s` surface (defaulting to `.primary` in button() below), so
+// its colours come from the surface classes in theme.ts. This rule only handles
+// layout, border, focus, hover and sizing.
 A.insertGlobalCss({
 	".s-btn": {
 		"&":
@@ -45,7 +42,7 @@ A.insertGlobalCss({
 		"&:focus-visible": "outline:none box-shadow: 0 0 0 3px $s-focus;",
 		"&:disabled, &[aria-disabled=true]": "opacity:0.45 cursor:not-allowed pointer-events:none filter:saturate(0.6)",
 		"&:hover": "filter: brightness(1.08)",
-		"&.s-tonal:hover, &.s-outlined:hover": "background: color-mix(in srgb, $s-b 26%, transparent);",
+		"&.tonal:hover, &.outlined:hover": "background: color-mix(in srgb, $s-b 26%, transparent);",
 		"&.s-sm": "padding: 0.32em 0.7em; font-size:0.85em",
 		"&.s-lg": "padding: 0.66em 1.3em; font-size:1.1em",
 	},
@@ -61,7 +58,7 @@ A.insertGlobalCss({
  * @example
  * ```ts
  * S.button({ text: "Save", click: save });
- * S.button({ text: "Delete", look: "danger-outlined", click: del });
+ * S.button({ text: "Delete", attrs: ".danger .outlined", click: del });
  * S.button("Cancel");                        // shorthand for { text: "Cancel" }
  * S.button({ href: "/docs", text: "Docs" }); // renders an <a role=button>
  * ```
@@ -70,10 +67,11 @@ export function button(opts: ButtonOptions | string | Content = {}): void {
 	const o: ButtonOptions = typeof opts === "string" ? { text: opts } : typeof opts === "function" ? { content: opts } : opts;
 
 	const tag = o.href != null ? "a" : "button";
-	const lookCls = lookClasses(o.look);
 	const sizeCls = o.size != null ? `.s-${o.size}` : "";
 
-	A(`${tag}.s-btn${lookCls}${sizeCls}`, o.root, o.inner, () => {
+	// A filled `.primary` surface by default; `attrs` (applied after) can override
+	// the role/variant with e.g. `.danger`, `.neutral .outlined`.
+	A(`${tag}.s-btn.s-s.primary${sizeCls}`, o.attrs, () => {
 		if (o.href != null) {
 			A(`href=${o.href} role=button`);
 			if (o.disabled) A("aria-disabled=true");

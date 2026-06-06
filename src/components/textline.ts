@@ -53,7 +53,7 @@ export interface TextlineOptions extends FieldOptions {
  */
 export function textline(opts: TextlineOptions = {}): void {
 	drawField(opts, (id, isInvalid) => {
-		A("input.s-input", opts.control, () => {
+		A("input.s-input", opts.inputAttrs, () => {
 			A("type=", opts.type ?? "text");
 			if (opts.placeholder != null) A("placeholder=", opts.placeholder);
 			if (opts.autocomplete != null) A("autocomplete=", opts.autocomplete);

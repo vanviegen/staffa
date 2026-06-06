@@ -20,7 +20,7 @@ A.insertGlobalCss({
 	".s-select_wrap": {
 		"&": "position:relative display:block",
 		"select": "w:100% cursor:pointer padding-right:2.2em; appearance:none",
-		"&::after": "content: '▾'; position:absolute right:0.7em top:50%; transform: translateY(-50%); pointer-events:none fg:$sFgMuted font-size:0.85em",
+		"&::after": "content: '▾'; position:absolute right:0.7em top:50%; transform: translateY(-50%); pointer-events:none fg:$s-fg-muted font-size:0.85em",
 	},
 });
 
@@ -36,7 +36,7 @@ A.insertGlobalCss({
  */
 export function select(opts: SelectOptions): void {
 	drawField(opts, (id, isInvalid) => {
-		A("div.s-select_wrap", opts.control, () => {
+		A("div.s-select_wrap", opts.inputAttrs, () => {
 			A("select.s-input", () => {
 				applyControlAttrs(opts, id, isInvalid);
 

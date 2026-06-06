@@ -1,6 +1,6 @@
 import A from "aberdeen";
 import S from "staffa";
-import type { Look, SurfaceRole } from "staffa";
+import type { SurfaceRole, Variant } from "staffa";
 
 const $user = A.proxy({
 	name: "Frank",
@@ -24,7 +24,7 @@ A.mount(document.body, () => {
 		maxWidth: "52rem",
 		menu: () => {
 			drawThemeChooser();
-			S.button({ text: "Docs", look: "neutral-outlined", href: "https://aberdeenjs.org" });
+			S.button({ text: "Docs", attrs: ".neutral .outlined", href: "https://aberdeenjs.org" });
 			S.button({ text: "New" });
 		},
 		footer: () => A("span rich='Built with **Staffa** · © 2026'"),
@@ -48,22 +48,14 @@ A.mount(document.body, () => {
 });
 
 function drawThemeChooser() {
-	const modes: Array<{ label: string; value: boolean | undefined; aria: string }> = [
-		{ label: "☀", value: false, aria: "Light theme" },
-		{ label: "Auto", value: undefined, aria: "Follow system theme" },
-		{ label: "☾", value: true, aria: "Dark theme" },
-	];
-	A(() => {
-		const active = S.getDarkMode(true);
-		S.buttonGroup({
-			buttons: modes.map((m) => ({
-				text: m.label,
-				ariaLabel: m.aria,
-				size: "sm",
-				look: (m.value === active ? "primary" : "neutral-outlined") as Look,
-				click: () => S.setDarkMode(m.value),
-			})),
-		});
+	// "light" | "auto" | "dark" — always one selected, maps to setDarkMode(false/undefined/true)
+	const initial = S.getDarkMode(true) === true ? "dark" : S.getDarkMode(true) === false ? "light" : "auto";
+	const $mode = A.proxy<{ value: string | null }>({ value: initial });
+	A(() => S.setDarkMode($mode.value === "dark" ? true : $mode.value === "light" ? false : undefined));
+	S.buttonChooser({
+		options: { light: "☀", auto: "Auto", dark: "☾" },
+		bind: $mode,
+		size: "sm",
 	});
 }
 
@@ -108,7 +100,7 @@ function drawForm() {
 						options: knownTags,
 						bind: A.ref($user, "tags"),
 						help: "Type to filter; Enter adds custom tags.",
-						root: ".s-wide",
+						attrs: ".s-wide",
 					});
 					S.textarea({
 						label: "Bio",
@@ -116,14 +108,14 @@ function drawForm() {
 						rows: 3,
 						placeholder: "Tell us about yourself",
 						bind: A.ref($user, "bio"),
-						root: ".s-wide",
+						attrs: ".s-wide",
 					});
 					S.checkbox({ label: "Remember me", name: "remember", bind: A.ref($user, "remember") });
 					S.checkbox({ label: "Subscribe to the newsletter", name: "newsletter", bind: A.ref($user, "newsletter") });
 				},
 				actions: () => {
 					S.button({ text: "Save", type: "submit" });
-					S.button({ text: "Cancel", look: "neutral-tonal" });
+					S.button({ text: "Cancel", attrs: ".neutral .tonal" });
 				},
 				submit: (data) => {
 					S.dialog({
@@ -143,28 +135,28 @@ function drawForm() {
 
 	S.box({
 		header: "Live state",
-		root: "mt:$3",
+		attrs: "mt:$3",
 		content: () => A.dump($user),
 	});
 }
 
 function drawButtons() {
 	const roles: SurfaceRole[] = ["primary", "neutral", "danger", "success"];
-	const mods = ["", "-tonal", "-outlined"] as const;
+	const variants: Variant[] = ["filled", "tonal", "outlined"];
 
 	A("div display:flex flex-direction:column gap:$3", () => {
-		for (const mod of mods) {
+		for (const variant of variants) {
 			A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
-				A("code w:5rem text=", mod || "filled");
+				A("div text-align:right w:5rem text=", variant);
 				for (const role of roles) {
-					S.button({ text: role, look: `${role}${mod}` as Look });
+					S.button({ text: role, attrs: `.${role} .${variant}` });
 				}
-				S.button({ text: "disabled", look: `primary${mod}` as Look, disabled: true });
+				S.button({ text: "disabled", attrs: `.primary .${variant}`, disabled: true });
 			});
 		}
 
 		A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
-			A("code w:5rem #sizes");
+			A("div text-align:right w:5rem #sizes");
 			S.button({ text: "Small", size: "sm" });
 			S.button({ text: "Medium" });
 			S.button({ text: "Large", size: "lg" });
@@ -173,8 +165,8 @@ function drawButtons() {
 		A("h4 mb:0 #Segmented group (attached)");
 		S.buttonGroup({
 			buttons: [
-				{ text: "Day", look: "neutral-outlined" },
-				{ text: "Week", look: "danger-tonal" },
+				{ text: "Day", attrs: ".neutral .outlined" },
+				{ text: "Week", attrs: ".danger .tonal" },
 				{ text: "Month" },
 			],
 		});
@@ -184,7 +176,7 @@ function drawButtons() {
 			layout: "spaced",
 			buttons: [
 				{ text: "Save" },
-				{ text: "Delete", look: "danger-outlined" },
+				{ text: "Delete", attrs: ".danger .outlined" },
 				{ text: "Disabled", disabled: true },
 			],
 		});
@@ -196,15 +188,49 @@ function drawButtons() {
 				await S.alert("File saved successfully.");
 				$result.value = "alert: dismissed";
 			}});
-			S.button({ text: "confirm()", look: "neutral-tonal", click: async () => {
+			S.button({ text: "confirm()", attrs: ".neutral .tonal", click: async () => {
 				const ok = await S.confirm("Delete this item?");
 				$result.value = `confirm → ${ok}`;
 			}});
-			S.button({ text: "prompt()", look: "neutral-outlined", click: async () => {
+			S.button({ text: "prompt()", attrs: ".neutral .outlined", click: async () => {
 				const name = await S.prompt("Enter your name:", "Alice");
 				$result.value = name === null ? "prompt → cancelled" : `prompt → "${name}"`;
 			}});
 			A(() => { if ($result.value) A("code #", $result.value); });
+		});
+		A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
+			S.button({ text: "dialog in dialog", attrs: ".warning .outlined", click: () => {
+				S.dialog({
+					header: "Primary dialog",
+					allowCancel: true,
+					// Smaller, so the inner dialog visibly extends beyond its edges.
+					attrs: "max-width:22rem",
+					content: (closeOuter) => {
+						A("p #This is the primary dialog. It is should be both wider and higher than the secondary dialog.");
+						A("p #That allows us to see that there is a backdrop between the two dialogs.")
+						S.button({ text: "Open secondary", click: () => {
+							S.dialog({
+								header: "Secondary dialog",
+								allowCancel: true,
+								// Wider and taller than the outer to make stacking obvious.
+								attrs: "max-width:36rem min-height:14rem",
+								content: (closeInner) => {
+									A("p #Smaller than primary.");
+									S.button({ text: "Close", click: closeInner });
+								},
+							});
+						}});
+						S.button({ text: "Close", attrs: ".neutral .outlined", click: closeOuter });
+					},
+				});
+			}});
+			S.button({ text: "dialog with surface style", click: () => {
+				S.dialog({
+					header: "Title",
+					content: () => A("#Content..."),
+					attrs: ".warning"
+				})
+			}});
 		});
 	});
 }
@@ -220,8 +246,8 @@ function drawSurfaces() {
 			content: () => {
 				A("div display:flex flex-direction:column gap:$1", () => {
 					for (const name of [...levels, ...roles]) {
-						A(`div.s-${name}.s-filled padding: $2 $3; r: $s-radius; display:flex gap:$3 align-items:baseline`, () => {
-							A(`code min-width:6.5rem font-size:0.8em #.s-${name}`);
+						A(`div.s-s.${name} padding: $2 $3; r: $s-radius; display:flex gap:$3 align-items:baseline`, () => {
+							A(`code min-width:6.5rem font-size:0.8em #.${name}`);
 							A(`span fg: $s-fg-muted; font-size:0.85em #muted`);
 							A(`span fg: $s-fg-faint; font-size:0.85em #faint`);
 							A(`a href=# font-size:0.85em #link`);
@@ -239,9 +265,9 @@ function drawSurfaces() {
 				A("div display:flex flex-direction:column gap:$2", () => {
 					for (const name of roles) {
 						A("div display:flex gap:$2 align-items:stretch", () => {
-							A(`span min-width:4.5rem fg: $s-fg-muted; font-size:0.85em display:flex align-items:center #.s-${name}`);
+							A(`span min-width:4.5rem fg: $s-fg-muted; font-size:0.85em display:flex align-items:center #.${name}`);
 							for (const variant of ["filled", "tonal", "outlined"]) {
-								A(`div.s-${name}.s-${variant} padding: $2 $3; r: $s-radius; border: 1px solid $s-border; flex:1 text-align:center`, () => {
+								A(`div.s-s.${name}.${variant} padding: $2 $3; r: $s-radius; border: 1px solid $s-border; flex:1 text-align:center`, () => {
 									A(`code font-size:0.8em #${variant}`);
 								});
 							}
@@ -254,15 +280,15 @@ function drawSurfaces() {
 		S.box({
 			header: "Nesting — tokens resolve to the nearest surface",
 			content: () => {
-				A("div.s-primary.s-filled padding: $3; r: $s-radius;", () => {
+				A("div.s-s.primary padding: $3; r: $s-radius;", () => {
 					A("p mt:0 mb:$2 display:flex gap:$2 align-items:center", () => {
-						A("code font-size:0.9em #.s-primary —");
+						A("code font-size:0.9em #.primary —");
 						A("span fg: $s-fg-muted; #muted ·");
 						A("a href=# #link");
 					});
-					A("div.s-panel.s-filled padding: $2 $3; r: $s-radius;", () => {
+					A("div.s-s.panel padding: $2 $3; r: $s-radius;", () => {
 						A("p m:0 display:flex gap:$2 align-items:center", () => {
-							A("code font-size:0.9em #.s-panel inside .s-primary —");
+							A("code font-size:0.9em #.panel inside .primary —");
 							A("span fg: $s-fg-muted; #muted ·");
 							A("a href=# #link");
 						});
@@ -275,21 +301,22 @@ function drawSurfaces() {
 			header: "Using surface tokens in your own widgets",
 			content: () => {
 				A("pre mt:0 mb:$2", () => A("#",
-`/* A role/level class + a variant class set --s-bg, --s-fg and
-   the derived tokens for the subtree. Reference them in CSS: */
-.my-widget {
-  background: $s-bg;
-  color: $s-fg;
-  border: 1px solid $s-border;
-  border-radius: $s-radius;
-}
-.my-widget .note { color: $s-fg-muted; }
+`// Register styles once — tokens resolve to whatever surface wraps the widget:
+A.insertGlobalCss({
+  ".my-card": "bg:$s-bg fg:$s-fg border: 1px solid $s-border; r:$s-radius p:$3",
+  ".my-card .note": "fg:$s-fg-muted",
+  ".my-card a": "color:$s-link",
+});
 
-/* One-line context override — all children adapt: */
-<div class="s-primary s-filled">  …filled accent…   </div>
-<div class="s-danger s-tonal">    …soft warning…    </div>`
+// Wrap content in any surface — all children adapt automatically:
+A("div.s-s.primary", () => {
+  A("div.my-card", () => { /* tokens adapt to primary fill */ });
+});
+A("div.s-s.danger.tonal", () => {
+  A("div.my-card", () => { /* tokens adapt to danger tint */ });
+});`
 				));
-				A("p m:0 fg: $s-fg-muted; font-size:0.9em rich='**Tip:** on filled accent surfaces, `--s-link` falls back to the surface ink so links stay legible.'");
+				A("p m:0 fg: $s-fg-muted; font-size:0.9em rich='**Tip:** on filled accent surfaces `--s-link` and `--s-accent` fall back to the surface ink so they stay legible.'");
 			},
 		});
 	});

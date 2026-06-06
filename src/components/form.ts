@@ -1,5 +1,5 @@
 import A from "aberdeen";
-import { type Content, type ContentOptions, type Styling } from "../core.js";
+import { type Content, type ContentOptions, type Attributes } from "../core.js";
 
 /** Options for {@link form}. */
 export interface FormOptions extends ContentOptions {
@@ -12,11 +12,11 @@ export interface FormOptions extends ContentOptions {
 	/**
 	 * Layout of fields. `"stacked"` (default) is a single column; `"grid"` packs
 	 * fields into a responsive multi-column grid. A field can span the full grid
-	 * width by adding the `.s-wide` class (e.g. `root: ".s-wide"`).
+	 * width by adding the `.s-wide` class (e.g. `attrs: ".s-wide"`).
 	 */
 	layout?: "stacked" | "grid";
 	/** Aberdeen attr/style string for the action bar. */
-	actionsInner?: Styling;
+	actionsAttrs?: Attributes;
 	/** Footer actions (typically a {@link import("./buttonGroup").buttonGroup} or buttons). */
 	actions?: Content;
 }
@@ -54,7 +54,7 @@ A.insertGlobalCss({
 export function form(opts: FormOptions | Content = {}): void {
 	const o: FormOptions = typeof opts === "function" ? { content: opts } : opts;
 
-	A(`form.s-form`, o.root, o.inner, () => {
+	A(`form.s-form`, o.attrs, () => {
 		// Toggle grid class in its own scope so changing layout doesn't recreate
 		// the fields (which would lose focus / input state).
 		A(() => {
@@ -78,7 +78,7 @@ export function form(opts: FormOptions | Content = {}): void {
 
 		// Own scope so toggling actions doesn't recreate the fields above.
 		A(() => {
-			if (o.actions) A("footer", o.actionsInner, () => o.actions?.());
+			if (o.actions) A("footer", o.actionsAttrs, () => o.actions?.());
 		});
 	});
 }

@@ -40,7 +40,7 @@ export function textarea(opts: TextareaOptions = {}): void {
 	const grow = opts.autoGrow !== false;
 
 	drawField(opts, (id, isInvalid) => {
-		const el = A("textarea.s-input", opts.control, () => {
+		const el = A("textarea.s-input", opts.inputAttrs, () => {
 			if (grow) {
 				A(".s-autoGrow");
 				A("input=", (e: Event) => {

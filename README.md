@@ -50,19 +50,26 @@ Staffa is published as ESM with TypeScript types.
 
 ## Components
 
-Every component takes a single typed options object. Common options are shared
-across all components:
+Every component takes a single typed options object. Common options follow a
+consistent naming convention:
 
-| Option     | On                       | Meaning                                                              |
-| ---------- | ------------------------ | ------------------------------------------------------------------- |
-| `root`     | every component          | Aberdeen attr/style string for the outermost element                |
-| `content`  | container components     | a `() => void` draw function for the children                       |
-| `inner`    | container components     | attr/style string for the element holding the children             |
-| `control`  | form fields              | attr/style string for the actual input element                      |
+| Option         | On                   | Meaning                                                   |
+| -------------- | -------------------- | --------------------------------------------------------- |
+| `attrs`        | most components      | attr/style string for the outermost element               |
+| `content`      | container components | a `() => void` draw function for the children             |
+| `contentAttrs` | container components | attr/style string for the element holding the children    |
+| `inputAttrs`   | form fields          | attr/style string for the actual input/control element    |
+| `<region>Attrs`| where relevant       | sub-region styling, e.g. `headerAttrs`, `footerAttrs`     |
 | `label` / `help` / `error` / `disabled` / `required` / `name` | form fields | standard field chrome |
 
-`root`/`inner`/`control` are [Aberdeen style strings](https://aberdeenjs.org),
-e.g. `"display:flex gap:$3 .my-class"`. (Write `display:flex`, not bare `flex`.)
+These are all [Aberdeen attr/style strings](https://aberdeenjs.org), e.g.
+`"display:flex gap:$3 .my-class"`. (Write `display:flex`, not bare `flex`.) As
+`attrs` is applied last, it can also override a component's default surface
+classes — pass `".danger"` or `".neutral .outlined"` to recolour a button, etc.
+
+Anywhere a component shows a small piece of text (a `label`, `header`, a button
+`text`, a dialog body, ...), you can pass either a **string** — rendered as
+[rich text](#rich-text) — or a `() => void` draw function for custom markup.
 
 ### Layout & containers
 
@@ -89,17 +96,19 @@ e.g. `"display:flex gap:$3 .my-class"`. (Write `display:flex`, not bare `flex`.)
 
 ### Dialogs
 
-- **`S.modal(opts)`** — dialog rendered into `document.body`, with a dimming
+- **`S.dialog(opts)`** — dialog rendered into `document.body`, with a dimming
   backdrop and fade transition. Lifecycle is tied to the calling reactive scope
-  (the modal disappears when that scope is cleaned up). The `content` callback
-  receives a `close()` function. Nested modals stack correctly.
+  (the dialog disappears when that scope is cleaned up). The `content` slot's
+  draw function receives a `close()` function. Nested dialogs stack correctly.
+  `S.alert` / `S.confirm` / `S.prompt` are promise-returning shortcuts.
 
 ### Actions
 
-- **`S.button(opts | "text")`** — `variant` is `filled` | `tonal` | `outlined`;
-  `color` is `primary` | `neutral` | `danger` | `success`; plus `size`,
-  `disabled`, `icon`, and `href` (renders an `<a role=button>`).
+- **`S.button(opts | "text")`** — a button surface; restyle it via `attrs`
+  (e.g. `".danger"`, `".neutral .outlined"`), plus `size`, `disabled`, `icon`,
+  and `href` (renders an `<a role=button>`). Defaults to a filled `.primary`.
 - **`S.buttonGroup(opts)`** — groups buttons, `attached` (segmented) or `spaced`.
+- **`S.buttonChooser(opts)`** — single-select segmented control bound to a value.
 
 Two-way binding uses Aberdeen observables: pass `bind: A.ref($obj, "key")` (or
 any `{ value }` proxy) to fields.
@@ -116,20 +125,44 @@ S.button($opts);
 $opts.disabled = true;   // the button updates, nothing else re-renders
 ```
 
-## Theming
+## Rich text
 
-Staffa is themed via CSS custom properties. `S.darkTheme` and `S.lightTheme` are
-live Aberdeen proxies — mutate them to restyle either scheme; changes flow into
-the CSS variables immediately:
+Wherever a component takes a text **slot** — a `label`, a `header`/`footer`, a
+button's `text`, a dialog body, ... — a plain string is rendered as **rich
+text**: a small markdown-like syntax with `*italic*`, `**bold**`, `` `code` ``
+and `[links](/path)`. All text is safely escaped. For anything more, pass a
+draw function instead of a string.
 
 ```ts
-S.darkTheme.sPrimary = "#28c4a0";
-S.darkTheme.sPrimaryFg = "#08110d";
-S.lightTheme.sRadius = "6px";
+S.button({ text: "Save **now**" });
+S.box({ header: "See the [docs](/docs)", content: () => { ... } });
 ```
 
-See the `Theme` type for all variables (`sBg`, `sSurface`, `sFg`, `sBorder`,
-`sPrimary`, `sDanger`, `sSuccess`, `sRadius`, `sShadow`, ...).
+## Surfaces & theming
+
+Staffa is built on **surfaces**. A surface is any element marked `.s-s`: it has
+its own background and a legible set of text/border tokens derived from it. Add
+modifier classes to colour it:
+
+- **level**: `.base` (page), `.panel` (card), `.raised` (chrome)
+- **role**: `.primary`, `.neutral`, `.danger`, `.success`, `.warning`
+- **variant**: `.filled` (default), `.tonal`, `.outlined`
+
+Components are built from these (`S.button` is a `.s-s.primary`, `S.box` a
+`.s-s.panel`, ...), and because `attrs` is applied last you can override the look
+from the outside — `S.button({ attrs: ".danger .outlined" })`.
+
+Inside any surface, widgets read its tokens (`$s-fg`, `$s-bg`, `$s-fg-muted`,
+`$s-border`, `$s-accent`, `$s-link`, ...) so they adapt automatically to wherever
+they're nested. Colours all come from a small palette set on `:root` per mode —
+re-skin by overriding those custom properties:
+
+```ts
+A(() => A.insertGlobalCss({ ":root": S.getDarkMode() ? "--s-primary:#28c4a0" : "--s-primary:#1f9d6b" }));
+A.insertGlobalCss({ ".s-s.panel": "--s-b:#efe9dd" }); // restyle a level/role
+```
+
+See `src/theme.ts` for the full token list and the palette.
 
 ### Dark / light mode
 
@@ -184,3 +217,8 @@ npx serve .        # then open /demo/ in a browser
 
 Contributing or extending Staffa? See [`AGENTS.md`](./AGENTS.md) for the design
 philosophy and the add-a-component checklist.
+
+## Changelog
+
+- 0.2.1 (2026-06-06): More flexible theming and component instance styling
+- 0.1.0 (2026-06-05): Initial release!

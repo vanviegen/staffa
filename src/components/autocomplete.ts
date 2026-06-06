@@ -35,19 +35,19 @@ export interface AutocompleteOptions extends FieldOptions {
 A.insertGlobalCss({
 	".s-ac": {
 		"&": "position:relative",
-		"> .s-control": "display:flex flex-wrap:wrap align-items:center gap:$1 bg:$sSurface fg:$sFg border: 1px solid $sBorder; r:$sRadius padding: 0.3em 0.4em; cursor:text; transition: border-color 0.15s, box-shadow 0.15s;",
-		"> .s-control:hover": "border-color:$sBorderStrong",
-		"> .s-control:focus-within": "border-color:$sPrimary box-shadow: 0 0 0 3px $sFocus;",
-		"&[aria-invalid=true] > .s-control": "border-color:$sDanger",
-		".s-chip": "display:inline-flex align-items:center gap:$1 font-size:0.85em bg:$sSurfaceHi border: 1px solid $sBorder; r:$sRadius padding: 0.1em 0.2em 0.1em 0.5em;",
-		".s-chip > button": "cursor:pointer border:0 background:transparent fg:$sFgMuted font-size:1.1em line-height:1 padding: 0 0.2em; r:4px",
-		".s-chip > button:hover": "fg:$sFg background:$sBorder",
+		"> .s-control": "display:flex flex-wrap:wrap align-items:center gap:$1 bg:$s-panel fg:$s-ink border: 1px solid $s-border; r:$s-radius padding: 0.3em 0.4em; cursor:text; transition: border-color 0.15s, box-shadow 0.15s;",
+		"> .s-control:hover": "border-color:$s-border-strong",
+		"> .s-control:focus-within": "border-color:$s-accent box-shadow: 0 0 0 3px $s-focus;",
+		"&[aria-invalid=true] > .s-control": "border-color:$s-danger",
+		".s-chip": "display:inline-flex align-items:center gap:$1 font-size:0.85em bg:$s-raised border: 1px solid $s-border; r:$s-radius padding: 0.1em 0.2em 0.1em 0.5em;",
+		".s-chip > button": "cursor:pointer border:0 background:transparent fg:$s-fg-muted font-size:1.1em line-height:1 padding: 0 0.2em; r:4px",
+		".s-chip > button:hover": "fg:$s-fg background:$s-border",
 		"input": "flex:1 min-width:6ch border:0 background:transparent color:inherit outline:none padding:0.25em",
-		"> .s-menu": "position:absolute top:100% left:0 right:0 z-index:20 margin-top:4px max-height:15rem overflow-y:auto list-style:none p:$1 margin-bottom:0 bg:$sSurface border: 1px solid $sBorder; r:$sRadius box-shadow:$sShadow",
+		"> .s-menu": "position:absolute top:100% left:0 right:0 z-index:20 margin-top:4px max-height:15rem overflow-y:auto list-style:none p:$1 margin-bottom:0 bg:$s-panel border: 1px solid $s-border; r:$s-radius box-shadow:$s-shadow",
 		".s-option": "padding: 0.45em 0.6em; r:6px cursor:pointer",
-		".s-option[aria-selected=true]": "background:$sSurfaceHi",
-		".s-add": "fg:$sPrimary font-style:italic",
-		".s-empty": "padding: 0.45em 0.6em; fg:$sFgMuted",
+		".s-option[aria-selected=true]": "background:$s-raised",
+		".s-add": "fg:$s-accent font-style:italic",
+		".s-empty": "padding: 0.45em 0.6em; fg:$s-fg-muted",
 	},
 });
 
@@ -123,7 +123,7 @@ export function autocomplete(opts: AutocompleteOptions): void {
 	};
 
 	drawField(opts, (id, isInvalid) => {
-		A("div.s-ac", opts.control, () => {
+		A("div.s-ac", opts.inputAttrs, () => {
 			A(() => A("aria-invalid=", isInvalid() ? "true" : "false"));
 
 			let inputEl: HTMLInputElement | undefined;

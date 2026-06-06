@@ -29,7 +29,7 @@ A.mount(document.body, () => {
 		content: () => {
 			S.box({
 				header: "Account",
-				footer: () => S.button({ text: "Footer button", look: "neutral-outlined" }),
+				footer: () => S.button({ text: "Footer button", attrs: ".neutral .outlined" }),
 				content: () => {
 					S.form({
 						layout: "grid",
@@ -57,13 +57,13 @@ A.mount(document.body, () => {
 
 			S.buttonGroup({
 				buttons: [
-					{ text: "Day", look: "neutral-outlined" },
-					{ text: "Week", look: "neutral-outlined" },
-					{ text: "Month", look: "neutral-outlined" },
+					{ text: "Day", attrs: ".neutral .outlined" },
+					{ text: "Week", attrs: ".neutral .outlined" },
+					{ text: "Month", attrs: ".neutral .outlined" },
 				],
 			});
 
-			["primary-tonal", "primary-outlined"].forEach((look) => S.button({ text: look, look }));
+			[".primary .tonal", ".primary .outlined"].forEach((attrs) => S.button({ text: attrs, attrs }));
 			S.button({ text: "disabled", disabled: true });
 			S.button("Shorthand string");
 			S.box(() => A("p#Box shorthand content"));
@@ -98,7 +98,7 @@ await flush(); // rebuild panel A — styles must still be present
 const headCss = document.head.textContent || "";
 
 // A proxied options object — mutating it should update the DOM in place.
-const $btn = A.proxy({ text: "Before", look: "primary", root: "data-tag=t1" });
+const $btn = A.proxy({ text: "Before", attrs: "data-tag=t1" });
 A.mount(document.body, () => S.button($btn));
 
 // Flush Aberdeen's async queue.
@@ -108,7 +108,7 @@ A.runQueue?.();
 
 // Mutate proxied options and confirm reactive updates.
 $btn.text = "After";
-$btn.root = "data-tag=t2";
+$btn.attrs = "data-tag=t2";
 A.runQueue?.();
 await new Promise((r) => setTimeout(r, 20));
 A.runQueue?.();
@@ -124,13 +124,14 @@ const checks = {
 	checkbox: html.includes('type="checkbox"'),
 	tabs: html.includes('role="tablist"'),
 	buttonGroup: html.includes("s-bgroup"),
-	"button variants": html.includes("s-tonal") && html.includes("s-outlined"),
+	"button variants": html.includes("tonal") && html.includes("outlined"),
+	surfaces: html.includes("s-s"),
 	"disabled button": html.includes("disabled"),
 	autocomplete: html.includes("s-control"),
 	"multi chip": html.includes("s-chip"),
 	"CSS survives tab switch": headCss.includes(".s-box") && headCss.includes(".s-bgroup") && headCss.includes(".s-btn"),
 	"reactive text update": html.includes("After") && !html.includes("Before"),
-	"reactive root update": html.includes('data-tag="t2"') && !html.includes('data-tag="t1"'),
+	"reactive attrs update": html.includes('data-tag="t2"') && !html.includes('data-tag="t1"'),
 };
 
 let ok = true;

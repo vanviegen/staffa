@@ -1,8 +1,10 @@
 import A from "aberdeen";
-import { type BaseOptions, type Content, type Slot, type Styling, drawSlot } from "../core.js";
+import { type Content, type Slot, type Attributes, drawSlot } from "../core.js";
 
 /** Options for {@link main}. */
-export interface MainOptions extends BaseOptions {
+export interface MainOptions {
+	/** Aberdeen attr/style string applied to the outermost shell element. */
+	attrs?: Attributes;
 	/** App/page title shown in the top bar. */
 	title?: Slot;
 	/** Secondary line under the title. */
@@ -22,25 +24,27 @@ export interface MainOptions extends BaseOptions {
 	 */
 	maxWidth?: string;
 	/** Aberdeen attr/style string applied to the content sheet. */
-	inner?: Styling;
+	contentAttrs?: Attributes;
 	/** Aberdeen attr/style string applied to the top bar. */
-	topbarInner?: Styling;
+	topbarAttrs?: Attributes;
 }
 
 A.insertGlobalCss({
 	".s-main": {
-		"&": "display:flex flex-direction:column min-height:100vh max-height:100vh bg:$sBg fg:$sFg",
-		"> header": "display:flex align-items:center gap:$3 padding: $2 $3; bg:$sSurfaceHi border-bottom: 1px solid $sBorder; position:sticky top:0 z-index:10",
+		// Colours come from the surface classes added in main(): the shell is a
+		// filled base, the bars are raised, the framed sheet is a panel.
+		"&": "display:flex flex-direction:column min-height:100vh max-height:100vh",
+		"> header": "display:flex align-items:center gap:$3 padding: $2 $3; border-bottom: 1px solid $s-border; position:sticky top:0 z-index:10",
 		"> header .s-icon": "display:flex align-items:center font-size:1.4em",
 		"> header .s-titles": "display:flex flex-direction:column min-width:0 flex:1",
 		"> header .s-title": "font-weight:700 font-size:1.1em line-height:1.2 overflow:hidden text-overflow:ellipsis white-space:nowrap",
-		"> header .s-subtitle": "fg:$sFgMuted font-size:0.85em overflow:hidden text-overflow:ellipsis white-space:nowrap",
+		"> header .s-subtitle": "fg:$s-fg-muted font-size:0.85em overflow:hidden text-overflow:ellipsis white-space:nowrap",
 		"> header .s-menu": "display:flex align-items:center gap:$2",
 		"> main": "flex:1 overflow-y:auto display:flex flex-direction:column",
 		"> main > .s-content": "width:100% flex:1",
-		"> main > .s-content.s-framed": "margin: $3 auto; bg:$sSurface border: 1px solid $sBorder; r:$sRadiusLg box-shadow:$sShadow p:$4",
+		"> main > .s-content.s-framed": "margin: $3 auto; border: 1px solid $s-border; r:$s-radius-lg box-shadow:$s-shadow p:$4",
 		"> main > .s-content.s-plain": "p:$3",
-		"> footer": "display:flex align-items:center gap:$2 padding: $2 $3; bg:$sSurfaceHi border-top: 1px solid $sBorder; fg:$sFgMuted",
+		"> footer": "display:flex align-items:center gap:$2 padding: $2 $3; border-top: 1px solid $s-border; fg:$s-fg-muted",
 	},
 });
 
@@ -65,12 +69,12 @@ A.insertGlobalCss({
  * ```
  */
 export function main(opts: MainOptions = {}): void {
-	A("div.s-main", opts.root, () => {
+	A("div.s-main.s-s.base", opts.attrs, () => {
 		// Top bar — only rendered when there's something to show in it.
 		A(() => {
 			const hasBar = opts.title != null || opts.subtitle != null || opts.icon != null || opts.menu != null;
 			if (!hasBar) return;
-			A("header", opts.topbarInner, () => {
+			A("header.s-s.raised", opts.topbarAttrs, () => {
 				A(() => {
 					if (opts.icon != null) A("div.s-icon", () => drawSlot(opts.icon));
 				});
@@ -90,12 +94,12 @@ export function main(opts: MainOptions = {}): void {
 
 		// Scrollable main region with the (optionally framed) content sheet.
 		A("main", () => {
-			A("div.s-content", opts.inner, () => {
+			A("div.s-content", opts.contentAttrs, () => {
 				// Framing applied in its own scope so changing maxWidth doesn't
 				// recreate the content (which holds the whole page).
 				A(() => {
 					const max = opts.maxWidth;
-					if (max != null) A(".s-framed max-width:", max);
+					if (max != null) A(".s-framed.s-s.panel max-width:", max);
 					else A(".s-plain");
 				});
 				if (opts.content) opts.content();

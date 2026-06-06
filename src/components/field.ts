@@ -1,5 +1,5 @@
 import A from "aberdeen";
-import { type BaseOptions, type Bindable, type Slot, type Styling, drawSlot, uniqueId } from "../core.js";
+import { type Bindable, type Slot, type Attributes, drawSlot, uniqueId } from "../core.js";
 
 /**
  * Options shared by all *form field* components (textline, textarea, checkbox,
@@ -9,7 +9,9 @@ import { type BaseOptions, type Bindable, type Slot, type Styling, drawSlot, uni
  * itself, and optional help/error text below it. {@link form} relies on this
  * shared structure to align groups of fields.
  */
-export interface FieldOptions extends BaseOptions {
+export interface FieldOptions {
+	/** Aberdeen attr/style string applied to the field's wrapper element. */
+	attrs?: Attributes;
 	/** Visible label, associated with the control via `for`/`id` for a11y. */
 	label?: Slot;
 	/** Helper text shown beneath the control. */
@@ -27,26 +29,27 @@ export interface FieldOptions extends BaseOptions {
 	name?: string;
 	/** Explicit id for the control; auto-generated when omitted. */
 	id?: string;
-	/** Aberdeen attr/style string applied to the control element itself. */
-	control?: Styling;
+	/** Aberdeen attr/style string applied to the control (input) element itself. */
+	inputAttrs?: Attributes;
 }
 
 A.insertGlobalCss({
 	".s-field": {
 		"&": "display:flex flex-direction:column gap:$1",
-		"> label": "font-weight:600 font-size:0.9em fg:$sFg user-select:none",
+		"> label": "font-weight:600 font-size:0.9em fg:$s-fg user-select:none",
 	},
 	// Shared, reusable bits (also used by checkbox & autocomplete).
-	".s-req": "fg:$sDanger margin-left:2px",
-	".s-help": "font-size:0.82em fg:$sFgMuted",
-	".s-error": "font-size:0.82em fg:$sDanger",
-	// Shared look for text-like controls.
+	".s-req": "fg:$s-danger margin-left:2px",
+	".s-help": "font-size:0.82em fg:$s-fg-muted",
+	".s-error": "font-size:0.82em fg:$s-danger",
+	// Shared look for text-like controls: a panel fill with a contextual border,
+	// the brand accent for focus, and the semantic danger ink when invalid.
 	".s-input": {
-		"&": "w:100% bg:$sSurface fg:$sFg border: 1px solid $sBorder; r:$sRadius padding: 0.55em 0.7em; transition: border-color 0.15s, box-shadow 0.15s;",
-		"&:hover:not(:disabled)": "border-color:$sBorderStrong",
-		"&:focus-visible": "border-color:$sPrimary box-shadow: 0 0 0 3px $sFocus; outline:none",
+		"&": "w:100% bg:$s-panel fg:$s-ink border: 1px solid $s-border; r:$s-radius padding: 0.55em 0.7em; transition: border-color 0.15s, box-shadow 0.15s;",
+		"&:hover:not(:disabled)": "border-color:$s-border-strong",
+		"&:focus-visible": "border-color:$s-accent box-shadow: 0 0 0 3px $s-focus; outline:none",
 		"&:disabled": "opacity:0.6 cursor:not-allowed",
-		"&[aria-invalid=true]": "border-color:$sDanger",
+		"&[aria-invalid=true]": "border-color:$s-danger",
 	},
 });
 
@@ -61,7 +64,7 @@ A.insertGlobalCss({
  * @param opts The field options.
  * @param drawControl Receives the resolved `id` and the live "invalid" getter,
  *   and must draw the actual control element (using class `s-input` where
- *   appropriate, and passing `opts.control` as an arg for caller styling).
+ *   appropriate, and passing `opts.inputAttrs` as an arg for caller styling).
  */
 export function drawField(
 	opts: FieldOptions,
@@ -70,7 +73,7 @@ export function drawField(
 	const id = opts.id ?? uniqueId("field");
 	const isInvalid = () => !!opts.error;
 
-	A("div.s-field", opts.root, () => {
+	A("div.s-field", opts.attrs, () => {
 		A(() => {
 			if (opts.label != null) {
 				A(`label for=${id}`, () => {
