@@ -38,11 +38,13 @@ A.insertGlobalCss({
 			"display:inline-flex align-items:center justify-content:center gap:$2 " +
 			"font-weight:600 line-height:1.2 white-space:nowrap cursor:pointer text-decoration:none " +
 			"border: 1px solid $s-border; r: $s-radius; padding: 0.5em 1em; " +
-			"transition: background 0.15s, border-color 0.15s, filter 0.15s, box-shadow 0.15s;",
+			"transition: background 0.15s, border-color 0.15s, color 0.15s, filter 0.15s, box-shadow 0.15s, transform 0.08s;",
 		"&:focus-visible": "outline:none box-shadow: 0 0 0 3px $s-focus;",
 		"&:disabled, &[aria-disabled=true]": "opacity:0.45 cursor:not-allowed pointer-events:none filter:saturate(0.6)",
 		"&:hover": "filter: brightness(1.08)",
 		"&.tonal:hover, &.outlined:hover": "background: color-mix(in srgb, $s-b 26%, transparent);",
+		// Subtle press feedback.
+		"&:active:not(:disabled):not([aria-disabled=true])": "transform: translateY(1px)",
 		"&.s-sm": "padding: 0.32em 0.7em; font-size:0.85em",
 		"&.s-lg": "padding: 0.66em 1.3em; font-size:1.1em",
 	},
@@ -54,6 +56,13 @@ A.insertGlobalCss({
  *
  * Shortcut: pass a string to use it as the label, or a function for custom
  * content.
+ *
+ * **Tip:** pair `href` with Aberdeen's `interceptLinks()` (called once at app
+ * startup) for SPA-style navigation without manual click handlers:
+ * ```ts
+ * interceptLinks(); // once at root
+ * S.button({ href: "/dashboard", text: "Dashboard" }); // navigates via router
+ * ```
  *
  * @example
  * ```ts

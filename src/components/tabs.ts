@@ -26,8 +26,6 @@ export interface TabsOptions {
 	 * its own internal selection, starting at the first tab.
 	 */
 	bind?: Bindable<string>;
-	/** Visual style of the tab strip. Defaults to `"underline"`. */
-	variant?: "underline" | "pills";
 	/** Aberdeen attr/style string applied to the active panel. */
 	contentAttrs?: Attributes;
 }
@@ -35,23 +33,18 @@ export interface TabsOptions {
 A.insertGlobalCss({
 	".s-tabs": {
 		"&": "display:flex flex-direction:column gap:$3",
-		".s-tablist": "display:flex gap:$1 align-items:stretch",
+		".s-tablist": "display:flex gap:$1 align-items:stretch overflow-x:auto scrollbar-width:none border-bottom: 1px solid $s-border;",
+		".s-tablist::-webkit-scrollbar": "display:none",
 		".s-tab":
 			"display:inline-flex align-items:center gap:$2 cursor:pointer background:transparent " +
 			"border:0 color: $s-fg-muted; font-weight:600 padding: 0.6em 0.9em; " +
+			"border-bottom: 2px solid transparent; margin-bottom:-1px " +
 			"transition: color 0.15s, background 0.15s, border-color 0.15s;",
 		".s-tab:hover:not(:disabled)": "color: $s-fg;",
 		".s-tab:disabled": "opacity:0.5 cursor:not-allowed",
 		".s-tab:focus-visible": "outline:none box-shadow: 0 0 0 3px $s-focus; r: $s-radius;",
-		// Underline variant — the active marker uses the contextual brand accent.
-		"&.s-underline .s-tablist": "border-bottom: 1px solid $s-border;",
-		"&.s-underline .s-tab": "border-bottom: 2px solid transparent; margin-bottom:-1px",
-		"&.s-underline .s-tab[aria-selected=true]": "color: $s-fg; border-bottom-color: $s-accent;",
-		// Pills variant — the active pill gets the `.s-s.primary` surface (added in
-		// tabs()), so its `--s-bg`/`--s-fg` are the brand surface's; we just paint
-		// (the `.s-tab` rule's transparent background would otherwise win on it).
-		"&.s-pills .s-tab": "r: $s-radius;",
-		"&.s-pills .s-tab[aria-selected=true]": "background: $s-bg; color: $s-fg;",
+		// The active marker uses the contextual brand accent.
+		".s-tab[aria-selected=true]": "color: $s-fg; border-bottom-color: $s-accent;",
 		// The panel has no enclosing box, so no default padding — its content
 		// aligns flush with the tab strip. Callers add padding/flex via `inner`.
 		".s-tabpanel": "display:block",
@@ -71,7 +64,6 @@ A.insertGlobalCss({
  * ```
  */
 export function tabs(opts: TabsOptions): void {
-	const variant = opts.variant ?? "underline";
 	const groupId = uniqueId("tabs");
 
 	// Resolve a tab's selection key (its id, or its index as a string).
@@ -85,7 +77,7 @@ export function tabs(opts: TabsOptions): void {
 		$sel.value = keyOf(tab, index);
 	};
 
-	A(`div.s-tabs.s-${variant}`, opts.attrs, () => {
+	A("div.s-tabs", opts.attrs, () => {
 		A("div.s-tablist role=tablist", () => {
 			opts.tabs.forEach((tab, index) => {
 				const key = keyOf(tab, index);
@@ -95,9 +87,6 @@ export function tabs(opts: TabsOptions): void {
 						const selected = $sel.value === key;
 						A("aria-selected=", selected ? "true" : "false");
 						A("tabindex=", selected ? "0" : "-1");
-						// The active pill is a filled brand surface; the classes flip
-						// with selection (Aberdeen removes them when this scope re-runs).
-						if (selected && variant === "pills") A(".s-s.primary");
 					});
 					if (tab.disabled) A("disabled=true");
 					A("click=", () => select(tab, index));

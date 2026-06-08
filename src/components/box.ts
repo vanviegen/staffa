@@ -22,6 +22,9 @@ export interface BoxOptions extends ContentOptions {
 A.insertGlobalCss({
 	".s-box": {
 		"&": "display:flex flex-direction:column border: 1px solid $s-border; r: $s-radius; overflow:hidden",
+		// A box is a flow block: it joins the same vertical rhythm as content
+		// elements (see theme.ts), spacing itself from a preceding sibling by $3.
+		"&:not(:first-child)": "margin-top: $3",
 		"> header": "display:flex align-items:center gap:$2 padding: $2 $3; border-bottom: 1px solid $s-border; font-weight:600",
 		"> footer": "display:flex align-items:center gap:$2 padding: $2 $3; border-top: 1px solid $s-border;",
 		// The body is the only plain <div> child; give it the default padding+gap.

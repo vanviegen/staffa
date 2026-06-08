@@ -44,7 +44,9 @@ A.insertGlobalCss({
 		".s-chip > button:hover": "fg:$s-fg background:$s-border",
 		"input": "flex:1 min-width:6ch border:0 background:transparent color:inherit outline:none padding:0.25em",
 		"> .s-menu": "position:absolute top:100% left:0 right:0 z-index:20 margin-top:4px max-height:15rem overflow-y:auto list-style:none p:$1 margin-bottom:0 bg:$s-panel border: 1px solid $s-border; r:$s-radius box-shadow:$s-shadow",
-		".s-option": "padding: 0.45em 0.6em; r:6px cursor:pointer",
+		// This menu repurposes <ul>/<li>, so opt its items out of the global list rhythm.
+		"> .s-menu li": "margin:0",
+		".s-option": "padding: 0.45em 0.6em; r:6px cursor:pointer transition: background 0.1s;",
 		".s-option[aria-selected=true]": "background:$s-raised",
 		".s-add": "fg:$s-accent font-style:italic",
 		".s-empty": "padding: 0.45em 0.6em; fg:$s-fg-muted",

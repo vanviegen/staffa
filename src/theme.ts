@@ -229,13 +229,13 @@ A.insertGlobalCss({
 });
 
 // A deliberately light reset. Colours/shape come from the contextual tokens, so
-// rich content (e.g. markdown-to-HTML) adapts to whatever surface holds it. It
-// does NOT strip margins from headings/paragraphs/lists.
+// rich content (e.g. markdown-to-HTML) adapts to whatever surface holds it. The
+// vertical rhythm / typography of block elements is handled separately, below.
 A.insertGlobalCss({
 	"*, *::before, *::after": "box-sizing:border-box",
 	html: "text-size-adjust:100%",
 	body: "m:0 line-height:1.5 font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing:antialiased",
-	a: "color: $s-link; text-decoration:underline text-underline-offset:2px",
+	a: "color: $s-link; text-decoration:underline text-underline-offset:2px; transition: color 0.12s, filter 0.12s;",
 	"a:hover": "filter: brightness(1.15)",
 	"input, button, textarea, select": "font:inherit color:inherit",
 	"code, kbd, samp, pre": "font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;",
@@ -243,8 +243,53 @@ A.insertGlobalCss({
 	pre: "background: color-mix(in oklab, $s-fg, $s-bg 92%); p:$3 r: $s-radius; overflow:auto",
 	"pre code": "background:transparent p:0",
 	"img, svg, video, canvas": "max-width:100% h:auto",
-	hr: "border:0 border-top: 1px solid $s-border; margin: $3 0;",
+	hr: "border:0 border-top: 1px solid $s-border;",
 	"::placeholder": "color: $s-fg-faint; opacity:1",
 	":focus-visible": "outline: 2px solid $s-focus; outline-offset:2px",
 	small: "color:$s-fg-muted font-size:0.9em",
+	// Respect users who prefer less motion: keep transitions essentially instant.
+	"@media (prefers-reduced-motion: reduce)": {
+		"*, *::before, *::after": "transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; scroll-behavior: auto !important;",
+	},
+});
+
+// ── Flow content: vertical rhythm & light typography ─────────────────────────
+// Sensible block defaults for *any* content — your own UI just as much as
+// markdown-rendered HTML. The rhythm: strip the browser's block margins, then
+// give every block a *top* margin only when it isn't its parent's first child.
+// Content sits flush against its container's edges, and space appears solely
+// *between* siblings. These are intentionally low-specificity defaults — a
+// component or utility that sets its own margin (or an inline `mt:` shortcut)
+// always wins, so a class only ever changes what it actually names.
+const BLOCK = "p, ul, ol, dl, blockquote, pre, table, figure, hr, h1, h2, h3, h4, h5, h6";
+
+A.insertGlobalCss({
+	[`:is(${BLOCK})`]: "margin: 0",
+	[`:is(${BLOCK}):not(:first-child)`]: "margin-top: $3",
+
+	// Headings: bold, tight, balanced. Big levels get slightly negative tracking,
+	// small levels become spaced "labels" — so adjacent levels stay distinct. The
+	// em-based top margin gives larger headings a little more room above.
+	"h1, h2, h3, h4, h5, h6": "line-height:1.15 font-weight:700 text-wrap:balance",
+	[":is(h1, h2, h3, h4, h5, h6):not(:first-child)"]: "margin-top: 1.4em",
+	h1: "font-size:2em font-weight:800 letter-spacing:-0.022em",
+	h2: "font-size:1.55em letter-spacing:-0.018em",
+	h3: "font-size:1.3em letter-spacing:-0.011em",
+	h4: "font-size:1.1em",
+	h5: "font-size:0.95em letter-spacing:0.005em",
+	h6: "font-size:0.8em fg:$s-fg-muted text-transform:uppercase letter-spacing:0.07em",
+
+	// Lists: markers, a sensible indent, gently spaced items, tight nesting.
+	"ul, ol": "padding-left: 1.5em",
+	":is(ul, ol) > li:not(:first-child), li > :is(ul, ol):not(:first-child)": "margin-top: $1",
+
+	// Blockquote, tables, definition lists, figure captions.
+	blockquote: "border-left: 3px solid $s-border; padding-left: $3; fg: $s-fg-muted",
+	table: "border-collapse:collapse",
+	"th, td": "text-align:left padding: $1 $2; border-bottom: 1px solid $s-border; vertical-align:top",
+	th: "font-weight:600",
+	"thead th": "border-bottom: 2px solid $s-border-strong;",
+	dt: "font-weight:600",
+	dd: "margin-left: 1.5em",
+	figcaption: "fg:$s-fg-muted font-size:0.9em margin-top:$1 text-align:center",
 });

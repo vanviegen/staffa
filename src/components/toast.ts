@@ -1,4 +1,5 @@
 import A from "aberdeen";
+import { grow, shrink } from "aberdeen/transitions";
 import { type Slot, type Attributes, drawSlot } from "../core.js";
 import type { SurfaceRole } from "../theme.js";
 
@@ -32,15 +33,13 @@ interface ToastEntry {
 A.insertGlobalCss({
 	".s-toasts":
 		"position:fixed bottom:$3 right:$3 z-index:400 " +
-		"display:flex flex-direction:column-reverse gap:$2 " +
+		"display:flex flex-direction:column gap:$2 " +
 		"pointer-events:none max-width:min(90vw,24rem) w:24rem",
 	".s-toast": {
 		"&":
 			"display:flex align-items:flex-start gap:$2 " +
-			"p:$3 border: 1px solid $s-border; r:$s-radius box-shadow:$s-shadow " +
-			"pointer-events:auto " +
-			"transition: opacity 0.2s ease-out, transform 0.2s ease-out;",
-		"&.hidden": "opacity:0 transform:translateX(100%) pointer-events:none",
+			"padding: $3; border: 1px solid $s-border; r:$s-radius box-shadow:$s-shadow " +
+			"pointer-events:auto",
 		".s-toast-body": "display:flex flex-direction:column gap:$1 flex:1 min-width:0",
 		".s-toast-title": "font-weight:700 line-height:1.3",
 		".s-toast-msg": "font-size:0.9em fg:$s-fg-muted line-height:1.4",
@@ -53,7 +52,8 @@ A.insertGlobalCss({
 });
 
 let toastCount = 0;
-const toasts = A.proxy([] as ToastEntry[]);
+// Keyed by stable ID so A.onEach scopes are per-toast — removing one never re-renders others.
+const toasts = A.proxy({} as Record<number, ToastEntry>);
 
 A.mount(document.body, () => {
 	A("div.s-toasts aria-live=polite aria-atomic=false", () => {
@@ -62,32 +62,27 @@ A.mount(document.body, () => {
 			const role = opts.type === "danger" || opts.type === "warning" ? "alert" : "status";
 			const surface = opts.type ?? "neutral";
 
-			A(
-				`div.s-toast.s-s.${surface} create=hidden destroy=hidden role=${role}`,
-				opts.attrs,
-				() => {
-					A("div.s-toast-body", () => {
-						A(() => {
-							if (opts.title != null) A("div.s-toast-title", () => drawSlot(opts.title));
-						});
-						A("div.s-toast-msg", () => drawSlot(opts.message));
-					});
+			A(`div.s-toast.s-s.${surface} role=${role}`, "create=", grow, "destroy=", shrink, opts.attrs, () => {
+				A("div.s-toast-body", () => {
 					A(() => {
-						if (opts.dismissible === false) return;
-						A("button.s-toast-close type=button aria-label=Dismiss", () => {
-							A("#×");
-							A("click=", () => dismiss(entry.id));
-						});
+						if (opts.title != null) A("div.s-toast-title", () => drawSlot(opts.title));
 					});
-				},
-			);
+					A("div.s-toast-msg", () => drawSlot(opts.message));
+				});
+				A(() => {
+					if (opts.dismissible === false) return;
+					A("button.s-toast-close type=button aria-label=Dismiss", () => {
+						A("#×");
+						A("click=", () => dismiss(entry.id));
+					});
+				});
+			});
 		});
 	});
 });
 
 function dismiss(id: number): void {
-	const idx = toasts.findIndex((t) => t.id === id);
-	if (idx !== -1) toasts.splice(idx, 1);
+	delete toasts[id];
 }
 
 /**
@@ -105,7 +100,7 @@ function dismiss(id: number): void {
  */
 export function toast(opts: ToastOptions): () => void {
 	const id = ++toastCount;
-	toasts.push({ id, opts });
+	toasts[id] = { id, opts };
 
 	const duration = opts.duration ?? 4000;
 	let timer: ReturnType<typeof setTimeout> | undefined;

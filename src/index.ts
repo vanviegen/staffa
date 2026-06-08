@@ -42,14 +42,14 @@ import { buttonGroup } from "./components/buttonGroup.js";
 import { checkbox } from "./components/checkbox.js";
 import { form } from "./components/form.js";
 import { main } from "./components/main.js";
-import { menu } from "./components/menu.js";
+import { menuButton, showFloatingMenu } from "./components/menu.js";
 import { dialog, alert, confirm, prompt } from "./components/dialog.js";
 import { select } from "./components/select.js";
 import { tabs } from "./components/tabs.js";
 import { textarea } from "./components/textarea.js";
 import { textline } from "./components/textline.js";
 import { toast } from "./components/toast.js";
-import { tooltip } from "./components/tooltip.js";
+import { addTooltip } from "./components/tooltip.js";
 
 /** The Staffa component namespace. */
 export const S = {
@@ -60,7 +60,8 @@ export const S = {
 	confirm,
 	prompt,
 	form,
-	menu,
+	menuButton,
+	showFloatingMenu,
 	textline,
 	textarea,
 	checkbox,
@@ -71,7 +72,7 @@ export const S = {
 	autocomplete,
 	select,
 	toast,
-	tooltip,
+	addTooltip,
 	setDarkMode,
 	getDarkMode,
 };
@@ -92,7 +93,8 @@ export { drawSlot, uniqueId } from "./core.js";
 
 export type { FieldOptions } from "./components/field.js";
 export type { MainOptions } from "./components/main.js";
-export type { MenuOptions, MenuEntry, MenuItem, MenuSeparator } from "./components/menu.js";
+export type { MenuOptions, MenuEntry, MenuItem, MenuSeparator, FloatingMenuOptions } from "./components/menu.js";
+export { drawMenu } from "./components/menu.js";
 export type { ToastOptions } from "./components/toast.js";
 export type { TooltipOptions } from "./components/tooltip.js";
 export type { BoxOptions } from "./components/box.js";

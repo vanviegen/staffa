@@ -76,15 +76,15 @@ A.mount(document.body, () => {
 			S.button("Shorthand string");
 			S.box(() => A("p#Box shorthand content"));
 
-			// Tooltip
-			S.tooltip({
-				tip: "Helpful hint",
-				content: () => S.button({ text: "Hover me" }),
+			// Tooltip — addTooltip attaches hover/focus handlers to the current element.
+			A("span.tt-probe display:inline-flex", () => {
+				S.button({ text: "Hover me" });
+				S.addTooltip({ tip: "Helpful hint" });
 			});
 
 			// Menu trigger
-			S.menu({
-				trigger: { text: "Actions", attrs: ".neutral .outlined" },
+			S.menuButton({
+				button: { text: "Actions", attrs: ".neutral .outlined" },
 				items: [
 					{ label: "Edit", click: () => {} },
 					{ separator: true },
@@ -140,10 +140,17 @@ A.runQueue?.();
 await new Promise((r) => setTimeout(r, 20));
 A.runQueue?.();
 
+// Hover the tooltip anchor to force the portal tip to render (it's only in the
+// DOM while active), then assert the portal popup appeared.
+document.querySelector(".tt-probe")?.dispatchEvent(new window.Event("mouseenter"));
+A.runQueue?.();
+await new Promise((r) => setTimeout(r, 20));
+A.runQueue?.();
+
 const html = document.body.innerHTML;
 const checks = {
 	"top bar title": html.includes("Staffa Smoke Test"),
-	"framed content": html.includes("s-framed"),
+	"content area": html.includes("s-content") && html.includes("max-width"),
 	box: html.includes("s-box") && html.includes("<header"),
 	"form grid": html.includes("grid"),
 	textline: html.includes("s-input"),
@@ -159,7 +166,8 @@ const checks = {
 	"CSS survives tab switch": headCss.includes(".s-box") && headCss.includes(".s-bgroup") && headCss.includes(".s-btn"),
 	"reactive text update": html.includes("After") && !html.includes("Before"),
 	"reactive attrs update": html.includes('data-tag="t2"') && !html.includes('data-tag="t1"'),
-	tooltip: html.includes("s-tt") && html.includes('role="tooltip"'),
+	// Tooltip popup is portal-rendered only while hovered; we hovered above.
+	tooltip: html.includes("s-tt-tip") && headCss.includes(".s-tt-tip"),
 	"menu trigger": html.includes("s-menu-list") || html.includes("Actions"),
 	"nav sidebar": html.includes("s-nav-panel") && html.includes('href="/"'),
 	toast: html.includes("s-toast") && html.includes("Smoke test toast"),

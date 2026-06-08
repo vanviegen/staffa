@@ -1,6 +1,6 @@
 import A from "aberdeen";
 import { type Content, type Slot, type Attributes, drawSlot } from "../core.js";
-import { type MenuOptions, type MenuEntry, type MenuItem, menu } from "./menu.js";
+import { type MenuOptions, menuButton, drawMenu } from "./menu.js";
 
 /** Options for {@link main}. */
 export interface MainOptions {
@@ -19,12 +19,12 @@ export interface MainOptions {
 	/** Footer content, pinned below the scroll area. */
 	footer?: Slot;
 	/**
-	 * Max content width. When set, the content is centered in a "sheet" with a
-	 * drop shadow and a distinct surface, against the darker page background.
-	 * e.g. `"60rem"`.
+	 * Max content width, e.g. `"60rem"`. When set, the content area caps its width
+	 * and centres horizontally; otherwise it fills the available width. Either way
+	 * it shares the page surface — it is not boxed.
 	 */
 	maxWidth?: string;
-	/** Aberdeen attr/style string applied to the content sheet. */
+	/** Aberdeen attr/style string applied to the content area. */
 	contentAttrs?: Attributes;
 	/** Aberdeen attr/style string applied to the top bar. */
 	topbarAttrs?: Attributes;
@@ -61,32 +61,19 @@ A.insertGlobalCss({
 		"> main": "flex:1 overflow-y:auto display:flex flex-direction:column",
 		// With nav, <main> is inside .s-body.
 		".s-body > main": "flex:1 overflow-y:auto display:flex flex-direction:column",
-		"> main > .s-content, .s-body > main > .s-content": "width:100% flex:1",
-		"> main > .s-content.s-framed, .s-body > main > .s-content.s-framed":
-			"margin: $3 auto; border: 1px solid $s-border; r:$s-radius-lg box-shadow:$s-shadow p:$4",
-		"> main > .s-content.s-plain, .s-body > main > .s-content.s-plain": "p:$3",
+		// The content area fills the scroll region with comfortable padding. With a
+		// maxWidth it caps its width and centres (applied inline in drawMainContent).
+		// It is deliberately NOT a boxed "sheet" — content brings its own boxes.
+		"> main > .s-content, .s-body > main > .s-content": "width:100% flex:1 p:$3",
 		"> footer": "display:flex align-items:center gap:$2 padding: $2 $3; border-top: 1px solid $s-border; fg:$s-fg-muted",
 	},
-	// Sidebar nav panel.
+	// Sidebar nav panel. Items reuse the shared `.s-menu-item[-link]` /
+	// `.s-menu-sep` styles from menu.ts, so the sidebar and the floating
+	// dropdown stay visually identical.
 	".s-nav-panel": {
 		"&": "display:flex flex-direction:column overflow-y:auto flex-shrink:0 w:220px p:$2 gap:$1",
 		"&.s-nav-left": "border-right: 1px solid $s-border;",
 		"&.s-nav-right": "border-left: 1px solid $s-border;",
-	},
-	".s-nav-item, a.s-nav-item": {
-		"&":
-			"display:flex align-items:center gap:$2 w:100% " +
-			"padding: 0.5em 0.75em; r:$s-radius " +
-			"font-size:0.92em border:0 background:transparent fg:$s-fg text-decoration:none text-align:left cursor:pointer " +
-			"transition: background 0.12s;",
-		"&:hover": "background: color-mix(in oklab, $s-fg, $s-bg 90%);",
-		"&:focus-visible": "outline:none box-shadow: 0 0 0 3px $s-focus;",
-		"&[aria-disabled=true]": "opacity:0.45 cursor:not-allowed",
-		"&[aria-current=page]":
-			"bg: color-mix(in oklab, $s-accent, $s-bg 80%); " +
-			"fg:$s-accent font-weight:600",
-		".s-nav-icon": "fg:$s-fg-muted flex-shrink:0",
-		".s-nav-sep": "border:0 border-top: 1px solid $s-border; margin: $1 0;",
 	},
 	// In button-only mode (or always-button navPosition), hide the sidebar and
 	// show the trigger. In sidebar mode, show the panel and hide the trigger.
@@ -98,14 +85,17 @@ A.insertGlobalCss({
 	"@container (max-width: 640px)": {
 		".s-main.s-nav-left .s-nav-panel, .s-main.s-nav-right .s-nav-panel": "display:none",
 		".s-main.s-nav-left .s-nav-trigger, .s-main.s-nav-right .s-nav-trigger": "display:flex",
+		// On phones a top-level content box becomes a full-bleed block: pull it out
+		// to negate the content padding and drop the rounded corners.
+		".s-content > .s-box": "margin-inline: calc(-1 * $3); r:0 border-inline:0",
 	},
 });
 
 /**
  * An application shell that wires up the things almost every app needs: a sticky
  * top bar (icon, title, subtitle, action menu), a scrollable content area, and a
- * footer. With {@link MainOptions.maxWidth} the content becomes a centered,
- * shadowed "sheet". Add a `nav` to get a responsive sidebar (auto-collapses to a
+ * footer. With {@link MainOptions.maxWidth} the content area is centred and its
+ * width capped. Add a `nav` to get a responsive sidebar (auto-collapses to a
  * menu button below 640 px, or always a button with `navPosition: "button"`).
  *
  * @example
@@ -149,14 +139,14 @@ export function main(opts: MainOptions = {}): void {
 					if (!hasNav) return;
 					// .s-nav-trigger: CSS toggles display based on sidebar visibility.
 					A("div.s-nav-trigger", () => {
-						menu({
+						menuButton({
 							...nav,
-							trigger: {
+							button: {
 								icon: () => A("span aria-hidden=true #☰"),
 								ariaLabel: "Open navigation",
 								attrs: ".neutral .outlined",
 								size: "sm",
-								...nav.trigger,
+								...nav.button,
 							},
 						});
 					});
@@ -182,7 +172,9 @@ export function main(opts: MainOptions = {}): void {
 		// Body — wraps sidebar + main when nav is in sidebar mode.
 		if (hasNav && navPos !== "button") {
 			A("div.s-body", () => {
-				drawNavPanel(nav, navPos as "left" | "right", opts.navAttrs);
+				A(`nav.s-nav-panel.s-s.raised.s-nav-${navPos}`, opts.navAttrs, () => {
+					drawMenu(nav.items);
+				});
 				drawMainContent(opts);
 			});
 		} else {
@@ -196,33 +188,12 @@ export function main(opts: MainOptions = {}): void {
 	});
 }
 
-function drawNavPanel(nav: MenuOptions, side: "left" | "right", navAttrs?: Attributes): void {
-	A(`nav.s-nav-panel.s-s.raised.s-nav-${side}`, navAttrs, () => {
-		for (const entry of nav.items) {
-			if ("separator" in entry) {
-				A("hr.s-nav-sep");
-				continue;
-			}
-			const tag = entry.href ? "a.s-nav-item" : "button.s-nav-item type=button";
-			A(tag, entry.attrs, () => {
-				if (entry.href) A("href=", entry.href);
-				if (entry.target) A("target=", entry.target);
-				if (entry.disabled) A("aria-disabled=true");
-				if (entry.click) A("click=", entry.click);
-				if (entry.icon) A("span.s-nav-icon", () => drawSlot(entry.icon));
-				drawSlot(entry.label);
-			});
-		}
-	});
-}
-
 function drawMainContent(opts: MainOptions): void {
 	A("main", () => {
 		A("div.s-content", opts.contentAttrs, () => {
 			A(() => {
-				const max = opts.maxWidth;
-				if (max != null) A(".s-framed.s-s.panel max-width:", max);
-				else A(".s-plain");
+				// With a maxWidth, cap the width and centre; otherwise fill the area.
+				if (opts.maxWidth != null) A("margin-inline:auto max-width:", opts.maxWidth);
 			});
 			if (opts.content) opts.content();
 		});

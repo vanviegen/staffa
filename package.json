@@ -25,10 +25,10 @@
     "prepublish": "npm run build"
   },
   "peerDependencies": {
-    "aberdeen": "^1.15.0"
+    "aberdeen": "^1.17.0"
   },
   "devDependencies": {
-    "aberdeen": "^1.15.0",
+    "aberdeen": "^1.17.0",
     "esbuild": "^0.28.0",
     "jsdom": "^29.1.1",
     "typescript": "^5.9.3"

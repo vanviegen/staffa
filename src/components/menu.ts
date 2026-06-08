@@ -1,8 +1,16 @@
 import A from "aberdeen";
-import { type Slot, type Attributes, drawSlot } from "../core.js";
+import { matchCurrent } from "aberdeen/route";
+import { type Content, type Slot, type Attributes, drawSlot } from "../core.js";
 import { button, type ButtonOptions } from "./button.js";
 
-/** A clickable item in a menu. */
+/**
+ * A clickable item in a menu or sidebar nav.
+ *
+ * **Tip:** set `href` and call Aberdeen's `interceptLinks()` once at app
+ * startup for SPA-style navigation. When `href` is set, the item is
+ * automatically highlighted as active whenever the current URL matches it
+ * (via {@link matchCurrent}).
+ */
 export interface MenuItem {
 	/** Label text or draw function. Strings are rendered as rich text. */
 	label: Slot;
@@ -10,7 +18,11 @@ export interface MenuItem {
 	icon?: Slot;
 	/** Click handler. */
 	click?: (e: Event) => void;
-	/** Render as a link (`<a role=menuitem>`) pointing here. */
+	/**
+	 * Render as a link (`<a>`) pointing here. Pairs naturally with
+	 * `interceptLinks()` — the item is highlighted automatically when the URL
+	 * matches.
+	 */
 	href?: string;
 	/** `target` for the link (`_blank`, etc.). Only meaningful with `href`. */
 	target?: string;
@@ -25,262 +37,241 @@ export interface MenuSeparator {
 	separator: true;
 }
 
-export type MenuEntry = MenuItem | MenuSeparator;
+/**
+ * An entry in a menu or sidebar nav list. Three forms:
+ * - `MenuItem` — a clickable/linkable row with label and optional icon.
+ * - `MenuSeparator` — a visual divider (`{ separator: true }`).
+ * - A draw function `() => void` — renders custom content (section header,
+ *   avatar, search box, …). Skipped by keyboard navigation.
+ */
+export type MenuEntry = MenuItem | MenuSeparator | Content;
 
-/** Options for {@link menu}. */
+/** Options for {@link menuButton} and {@link MainOptions.nav}. */
 export interface MenuOptions {
-	/** Items shown in the dropdown. */
+	/** Items shown in the dropdown or sidebar nav. */
 	items: MenuEntry[];
 	/**
-	 * Customise the trigger button. If omitted, a `☰` icon button is rendered.
-	 * The `click` handler is managed internally — do not set it here.
+	 * Customize the trigger button rendered by {@link menuButton}. Defaults to a
+	 * `☰` icon button. The `click` handler is managed internally.
+	 *
+	 * When used as a `nav` in `S.main()`, this also customizes the hamburger
+	 * button shown when the sidebar collapses.
 	 */
-	trigger?: ButtonOptions;
-	/** Aberdeen attr/style string on the dropdown list panel. */
-	attrs?: Attributes;
+	button?: ButtonOptions;
+	/** Aberdeen attr/style string on the floating dropdown panel. */
+	dropdownAttrs?: Attributes;
 }
 
+/** Options for {@link showFloatingMenu}. */
+export interface FloatingMenuOptions {
+	/** Items to show. */
+	items: MenuEntry[];
+	/** Element to anchor the menu to (positioned just below it, flips up if needed). */
+	anchor: HTMLElement;
+	/** Aberdeen attr/style string on the floating panel. */
+	dropdownAttrs?: Attributes;
+}
+
+// Styles shared by the floating dropdown and the sidebar nav, so both look
+// identical. The item styles aren't scoped to a container, so `drawMenu` can
+// render its items into either one.
 A.insertGlobalCss({
-	".s-menu-list": {
-		"&":
-			"position:fixed z-index:350 min-width:10rem " +
-			"list-style:none p:$1 m:0 " +
-			"border: 1px solid $s-border; r:$s-radius-lg box-shadow:$s-shadow " +
-			"overflow-y:auto max-height:min(80vh,28rem) " +
-			"transition: opacity 0.15s, transform 0.15s;",
-		"&.hidden": "opacity:0 pointer-events:none transform:translateY(-6px)",
-		".s-menu-item, .s-menu-item-link":
-			"display:flex align-items:center gap:$2 w:100% " +
-			"padding: 0.45em 0.65em; r:6px cursor:pointer text-align:left " +
-			"font-size:0.9em border:0 background:transparent fg:$s-fg text-decoration:none " +
-			"transition: background 0.1s;",
-		".s-menu-item:hover:not([aria-disabled=true]), .s-menu-item-link:hover":
-			"background: color-mix(in oklab, $s-fg, $s-bg 90%);",
-		".s-menu-item:focus-visible, .s-menu-item-link:focus-visible":
-			"outline:none background: color-mix(in oklab, $s-fg, $s-bg 90%); box-shadow: 0 0 0 2px inset $s-focus;",
-		".s-menu-item[aria-disabled=true], .s-menu-item-link[aria-disabled=true]":
-			"opacity:0.45 cursor:not-allowed",
-		".s-menu-icon": "fg:$s-fg-muted flex-shrink:0",
-		".s-menu-sep": "border:0 border-top: 1px solid $s-border; margin: $1 0;",
-	},
+	".s-menu-list":
+		"position:fixed z-index:350 min-width:10rem display:flex flex-direction:column p:$1 " +
+		"border: 1px solid $s-border; r:$s-radius-lg box-shadow:$s-shadow " +
+		"overflow-y:auto max-height:min(80vh,28rem) " +
+		"transition: opacity 0.15s, transform 0.15s;",
+	".s-menu-list.hidden": "opacity:0 pointer-events:none transform:translateY(-6px)",
+	".s-menu-item, .s-menu-item-link":
+		"display:flex align-items:center gap:$2 w:100% " +
+		"padding: 0.5em 0.65em; r:$s-radius cursor:pointer text-align:left " +
+		"font-size:0.9em border:0 background:transparent fg:$s-fg text-decoration:none " +
+		"transition: background 0.12s, color 0.12s;",
+	".s-menu-item:hover:not([aria-disabled=true]), .s-menu-item-link:hover":
+		"background: color-mix(in oklab, $s-fg, $s-bg 90%);",
+	// Active (current page): an accent-tinted pill, not just coloured text.
+	".s-menu-item[aria-current=page], .s-menu-item-link[aria-current=page]":
+		"fg:$s-accent font-weight:600 background: color-mix(in oklab, $s-accent, transparent 88%);",
+	".s-menu-item[aria-current=page]:hover, .s-menu-item-link[aria-current=page]:hover":
+		"background: color-mix(in oklab, $s-accent, transparent 82%);",
+	".s-menu-item:focus-visible, .s-menu-item-link:focus-visible":
+		"outline:none background: color-mix(in oklab, $s-fg, $s-bg 90%); box-shadow: 0 0 0 2px inset $s-focus;",
+	".s-menu-item[aria-disabled=true], .s-menu-item-link[aria-disabled=true]":
+		"opacity:0.45 cursor:not-allowed pointer-events:none",
+	".s-menu-icon": "fg:$s-fg-muted flex-shrink:0",
+	// `hr.` (not just `.`) so this wins over the global hr flow-margin rule.
+	"hr.s-menu-sep": "border:0 border-top: 1px solid $s-border; margin: $1 0;",
 });
 
-// ─── Global portal state ────────────────────────────────────────────────────
+/**
+ * Draw a list of {@link MenuEntry} items into the *current* element, with
+ * arrow-key / Home / End navigation between the focusable items. The single
+ * shared primitive behind both the floating dropdown ({@link showFloatingMenu})
+ * and the sidebar nav in `S.main()` — call it inside whatever container
+ * (`<nav>`, the floating panel, …) you've opened.
+ *
+ * Items are real `<a>`/`<button>` elements, so Enter/Space activate them and
+ * screen readers narrate them natively.
+ *
+ * @param items The entries to render.
+ * @param onActivate Optional — run when any item is activated (used by the
+ *   floating menu to close itself on selection).
+ */
+export function drawMenu(items: MenuEntry[], onActivate?: () => void): void {
+	// Roving focus via the DOM: query the live item elements on each keypress.
+	A("keydown=", (e: KeyboardEvent) => {
+		if (e.key !== "ArrowDown" && e.key !== "ArrowUp" && e.key !== "Home" && e.key !== "End") return;
+		e.preventDefault();
+		const container = e.currentTarget as HTMLElement;
+		const els = [...container.querySelectorAll<HTMLElement>(".s-menu-item, .s-menu-item-link")]
+			.filter((el) => el.getAttribute("aria-disabled") !== "true");
+		if (!els.length) return;
+		const cur = els.indexOf(document.activeElement as HTMLElement);
+		const dir = e.key === "ArrowUp" ? -1 : 1;
+		const next =
+			e.key === "Home" ? 0 :
+			e.key === "End" ? els.length - 1 :
+			cur < 0 ? (dir > 0 ? 0 : els.length - 1) :
+			(cur + dir + els.length) % els.length;
+		els[next].focus();
+	});
 
-interface ActiveMenu {
-	id: number;
-	tx: number; // trigger left
-	ty: number; // trigger top
-	tw: number; // trigger width
-	th: number; // trigger height
-	activeIdx: number; // focused item index (into opts.items), -1 = none
-}
+	for (const entry of items) {
+		if (typeof entry === "function") { entry(); continue; }
+		if ("separator" in entry) { A("hr.s-menu-sep"); continue; }
 
-const menuRegistry = new Map<number, MenuOptions>();
-let menuSeq = 0;
-const $active = A.proxy<ActiveMenu>({ id: 0, tx: 0, ty: 0, tw: 0, th: 0, activeIdx: -1 });
-let activeTriggerFocus: (() => void) | null = null;
-
-function closeMenu(): void {
-	if (!$active.id) return;
-	$active.id = 0;
-	$active.activeIdx = -1;
-	const refocus = activeTriggerFocus;
-	activeTriggerFocus = null;
-	refocus?.();
-}
-
-function positionMenu(menuEl: HTMLElement, tx: number, ty: number, tw: number, th: number): void {
-	const mw = menuEl.offsetWidth;
-	const mh = menuEl.offsetHeight;
-	const vw = window.innerWidth;
-	const vh = window.innerHeight;
-	const gap = 4;
-
-	// Horizontal: start-aligned by default, shift left if overflows right edge.
-	let x = tx;
-	if (x + mw > vw - 8) x = Math.max(8, tx + tw - mw);
-
-	// Vertical: below trigger by default; flip above if not enough space below.
-	let y = ty + th + gap;
-	if (y + mh > vh - 8 && ty - mh - gap >= 8) {
-		y = ty - mh - gap;
+		A(entry.href ? "a.s-menu-item-link" : "button.s-menu-item type=button", entry.attrs, () => {
+			if (entry.href) {
+				A("href=", entry.href);
+				if (entry.target) A("target=", entry.target);
+				A(() => { if (matchCurrent(entry.href!)) A("aria-current=page"); });
+			}
+			if (entry.disabled) A("aria-disabled=true");
+			A("click=", (e: Event) => {
+				if (entry.disabled) { e.preventDefault(); return; }
+				onActivate?.();
+				entry.click?.(e);
+			});
+			if (entry.icon) A("span.s-menu-icon", () => drawSlot(entry.icon));
+			drawSlot(entry.label);
+		});
 	}
-
-	menuEl.style.left = Math.max(8, x) + "px";
-	menuEl.style.top = Math.max(8, y) + "px";
 }
 
-// ─── Portal ─────────────────────────────────────────────────────────────────
+// ─── Floating menu ───────────────────────────────────────────────────────────
+
+// At most one floating menu is open at a time. The anchor lives in the options,
+// so it's available for positioning and focus-return without extra state.
+const $floating = A.proxy<{ opts: FloatingMenuOptions | null }>({ opts: null });
+
+function closeFloating(): void {
+	const anchor = $floating.opts?.anchor;
+	$floating.opts = null;
+	anchor?.focus();
+}
+
+function positionMenu(menuEl: HTMLElement, rect: DOMRect): void {
+	const mw = menuEl.offsetWidth, mh = menuEl.offsetHeight;
+	const vw = window.innerWidth,  vh = window.innerHeight;
+	const gap = 4;
+	let x = rect.left;
+	if (x + mw > vw - 8) x = Math.max(8, rect.right - mw);
+	let y = rect.bottom + gap;
+	if (y + mh > vh - 8 && rect.top - mh - gap >= 8) y = rect.top - mh - gap;
+	menuEl.style.left = Math.max(8, x) + "px";
+	menuEl.style.top  = Math.max(8, y) + "px";
+}
 
 A.mount(document.body, () => {
-	A(() => {
-		const id = $active.id;
-		if (!id) return;
-		const opts = menuRegistry.get(id);
-		if (!opts) return;
+	const f = $floating.opts;
+	if (!f) return;
 
-		// Invisible full-screen backdrop catches outside clicks.
-		A("div position:fixed inset:0 z-index:349", () => {
-			A("click=", closeMenu);
-		});
+	const menuEl = A("div.s-menu-list.s-s.panel create=hidden destroy=hidden", f.dropdownAttrs, () => {
+		drawMenu(f.items, closeFloating);
+	}) as HTMLElement;
 
-		// Collect interactive element refs for programmatic focus.
-		const itemEls: (HTMLElement | null)[] = [];
+	// Capture-phase document handlers replace an invisible backdrop element:
+	// any click outside the panel + anchor closes; Escape/Tab close.
+	const onClick = (e: MouseEvent) => {
+		const t = e.target as Node;
+		if (!menuEl.contains(t) && !f.anchor.contains(t)) closeFloating();
+	};
+	const onKey = (e: KeyboardEvent) => {
+		if (e.key === "Escape" || e.key === "Tab") { e.preventDefault(); closeFloating(); }
+	};
+	document.addEventListener("click", onClick, true);
+	document.addEventListener("keydown", onKey, true);
+	A.clean(() => {
+		document.removeEventListener("click", onClick, true);
+		document.removeEventListener("keydown", onKey, true);
+	});
 
-		const menuEl = A("ul.s-menu-list.s-s.panel create=hidden destroy=hidden", opts.attrs, () => {
-			A("keydown=", handleKeyDown);
-
-			opts.items.forEach((entry, i) => {
-				if ("separator" in entry) {
-					itemEls.push(null);
-					A("li.s-menu-sep role=none");
-					return;
-				}
-
-				let el: HTMLElement;
-				if (entry.href) {
-					A("li role=none", () => {
-						el = A(
-							"a.s-menu-item-link role=menuitem tabindex=-1",
-							entry.attrs,
-							() => {
-								A("href=", entry.href!);
-								if (entry.target) A("target=", entry.target);
-								if (entry.disabled) A("aria-disabled=true");
-								renderItemContent(entry, i);
-							},
-						) as HTMLElement;
-					});
-				} else {
-					el = A("li.s-menu-item role=menuitem tabindex=-1", entry.attrs, () => {
-						if (entry.disabled) A("aria-disabled=true");
-						A(() => {
-							// Only this tiny scope re-runs on keyboard navigation.
-							A("tabindex=", $active.activeIdx === i ? "0" : "-1");
-						});
-						renderItemContent(entry, i);
-						A("click=", (e: Event) => {
-							if (entry.disabled) return;
-							closeMenu();
-							entry.click?.(e);
-						});
-					}) as HTMLElement;
-				}
-				itemEls.push(el!);
-			});
-		}) as HTMLElement;
-
-		// After layout: position and focus the first item.
-		requestAnimationFrame(() => {
-			if (!document.body.contains(menuEl)) return;
-			const { tx, ty, tw, th } = $active;
-			positionMenu(menuEl, tx, ty, tw, th);
-			// Focus the first enabled item.
-			const firstIdx = opts.items.findIndex(
-				(e) => !("separator" in e) && !(e as MenuItem).disabled,
-			);
-			if (firstIdx >= 0) {
-				$active.activeIdx = firstIdx;
-				itemEls[firstIdx]?.focus();
-			}
-		});
-
-		function handleKeyDown(e: KeyboardEvent): void {
-			const items = opts!.items;
-			const idx = $active.activeIdx;
-
-			if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-				e.preventDefault();
-				const dir = e.key === "ArrowDown" ? 1 : -1;
-				let next = idx < 0 ? (dir > 0 ? -1 : items.length) : idx;
-				for (let step = 0; step < items.length; step++) {
-					next = (next + dir + items.length) % items.length;
-					const item = items[next];
-					if (item && !("separator" in item) && !(item as MenuItem).disabled) break;
-				}
-				$active.activeIdx = next;
-				itemEls[next]?.focus();
-			} else if (e.key === "Home") {
-				e.preventDefault();
-				const first = items.findIndex((e) => !("separator" in e) && !(e as MenuItem).disabled);
-				if (first >= 0) { $active.activeIdx = first; itemEls[first]?.focus(); }
-			} else if (e.key === "End") {
-				e.preventDefault();
-				let last = -1;
-				for (let i = items.length - 1; i >= 0; i--) {
-					if (!("separator" in items[i]!) && !(items[i] as MenuItem).disabled) { last = i; break; }
-				}
-				if (last >= 0) { $active.activeIdx = last; itemEls[last]?.focus(); }
-			} else if (e.key === "Enter" || e.key === " ") {
-				e.preventDefault();
-				const item = items[idx];
-				if (item && !("separator" in item) && !(item as MenuItem).disabled) {
-					closeMenu();
-					(item as MenuItem).click?.({ type: "click" } as Event);
-				}
-			} else if (e.key === "Escape" || e.key === "Tab") {
-				e.preventDefault();
-				closeMenu();
-			}
-		}
+	// Position after layout, then focus the first enabled item.
+	requestAnimationFrame(() => {
+		if (!document.body.contains(menuEl)) return;
+		positionMenu(menuEl, f.anchor.getBoundingClientRect());
+		menuEl.querySelector<HTMLElement>(
+			".s-menu-item:not([aria-disabled=true]), .s-menu-item-link:not([aria-disabled=true])",
+		)?.focus();
 	});
 });
 
-function renderItemContent(entry: MenuItem, _i: number): void {
-	if (entry.icon) A("span.s-menu-icon", () => drawSlot(entry.icon));
-	drawSlot(entry.label);
-}
-
-// ─── Public component ────────────────────────────────────────────────────────
+// ─── Public API ──────────────────────────────────────────────────────────────
 
 /**
- * A button that opens a positioned dropdown menu. The dropdown is portaled to
- * `document.body` so it always appears above other content regardless of
- * stacking context. Keyboard navigation follows the WAI-ARIA menu pattern:
- * Arrow Up/Down, Home, End, Enter/Space to activate, Escape to close.
+ * Open a floating dropdown menu anchored to an element. Portals to
+ * `document.body` (never clipped), positions itself (flipping up when there's
+ * no room below), and closes on Escape, Tab, item selection, or any click
+ * outside the panel and anchor. Returns a `close()` function.
  *
  * @example
  * ```ts
- * S.menu({
- *   trigger: { text: "Actions", attrs: ".neutral .outlined" },
+ * // Custom context menu:
+ * el.addEventListener("contextmenu", (e) => {
+ *   e.preventDefault();
+ *   S.showFloatingMenu({ items, anchor: el });
+ * });
+ * ```
+ */
+export function showFloatingMenu(opts: FloatingMenuOptions): () => void {
+	$floating.opts = opts;
+	return closeFloating;
+}
+
+/**
+ * A button that opens a {@link showFloatingMenu | floating dropdown menu} on
+ * click. Keyboard navigation: Arrow Up/Down, Home, End; Escape/Tab to close;
+ * Enter/Space activate the focused item natively.
+ *
+ * **Tip:** set `href` on items and call `interceptLinks()` once at app startup
+ * for SPA navigation — active items are highlighted automatically.
+ *
+ * @example
+ * ```ts
+ * S.menuButton({
+ *   button: { text: "Actions", attrs: ".neutral .outlined" },
  *   items: [
  *     { label: "Edit", icon: () => A("#✎"), click: () => edit() },
- *     { label: "Duplicate", click: () => dupe() },
  *     { separator: true },
  *     { label: "Delete", attrs: "fg:$s-danger", click: () => del() },
  *   ],
  * });
  * ```
  */
-export function menu(opts: MenuOptions): void {
-	const menuId = ++menuSeq;
-	menuRegistry.set(menuId, opts);
-
-	A.clean(() => {
-		menuRegistry.delete(menuId);
-		if ($active.id === menuId) closeMenu();
-	});
+export function menuButton(opts: MenuOptions): void {
+	let myEl: HTMLElement | null = null;
+	A.clean(() => { if ($floating.opts?.anchor === myEl) closeFloating(); });
 
 	button({
 		icon: () => A("span aria-hidden=true #☰"),
 		ariaLabel: "Open menu",
 		attrs: ".neutral .outlined",
-		...opts.trigger,
+		...opts.button,
 		click: (e: Event) => {
-			if ($active.id === menuId) {
-				closeMenu();
-				return;
-			}
-			const el = e.currentTarget as HTMLElement;
-			activeTriggerFocus = () => el.focus();
-			const rect = el.getBoundingClientRect();
-			$active.id = menuId;
-			$active.tx = rect.left;
-			$active.ty = rect.top;
-			$active.tw = rect.width;
-			$active.th = rect.height;
-			$active.activeIdx = -1;
+			myEl = e.currentTarget as HTMLElement;
+			// Toggle: a second click on the same trigger closes the menu.
+			if ($floating.opts?.anchor === myEl) { closeFloating(); return; }
+			showFloatingMenu({ items: opts.items, anchor: myEl, dropdownAttrs: opts.dropdownAttrs });
 		},
 	});
 }

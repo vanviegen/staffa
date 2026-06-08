@@ -82,8 +82,8 @@ for a dedicated `A(() => ...)` scope when recreation would be costly or wrong:
   `aria-invalid`, ...) in small scopes (see `applyControlAttrs` in `field.ts`).
 - The element **contains lots of content** you don't want to redraw — e.g.
   `box` puts its header/footer in their own scopes so toggling them doesn't
-  recreate the body; `main` frames the content sheet in a nested scope so a
-  `maxWidth` change doesn't rebuild the whole page.
+  recreate the body; `main` applies the content `maxWidth` in a nested scope so
+  changing it doesn't rebuild the whole page.
 
 Use `A.peek(() => ...)` when you need a value but must *not* subscribe.
 
@@ -142,10 +142,17 @@ comment — not by default.
    underlined; focus states use a visible ring (`box-shadow: 0 0 0 3px $s-focus`).
    Don't ship an affordance the user can't recognise.
 
-The base stylesheet in `theme.ts` is a *light* reset: box-sizing, body
-bg/fg/font, link/code styling, focus ring. It deliberately does **not** strip
-margins from headings/paragraphs/lists, so rendered rich content (e.g.
-markdown-to-HTML) keeps a sane rhythm.
+The base stylesheet in `theme.ts` is a *light* reset (box-sizing, body
+bg/fg/font, link/code styling, focus ring) plus a light **vertical rhythm and
+typography** for block elements (`p`, `ul`/`ol`, headings, `table`, `blockquote`,
+`hr`, ...) — defaults for your own UI just as much as for rendered markup
+(markdown-to-HTML). Following the same "spacing lives *between* siblings"
+principle as rule 6, each block's margins are zeroed and a *top* margin is
+re-added only when it isn't its parent's first child: content sits flush in its
+container and separates only from preceding siblings — no edge-margin bleed, no
+reliance on margin-collapse. These are intentionally low-specificity `:is(...)`
+defaults, so any component, utility class or inline `mt:` shortcut overrides them
+— a class only ever changes what it names.
 
 ## Convenience shortcuts
 
@@ -214,10 +221,3 @@ JS theme object: re-skin by overriding the palette custom properties (see the
 - `npm run typecheck` — must be clean.
 - `npm run smoke` — builds, then renders every component in jsdom and checks the
   output (including a reactive-update assertion). Add a check for anything new.
-
-## Reference
-
-`m3e/` is a vendored copy of the Material 3 *web-component* library. It's **only
-a last-resort source of inspiration** (e.g. for the ARIA shape of a complex
-widget). Staffa's API and implementation are entirely different — function calls
-that do Aberdeen draws, not web components — so do **not** port its code or API.
