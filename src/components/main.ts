@@ -19,9 +19,12 @@ export interface MainOptions {
 	/** Footer content, pinned below the scroll area. */
 	footer?: Slot;
 	/**
-	 * Max content width, e.g. `"60rem"`. When set, the content area caps its width
-	 * and centres horizontally; otherwise it fills the available width. Either way
-	 * it shares the page surface — it is not boxed.
+	 * Max width for the page's *content*, e.g. `"60rem"`. The header and footer
+	 * backgrounds still span the full shell width, but their contents — and the
+	 * sidebar + separator + content trio (or just the content when there's no
+	 * sidebar) — cap to this width and centre horizontally. When unset, everything
+	 * fills the available width. Either way the content shares the page surface —
+	 * it is not boxed.
 	 */
 	maxWidth?: string;
 	/** Aberdeen attr/style string applied to the content area. */
@@ -49,23 +52,33 @@ A.insertGlobalCss({
 	".s-main": {
 		// container-type so @container queries below can respond to shell width.
 		"&": "display:flex flex-direction:column min-height:100vh max-height:100vh container-type:inline-size",
-		"> header": "display:flex align-items:center gap:$3 padding: $2 $3; border-bottom: 1px solid $s-border; position:sticky top:0 z-index:10",
+		// Header/footer stretch their background the full shell width; their inner
+		// `.s-bar` caps to maxWidth and centres, so chrome aligns with the content.
+		"> header": "border-bottom: 1px solid $s-border; position:sticky top:0 z-index:10",
+		"> footer": "border-top: 1px solid $s-border; fg:$s-fg-muted",
+		"> header > .s-bar, > footer > .s-bar": "display:flex align-items:center width:100% margin-inline:auto gap:$3 padding: $2 $3;",
 		"> header .s-icon": "display:flex align-items:center font-size:1.4em background: $s-gradient; -webkit-background-clip:text; background-clip:text; color:transparent;",
 		"> header .s-titles": "display:flex flex-direction:column min-width:0 flex:1",
 		"> header .s-title": "font-weight:800 font-size:1.1em line-height:1.2 overflow:hidden text-overflow:ellipsis white-space:nowrap letter-spacing:-0.01em background: $s-gradient; -webkit-background-clip:text; background-clip:text; color:transparent; width:fit-content max-width:100%",
 		"> header .s-subtitle": "fg:$s-fg-muted font-size:0.85em overflow:hidden text-overflow:ellipsis white-space:nowrap",
 		"> header .s-menu": "display:flex align-items:center gap:$2",
-		// Body holds sidebar + <main> side by side (only used when nav is present).
-		".s-body": "flex:1 overflow:hidden display:flex flex-direction:row min-height:0",
-		// Without nav, <main> is a direct child.
+		// Body holds sidebar + separator + <main> side by side (only used in sidebar
+		// nav mode). It centres `.s-body-inner`, which caps the trio to maxWidth.
+		".s-body": "flex:1 overflow:hidden display:flex flex-direction:row min-height:0 justify-content:center",
+		".s-body-inner": "flex:1 display:flex flex-direction:row min-height:0",
+		// Put the sidebar on the right (content fills the left) for right-hand navs.
+		"&.s-nav-right .s-body-inner": "flex-direction:row-reverse",
+		// A vertical hairline between sidebar and content, fading out at both ends —
+		// the vertical sibling of the menu's `hr.s-menu-sep`.
+		".s-nav-sep": "width:1px flex-shrink:0 align-self:stretch margin: 0.6rem 0; border:0 background: linear-gradient(to bottom, transparent, $s-border-strong 18%, $s-border-strong 82%, transparent);",
+		// Without a sidebar, <main> is a direct child; with one it lives in .s-body.
 		"> main": "flex:1 overflow-y:auto display:flex flex-direction:column",
-		// With nav, <main> is inside .s-body.
-		".s-body > main": "flex:1 overflow-y:auto display:flex flex-direction:column",
-		// The content area fills the scroll region with comfortable padding. With a
-		// maxWidth it caps its width and centres (applied inline in drawMainContent).
+		".s-body main": "flex:1 overflow-y:auto display:flex flex-direction:column",
+		// The content area fills the scroll region with comfortable padding. Without a
+		// sidebar it caps its own width to maxWidth and centres (applied inline in
+		// drawMainContent); with one, `.s-body-inner` does the capping for the trio.
 		// It is deliberately NOT a boxed "sheet" — content brings its own boxes.
-		"> main > .s-content, .s-body > main > .s-content": "width:100% flex:1 p:$3",
-		"> footer": "display:flex align-items:center gap:$2 padding: $2 $3; border-top: 1px solid $s-border; fg:$s-fg-muted",
+		"> main > .s-content, .s-body main > .s-content": "width:100% flex:1 p:$3",
 	},
 	// Sidebar nav panel. Items reuse the shared `.s-menu-item[-link]` /
 	// `.s-menu-sep` styles from menu.ts, so the sidebar and the floating
@@ -76,7 +89,7 @@ A.insertGlobalCss({
 		// Extra horizontal padding leaves room for the active pill's glow, which the
 		// vertical scroll (overflow-y:auto, which also clips overflow-x) would
 		// otherwise cut off at the panel edges.
-		"&": "display:flex flex-direction:column overflow-y:auto flex-shrink:0 w:228px padding:$3 gap:$1 background:transparent",
+		"&": "display:flex flex-direction:column overflow-y:auto flex-shrink:0 max-width:228px padding:$3 gap:$1 background:transparent",
 	},
 	// In button-only mode (or always-button navPosition), hide the sidebar and
 	// show the trigger. In sidebar mode, show the panel and hide the trigger.
@@ -86,7 +99,7 @@ A.insertGlobalCss({
 	".s-main.s-nav-btn-only .s-nav-trigger": "display:flex",
 	// Collapse sidebar → button when shell is narrow.
 	"@container (max-width: 640px)": {
-		".s-main.s-nav-left .s-nav-panel, .s-main.s-nav-right .s-nav-panel": "display:none",
+		".s-main.s-nav-left .s-nav-panel, .s-main.s-nav-right .s-nav-panel, .s-main .s-nav-sep": "display:none",
 		".s-main.s-nav-left .s-nav-trigger, .s-main.s-nav-right .s-nav-trigger": "display:flex",
 		// On phones a top-level content box becomes a full-bleed block: pull it out
 		// to negate the content padding and drop the rounded corners.
@@ -137,66 +150,94 @@ export function main(opts: MainOptions = {}): void {
 				hasNav;
 			if (!hasBar) return;
 			A("header.s-s.raised", opts.topbarAttrs, () => {
-				// Nav trigger button — visible when sidebar is hidden (button mode or narrow viewport).
-				A(() => {
-					if (!hasNav) return;
-					// .s-nav-trigger: CSS toggles display based on sidebar visibility.
-					A("div.s-nav-trigger", () => {
-						menuButton({
-							...nav,
-							button: {
-								icon: () => A("span aria-hidden=true #☰"),
-								ariaLabel: "Open navigation",
-								attrs: ".neutral .outlined .small",
-								...nav.button,
-							},
+				A("div.s-bar", () => {
+					// Cap the bar's content to maxWidth and centre it within the full-width header.
+					A(() => {
+						if (opts.maxWidth != null) A("max-width:", opts.maxWidth);
+					});
+					// Nav trigger button — visible when sidebar is hidden (button mode or narrow viewport).
+					A(() => {
+						if (!hasNav) return;
+						// .s-nav-trigger: CSS toggles display based on sidebar visibility.
+						A("div.s-nav-trigger", () => {
+							menuButton({
+								...nav,
+								button: {
+									icon: () => A("span aria-hidden=true #☰"),
+									ariaLabel: "Open navigation",
+									attrs: ".neutral .outlined .small",
+									...nav.button,
+								},
+							});
 						});
 					});
-				});
 
-				A(() => {
-					if (opts.icon != null) A("div.s-icon", () => drawSlot(opts.icon));
-				});
-				A("div.s-titles", () => {
 					A(() => {
-						if (opts.title != null) A("div.s-title", () => drawSlot(opts.title));
+						if (opts.icon != null) A("div.s-icon", () => drawSlot(opts.icon));
+					});
+					A("div.s-titles", () => {
+						A(() => {
+							if (opts.title != null) A("div.s-title", () => drawSlot(opts.title));
+						});
+						A(() => {
+							if (opts.subtitle != null) A("div.s-subtitle", () => drawSlot(opts.subtitle));
+						});
 					});
 					A(() => {
-						if (opts.subtitle != null) A("div.s-subtitle", () => drawSlot(opts.subtitle));
+						if (opts.menu) A("div.s-menu", () => opts.menu?.());
 					});
-				});
-				A(() => {
-					if (opts.menu) A("div.s-menu", () => opts.menu?.());
 				});
 			});
 		});
 
-		// Body — wraps sidebar + main when nav is in sidebar mode.
+		// Body — wraps sidebar + separator + main when nav is in sidebar mode. The
+		// trio together caps to maxWidth (via .s-body-inner); main fills the rest.
 		if (hasNav && navPos !== "button") {
 			A("div.s-body", () => {
-				A(`nav.s-nav-panel.s-s.raised.s-nav-${navPos}`, opts.navAttrs, () => {
-					drawMenu(nav.items);
+				A("div.s-body-inner", () => {
+					A(() => {
+						if (opts.maxWidth != null) A("max-width:", opts.maxWidth);
+					});
+					A(`nav.s-nav-panel.s-s.raised.s-nav-${navPos}`, opts.navAttrs, () => {
+						drawMenu(nav.items);
+					});
+					A("div.s-nav-sep aria-hidden=true");
+					drawMainContent(opts, false);
 				});
-				drawMainContent(opts);
 			});
 		} else {
-			drawMainContent(opts);
+			drawMainContent(opts, true);
 		}
 
-		// Footer.
+		// Footer — full-width background, content centred to maxWidth via .s-bar.
 		A(() => {
-			if (opts.footer != null) A("footer", () => drawSlot(opts.footer));
+			if (opts.footer != null) {
+				A("footer", () => {
+					A("div.s-bar", () => {
+						A(() => {
+							if (opts.maxWidth != null) A("max-width:", opts.maxWidth);
+						});
+						drawSlot(opts.footer);
+					});
+				});
+			}
 		});
 	});
 }
 
-function drawMainContent(opts: MainOptions): void {
+/**
+ * Draw the scrollable `<main>` + content area. When `capWidth` is true (no
+ * sidebar), the content caps its own width to maxWidth and centres; in sidebar
+ * mode the surrounding `.s-body-inner` already caps the sidebar+content trio.
+ */
+function drawMainContent(opts: MainOptions, capWidth: boolean): void {
 	A("main", () => {
 		A("div.s-content", opts.contentAttrs, () => {
-			A(() => {
-				// With a maxWidth, cap the width and centre; otherwise fill the area.
-				if (opts.maxWidth != null) A("margin-inline:auto max-width:", opts.maxWidth);
-			});
+			if (capWidth) {
+				A(() => {
+					if (opts.maxWidth != null) A("margin-inline:auto max-width:", opts.maxWidth);
+				});
+			}
 			if (opts.content) opts.content();
 		});
 	});

@@ -27,7 +27,7 @@ A.mount(document.body, () => {
 		icon: "✦",
 		title: "Staffa",
 		subtitle: "components for Aberdeen",
-		maxWidth: "52rem",
+		maxWidth: "1280px",
 		nav: {
 			button: { attrs: ".small" },
 			items: [
@@ -500,12 +500,12 @@ function drawSurfaces() {
 
 
 	S.box({
-		header: "Surfaces (shown filled)",
+		header: "Surfaces",
 		content: () => {
 			A("div display:flex flex-direction:column gap:$1", () => {
 				for (const name of [...levels, ...roles]) {
 					A(`div.s-s.${name} padding: $2 $3; r: $s-radius; display:flex gap:$3 align-items:baseline`, () => {
-						A(`code min-width:6.5rem font-size:0.8em #.${name}`);
+						A(`div w:7em #.${name}`);
 						A(`span fg: $s-fg-muted; font-size:0.85em #muted`);
 						A(`span fg: $s-fg-faint; font-size:0.85em #faint`);
 						A(`a href=# font-size:0.85em #link`);
@@ -526,7 +526,7 @@ function drawSurfaces() {
 						A(`span min-width:4.5rem fg: $s-fg-muted; font-size:0.85em display:flex align-items:center #.${name}`);
 						for (const variant of ["filled", "tonal", "outlined"]) {
 							A(`div.s-s.${name}.${variant} padding: $2 $3; r: $s-radius; border: 1px solid $s-border; flex:1 text-align:center`, () => {
-								A(`code font-size:0.8em #${variant}`);
+								A(`#${variant}`);
 							});
 						}
 					});
@@ -540,13 +540,13 @@ function drawSurfaces() {
 		content: () => {
 			A("div.s-s.primary padding: $3; r: $s-radius;", () => {
 				A("p mt:0 mb:$2 display:flex gap:$2 align-items:center", () => {
-					A("code font-size:0.9em #.primary —");
+					A("code #code");
 					A("span fg: $s-fg-muted; #muted ·");
 					A("a href=# #link");
 				});
 				A("div.s-s.panel padding: $2 $3; r: $s-radius;", () => {
 					A("p m:0 display:flex gap:$2 align-items:center", () => {
-						A("code font-size:0.9em #.panel inside .primary —");
+						A("code #code");
 						A("span fg: $s-fg-muted; #muted ·");
 						A("a href=# #link");
 					});
