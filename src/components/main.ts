@@ -111,7 +111,7 @@ A.insertGlobalCss({
  *     ],
  *   },
  *   navPosition: "left",
- *   menu: () => S.button({ text: "New", size: "sm" }),
+ *   menu: () => S.button({ text: "New", attrs: ".small" }),
  *   content: () => drawPage(),
  *   footer: "© 2026",
  * });
@@ -144,8 +144,7 @@ export function main(opts: MainOptions = {}): void {
 							button: {
 								icon: () => A("span aria-hidden=true #☰"),
 								ariaLabel: "Open navigation",
-								attrs: ".neutral .outlined",
-								size: "sm",
+								attrs: ".neutral .outlined .small",
 								...nav.button,
 							},
 						});

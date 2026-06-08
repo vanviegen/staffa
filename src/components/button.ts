@@ -11,8 +11,6 @@ export interface ButtonOptions {
 	icon?: Slot;
 	/** Click handler. */
 	click?: (event: Event) => void;
-	/** Size. Defaults to `"md"`. */
-	size?: "sm" | "md" | "lg";
 	/** Disables the button. */
 	disabled?: boolean;
 	/** Native button behaviour. Defaults to `"button"`. */
@@ -25,6 +23,10 @@ export interface ButtonOptions {
 	 * Aberdeen attr/style string applied to the button. A button is a surface, so
 	 * pass surface modifier classes here to restyle it, e.g. `".danger"`,
 	 * `".neutral .outlined"`. Defaults to a filled `.primary` surface.
+	 *
+	 * Size is set here too, with `.small` or `.large` (medium is the default and
+	 * needs no class), e.g. `".danger .small"`. A `.small`/`.large` parent (such
+	 * as a {@link buttonGroup}) also sizes its buttons, so you can set it once.
 	 */
 	attrs?: Attributes;
 }
@@ -45,8 +47,10 @@ A.insertGlobalCss({
 		"&.tonal:hover, &.outlined:hover": "background: color-mix(in srgb, $s-b 26%, transparent);",
 		// Subtle press feedback.
 		"&:active:not(:disabled):not([aria-disabled=true])": "transform: translateY(1px)",
-		"&.s-sm": "padding: 0.32em 0.7em; font-size:0.85em",
-		"&.s-lg": "padding: 0.66em 1.3em; font-size:1.1em",
+		// Size: set on the button itself, or inherited from a `.small`/`.large`
+		// parent (e.g. a buttonGroup), so a container can size all its buttons at once.
+		"&.small, .small > &": "padding: 0.32em 0.7em; font-size:0.85em",
+		"&.large, .large > &": "padding: 0.66em 1.3em; font-size:1.1em",
 	},
 });
 
@@ -76,11 +80,11 @@ export function button(opts: ButtonOptions | string | Content = {}): void {
 	const o: ButtonOptions = typeof opts === "string" ? { text: opts } : typeof opts === "function" ? { content: opts } : opts;
 
 	const tag = o.href != null ? "a" : "button";
-	const sizeCls = o.size != null ? `.s-${o.size}` : "";
 
 	// A filled `.primary` surface by default; `attrs` (applied after) can override
-	// the role/variant with e.g. `.danger`, `.neutral .outlined`.
-	A(`${tag}.s-btn.s-s.primary${sizeCls}`, o.attrs, () => {
+	// the role/variant with e.g. `.danger`, `.neutral .outlined`, or the size with
+	// `.small`/`.large`.
+	A(`${tag}.s-btn.s-s.primary`, o.attrs, () => {
 		if (o.href != null) {
 			A(`href=${o.href} role=button`);
 			if (o.disabled) A("aria-disabled=true");

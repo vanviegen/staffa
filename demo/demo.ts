@@ -29,7 +29,7 @@ A.mount(document.body, () => {
 		subtitle: "components for Aberdeen",
 		maxWidth: "52rem",
 		nav: {
-			button: { size: "sm" },
+			button: { attrs: ".small" },
 			items: [
 				{ label: "Form",     icon: () => A("span aria-hidden=true #📋"), href: "?menu=form"     },
 				{ label: "Buttons",  icon: () => A("span aria-hidden=true #🔘"), href: "?menu=buttons"  },
@@ -67,7 +67,7 @@ function drawThemeChooser() {
 	S.buttonChooser({
 		options: { light: "☀", auto: "Auto", dark: "☾" },
 		bind: $mode,
-		size: "sm",
+		attrs: ".small",
 	});
 }
 
@@ -173,9 +173,9 @@ function drawButtons() {
 
 			A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
 				A("div text-align:right w:5rem #sizes");
-				S.button({ text: "Small", size: "sm" });
+				S.button({ text: "Small", attrs: ".small" });
 				S.button({ text: "Medium" });
-				S.button({ text: "Large", size: "lg" });
+				S.button({ text: "Large", attrs: ".large" });
 			});
 		},
 	});

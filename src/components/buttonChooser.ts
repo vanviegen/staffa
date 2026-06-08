@@ -21,8 +21,6 @@ export interface ButtonChooserOptions {
 	 * `bind.value` to `null`. Useful for "none / auto" states.
 	 */
 	allowDeselect?: boolean;
-	/** Button size. Defaults to `"md"`. */
-	size?: "sm" | "md" | "lg";
 	/** Name attribute for the hidden `<input>`, enabling form submission. */
 	name?: string;
 }
@@ -50,7 +48,6 @@ export function buttonChooser(opts: ButtonChooserOptions): void {
 			attrs: opts.attrs,
 			buttons: Object.entries(opts.options).map(([id, label]) => ({
 				text: label,
-				size: opts.size,
 				attrs: selected === id ? ".primary" : ".neutral .outlined",
 				click: () => {
 					opts.bind.value = (opts.allowDeselect && selected === id) ? null : id;
