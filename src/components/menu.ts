@@ -87,20 +87,31 @@ A.insertGlobalCss({
 		"padding: 0.5em 0.65em; r:$s-radius cursor:pointer text-align:left " +
 		"font-size:0.9em border:0 background:transparent fg:$s-fg text-decoration:none " +
 		"transition: background 0.12s, color 0.12s;",
+	// A translucent ink tint (rather than an *opaque* mix) so the hover fades in
+	// cleanly: transitioning background from `transparent` toward an opaque colour
+	// flashes through dark mid-tones in browsers that interpolate non-premultiplied.
+	// Staying ink-hued at low alpha keeps the fade the right colour throughout.
 	".s-menu-item:hover:not([aria-disabled=true]), .s-menu-item-link:hover":
-		"background: color-mix(in oklab, $s-fg, $s-bg 90%);",
-	// Active (current page): an accent-tinted pill, not just coloured text.
+		"background: color-mix(in srgb, $s-fg 10%, transparent);",
+	// Active (current page): a filled brand-gradient pill with a soft glow — the
+	// one place the menu shows real colour, so the current page is unmistakable.
 	".s-menu-item[aria-current=page], .s-menu-item-link[aria-current=page]":
-		"fg:$s-accent font-weight:600 background: color-mix(in oklab, $s-accent, transparent 88%);",
+		"color:$s-on-accent font-weight:600 background: $s-gradient; box-shadow: 0 3px 10px color-mix(in srgb, $s-primary 38%, transparent);",
+	".s-menu-item[aria-current=page] .s-menu-icon, .s-menu-item-link[aria-current=page] .s-menu-icon":
+		"color:$s-on-accent",
 	".s-menu-item[aria-current=page]:hover, .s-menu-item-link[aria-current=page]:hover":
-		"background: color-mix(in oklab, $s-accent, transparent 82%);",
+		"filter: brightness(1.06);",
 	".s-menu-item:focus-visible, .s-menu-item-link:focus-visible":
-		"outline:none background: color-mix(in oklab, $s-fg, $s-bg 90%); box-shadow: 0 0 0 2px inset $s-focus;",
+		"outline:none background: color-mix(in srgb, $s-fg 10%, transparent); box-shadow: 0 0 0 2px inset $s-focus;",
 	".s-menu-item[aria-disabled=true], .s-menu-item-link[aria-disabled=true]":
 		"opacity:0.45 cursor:not-allowed pointer-events:none",
 	".s-menu-icon": "fg:$s-fg-muted flex-shrink:0",
+	// A soft hairline that fades out at both ends, rather than a hard full-width
+	// rule — quieter, and it reads as a grouping cue instead of a divider bar.
 	// `hr.` (not just `.`) so this wins over the global hr flow-margin rule.
-	"hr.s-menu-sep": "border:0 border-top: 1px solid $s-border; margin: $1 0;",
+	"hr.s-menu-sep":
+		"border:0 height:1px margin: $1 0.6rem; " +
+		"background: linear-gradient(to right, transparent, $s-border-strong 18%, $s-border-strong 82%, transparent);",
 });
 
 /**

@@ -154,7 +154,7 @@ function drawForm() {
 }
 
 function drawButtons() {
-	const roles: SurfaceRole[] = ["primary", "neutral", "danger", "success"];
+	const roles: SurfaceRole[] = ["gradient", "primary", "secondary", "neutral", "danger", "success"];
 	const variants: Variant[] = ["filled", "tonal", "outlined"];
 
 	S.box({
@@ -496,7 +496,7 @@ function drawContent() {
 
 function drawSurfaces() {
 	const levels = ["base", "panel", "raised"];
-	const roles = ["neutral", "primary", "danger", "success", "warning"];
+	const roles = ["neutral", "primary", "secondary", "gradient", "danger", "success", "warning"];
 
 
 	S.box({

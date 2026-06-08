@@ -50,9 +50,9 @@ A.insertGlobalCss({
 		// container-type so @container queries below can respond to shell width.
 		"&": "display:flex flex-direction:column min-height:100vh max-height:100vh container-type:inline-size",
 		"> header": "display:flex align-items:center gap:$3 padding: $2 $3; border-bottom: 1px solid $s-border; position:sticky top:0 z-index:10",
-		"> header .s-icon": "display:flex align-items:center font-size:1.4em",
+		"> header .s-icon": "display:flex align-items:center font-size:1.4em background: $s-gradient; -webkit-background-clip:text; background-clip:text; color:transparent;",
 		"> header .s-titles": "display:flex flex-direction:column min-width:0 flex:1",
-		"> header .s-title": "font-weight:700 font-size:1.1em line-height:1.2 overflow:hidden text-overflow:ellipsis white-space:nowrap",
+		"> header .s-title": "font-weight:800 font-size:1.1em line-height:1.2 overflow:hidden text-overflow:ellipsis white-space:nowrap letter-spacing:-0.01em background: $s-gradient; -webkit-background-clip:text; background-clip:text; color:transparent; width:fit-content max-width:100%",
 		"> header .s-subtitle": "fg:$s-fg-muted font-size:0.85em overflow:hidden text-overflow:ellipsis white-space:nowrap",
 		"> header .s-menu": "display:flex align-items:center gap:$2",
 		// Body holds sidebar + <main> side by side (only used when nav is present).
@@ -70,10 +70,13 @@ A.insertGlobalCss({
 	// Sidebar nav panel. Items reuse the shared `.s-menu-item[-link]` /
 	// `.s-menu-sep` styles from menu.ts, so the sidebar and the floating
 	// dropdown stay visually identical.
+	// Borderless and transparent so the page's aurora shows through — an airy,
+	// floating sidebar whose only chrome is the active item's gradient pill.
 	".s-nav-panel": {
-		"&": "display:flex flex-direction:column overflow-y:auto flex-shrink:0 w:220px p:$2 gap:$1",
-		"&.s-nav-left": "border-right: 1px solid $s-border;",
-		"&.s-nav-right": "border-left: 1px solid $s-border;",
+		// Extra horizontal padding leaves room for the active pill's glow, which the
+		// vertical scroll (overflow-y:auto, which also clips overflow-x) would
+		// otherwise cut off at the panel edges.
+		"&": "display:flex flex-direction:column overflow-y:auto flex-shrink:0 w:228px padding:$3 gap:$1 background:transparent",
 	},
 	// In button-only mode (or always-button navPosition), hide the sidebar and
 	// show the trigger. In sidebar mode, show the panel and hide the trigger.

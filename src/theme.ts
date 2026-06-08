@@ -4,7 +4,7 @@ import A from "aberdeen";
  * The named accent roles for interactive elements (buttons, tabs, badges, …).
  * Each maps to a `.s-s.<role>` class that sets `--s-a` (ink) and `--s-b` (fill).
  */
-export type SurfaceRole = "primary" | "neutral" | "danger" | "success" | "warning";
+export type SurfaceRole = "primary" | "secondary" | "gradient" | "neutral" | "danger" | "success" | "warning";
 
 /** How a surface's two colours are rendered. `filled` is the default. */
 export type Variant = "filled" | "tonal" | "outlined";
@@ -24,7 +24,8 @@ export type Variant = "filled" | "tonal" | "outlined";
  *
  * set by a **level** modifier — `.base` (the page), `.panel` (the default card),
  * `.raised` (elevated chrome) — or an **accent role** modifier — `.primary`,
- * `.neutral`, `.danger`, `.success`, `.warning`.
+ * `.secondary`, `.gradient` (the brand sweep), `.neutral`, `.danger`,
+ * `.success`, `.warning`.
  *
  * A **variant** modifier — `.filled` (the default), `.tonal` or `.outlined` —
  * decides how `--s-a`/`--s-b` map onto the tokens widgets read
@@ -47,6 +48,8 @@ export type Variant = "filled" | "tonal" | "outlined";
  * | `--s-fg-faint`   | placeholders, disabled                    |
  * | `--s-border` / `--s-border-strong` | borders                 |
  * | `--s-accent`     | brand "pop" colour (active indicators, etc.) |
+ * | `--s-gradient`   | primary→secondary brand sweep (mark, primary buttons, active nav) |
+ * | `--s-glow`       | soft coloured shadow for lit brand elements |
  * | `--s-link` / `--s-focus` | link & focus-ring colours         |
  * | `--s-radius` / `--s-radius-lg` / `--s-shadow` | shape tokens      |
  *
@@ -58,7 +61,8 @@ export type Variant = "filled" | "tonal" | "outlined";
  *
  * All colours come from a small set of named **palette** tokens on `:root`, set
  * per mode — the only place colours live, and the single place to re-skin:
- * `--s-primary`, `--s-danger`, `--s-success`, `--s-warning` (accent fills, which
+ * `--s-primary`, `--s-secondary` (the two ends of `--s-gradient`), `--s-danger`,
+ * `--s-success`, `--s-warning` (accent fills, which
  * double as semantic *ink* on neutral surfaces), `--s-neutral`, `--s-page`,
  * `--s-panel`, `--s-raised` (neutral fills), `--s-ink` (text on neutral) and
  * `--s-on-accent` (text on accent fills), plus `--s-link`/`--s-focus` and the
@@ -145,20 +149,20 @@ A(() => {
 	if (getDarkMode()) {
 		A.insertGlobalCss({
 			":root":
-				"--s-primary:#8b7bff --s-danger:#ff6b6b --s-success:#46d39a --s-warning:#fbbf24 " +
+				"--s-primary:#8b7bff --s-secondary:#ef7fd0 --s-danger:#ff6b6b --s-success:#46d39a --s-warning:#fbbf24 " +
 				"--s-neutral:#3c4352 --s-page:#0e1015 --s-panel:#181b22 --s-raised:#222632 " +
 				"--s-ink:#e8eaf0 --s-on-accent:#0c0a14 --s-focus:rgba(139,123,255,0.45) " +
-				"--s-radius:10px --s-radius-lg:16px --s-shadow: 0 8px 30px rgba(0,0,0,0.45);",
+				"--s-radius:12px --s-radius-lg:18px --s-shadow: 0 10px 34px rgba(0,0,0,0.5);",
 			// Contextual link, restored across the neutral group (see static block).
 			":root, .s-s.base, .s-s.panel, .s-s.raised, .s-s.neutral": "--s-link:#6db3ff",
 		});
 	} else {
 		A.insertGlobalCss({
 			":root":
-				"--s-primary:#6c5ce7 --s-danger:#e23b3b --s-success:#1f9d6b --s-warning:#d97706 " +
+				"--s-primary:#6c5ce7 --s-secondary:#d6459e --s-danger:#e23b3b --s-success:#1f9d6b --s-warning:#d97706 " +
 				"--s-neutral:#c7ccda --s-page:#f3f4f8 --s-panel:#ffffff --s-raised:#eceef4 " +
 				"--s-ink:#1b1e27 --s-on-accent:#ffffff --s-focus:rgba(108,92,231,0.35) " +
-				"--s-radius:10px --s-radius-lg:16px --s-shadow: 0 6px 24px rgba(20,24,40,0.12);",
+				"--s-radius:12px --s-radius-lg:18px --s-shadow: 0 10px 30px rgba(20,24,40,0.13);",
 			":root, .s-s.base, .s-s.panel, .s-s.raised, .s-s.neutral": "--s-link:#2563eb",
 		});
 	}
@@ -183,16 +187,36 @@ A(() => {
 A.setSpacingCssVars();
 
 A.insertGlobalCss({
+	// Derived brand tokens. These only reference the per-mode palette colours, so
+	// they're defined once here and track the active mode (and any re-skin):
+	// `--s-gradient` is the primary→secondary brand sweep used for the headline
+	// mark, primary buttons and the active nav pill; `--s-glow` is a soft coloured
+	// shadow that makes those same elements feel lit; `--s-page-bg` is a faint
+	// twin-corner aurora wash painted on the page surface.
+	":root":
+		"--s-gradient: linear-gradient(135deg, $s-primary, $s-secondary); " +
+		"--s-glow: 0 8px 24px color-mix(in srgb, $s-primary 32%, transparent); " +
+		"--s-page-bg: radial-gradient(120% 80% at 100% 0%, color-mix(in oklab, $s-secondary, transparent 86%), transparent 56%), radial-gradient(120% 80% at 0% 0%, color-mix(in oklab, $s-primary, transparent 87%), transparent 56%), $s-page;",
+
 	// Level/role modifier → anchors. Levels (neutral elevations) use the shared
-	// ink; accent roles use the on-accent ink over their named fill.
+	// ink; accent roles use the on-accent ink over their named fill. The page
+	// (`.base`) additionally paints the aurora wash; `--s-b` keeps the solid
+	// fallback so every derived token stays sensible.
 	":root, .s-s.base": "--s-a:$s-ink --s-b:$s-page",
+	".s-s.base": "background: $s-page-bg;",
 	".s-s.panel":   "--s-a:$s-ink --s-b:$s-panel",
 	".s-s.raised":  "--s-a:$s-ink --s-b:$s-raised",
 	".s-s.neutral": "--s-a:$s-ink --s-b:$s-neutral",
-	".s-s.primary": "--s-a:$s-on-accent --s-b:$s-primary",
-	".s-s.danger":  "--s-a:$s-on-accent --s-b:$s-danger",
-	".s-s.success": "--s-a:$s-on-accent --s-b:$s-success",
-	".s-s.warning": "--s-a:$s-on-accent --s-b:$s-warning",
+	".s-s.primary":   "--s-a:$s-on-accent --s-b:$s-primary",
+	".s-s.secondary": "--s-a:$s-on-accent --s-b:$s-secondary",
+	".s-s.danger":    "--s-a:$s-on-accent --s-b:$s-danger",
+	".s-s.success":   "--s-a:$s-on-accent --s-b:$s-success",
+	".s-s.warning":   "--s-a:$s-on-accent --s-b:$s-warning",
+	// `.gradient` is an accent role whose fill is the brand sweep. Its `--s-b`
+	// anchor stays the solid `--s-primary` so the derived tokens (muted ink,
+	// border, …) remain sensible; the gradient itself is painted further down,
+	// only in the filled context (tonal/outlined read the solid fallback instead).
+	".s-s.gradient":  "--s-a:$s-on-accent --s-b:$s-primary",
 
 	// Filled default (bare `.s-s` and `:root`): map the anchors to fg/bg, derive
 	// the secondary tokens from that pair, then paint. var() resolves at use time,
@@ -215,6 +239,10 @@ A.insertGlobalCss({
 	// overrides a component's default `.tonal`/`.outlined` (resetting both the
 	// anchors and the painted background).
 	".s-s.filled": "--s-fg:$s-a --s-bg:$s-b background:$s-bg;",
+	// Paint the brand sweep for a filled `.gradient` surface. Sits after the
+	// variant rules and is keyed on `:not(.tonal):not(.outlined)`, so those
+	// variants keep their solid-primary tint/edge.
+	".s-s.gradient:not(.tonal):not(.outlined)": "background: $s-gradient;",
 
 	// Contextual accent: the brand pop colour on neutral surfaces. Declared on the
 	// whole neutral group so re-entering a neutral surface under a coloured one
@@ -225,7 +253,7 @@ A.insertGlobalCss({
 	// On a bright coloured surface those wouldn't be legible, so they fall back to
 	// the surface's own ink. (Keyed on the role modifier, so it holds across
 	// variants — and tracks the tonal/outlined fg remap.)
-	".s-s.primary, .s-s.danger, .s-s.success, .s-s.warning": "--s-accent:$s-fg --s-link:$s-fg",
+	".s-s.primary, .s-s.secondary, .s-s.danger, .s-s.success, .s-s.warning, .s-s.gradient": "--s-accent:$s-fg --s-link:$s-fg",
 });
 
 // A deliberately light reset. Colours/shape come from the contextual tokens, so

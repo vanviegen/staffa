@@ -13,7 +13,7 @@ import A from "aberdeen";
  * An Aberdeen attribute/style/class string, e.g. `"display:flex gap:$3 .my-class"`.
  * 
  * Common values are our surface modifier classes:
- * - for colors: `.panel` `.raised` `.neutral` `.primary` `.danger` `.success` and `.warning`
+ * - for colors: `.panel` `.raised` `.neutral` `.primary` `.secondary` `.gradient` `.danger` `.success` and `.warning`
  * - for variant: `.filled` `.tonal` and `.outlined`
  *
  * These strings are passed straight through to {@link A} as positional

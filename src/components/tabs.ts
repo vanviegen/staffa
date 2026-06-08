@@ -38,13 +38,13 @@ A.insertGlobalCss({
 		".s-tab":
 			"display:inline-flex align-items:center gap:$2 cursor:pointer background:transparent " +
 			"border:0 color: $s-fg-muted; font-weight:600 padding: 0.6em 0.9em; " +
-			"border-bottom: 2px solid transparent; margin-bottom:-1px " +
+			"border-bottom: 3px solid transparent; margin-bottom:-1px " +
 			"transition: color 0.15s, background 0.15s, border-color 0.15s;",
 		".s-tab:hover:not(:disabled)": "color: $s-fg;",
 		".s-tab:disabled": "opacity:0.5 cursor:not-allowed",
 		".s-tab:focus-visible": "outline:none box-shadow: 0 0 0 3px $s-focus; r: $s-radius;",
-		// The active marker uses the contextual brand accent.
-		".s-tab[aria-selected=true]": "color: $s-fg; border-bottom-color: $s-accent;",
+		// The active marker is the brand gradient, drawn as a 2px underline.
+		".s-tab[aria-selected=true]": "color: $s-fg; border-image: $s-gradient 1;",
 		// The panel has no enclosing box, so no default padding — its content
 		// aligns flush with the tab strip. Callers add padding/flex via `inner`.
 		".s-tabpanel": "display:block",

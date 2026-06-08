@@ -21,7 +21,7 @@ export interface BoxOptions extends ContentOptions {
 // it's nested in.
 A.insertGlobalCss({
 	".s-box": {
-		"&": "display:flex flex-direction:column border: 1px solid $s-border; r: $s-radius; overflow:hidden",
+		"&": "display:flex flex-direction:column border: 1px solid $s-border; r: $s-radius-lg; overflow:hidden box-shadow: $s-shadow;",
 		// A box is a flow block: it joins the same vertical rhythm as content
 		// elements (see theme.ts), spacing itself from a preceding sibling by $3.
 		"&:not(:first-child)": "margin-top: $3",

@@ -45,6 +45,16 @@ A.insertGlobalCss({
 		"&:disabled, &[aria-disabled=true]": "opacity:0.45 cursor:not-allowed pointer-events:none filter:saturate(0.6)",
 		"&:hover": "filter: brightness(1.08)",
 		"&.tonal:hover, &.outlined:hover": "background: color-mix(in srgb, $s-b 26%, transparent);",
+		// A filled `.gradient` button (the default) is the app's signature call to
+		// action: a borderless gradient with a soft glow that lifts on hover. The
+		// gradient fill itself comes from the `.s-s.gradient` surface rule in theme.ts.
+		// No border: a filled gradient reads as one solid shape. Dropping the border
+		// (rather than making it transparent) also sidesteps a Chromium artifact where
+		// a gradient clipped to a transparent rounded border fringes the edge with the
+		// gradient's far colour.
+		"&.gradient:not(.tonal):not(.outlined)": "border:0 box-shadow: $s-glow;",
+		"&.gradient:not(.tonal):not(.outlined):hover":
+			"filter: brightness(1.06); box-shadow: 0 10px 28px color-mix(in srgb, $s-primary 42%, transparent); transform: translateY(-1px);",
 		// Subtle press feedback.
 		"&:active:not(:disabled):not([aria-disabled=true])": "transform: translateY(1px)",
 		// Size: set on the button itself, or inherited from a `.small`/`.large`
@@ -53,6 +63,10 @@ A.insertGlobalCss({
 		"&.large, .large > &": "padding: 0.66em 1.3em; font-size:1.1em",
 	},
 });
+
+// Surface-role classes a caller may pass in `attrs`. When one is present we skip
+// the default `.gradient` base so the two roles don't stack on one element.
+const ROLE_CLASS = /\.(gradient|primary|secondary|neutral|danger|success|warning|base|panel|raised)(\.|\s|$)/;
 
 /**
  * A button. Always carries at least a visible border so its affordance is
@@ -81,10 +95,12 @@ export function button(opts: ButtonOptions | string | Content = {}): void {
 
 	const tag = o.href != null ? "a" : "button";
 
-	// A filled `.primary` surface by default; `attrs` (applied after) can override
-	// the role/variant with e.g. `.danger`, `.neutral .outlined`, or the size with
-	// `.small`/`.large`.
-	A(`${tag}.s-btn.s-s.primary`, o.attrs, () => {
+	// A filled `.gradient` surface by default — the signature CTA. If the caller's
+	// `attrs` already names a surface role we omit the default, so `.danger`,
+	// `.neutral .outlined`, etc. fully take over (rather than stacking two roles).
+	// A bare variant/size (`.outlined`, `.small`) keeps the gradient base.
+	const role = o.attrs && ROLE_CLASS.test(o.attrs) ? "" : ".gradient";
+	A(`${tag}.s-btn.s-s${role}`, o.attrs, () => {
 		if (o.href != null) {
 			A(`href=${o.href} role=button`);
 			if (o.disabled) A("aria-disabled=true");

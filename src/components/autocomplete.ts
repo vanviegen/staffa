@@ -47,7 +47,9 @@ A.insertGlobalCss({
 		// This menu repurposes <ul>/<li>, so opt its items out of the global list rhythm.
 		"> .s-menu li": "margin:0",
 		".s-option": "padding: 0.45em 0.6em; r:6px cursor:pointer transition: background 0.1s;",
-		".s-option[aria-selected=true]": "background:$s-raised",
+		// Translucent ink tint, not an opaque fill, so the highlight fades in without
+		// flashing through dark mid-tones (see the note in menu.ts).
+		".s-option[aria-selected=true]": "background: color-mix(in srgb, $s-fg 10%, transparent);",
 		".s-add": "fg:$s-accent font-style:italic",
 		".s-empty": "padding: 0.45em 0.6em; fg:$s-fg-muted",
 	},
