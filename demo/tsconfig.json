@@ -16,7 +16,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
-      "staffa": ["../dist/index.d.ts"]
+      "staffa": ["../dist/index.d.ts"],
+      "staffa/icons": ["../dist/icons.d.ts"]
     }
   },
   "include": ["demo.ts"]

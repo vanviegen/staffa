@@ -227,7 +227,18 @@ A.insertGlobalCss({
 		"--s-fg-faint: color-mix(in oklab, $s-fg, $s-bg 64%); " +
 		"--s-border: color-mix(in oklab, $s-fg, $s-bg 82%); " +
 		"--s-border-strong: color-mix(in oklab, $s-fg, $s-bg 68%); " +
+		// Themed scrollbars (standard properties, honoured by Firefox and modern
+		// Chromium): the thumb uses the surface's derived border token, so the bar
+		// tracks the active mode/re-skin and a nested surface's own colours.
+		"scrollbar-width:thin scrollbar-color: $s-border-strong transparent; " +
 		"background:$s-bg color:$s-fg",
+	// WebKit/older-Chromium counterpart to the standard `scrollbar-*` props above:
+	// a transparent track and a rounded thumb (border-clipped to leave breathing
+	// room) that brightens on hover.
+	".s-s::-webkit-scrollbar, .s-s ::-webkit-scrollbar": "width:10px height:10px",
+	".s-s::-webkit-scrollbar-track, .s-s ::-webkit-scrollbar-track": "background:transparent",
+	".s-s::-webkit-scrollbar-thumb, .s-s ::-webkit-scrollbar-thumb": "background:$s-border-strong border-radius:99px border: 2px solid transparent; background-clip:padding-box",
+	".s-s::-webkit-scrollbar-thumb:hover, .s-s ::-webkit-scrollbar-thumb:hover": "background:$s-fg-faint background-clip:padding-box",
 	// Tonal: the fill colour becomes the ink, over a soft tint of itself.
 	".s-s.tonal": "--s-fg:$s-b --s-bg: color-mix(in srgb, $s-b 16%, transparent);",
 	// Outlined: the fill colour is the ink; --s-bg *inherits* the parent's bg (the

@@ -2,3 +2,4 @@ node_modules/
 dist/
 demo/demo.js
 *.log
+src/icons.ts

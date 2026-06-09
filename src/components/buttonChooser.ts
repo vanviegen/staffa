@@ -1,5 +1,5 @@
 import A from "aberdeen";
-import { type Bindable, type Attributes } from "../core.js";
+import { type Bindable, type Attributes, type Slot } from "../core.js";
 import { buttonGroup } from "./buttonGroup.js";
 
 /** Options for {@link buttonChooser}. */
@@ -8,9 +8,10 @@ export interface ButtonChooserOptions {
 	attrs?: Attributes;
 	/**
 	 * The options to display, as a plain object mapping id → display label.
-	 * Buttons appear in insertion order.
+	 * Buttons appear in insertion order. A label may be a plain (rich-text)
+	 * string, or a draw-function for custom content such as an icon.
 	 */
-	options: Record<string, string>;
+	options: Record<string, Slot>;
 	/**
 	 * Two-way binding for the selected id, or `null` when nothing is selected.
 	 * Use an `A.proxy` or `A.ref`.
@@ -47,7 +48,8 @@ export function buttonChooser(opts: ButtonChooserOptions): void {
 		buttonGroup({
 			attrs: opts.attrs,
 			buttons: Object.entries(opts.options).map(([id, label]) => ({
-				text: label,
+				text: typeof label === "string" ? label : undefined,
+				content: typeof label === "function" ? label : undefined,
 				attrs: selected === id ? ".primary" : ".neutral .outlined",
 				click: () => {
 					opts.bind.value = (opts.allowDeselect && selected === id) ? null : id;

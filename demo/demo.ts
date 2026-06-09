@@ -2,6 +2,7 @@ import A from "aberdeen";
 import { current, interceptLinks } from "aberdeen/route";
 import S from "staffa";
 import type { SurfaceRole, Variant } from "staffa";
+import * as icons from "staffa/icons";
 
 // Enable PWA-style local link interception.
 interceptLinks();
@@ -24,21 +25,24 @@ const knownLanguages = ["TypeScript", "JavaScript", "Python", "Rust", "Go", "Jav
 
 A.mount(document.body, () => {
 	S.main({
-		icon: "✦",
+		// The brand sits in a gradient-text header, which sets `color:transparent`;
+		// give the icon an explicit colour so its `currentColor` stroke stays visible.
+		icon: () => icons.sparkles({ color: "var(--s-primary)" }),
 		title: "Staffa",
 		subtitle: "components for Aberdeen",
 		maxWidth: "1280px",
 		nav: {
 			button: { attrs: ".small" },
 			items: [
-				{ label: "Form",     icon: () => A("span aria-hidden=true #📋"), href: "?menu=form"     },
-				{ label: "Buttons",  icon: () => A("span aria-hidden=true #🔘"), href: "?menu=buttons"  },
-				{ label: "Tabs",     icon: () => A("span aria-hidden=true #🗂"), href: "?menu=tabs"     },
-				{ label: "Overlays", icon: () => A("span aria-hidden=true #🔔"), href: "?menu=overlays" },
-				{ label: "Surfaces", icon: () => A("span aria-hidden=true #🎨"), href: "?menu=surfaces" },
-				{ label: "Content",  icon: () => A("span aria-hidden=true #📝"), href: "?menu=content"  },
+				{ label: "Form",     icon: icons.clipboardList,      href: "?menu=form"     },
+				{ label: "Buttons",  icon: icons.mousePointerClick,  href: "?menu=buttons"  },
+				{ label: "Tabs",     icon: icons.folders,            href: "?menu=tabs"     },
+				{ label: "Overlays", icon: icons.bell,               href: "?menu=overlays" },
+				{ label: "Surfaces", icon: icons.palette,            href: "?menu=surfaces" },
+				{ label: "Content",  icon: icons.fileText,           href: "?menu=content"  },
+				{ label: "Icons",    icon: icons.shapes,             href: "?menu=icons"    },
 				{ separator: true },
-				{ label: "Aberdeen docs", icon: () => A("span aria-hidden=true #↗"), href: "https://aberdeenjs.org", target: "_blank" },
+				{ label: "Aberdeen docs", icon: icons.arrowUpRight, href: "https://aberdeenjs.org", target: "_blank" },
 			],
 		},
 		navPosition: "left",
@@ -52,6 +56,7 @@ A.mount(document.body, () => {
 				else if (page === "overlays") drawOverlays();
 				else if (page === "surfaces") drawSurfaces();
 				else if (page === "content")  drawContent();
+				else if (page === "icons")    drawIcons();
 				else                          drawForm();
 			});
 		},
@@ -65,7 +70,7 @@ function drawThemeChooser() {
 	const $mode = A.proxy<{ value: string | null }>({ value: initial });
 	A(() => S.setDarkMode($mode.value === "dark" ? true : $mode.value === "light" ? false : undefined));
 	S.buttonChooser({
-		options: { light: "☀", auto: "Auto", dark: "☾" },
+		options: { light: () => icons.sun(), auto: "Auto", dark: () => icons.moon() },
 		bind: $mode,
 		attrs: ".small",
 	});
@@ -322,11 +327,11 @@ function drawOverlays() {
 				S.menuButton({
 					button: { text: "Actions", attrs: ".neutral .outlined" },
 					items: [
-						{ label: "Edit",      icon: () => A("span aria-hidden=true #✎"), click: () => S.toast({ message: "Edit clicked",   type: "success" }) },
-						{ label: "Duplicate", icon: () => A("span aria-hidden=true #⎘"), click: () => S.toast({ message: "Duplicated",     type: "neutral" }) },
+						{ label: "Edit",      icon: icons.pencil,  click: () => S.toast({ message: "Edit clicked",   type: "success" }) },
+						{ label: "Duplicate", icon: icons.copy,    click: () => S.toast({ message: "Duplicated",     type: "neutral" }) },
 						{ separator: true },
-						{ label: "Archive",   icon: () => A("span aria-hidden=true #📦"), click: () => S.toast({ message: "Archived", type: "warning" }) },
-						{ label: "Delete",    icon: () => A("span aria-hidden=true #🗑"), attrs: "fg:$s-danger", click: () => S.toast({ message: "Deleted!", type: "danger" }) },
+						{ label: "Archive",   icon: icons.archive, click: () => S.toast({ message: "Archived", type: "warning" }) },
+						{ label: "Delete",    icon: icons.trash2,  attrs: "fg:$s-danger", click: () => S.toast({ message: "Deleted!", type: "danger" }) },
 					],
 				});
 
@@ -575,6 +580,125 @@ A("div.s-s.danger.tonal", () => {
 });`
 			));
 			A("p m:0 fg: $s-fg-muted; font-size:0.9em rich='**Tip:** on filled accent surfaces `--s-link` and `--s-accent` fall back to the surface ink so they stay legible.'");
+		},
+	});
+}
+
+// ─── Icons ─────────────────────────────────────────────────────────────────────
+
+function drawIconCell(name: string, fn: (opts?: icons.IconOptions) => void) {
+	A("div.s-s.panel display:flex flex-direction:column align-items:center justify-content:center gap:$1 padding:$2 r:$s-radius text-align:center", () => {
+		S.addTooltip({ tip: name });
+		fn({ size: 26 });
+		A("small fg:$s-fg-muted font-size:0.7em overflow:hidden text-overflow:ellipsis white-space:nowrap max-width:100% text=", name);
+	});
+}
+
+function drawIconSample(label: string, draw: () => void) {
+	A("div display:flex flex-direction:column align-items:center gap:$1 w:6rem text-align:center", () => {
+		draw();
+		A("small fg:$s-fg-muted font-size:0.72em #", label);
+	});
+}
+
+function drawIcons() {
+	// Every export of `staffa/icons` is a draw-function, except `setDefaults`. Grab
+	// them by name so we can both count the full set and power the live search box.
+	// Declared up here (not beside the icons page) so the initial synchronous mount
+	// can call drawIcons() without hitting their temporal dead zone.
+	const allIcons = Object.entries(icons).filter(
+		([name, fn]) => typeof fn === "function" && name !== "setDefaults",
+	) as [string, (opts?: icons.IconOptions) => void][];
+	const iconByName = Object.fromEntries(allIcons) as Record<string, (opts?: icons.IconOptions) => void>;
+
+	// A hand-picked subset for the gallery, in a sensible reading order.
+	const showcaseIcons = [
+		"house", "search", "settings", "user", "users", "bell", "mail", "calendar",
+		"clock", "heart", "star", "bookmark", "tag", "flag", "camera", "image",
+		"music", "video", "globe", "cloud", "sun", "moon", "zap", "rocket", "gift",
+		"coffee", "code", "terminal", "database", "download", "upload", "copy",
+		"pencil", "trash2", "filter", "eye",
+	];
+
+	S.box({
+		header: "Gallery",
+		content: () => {
+			A("p m:0 mb:$2 fg:$s-fg-muted font-size:0.9em rich='Each icon is a tree-shakable named export — `import { house } from \"staffa/icons\"` — that draws an inline `<svg>` into the current scope. Hover for the name.'");
+			A("div display:grid gap:$2 grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));", () => {
+				for (const name of showcaseIcons) drawIconCell(name, iconByName[name]);
+			});
+		},
+	});
+
+	S.box({
+		header: "Sizing",
+		content: () => {
+			A("p m:0 mb:$2 fg:$s-fg-muted font-size:0.9em rich='`size` accepts a number (px) or any CSS length. Pass `\"1em\"` to scale with the surrounding text.'");
+			A("div display:flex gap:$3 align-items:flex-end flex-wrap:wrap", () => {
+				for (const size of [16, 24, 32, 48, 64]) {
+					drawIconSample(`${size}px`, () => icons.house({ size }));
+				}
+			});
+			A("p mt:$3 mb:0 display:flex align-items:center gap:$1 flex-wrap:wrap", () => {
+				A("span #Inline and sized to the font:");
+				icons.mapPin({ size: "1em" });
+				A("span #it flows with the line, scaling up to");
+				A("span font-size:1.6em display:inline-flex align-items:center gap:$1", () => {
+					icons.mapPin({ size: "1em" });
+					A("span #1.6em");
+				});
+			});
+		},
+	});
+
+	S.box({
+		header: "Colour, stroke & line style",
+		content: () => {
+			A("div display:flex gap:$4 flex-wrap:wrap align-items:flex-start", () => {
+				drawIconSample("default", () => icons.heart({ size: 32 }));
+				drawIconSample("color", () => icons.heart({ size: 32, color: "var(--s-danger)" }));
+				drawIconSample("strokeWidth: 1", () => icons.heart({ size: 32, strokeWidth: 1 }));
+				drawIconSample("strokeWidth: 3", () => icons.heart({ size: 32, strokeWidth: 3 }));
+				drawIconSample("cap/join: miter", () => icons.activity({ size: 32, strokeWidth: 4, cap: "butt", join: "miter" }));
+				drawIconSample("cap/join: round", () => icons.activity({ size: 32, strokeWidth: 4, cap: "round", join: "round" }));
+				drawIconSample("attrs", () => icons.star({ size: 32, attrs: "fg:gold transform:rotate(15deg)" }));
+			});
+			A("p mt:$3 mb:0 fg:$s-fg-muted font-size:0.9em rich='Stroke colour defaults to `currentColor`, so an icon inherits its text colour. `attrs` is an Aberdeen attr/style string applied straight to the `<svg>` — handy for transforms, opacity or a one-off `fg:`.'");
+			A("pre mt:$2 mb:0", () => A("#",
+`// Shift the module-wide defaults once, at startup:
+import { setDefaults } from "staffa/icons";
+setDefaults({ size: "1.25em", strokeWidth: 1.5 });`));
+		},
+	});
+
+	S.box({
+		header: "In context",
+		content: () => {
+			A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
+				S.button({ text: "New", icon: icons.plus });
+				S.button({ text: "Download", icon: icons.download, attrs: ".neutral .outlined" });
+				S.button({ text: "Delete", icon: icons.trash2, attrs: ".danger .tonal" });
+				S.button({ icon: icons.settings, ariaLabel: "Settings", attrs: ".neutral .outlined" });
+			});
+			A("p mt:$3 mb:0 rich='Buttons take an `icon` slot. Because icons stroke themselves in `currentColor`, they tint to match whatever surface or text wraps them — no per-button colour needed.'");
+		},
+	});
+
+	S.box({
+		header: "Search the full set",
+		content: () => {
+			const $q = A.proxy({ value: "" });
+			S.textline({ label: `Filter all ${allIcons.length} icons`, placeholder: "e.g. arrow, chevron, file…", bind: $q });
+			A("div mt:$2", () => {
+				const q = $q.value.trim().toLowerCase();
+				const matches = q ? allIcons.filter(([name]) => name.toLowerCase().includes(q)) : allIcons;
+				const cap = 120;
+				A("p m:0 mb:$2 fg:$s-fg-muted font-size:0.85em #",
+					`${matches.length} match${matches.length === 1 ? "" : "es"}${matches.length > cap ? ` — showing the first ${cap}` : ""}`);
+				A("div display:grid gap:$2 grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));", () => {
+					for (const [name, fn] of matches.slice(0, cap)) drawIconCell(name, fn);
+				});
+			});
 		},
 	});
 }

@@ -12,6 +12,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./icons.js": {
+      "types": "./dist/icons.d.ts",
+      "default": "./dist/icons.js"
+    },
     "./all.js": "./dist/staffa.esm.js"
   },
   "files": [
@@ -19,7 +23,8 @@
     "src"
   ],
   "scripts": {
-    "build": "tsc && tsc -p demo && esbuild src/index.ts --bundle --external:aberdeen --minify --format=esm --outfile=dist/staffa.esm.js",
+    "build:icons": "node scripts/generate-icons.mjs",
+    "build": "npm run build:icons && tsc && tsc -p demo && esbuild src/index.ts --bundle --external:aberdeen --minify --format=esm --outfile=dist/staffa.esm.js",
     "typecheck": "tsc --noEmit && tsc -p demo --noEmit",
     "smoke": "tsc && node smoke.mjs",
     "prepublish": "npm run build"
@@ -31,6 +36,7 @@
     "aberdeen": "^1.17.1",
     "esbuild": "^0.28.0",
     "jsdom": "^29.1.1",
+    "lucide-static": "^1.17.0",
     "typescript": "^5.9.3"
   }
 }

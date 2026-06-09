@@ -57,7 +57,7 @@ A.insertGlobalCss({
 		"> header": "border-bottom: 1px solid $s-border; position:sticky top:0 z-index:10",
 		"> footer": "border-top: 1px solid $s-border; fg:$s-fg-muted",
 		"> header > .s-bar, > footer > .s-bar": "display:flex align-items:center width:100% margin-inline:auto gap:$3 padding: $2 $3;",
-		"> header .s-icon": "display:flex align-items:center font-size:1.4em background: $s-gradient; -webkit-background-clip:text; background-clip:text; color:transparent;",
+		"> header .s-header-icon": "display:flex align-items:center font-size:1.4em background: $s-gradient; -webkit-background-clip:text; background-clip:text; color:transparent;",
 		"> header .s-titles": "display:flex flex-direction:column min-width:0 flex:1",
 		"> header .s-title": "font-weight:800 font-size:1.1em line-height:1.2 overflow:hidden text-overflow:ellipsis white-space:nowrap letter-spacing:-0.01em background: $s-gradient; -webkit-background-clip:text; background-clip:text; color:transparent; width:fit-content max-width:100%",
 		"> header .s-subtitle": "fg:$s-fg-muted font-size:0.85em overflow:hidden text-overflow:ellipsis white-space:nowrap",
@@ -72,13 +72,19 @@ A.insertGlobalCss({
 		// the vertical sibling of the menu's `hr.s-menu-sep`.
 		".s-nav-sep": "width:1px flex-shrink:0 align-self:stretch margin: 0.6rem 0; border:0 background: linear-gradient(to bottom, transparent, $s-border-strong 18%, $s-border-strong 82%, transparent);",
 		// Without a sidebar, <main> is a direct child; with one it lives in .s-body.
-		"> main": "flex:1 overflow-y:auto display:flex flex-direction:column",
-		".s-body main": "flex:1 overflow-y:auto display:flex flex-direction:column",
+		"> main, .s-body main": "flex:1 overflow-y:auto display:flex flex-direction:column",
 		// The content area fills the scroll region with comfortable padding. Without a
 		// sidebar it caps its own width to maxWidth and centres (applied inline in
 		// drawMainContent); with one, `.s-body-inner` does the capping for the trio.
 		// It is deliberately NOT a boxed "sheet" — content brings its own boxes.
 		"> main > .s-content, .s-body main > .s-content": "width:100% flex:1 p:$3",
+		// When <main> actually shows a vertical scrollbar (the `.s-scroll-y` class is
+		// toggled from JS by watchVerticalOverflow), inset it from the shell edge by
+		// $3 so the bar's right edge lines up with the header/footer content (which
+		// sits $3 inside the edge via `.s-bar` padding). The $3 gap between the content
+		// and the bar already comes from `.s-content`'s padding. Without a scrollbar
+		// there's no margin, so the content keeps its single $3 edge — not 2×$3.
+		"> main.s-scroll-y, .s-body main.s-scroll-y": "margin-right:$3",
 	},
 	// Sidebar nav panel. Items reuse the shared `.s-menu-item[-link]` /
 	// `.s-menu-sep` styles from menu.ts, so the sidebar and the floating
@@ -173,7 +179,7 @@ export function main(opts: MainOptions = {}): void {
 					});
 
 					A(() => {
-						if (opts.icon != null) A("div.s-icon", () => drawSlot(opts.icon));
+						if (opts.icon != null) A("div.s-header-icon", () => drawSlot(opts.icon));
 					});
 					A("div.s-titles", () => {
 						A(() => {
@@ -231,7 +237,7 @@ export function main(opts: MainOptions = {}): void {
  * mode the surrounding `.s-body-inner` already caps the sidebar+content trio.
  */
 function drawMainContent(opts: MainOptions, capWidth: boolean): void {
-	A("main", () => {
+	const mainEl = A("main", () => {
 		A("div.s-content", opts.contentAttrs, () => {
 			if (capWidth) {
 				A(() => {
@@ -240,5 +246,25 @@ function drawMainContent(opts: MainOptions, capWidth: boolean): void {
 			}
 			if (opts.content) opts.content();
 		});
-	});
+	}) as HTMLElement;
+	watchVerticalOverflow(mainEl);
+}
+
+/**
+ * Toggle the `.s-scroll-y` class on `el` whenever a vertical scrollbar is eating
+ * into its width, so CSS can inset the bar from the shell edge (see the
+ * `.s-scroll-y` rule above). We key on `offsetWidth > clientWidth` — a
+ * *space-consuming* scrollbar — rather than on content overflow, so overlay
+ * scrollbars (mobile, macOS) that take no layout width don't trigger the margin.
+ * A `ResizeObserver` watches both the viewport and its content, so the class
+ * tracks live content/layout changes; it's disconnected when the scope tears down.
+ */
+function watchVerticalOverflow(el: HTMLElement): void {
+	if (typeof ResizeObserver === "undefined") return; // No-op outside the browser.
+	const update = () => el.classList.toggle("s-scroll-y", el.offsetWidth > el.clientWidth);
+	const ro = new ResizeObserver(update);
+	ro.observe(el);
+	if (el.firstElementChild) ro.observe(el.firstElementChild);
+	update();
+	A.clean(() => ro.disconnect());
 }
