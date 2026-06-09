@@ -292,6 +292,26 @@ A.insertGlobalCss({
 	},
 });
 
+// ── Suppress transitions during the initial load ─────────────────────────────
+// Buttons (and links) transition their colours, so a light↔dark switch animates
+// smoothly. On a *cold* load that's a liability: elements mount and paint in the
+// active theme in one pass, but a transitioning element animates from its
+// default (unstyled) colours into the theme — so a fresh button visibly slides
+// from light to dark while the rest of the page is already correct. Tag <html>
+// until the first frame has painted and hard-disable transitions under that tag,
+// so the initial render snaps straight to the right colours. Two rAFs: the first
+// runs before the paint that shows the themed UI, the second clears the tag just
+// after it — later theme switches then animate as normal.
+A.insertGlobalCss({
+	".s-preload, .s-preload *, .s-preload *::before, .s-preload *::after":
+		"transition: none !important; animation: none !important;",
+});
+if (typeof document !== "undefined" && typeof requestAnimationFrame === "function") {
+	const root = document.documentElement;
+	root.classList.add("s-preload");
+	requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove("s-preload")));
+}
+
 // ── Flow content: vertical rhythm & light typography ─────────────────────────
 // Sensible block defaults for *any* content — your own UI just as much as
 // markdown-rendered HTML. The rhythm: strip the browser's block margins, then
