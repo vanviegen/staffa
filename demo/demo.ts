@@ -21,6 +21,24 @@ const $user = A.proxy({
 const knownTags = ["aberdeen", "ui", "ux", "reactive", "typescript", "css"];
 const knownLanguages = ["TypeScript", "JavaScript", "Python", "Rust", "Go", "Java", "C#", "C++"];
 
+
+// Default brand palette for the demo. A.cssVars writes a `:root` custom-property
+// block that Aberdeen emits *after* the library's own styles, so it cleanly
+// overrides Staffa's --s-primary / --s-secondary (and everything derived from
+// them) at equal specificity. Transient — not persisted.
+A.cssVars["s-primary"] = "#fdda58";
+A.cssVars["s-secondary"] = "#cc5624";
+
+// Scoped (generated-class) styling for the swatch row, so it stays out of the
+// global and `s-` namespaces.
+const colorPickerStyle = A.insertCss({
+	"&": "display:flex align-items:center gap:$1",
+	"input[type=color]": "w:1.9rem h:1.9rem p:0 border: 1px solid $s-border-strong; r:$s-radius bg:transparent cursor:pointer",
+	"input[type=color]::-webkit-color-swatch-wrapper": "padding:2px",
+	"input[type=color]::-webkit-color-swatch": "border:0 border-radius: calc($s-radius - 3px)",
+	"input[type=color]::-moz-color-swatch": "border:0 border-radius: calc($s-radius - 3px)",
+});
+
 // ─── Shell ───────────────────────────────────────────────────────────────────
 
 A.mount(document.body, () => {
@@ -46,7 +64,10 @@ A.mount(document.body, () => {
 			],
 		},
 		navPosition: "left",
-		menu: () => drawThemeChooser(),
+		menu: () => {
+				drawColorPickers();
+				drawThemeChooser();
+		},
 		footer: () => A("span rich='Built with **Staffa** · © 2026'"),
 		content: () => {
 			A(() => {
@@ -64,6 +85,25 @@ A.mount(document.body, () => {
 });
 
 // ─── Theme chooser ───────────────────────────────────────────────────────────
+
+
+/**
+ * Two swatches that re-skin the brand's primary/secondary colours live, bound
+ * straight to A.cssVars so a pick updates the `:root` token — and thus the whole
+ * theme — reactively. Transient: nothing persisted, a reload restores defaults.
+ */
+function drawColorPickers() {
+	// Object syntax (not the string mini-language) so the spaces in the aria-labels
+	// don't get split into stray tokens — which would break the `bind`.
+	A("div", colorPickerStyle, () => {
+		A("input type=color", { "aria-label": "Primary colour", bind: A.ref(A.cssVars, "s-primary") }, () => {
+			S.addTooltip({ tip: "Primary colour" });
+		});
+		A("input type=color", { "aria-label": "Secondary colour", bind: A.ref(A.cssVars, "s-secondary") }, () => {
+			S.addTooltip({ tip: "Secondary colour" });
+		});
+	});
+}
 
 function drawThemeChooser() {
 	const initial = S.getDarkMode(true) === true ? "dark" : S.getDarkMode(true) === false ? "light" : "auto";

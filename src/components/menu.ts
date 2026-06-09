@@ -86,7 +86,7 @@ A.insertGlobalCss({
 		"display:flex align-items:center gap:$2 w:100% " +
 		"padding: 0.5em 0.65em; r:$s-radius cursor:pointer text-align:left " +
 		"font-size:0.9em border:0 background:transparent fg:$s-fg text-decoration:none " +
-		"transition: background 0.12s, color 0.12s;",
+		"transition: background 0.12s, color 0.12s, transform 0.12s, box-shadow 0.12s;",
 	// A translucent ink tint (rather than an *opaque* mix) so the hover fades in
 	// cleanly: transitioning background from `transparent` toward an opaque colour
 	// flashes through dark mid-tones in browsers that interpolate non-premultiplied.
@@ -100,7 +100,7 @@ A.insertGlobalCss({
 	".s-menu-item[aria-current=page] .s-menu-icon, .s-menu-item-link[aria-current=page] .s-menu-icon":
 		"color:$s-on-accent",
 	".s-menu-item[aria-current=page]:hover, .s-menu-item-link[aria-current=page]:hover":
-		"filter: brightness(1.06);",
+		"filter:brightness(1.06)",
 	".s-menu-item:focus-visible, .s-menu-item-link:focus-visible":
 		"outline:none background: color-mix(in srgb, $s-fg 10%, transparent); box-shadow: 0 0 0 2px inset $s-focus;",
 	".s-menu-item[aria-disabled=true], .s-menu-item-link[aria-disabled=true]":

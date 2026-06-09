@@ -161,7 +161,7 @@ A(() => {
 			":root":
 				"--s-primary:#6c5ce7 --s-secondary:#d6459e --s-danger:#e23b3b --s-success:#1f9d6b --s-warning:#d97706 " +
 				"--s-neutral:#c7ccda --s-page:#f3f4f8 --s-panel:#ffffff --s-raised:#eceef4 " +
-				"--s-ink:#1b1e27 --s-on-accent:#ffffff --s-focus:rgba(108,92,231,0.35) " +
+				"--s-ink:#1b1e27 --s-on-accent:#0c0a14 --s-focus:rgba(108,92,231,0.35) " +
 				"--s-radius:12px --s-radius-lg:18px --s-shadow: 0 10px 30px rgba(20,24,40,0.13);",
 			":root, .s-s.base, .s-s.panel, .s-s.raised, .s-s.neutral": "--s-link:#2563eb",
 		});

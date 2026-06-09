@@ -43,7 +43,10 @@ A.insertGlobalCss({
 			"transition: background 0.15s, border-color 0.15s, color 0.15s, filter 0.15s, box-shadow 0.15s, transform 0.08s;",
 		"&:focus-visible": "outline:none box-shadow: 0 0 0 3px $s-focus;",
 		"&:disabled, &[aria-disabled=true]": "opacity:0.45 cursor:not-allowed pointer-events:none filter:saturate(0.6)",
-		"&:hover": "filter: brightness(1.08)",
+		// Every button lifts a little toward the cursor on hover (the transform is in
+		// the transition list above). The filled `.gradient` CTA below layers a deeper
+		// shadow on top of the same lift, so it still reads as the signature action.
+		"&:hover": "filter: brightness(1.08); transform: translateY(-1px)",
 		"&.tonal:hover, &.outlined:hover": "background: color-mix(in srgb, $s-b 26%, transparent);",
 		// A filled `.gradient` button (the default) is the app's signature call to
 		// action: a borderless gradient with a soft glow that lifts on hover. The
