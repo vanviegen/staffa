@@ -40,13 +40,10 @@ A.insertGlobalCss({
 			"border:0 color: $s-fg-muted; font-weight:600 padding: 0.6em 0.9em; " +
 			"border-bottom: 3px solid transparent; margin-bottom:-1px " +
 			"transition: color 0.15s, background 0.15s, border-color 0.15s;",
-		".s-tab:hover:not(:disabled)": "color: $s-fg;",
+		".s-tab:hover:not(:disabled), .s-tab[aria-selected=true]": "color: $s-fg;",
 		".s-tab:disabled": "opacity:0.5 cursor:not-allowed",
 		".s-tab:focus-visible": "outline:none box-shadow: 0 0 0 3px $s-focus; r: $s-radius;",
-		// The active marker is the brand gradient, drawn as a 2px underline.
-		".s-tab[aria-selected=true]": "color: $s-fg; border-image: $s-gradient 1;",
-		// The panel has no enclosing box, so no default padding — its content
-		// aligns flush with the tab strip. Callers add padding/flex via `inner`.
+		".s-tab[aria-selected=true]": "border-image: $s-gradient 1;",
 		".s-tabpanel": "display:block",
 	},
 });

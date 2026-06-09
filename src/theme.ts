@@ -323,14 +323,18 @@ if (typeof document !== "undefined" && typeof requestAnimationFrame === "functio
 const BLOCK = "p, ul, ol, dl, blockquote, pre, table, figure, hr, h1, h2, h3, h4, h5, h6";
 
 A.insertGlobalCss({
-	[`:is(${BLOCK})`]: "margin: 0",
-	[`:is(${BLOCK}):not(:first-child)`]: "margin-top: $3",
+	[`${BLOCK}`]: {
+		"&": "margin:0",
+		"&:not(:first-child)": "margin-top:$3",
+	},
 
 	// Headings: bold, tight, balanced. Big levels get slightly negative tracking,
 	// small levels become spaced "labels" — so adjacent levels stay distinct. The
 	// em-based top margin gives larger headings a little more room above.
-	"h1, h2, h3, h4, h5, h6": "line-height:1.15 font-weight:700 text-wrap:balance",
-	[":is(h1, h2, h3, h4, h5, h6):not(:first-child)"]: "margin-top: 1.4em",
+	"h1, h2, h3, h4, h5, h6": {
+		"&": "line-height:1.15 font-weight:700 text-wrap:balance",
+		"&:not(:first-child)": "margin-top:1.4em",
+	},
 	h1: "font-size:2em font-weight:800 letter-spacing:-0.022em",
 	h2: "font-size:1.55em letter-spacing:-0.018em",
 	h3: "font-size:1.3em letter-spacing:-0.011em",
@@ -339,8 +343,10 @@ A.insertGlobalCss({
 	h6: "font-size:0.8em fg:$s-fg-muted text-transform:uppercase letter-spacing:0.07em",
 
 	// Lists: markers, a sensible indent, gently spaced items, tight nesting.
-	"ul, ol": "padding-left: 1.5em",
-	":is(ul, ol) > li:not(:first-child), li > :is(ul, ol):not(:first-child)": "margin-top: $1",
+	"ul, ol": {
+		"&": "padding-left:1.5em",
+		"> li:not(:first-child), li > &:not(:first-child)": "margin-top:$1",
+	},
 
 	// Blockquote, tables, definition lists, figure captions.
 	blockquote: "border-left: 3px solid $s-border; padding-left: $3; fg: $s-fg-muted",

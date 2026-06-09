@@ -38,12 +38,9 @@ A.insertGlobalCss({
 		"&": "display:flex flex-direction:column gap:$1",
 		"> label": "font-weight:600 font-size:0.9em fg:$s-fg user-select:none",
 	},
-	// Shared, reusable bits (also used by checkbox & autocomplete).
 	".s-req": "fg:$s-danger margin-left:2px",
 	".s-help": "font-size:0.82em fg:$s-fg-muted",
 	".s-error": "font-size:0.82em fg:$s-danger",
-	// Shared look for text-like controls: a panel fill with a contextual border,
-	// the brand accent for focus, and the semantic danger ink when invalid.
 	".s-input": {
 		"&": "w:100% bg:$s-panel fg:$s-ink border: 1px solid $s-border; r:$s-radius padding: 0.55em 0.7em; transition: border-color 0.15s, box-shadow 0.15s;",
 		"&:hover:not(:disabled)": "border-color:$s-border-strong",

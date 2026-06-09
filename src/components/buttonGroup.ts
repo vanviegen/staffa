@@ -24,8 +24,6 @@ A.insertGlobalCss({
 		"&.s-spaced": "gap:$2 flex-wrap:wrap",
 		"&.s-vertical": "flex-direction:column",
 		"&.s-attached": "gap:0",
-		// When attached, collapse the shared border and square off the touching
-		// corners, keeping only the outer ends of the group rounded.
 		"&.s-attached:not(.s-vertical) > .s-btn:not(:first-child)": "margin-left:-1px",
 		"&.s-attached:not(.s-vertical) > .s-btn:not(:first-child):not(:last-child)": "r:0",
 		"&.s-attached:not(.s-vertical) > .s-btn:first-child:not(:last-child)": "border-top-right-radius:0 border-bottom-right-radius:0",
@@ -34,7 +32,6 @@ A.insertGlobalCss({
 		"&.s-attached.s-vertical > .s-btn:not(:first-child):not(:last-child)": "r:0",
 		"&.s-attached.s-vertical > .s-btn:first-child:not(:last-child)": "border-bottom-left-radius:0 border-bottom-right-radius:0",
 		"&.s-attached.s-vertical > .s-btn:last-child:not(:first-child)": "border-top-left-radius:0 border-top-right-radius:0",
-		// Keep the hovered/focused button's border above its neighbours.
 		"&.s-attached > .s-btn:hover, &.s-attached > .s-btn:focus-visible": "z-index:1",
 	},
 });

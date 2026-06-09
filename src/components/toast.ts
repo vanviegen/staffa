@@ -47,7 +47,7 @@ A.insertGlobalCss({
 			"cursor:pointer border:0 background:transparent fg:$s-fg-muted font-size:1.1em line-height:1 " +
 			"padding: 0 0.15em; r:4px flex-shrink:0 align-self:flex-start",
 		".s-toast-close:hover": "fg:$s-fg",
-		".s-toast-close:focus-visible": "outline:none box-shadow: 0 0 0 3px $s-focus;",
+		".s-toast-close:focus-visible": "outline:none box-shadow: 0 0 0 3px $s-focus; fg:$s-fg",
 	},
 });
 
