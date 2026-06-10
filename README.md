@@ -172,6 +172,24 @@ Components share naming conventions for options: `attrs` (outermost element), `c
 - **`S.buttonGroup(opts)`**: groups buttons, `attached` (segmented) or `spaced`.
 - **`S.buttonChooser(opts)`**: single-select segmented control bound to a value.
 
+
+### Icons
+
+Staffa ships the full [Lucide icon set](https://lucide.dev/icons/) as named exports. Import only the ones you use, so a bundler tree-shakes the rest (the whole set is ~82 kB gzipped):
+
+```ts
+import { sparkles, bell } from "staffa/icons.js";
+```
+
+Each icon is a draw function usable anywhere a slot is accepted (e.g. a button `icon`), or called directly. Customize per call, or globally via `setDefaults()`:
+
+```ts
+S.button({ text: "Save", icon: bell });
+sparkles({ size: "1.5em", color: "var(--s-primary)", strokeWidth: 1.5 });
+```
+
+Options: `size`, `color` (defaults to `currentColor`), `strokeWidth`, `cap`, `join`, `attrs`.
+
 ### Other
 
 - **`S.menuButton(opts)` / `S.showFloatingMenu(opts)`**: menu actions and floating menus, with keyboard navigation and submenus.
