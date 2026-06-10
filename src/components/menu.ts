@@ -91,7 +91,7 @@ A.insertGlobalCss({
 	// cleanly: transitioning background from `transparent` toward an opaque colour
 	// flashes through dark mid-tones in browsers that interpolate non-premultiplied.
 	// Staying ink-hued at low alpha keeps the fade the right colour throughout.
-	".s-menu-item:hover:not([aria-disabled=true]), .s-menu-item-link:hover":
+	".s-menu-item:hover:not([aria-disabled=true]):not([aria-current=page]), .s-menu-item-link:hover:not([aria-current=page])":
 		"background: color-mix(in srgb, $s-fg 10%, transparent);",
 	// Active (current page): a filled brand-gradient pill with a soft glow — the
 	// one place the menu shows real colour, so the current page is unmistakable.
