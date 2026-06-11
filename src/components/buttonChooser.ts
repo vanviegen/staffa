@@ -13,13 +13,13 @@ export interface ButtonChooserOptions {
 	 */
 	options: Record<string, Slot>;
 	/**
-	 * Two-way binding for the selected id, or `null` when nothing is selected.
+	 * Two-way binding for the selected id, or `undefined` when nothing is selected.
 	 * Use an `A.proxy` or `A.ref`.
 	 */
-	bind: Bindable<string | null>;
+	bind: Bindable<string | undefined>;
 	/**
 	 * When `true`, clicking the already-selected button deselects it, setting
-	 * `bind.value` to `null`. Useful for "none / auto" states.
+	 * `bind.value` to `undefined`. Useful for "none / auto" states.
 	 */
 	allowDeselect?: boolean;
 	/** Name attribute for the hidden `<input>`, enabling form submission. */
@@ -28,14 +28,14 @@ export interface ButtonChooserOptions {
 
 /**
  * A single-selection segmented control: an attached button group where exactly
- * one button is active at a time. Optionally allows deselecting back to `null`.
+ * one button is active at a time. Optionally allows deselecting back to `undefined`.
  *
  * Renders a hidden `<input>` alongside (when `name` is set) so the selected
  * value is included in native form submission.
  *
  * @example
  * ```ts
- * const $view = A.proxy({ value: "day" as string | null });
+ * const $view = A.proxy({ value: "day" as string | undefined });
  * S.buttonChooser({
  *   options: { day: "Day", week: "Week", month: "Month" },
  *   bind: $view,
@@ -48,11 +48,13 @@ export function buttonChooser(opts: ButtonChooserOptions): void {
 		buttonGroup({
 			attrs: opts.attrs,
 			buttons: Object.entries(opts.options).map(([id, label]) => ({
-				text: typeof label === "string" ? label : undefined,
-				content: typeof label === "function" ? label : undefined,
+				content: label,
+				// Icon-only options (draw-function labels) get the id as their
+				// accessible name; plain-text labels speak for themselves.
+				ariaLabel: typeof label === "function" ? id : undefined,
 				attrs: selected === id ? ".primary" : ".neutral .outlined",
 				click: () => {
-					opts.bind.value = (opts.allowDeselect && selected === id) ? null : id;
+					opts.bind.value = (opts.allowDeselect && selected === id) ? undefined : id;
 				},
 			})),
 		});

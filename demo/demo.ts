@@ -1,7 +1,6 @@
 import A from "aberdeen";
 import { current, interceptLinks } from "aberdeen/route";
-import S from "staffa";
-import type { SurfaceRole, Variant } from "staffa";
+import * as S from "staffa";
 import * as icons from "staffa/icons";
 
 // Enable PWA-style local link interception.
@@ -42,45 +41,53 @@ const colorPickerStyle = A.insertCss({
 // ─── Shell ───────────────────────────────────────────────────────────────────
 
 A.mount(document.body, () => {
-	S.main({
-		// The brand sits in a gradient-text header, which sets `color:transparent`;
-		// give the icon an explicit colour so its `currentColor` stroke stays visible.
-		icon: () => icons.sparkles({ color: "var(--s-primary)" }),
-		title: "Staffa",
-		subtitle: "components for Aberdeen",
-		maxWidth: "1280px",
-		nav: {
-			button: { attrs: ".small" },
-			items: [
-				{ label: "Form",     icon: icons.clipboardList,      href: "?menu=form"     },
-				{ label: "Buttons",  icon: icons.mousePointerClick,  href: "?menu=buttons"  },
-				{ label: "Tabs",     icon: icons.folders,            href: "?menu=tabs"     },
-				{ label: "Overlays", icon: icons.bell,               href: "?menu=overlays" },
-				{ label: "Surfaces", icon: icons.palette,            href: "?menu=surfaces" },
-				{ label: "Content",  icon: icons.fileText,           href: "?menu=content"  },
-				{ label: "Icons",    icon: icons.shapes,             href: "?menu=icons"    },
-				{ separator: true },
-				{ label: "Aberdeen docs", icon: icons.arrowUpRight, href: "https://aberdeenjs.org", target: "_blank" },
-			],
-		},
-		navPosition: "left",
-		menu: () => {
-				drawColorPickers();
-				drawThemeChooser();
-		},
-		footer: () => A("span rich='Built with **Staffa** · © 2026'"),
-		content: () => {
-			A(() => {
-				const page = current.search.menu;
-				if (page === "buttons")       drawButtons();
-				else if (page === "tabs")     drawTabsPage();
-				else if (page === "overlays") drawOverlays();
-				else if (page === "surfaces") drawSurfaces();
-				else if (page === "content")  drawContent();
-				else if (page === "icons")    drawIcons();
-				else                          drawForm();
-			});
-		},
+	const $navPosition = A.proxy("left") as {value: "left" | "right" | "button"};
+	A(() => {
+		S.main({
+			// The brand sits in a gradient-text header, which sets `color:transparent`;
+			// give the icon an explicit colour so its `currentColor` stroke stays visible.
+			icon: () => icons.sparkles({ color: "var(--s-primary)" }),
+			title: "Staffa",
+			subtitle: "components for Aberdeen",
+			maxWidth: "1280px",
+			nav: {
+				button: { attrs: ".small" },
+				items: [
+					{ label: "Form",     icon: icons.clipboardList,      href: "?menu=form"     },
+					{ label: "Buttons",  icon: icons.mousePointerClick,  href: "?menu=buttons"  },
+					{ label: "Tabs",     icon: icons.folders,            href: "?menu=tabs"     },
+					{ label: "Overlays", icon: icons.bell,               href: "?menu=overlays" },
+					{ label: "Surfaces", icon: icons.palette,            href: "?menu=surfaces" },
+					{ label: "Content",  icon: icons.fileText,           href: "?menu=content"  },
+					{ label: "Icons",    icon: icons.shapes,             href: "?menu=icons"    },
+					{ separator: true },
+					{ label: "Aberdeen docs", icon: icons.arrowUpRight, href: "https://aberdeenjs.org", target: "_blank" },
+				],
+			},
+			navPosition: $navPosition.value,
+			menu: () => {
+					S.buttonChooser({
+						options: { left: icons.panelLeft, right: icons.panelRight, button: icons.menu },
+						bind: $navPosition,
+						attrs: ".small",
+					});
+					drawColorPickers();
+					drawThemeChooser();
+			},
+			footer: () => A("span rich='Built with **Staffa** · © 2026'"),
+			content: () => {
+				A(() => {
+					const page = current.search.menu;
+					if (page === "buttons")       drawButtons();
+					else if (page === "tabs")     drawTabsPage();
+					else if (page === "overlays") drawOverlays();
+					else if (page === "surfaces") drawSurfaces();
+					else if (page === "content")  drawContent();
+					else if (page === "icons")    drawIcons();
+					else                          drawForm();
+				});
+			},
+		});
 	});
 });
 
@@ -107,7 +114,7 @@ function drawColorPickers() {
 
 function drawThemeChooser() {
 	const initial = S.getDarkMode(true) === true ? "dark" : S.getDarkMode(true) === false ? "light" : "auto";
-	const $mode = A.proxy<{ value: string | null }>({ value: initial });
+	const $mode = A.proxy({ value: initial });
 	A(() => S.setDarkMode($mode.value === "dark" ? true : $mode.value === "light" ? false : undefined));
 	S.buttonChooser({
 		options: { light: () => icons.sun(), auto: "Auto", dark: () => icons.moon() },
@@ -173,8 +180,8 @@ function drawForm() {
 					S.checkbox({ label: "Subscribe to the newsletter", name: "newsletter", bind: A.ref($user, "newsletter") });
 				},
 				actions: () => {
-					S.button({ text: "Save", type: "submit" });
-					S.button({ text: "Cancel", attrs: ".neutral .tonal" });
+					S.button({ content: "Cancel", attrs: ".neutral .tonal" });
+					S.button({ content: "Save", type: "submit" });
 				},
 				submit: (data) => {
 					S.dialog({
@@ -183,7 +190,7 @@ function drawForm() {
 						content: (close) => {
 							A("pre", () => A("#", JSON.stringify(data, null, 2)));
 							A("div display:flex gap:$2 justify-content:flex-end", () => {
-								S.button({ text: "Close", click: close });
+								S.button({ content: "Close", click: close });
 							});
 						},
 					});
@@ -199,8 +206,8 @@ function drawForm() {
 }
 
 function drawButtons() {
-	const roles: SurfaceRole[] = ["gradient", "primary", "secondary", "neutral", "danger", "success"];
-	const variants: Variant[] = ["filled", "tonal", "outlined"];
+	const roles = ["gradient", "primary", "secondary", "neutral", "danger", "success"];
+	const variants = ["filled", "tonal", "outlined"];
 
 	S.box({
 		header: "Variants & sizes",
@@ -210,17 +217,17 @@ function drawButtons() {
 				A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
 					A("div text-align:right w:5rem text=", variant);
 					for (const role of roles) {
-						S.button({ text: role, attrs: `.${role} .${variant}` });
+						S.button({ content: role, attrs: `.${role} .${variant}` });
 					}
-					S.button({ text: "disabled", attrs: `.primary .${variant}`, disabled: true });
+					S.button({ content: "disabled", attrs: `.primary .${variant}`, disabled: true });
 				});
 			}
 
 			A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
 				A("div text-align:right w:5rem #sizes");
-				S.button({ text: "Small", attrs: ".small" });
-				S.button({ text: "Medium" });
-				S.button({ text: "Large", attrs: ".large" });
+				S.button({ content: "Small", attrs: ".small" });
+				S.button({ content: "Medium" });
+				S.button({ content: "Large", attrs: ".large" });
 			});
 		},
 	});
@@ -232,9 +239,9 @@ function drawButtons() {
 			A("h4 mt:0 #Segmented group (attached)");
 			S.buttonGroup({
 				buttons: [
-					{ text: "Day",   attrs: ".neutral .outlined" },
-					{ text: "Week",  attrs: ".danger .tonal" },
-					{ text: "Month" },
+					{ content: "Day",   attrs: ".neutral .outlined" },
+					{ content: "Week",  attrs: ".danger .tonal" },
+					{ content: "Month" },
 				],
 			});
 
@@ -242,9 +249,9 @@ function drawButtons() {
 			S.buttonGroup({
 				layout: "spaced",
 				buttons: [
-					{ text: "Save" },
-					{ text: "Delete",   attrs: ".danger .outlined" },
-					{ text: "Disabled", disabled: true },
+					{ content: "Delete",   attrs: ".danger .outlined" },
+					{ content: "Disabled", disabled: true },
+					{ content: "Save" },
 				],
 			});
 		},
@@ -306,27 +313,27 @@ function drawOverlays() {
 			A("p m:0 fg:$s-fg-muted font-size:0.9em #Click to fire a toast. Each dismisses independently.");
 			A("div display:flex gap:$2 flex-wrap:wrap mt:$2", () => {
 				S.button({
-					text: "Neutral",
+					content: "Neutral",
 					attrs: ".neutral .outlined",
 					click: () => S.toast({ message: "A neutral notification." }),
 				});
 				S.button({
-					text: "Success",
+					content: "Success",
 					attrs: ".success .tonal",
 					click: () => S.toast({ title: "Saved!", message: "Your changes have been saved.", type: "success" }),
 				});
 				S.button({
-					text: "Warning",
+					content: "Warning",
 					attrs: ".warning .tonal",
 					click: () => S.toast({ title: "Watch out", message: "This action cannot be undone.", type: "warning" }),
 				});
 				S.button({
-					text: "Danger",
+					content: "Danger",
 					attrs: ".danger .tonal",
 					click: () => S.toast({ title: "Error", message: "Something went wrong.", type: "danger" }),
 				});
 				S.button({
-					text: "Persistent",
+					content: "Persistent",
 					attrs: ".neutral .outlined",
 					click: () => {
 						const dismiss = S.toast({ title: "In progress", message: "Dismiss manually or wait 8 s.", duration: 0 });
@@ -334,7 +341,7 @@ function drawOverlays() {
 					},
 				});
 				S.button({
-					text: "No close button",
+					content: "No close button",
 					attrs: ".neutral .outlined",
 					click: () => S.toast({ message: "Auto-dismisses in 2 s.", duration: 2000, dismissible: false }),
 				});
@@ -348,12 +355,12 @@ function drawOverlays() {
 		content: () => {
 			A("p m:0 fg:$s-fg-muted font-size:0.9em #Portal-rendered — never clipped. Hover or focus the buttons to see the tips.");
 			A("div display:flex gap:$4 flex-wrap:wrap align-items:center mt:$2", () => {
-				A("span display:inline-flex", () => { S.addTooltip({ tip: "Appears above (default)" });            S.button({ text: "Top",      attrs: ".neutral .outlined" }); });
-				A("span display:inline-flex", () => { S.addTooltip({ placement: "bottom", tip: "Appears below" }); S.button({ text: "Bottom",   attrs: ".neutral .outlined" }); });
-				A("span display:inline-flex", () => { S.addTooltip({ placement: "left",   tip: "Appears to the left" }); S.button({ text: "Left", attrs: ".neutral .outlined" }); });
-				A("span display:inline-flex", () => { S.addTooltip({ placement: "right",  tip: "Appears to the right" }); S.button({ text: "Right", attrs: ".neutral .outlined" }); });
-				A("span display:inline-flex", () => { S.addTooltip({ tip: "Supports **bold** and `code` in tips" }); S.button({ text: "Rich tip", attrs: ".neutral .outlined" }); });
-				A("span display:inline-flex", () => { S.addTooltip({ tip: "Still describes why it's disabled" });    S.button({ text: "Disabled", disabled: true }); });
+				A("span display:inline-flex", () => { S.addTooltip({ tip: "Appears above (default)" });            S.button({ content: "Top",      attrs: ".neutral .outlined" }); });
+				A("span display:inline-flex", () => { S.addTooltip({ placement: "bottom", tip: "Appears below" }); S.button({ content: "Bottom",   attrs: ".neutral .outlined" }); });
+				A("span display:inline-flex", () => { S.addTooltip({ placement: "left",   tip: "Appears to the left" }); S.button({ content: "Left", attrs: ".neutral .outlined" }); });
+				A("span display:inline-flex", () => { S.addTooltip({ placement: "right",  tip: "Appears to the right" }); S.button({ content: "Right", attrs: ".neutral .outlined" }); });
+				A("span display:inline-flex", () => { S.addTooltip({ tip: "Supports **bold** and `code` in tips" }); S.button({ content: "Rich tip", attrs: ".neutral .outlined" }); });
+				A("span display:inline-flex", () => { S.addTooltip({ tip: "Still describes why it's disabled" });    S.button({ content: "Disabled", disabled: true }); });
 			});
 		},
 	});
@@ -365,7 +372,7 @@ function drawOverlays() {
 			A("p m:0 fg:$s-fg-muted font-size:0.9em #Portal-rendered — never clipped. Full keyboard nav: arrows, Enter, Escape.");
 			A("div display:flex gap:$3 flex-wrap:wrap align-items:center mt:$2", () => {
 				S.menuButton({
-					button: { text: "Actions", attrs: ".neutral .outlined" },
+					button: { content: "Actions", attrs: ".neutral .outlined" },
 					items: [
 						{ label: "Edit",      icon: icons.pencil,  click: () => S.toast({ message: "Edit clicked",   type: "success" }) },
 						{ label: "Duplicate", icon: icons.copy,    click: () => S.toast({ message: "Duplicated",     type: "neutral" }) },
@@ -376,7 +383,7 @@ function drawOverlays() {
 				});
 
 				S.menuButton({
-					button: { text: "With link & disabled", attrs: ".neutral .tonal" },
+					button: { content: "With link & disabled", attrs: ".neutral .tonal" },
 					items: [
 						{ label: "View docs", href: "https://aberdeenjs.org", target: "_blank" },
 						{ label: "Share", click: () => S.toast({ message: "Link copied!", type: "success" }) },
@@ -405,19 +412,19 @@ function drawOverlays() {
 			const $result = A.proxy({ value: "" });
 			A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
 				S.button({
-					text: "alert()", click: async () => {
+					content: "alert()", click: async () => {
 						await S.alert("File saved successfully.");
 						$result.value = "alert: dismissed";
 					},
 				});
 				S.button({
-					text: "confirm()", attrs: ".neutral .tonal", click: async () => {
+					content: "confirm()", attrs: ".neutral .tonal", click: async () => {
 						const ok = await S.confirm("Delete this item?");
 						$result.value = `confirm → ${ok}`;
 					},
 				});
 				S.button({
-					text: "prompt()", attrs: ".neutral .outlined", click: async () => {
+					content: "prompt()", attrs: ".neutral .outlined", click: async () => {
 						const name = await S.prompt("Enter your name:", "Alice");
 						$result.value = name === null ? "prompt → cancelled" : `prompt → "${name}"`;
 					},
@@ -427,7 +434,7 @@ function drawOverlays() {
 
 			A("div display:flex gap:$2 flex-wrap:wrap align-items:center mt:$2", () => {
 				S.button({
-					text: "dialog in dialog", attrs: ".warning .outlined", click: () => {
+					content: "dialog in dialog", attrs: ".warning .outlined", click: () => {
 						S.dialog({
 							header: "Primary dialog",
 							allowCancel: true,
@@ -436,25 +443,25 @@ function drawOverlays() {
 								A("p #This is the primary dialog.");
 								A("p #It should be wider and higher than the secondary.");
 								S.button({
-									text: "Open secondary", click: () => {
+									content: "Open secondary", click: () => {
 										S.dialog({
 											header: "Secondary dialog",
 											allowCancel: true,
 											attrs: "max-width:36rem min-height:14rem",
 											content: (closeInner) => {
 												A("p #Smaller than primary.");
-												S.button({ text: "Close", click: closeInner });
+												S.button({ content: "Close", click: closeInner });
 											},
 										});
 									},
 								});
-								S.button({ text: "Close", attrs: ".neutral .outlined", click: closeOuter });
+								S.button({ content: "Close", attrs: ".neutral .outlined", click: closeOuter });
 							},
 						});
 					},
 				});
 				S.button({
-					text: "dialog with surface style", click: () => {
+					content: "dialog with surface style", click: () => {
 						S.dialog({ header: "Title", content: () => A("#Content..."), attrs: ".warning" });
 					},
 				});
@@ -715,9 +722,9 @@ setDefaults({ size: "1.25em", strokeWidth: 1.5 });`));
 		header: "In context",
 		content: () => {
 			A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
-				S.button({ text: "New", icon: icons.plus });
-				S.button({ text: "Download", icon: icons.download, attrs: ".neutral .outlined" });
-				S.button({ text: "Delete", icon: icons.trash2, attrs: ".danger .tonal" });
+				S.button({ content: "New", icon: icons.plus });
+				S.button({ content: "Download", icon: icons.download, attrs: ".neutral .outlined" });
+				S.button({ content: "Delete", icon: icons.trash2, attrs: ".danger .tonal" });
 				S.button({ icon: icons.settings, ariaLabel: "Settings", attrs: ".neutral .outlined" });
 			});
 			A("p mt:$3 mb:0 rich='Buttons take an `icon` slot. Because icons stroke themselves in `currentColor`, they tint to match whatever surface or text wraps them — no per-button colour needed.'");

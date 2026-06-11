@@ -5,7 +5,7 @@
  * Import the default `S` object and call its component functions:
  *
  * ```ts
- * import S from "staffa";
+ * import * as S from "staffa";
  *
  * S.main({
  *   title: "Hello",
@@ -17,7 +17,7 @@
  *           S.textline({ label: "Email", type: "email", bind: A.ref($u, "email") });
  *           S.checkbox({ label: "Remember me", bind: A.ref($u, "remember") });
  *         },
- *         actions: () => S.button({ text: "Sign in", type: "submit" }),
+ *         actions: () => S.button({ content: "Sign in", type: "submit" }),
  *       });
  *     }});
  *   },
@@ -32,80 +32,25 @@
 // Importing the theme module installs spacing vars, the reactive theme and the
 // base stylesheet. Customise it from your app with A.insertGlobalCss (see
 // theme.ts); toggle modes with setDarkMode / getDarkMode.
-import { setDarkMode, getDarkMode } from "./theme.js";
-
-import { autocomplete } from "./components/autocomplete.js";
-import { box } from "./components/box.js";
-import { button } from "./components/button.js";
-import { buttonChooser } from "./components/buttonChooser.js";
-import { buttonGroup } from "./components/buttonGroup.js";
-import { checkbox } from "./components/checkbox.js";
-import { form } from "./components/form.js";
-import { main } from "./components/main.js";
-import { menuButton, showFloatingMenu } from "./components/menu.js";
-import { dialog, alert, confirm, prompt } from "./components/dialog.js";
-import { select } from "./components/select.js";
-import { tabs } from "./components/tabs.js";
-import { textarea } from "./components/textarea.js";
-import { textline } from "./components/textline.js";
-import { toast } from "./components/toast.js";
-import { addTooltip } from "./components/tooltip.js";
-
-/** The Staffa component namespace. */
-export const S = {
-	main,
-	box,
-	dialog,
-	alert,
-	confirm,
-	prompt,
-	form,
-	menuButton,
-	showFloatingMenu,
-	textline,
-	textarea,
-	checkbox,
-	tabs,
-	button,
-	buttonChooser,
-	buttonGroup,
-	autocomplete,
-	select,
-	toast,
-	addTooltip,
-	setDarkMode,
-	getDarkMode,
-};
-
-export default S;
+export { setDarkMode, getDarkMode } from "./theme.js";
+export { autocomplete, type AutocompleteOptions, type AutocompleteOptionInput } from "./components/autocomplete.js";
+export { box, type BoxOptions } from "./components/box.js";
+export { button, type ButtonOptions } from "./components/button.js";
+export { buttonChooser, type ButtonChooserOptions } from "./components/buttonChooser.js";
+export { buttonGroup, type ButtonGroupOptions } from "./components/buttonGroup.js";
+export { checkbox, type CheckboxOptions } from "./components/checkbox.js";
+export { form, type FormOptions } from "./components/form.js";
+export { main, type MainOptions } from "./components/main.js";
+export { menuButton, showFloatingMenu, type MenuOptions, type MenuEntry, type MenuItem, type MenuSeparator, type FloatingMenuOptions } from "./components/menu.js";
+export { dialog, alert, confirm, prompt, type DialogOptions } from "./components/dialog.js";
+export { select, type SelectOptions, type SelectOptionInput } from "./components/select.js";
+export { tabs, type Tab, type TabsOptions } from "./components/tabs.js";
+export { textarea, type TextareaOptions } from "./components/textarea.js";
+export { textline, type TextlineOptions, type TextlineType } from "./components/textline.js";
+export { toast, type ToastOptions } from "./components/toast.js";
+export { addTooltip, type TooltipOptions } from "./components/tooltip.js";
+export type { FieldOptions } from "./components/field.js";
 
 // Re-export theming and shared types for advanced use.
-export { setDarkMode, getDarkMode } from "./theme.js";
-export type { SurfaceRole, Variant } from "./theme.js";
-export type {
-	ContentOptions,
-	Bindable,
-	Content,
-	Slot,
-	Attributes as Styling,
-} from "./core.js";
-export { drawSlot, uniqueId } from "./core.js";
+export type {ContentOptions, Bindable, Slot, Attributes} from "./core.js";
 
-export type { FieldOptions } from "./components/field.js";
-export type { MainOptions } from "./components/main.js";
-export type { MenuOptions, MenuEntry, MenuItem, MenuSeparator, FloatingMenuOptions } from "./components/menu.js";
-export { drawMenu } from "./components/menu.js";
-export type { ToastOptions } from "./components/toast.js";
-export type { TooltipOptions } from "./components/tooltip.js";
-export type { BoxOptions } from "./components/box.js";
-export type { FormOptions } from "./components/form.js";
-export type { TextlineOptions, TextlineType } from "./components/textline.js";
-export type { TextareaOptions } from "./components/textarea.js";
-export type { CheckboxOptions } from "./components/checkbox.js";
-export type { Tab, TabsOptions } from "./components/tabs.js";
-export type { ButtonOptions } from "./components/button.js";
-export type { ButtonChooserOptions } from "./components/buttonChooser.js";
-export type { ButtonGroupOptions } from "./components/buttonGroup.js";
-export type { AutocompleteOptions, AutocompleteOptionInput } from "./components/autocomplete.js";
-export type { SelectOptions, SelectOptionInput } from "./components/select.js";
-export type { DialogOptions } from "./components/dialog.js";

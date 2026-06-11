@@ -1,7 +1,6 @@
 import A from "aberdeen";
 import { grow, shrink } from "aberdeen/transitions";
-import { type Slot, type Attributes, drawSlot } from "../core.js";
-import type { SurfaceRole } from "../theme.js";
+import { type Slot, type Attributes, drawSlot, mountPortal } from "../core.js";
 
 /** Options for {@link toast}. */
 export interface ToastOptions {
@@ -11,9 +10,8 @@ export interface ToastOptions {
 	title?: Slot;
 	/**
 	 * Colour role. Defaults to `"neutral"`.
-	 * Use `"success"` / `"danger"` / `"warning"` for semantic feedback.
 	 */
-	type?: SurfaceRole;
+	type?: "success" | "danger" | "warning" | "neutral"
 	/**
 	 * Auto-dismiss delay in milliseconds. Defaults to `4000`.
 	 * Pass `0` to make the toast persistent until dismissed manually.
@@ -55,7 +53,7 @@ let toastCount = 0;
 // Keyed by stable ID so A.onEach scopes are per-toast — removing one never re-renders others.
 const toasts = A.proxy({} as Record<number, ToastEntry>);
 
-A.mount(document.body, () => {
+mountPortal(() => {
 	A("div.s-toasts aria-live=polite aria-atomic=false", () => {
 		A.onEach(toasts, (entry) => {
 			const { opts } = entry;

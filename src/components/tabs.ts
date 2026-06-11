@@ -1,5 +1,5 @@
 import A from "aberdeen";
-import { type Bindable, type Content, type Slot, type Attributes, drawSlot, uniqueId } from "../core.js";
+import { type Bindable, type Slot, type Attributes, drawSlot, uniqueId } from "../core.js";
 
 /** A single tab definition. */
 export interface Tab {
@@ -9,8 +9,8 @@ export interface Tab {
 	label: Slot;
 	/** Optional leading icon. */
 	icon?: Slot;
-	/** Content rendered in the panel when this tab is active. */
-	content?: Content;
+	/** Content rendered in the panel when this tab is active. A string is rendered as rich text. */
+	content?: Slot;
 	/** Disables selecting this tab. */
 	disabled?: boolean;
 }
@@ -101,7 +101,7 @@ export function tabs(opts: TabsOptions): void {
 				const tab = opts.tabs[index] ?? opts.tabs[0];
 				if (!tab) return;
 				A(`id=${groupId}-panel-${keyOf(tab, index)} aria-labelledby=${groupId}-tab-${keyOf(tab, index)}`);
-				tab.content?.();
+				drawSlot(tab.content);
 			});
 		});
 	});

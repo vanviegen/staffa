@@ -1,12 +1,10 @@
 import A from "aberdeen";
-import { type Content, type Slot, type Attributes, drawSlot } from "../core.js";
+import { type Slot, type Attributes, drawSlot } from "../core.js";
 
 /** Options for {@link button}. */
 export interface ButtonOptions {
-	/** Button label text. */
-	text?: string;
-	/** Custom content (overrides {@link ButtonOptions.text | text}). */
-	content?: Content;
+	/** Button content: a string for plain text, or a function for custom markup. */
+	content?: Slot;
 	/** Leading icon/adornment, drawn before the label. */
 	icon?: Slot;
 	/** Click handler. */
@@ -49,15 +47,17 @@ A.insertGlobalCss({
 		"&:hover": "filter: brightness(1.08); transform: translateY(-1px)",
 		"&.tonal:hover, &.outlined:hover": "background: color-mix(in srgb, $s-b 26%, transparent);",
 		// A filled `.gradient` button (the default) is the app's signature call to
-		// action: a borderless gradient with a soft glow that lifts on hover. The
-		// gradient fill itself comes from the `.s-s.gradient` surface rule in theme.ts.
-		// No border: a filled gradient reads as one solid shape. Dropping the border
-		// (rather than making it transparent) also sidesteps a Chromium artifact where
-		// a gradient clipped to a transparent rounded border fringes the edge with the
-		// gradient's far colour.
-		"&.gradient:not(.tonal):not(.outlined)": "border:0 box-shadow: $s-glow;",
+		// action: a borderless gradient with a hairline top highlight (a hint of
+		// top-lighting that sells the fill as a lit, rounded shape) over a soft glow.
+		// The gradient fill itself comes from the `.s-s.gradient` surface rule in
+		// theme.ts. No border: a filled gradient reads as one solid shape. Dropping
+		// the border (rather than making it transparent) also sidesteps a Chromium
+		// artifact where a gradient clipped to a transparent rounded border fringes
+		// the edge with the gradient's far colour.
+		"&.gradient:not(.tonal):not(.outlined)":
+			"border:0 box-shadow: inset 0 1px 0 color-mix(in srgb, white 25%, transparent), $s-glow;",
 		"&.gradient:not(.tonal):not(.outlined):hover":
-			"filter: brightness(1.06); box-shadow: 0 10px 28px color-mix(in srgb, $s-primary 42%, transparent); transform: translateY(-1px);",
+			"filter: brightness(1.05); box-shadow: inset 0 1px 0 color-mix(in srgb, white 25%, transparent), 0 7px 18px color-mix(in srgb, $s-primary 34%, transparent); transform: translateY(-1px);",
 		// Subtle press feedback.
 		"&:active:not(:disabled):not([aria-disabled=true])": "transform: translateY(1px)",
 		// Size: set on the button itself, or inherited from a `.small`/`.large`
@@ -82,19 +82,19 @@ const ROLE_CLASS = /\.(gradient|primary|secondary|neutral|danger|success|warning
  * startup) for SPA-style navigation without manual click handlers:
  * ```ts
  * interceptLinks(); // once at root
- * S.button({ href: "/dashboard", text: "Dashboard" }); // navigates via router
+ * S.button({ href: "/dashboard", content: "Dashboard" }); // navigates via router
  * ```
  *
  * @example
  * ```ts
- * S.button({ text: "Save", click: save });
- * S.button({ text: "Delete", attrs: ".danger .outlined", click: del });
- * S.button("Cancel");                        // shorthand for { text: "Cancel" }
- * S.button({ href: "/docs", text: "Docs" }); // renders an <a role=button>
+ * S.button({ content: "Save", click: save });
+ * S.button({ content: "Delete", attrs: ".danger .outlined", click: del });
+ * S.button("Cancel");                        // shorthand for { content: "Cancel" }
+ * S.button({ href: "/docs", content: "Docs" }); // renders an <a role=button>
  * ```
  */
-export function button(opts: ButtonOptions | string | Content = {}): void {
-	const o: ButtonOptions = typeof opts === "string" ? { text: opts } : typeof opts === "function" ? { content: opts } : opts;
+export function button(opts: ButtonOptions | Slot = {}): void {
+	const o: ButtonOptions = typeof opts === "string" || typeof opts === "function" ? { content: opts } : opts;
 
 	const tag = o.href != null ? "a" : "button";
 
@@ -115,7 +115,6 @@ export function button(opts: ButtonOptions | string | Content = {}): void {
 		if (o.click) A("click=", o.click);
 
 		drawSlot(o.icon);
-		if (o.content) o.content();
-		else if (o.text != null) A("#", o.text);
+		drawSlot(o.content);
 	});
 }

@@ -1,6 +1,6 @@
 {
   "name": "staffa",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "An opinionated component library for the Aberdeen reactive UI library.",
   "license": "ISC",
   "author": "",
@@ -25,9 +25,11 @@
   "scripts": {
     "build:icons": "node scripts/generate-icons.mjs",
     "build": "npm run build:icons && tsc && tsc -p demo && esbuild src/index.ts --bundle --external:aberdeen --minify --format=esm --outfile=dist/staffa.esm.js",
+    "build:skill": "rm -rf skill ; mkdir skill && readme-tsdoc --create src/index.ts --file skill/REFERENCE.md --split && awk '/^@@include /{while((getline line < $2)>0) print line; close($2); next} 1' skill-template.md > skill/SKILL.md && rm skill/REFERENCE.md",
     "typecheck": "tsc --noEmit && tsc -p demo --noEmit",
     "smoke": "tsc && node smoke.mjs",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build && shotest test && npm run build:skill",
+    "test": "shotest test"
   },
   "peerDependencies": {
     "aberdeen": "^1.17.1"
@@ -35,8 +37,13 @@
   "devDependencies": {
     "aberdeen": "^1.17.1",
     "esbuild": "^0.28.0",
+    "http-server": "^14.1.1",
     "jsdom": "^29.1.1",
     "lucide-static": "^1.17.0",
+    "readme-tsdoc": "^1.2.1",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "shotest": "^1.6.1"
   }
 }

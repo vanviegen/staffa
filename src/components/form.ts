@@ -1,5 +1,5 @@
 import A from "aberdeen";
-import { type Content, type ContentOptions, type Attributes } from "../core.js";
+import { type ContentOptions, type Attributes, type Slot, drawSlot } from "../core.js";
 
 /** Options for {@link form}. */
 export interface FormOptions extends ContentOptions {
@@ -18,7 +18,7 @@ export interface FormOptions extends ContentOptions {
 	/** Aberdeen attr/style string for the action bar. */
 	actionsAttrs?: Attributes;
 	/** Footer actions (typically a {@link import("./buttonGroup").buttonGroup} or buttons). */
-	actions?: Content;
+	actions?: Slot;
 }
 
 A.insertGlobalCss({
@@ -26,7 +26,7 @@ A.insertGlobalCss({
 		"&": "display:flex flex-direction:column gap:$3",
 		"&.grid": "display:grid grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap:$3",
 		"&.grid > .s-wide, &.grid > footer": "grid-column: 1 / -1;",
-		"> footer": "display:flex align-items:center gap:$2 flex-wrap:wrap margin-top:$1",
+		"> footer": "display:flex align-items:center justify-content:flex-end gap:$2 flex-wrap:wrap margin-top:$1",
 	},
 });
 
@@ -47,12 +47,12 @@ A.insertGlobalCss({
  *     S.textline({ label: "Name", required: true, bind: A.ref($u, "name") });
  *     S.textline({ label: "Email", type: "email", bind: A.ref($u, "email") });
  *   },
- *   actions: () => S.button({ text: "Save", type: "submit" }),
+ *   actions: () => S.button({ content: "Save", type: "submit" }),
  * });
  * ```
  */
-export function form(opts: FormOptions | Content = {}): void {
-	const o: FormOptions = typeof opts === "function" ? { content: opts } : opts;
+export function form(opts: FormOptions | Slot = {}): void {
+	const o: FormOptions = typeof opts === "string" || typeof opts === "function" ? { content: opts } : opts;
 
 	A(`form.s-form`, o.attrs, () => {
 		// Toggle grid class in its own scope so changing layout doesn't recreate
@@ -74,11 +74,11 @@ export function form(opts: FormOptions | Content = {}): void {
 			}
 		});
 
-		if (o.content) o.content();
+		drawSlot(o.content);
 
 		// Own scope so toggling actions doesn't recreate the fields above.
 		A(() => {
-			if (o.actions) A("footer", o.actionsAttrs, () => o.actions?.());
+			if (o.actions) A("footer", o.actionsAttrs, () => drawSlot(o.actions));
 		});
 	});
 }

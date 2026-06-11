@@ -1,5 +1,5 @@
 import A from "aberdeen";
-import { type Slot, type Attributes, drawSlot } from "../core.js";
+import { type Slot, type Attributes, drawSlot, mountPortal } from "../core.js";
 
 /** Options for {@link addTooltip}. */
 export interface TooltipOptions {
@@ -79,7 +79,7 @@ function scheduleHide(): void {
 
 // ─── Portal ──────────────────────────────────────────────────────────────────
 
-A.mount(document.body, () => {
+mountPortal(() => {
 	const active = $ttActive.value;
 	if (!active) return;
 	const { opts, anchor } = active;

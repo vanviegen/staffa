@@ -1,15 +1,6 @@
 import A from "aberdeen";
 
 /**
- * The named accent roles for interactive elements (buttons, tabs, badges, …).
- * Each maps to a `.s-s.<role>` class that sets `--s-a` (ink) and `--s-b` (fill).
- */
-export type SurfaceRole = "primary" | "secondary" | "gradient" | "neutral" | "danger" | "success" | "warning";
-
-/** How a surface's two colours are rendered. `filled` is the default. */
-export type Variant = "filled" | "tonal" | "outlined";
-
-/**
  * Theming and global base styles for Staffa.
  *
  * # The surface model
@@ -48,7 +39,9 @@ export type Variant = "filled" | "tonal" | "outlined";
  * | `--s-fg-faint`   | placeholders, disabled                    |
  * | `--s-border` / `--s-border-strong` | borders                 |
  * | `--s-accent`     | brand "pop" colour (active indicators, etc.) |
- * | `--s-gradient`   | primary→secondary brand sweep (mark, primary buttons, active nav) |
+ * | `--s-gradient`   | full primary→secondary brand sweep (mark, active nav) |
+ * | `--s-gradient-surface` | compressed sweep for filled gradient surfaces (buttons) |
+ * | `--s-tint`       | brand mid colour; the hue the neutral greys lean toward |
  * | `--s-glow`       | soft coloured shadow for lit brand elements |
  * | `--s-link` / `--s-focus` | link & focus-ring colours         |
  * | `--s-radius` / `--s-radius-lg` / `--s-shadow` | shape tokens      |
@@ -145,13 +138,23 @@ export function getDarkMode(allowAuto = false): boolean | undefined {
 // names (--s-primary/-danger/-success/-warning) double as semantic *ink*
 // colours, legible as text/borders on neutral surfaces.
 // ---------------------------------------------------------------------------
+// The neutral fills/inks aren't hard-coded greys: each one mixes a small dose
+// of `--s-tint` (the brand's mid colour, defined in the static block below)
+// into a true-grey base. Re-skin the brand and every "grey" — page, panels,
+// ink, the neutral fill — drifts subtly toward the new brand hue, light and
+// dark alike. The percentages are deliberately small: a tint you'd only spot
+// in a side-by-side, never a colour cast.
 A(() => {
 	if (getDarkMode()) {
 		A.insertGlobalCss({
 			":root":
 				"--s-primary:#8b7bff --s-secondary:#ef7fd0 --s-danger:#ff6b6b --s-success:#46d39a --s-warning:#fbbf24 " +
-				"--s-neutral:#3c4352 --s-page:#0e1015 --s-panel:#181b22 --s-raised:#222632 " +
-				"--s-ink:#e8eaf0 --s-on-accent:#0c0a14 --s-focus:rgba(139,123,255,0.45) " +
+				"--s-neutral: color-mix(in oklab, #3d4047, $s-tint 14%); " +
+				"--s-page: color-mix(in oklab, #0e0f12, $s-tint 5%); " +
+				"--s-panel: color-mix(in oklab, #17181c, $s-tint 6%); " +
+				"--s-raised: color-mix(in oklab, #212327, $s-tint 8%); " +
+				"--s-ink: color-mix(in oklab, #e9eaec, $s-tint 8%); " +
+				"--s-on-accent:#0c0a14 --s-focus: color-mix(in srgb, $s-primary 45%, transparent); " +
 				"--s-radius:12px --s-radius-lg:18px --s-shadow: 0 10px 34px rgba(0,0,0,0.5);",
 			// Contextual link, restored across the neutral group (see static block).
 			":root, .s-s.base, .s-s.panel, .s-s.raised, .s-s.neutral": "--s-link:#6db3ff",
@@ -160,8 +163,12 @@ A(() => {
 		A.insertGlobalCss({
 			":root":
 				"--s-primary:#6c5ce7 --s-secondary:#d6459e --s-danger:#e23b3b --s-success:#1f9d6b --s-warning:#d97706 " +
-				"--s-neutral:#c7ccda --s-page:#f3f4f8 --s-panel:#ffffff --s-raised:#eceef4 " +
-				"--s-ink:#1b1e27 --s-on-accent:#0c0a14 --s-focus:rgba(108,92,231,0.35) " +
+				"--s-neutral: color-mix(in oklab, #c9cbd0, $s-tint 14%); " +
+				"--s-page: color-mix(in oklab, #f3f4f6, $s-tint 5%); " +
+				"--s-panel: color-mix(in oklab, #ffffff, $s-tint 2%); " +
+				"--s-raised: color-mix(in oklab, #edeef0, $s-tint 7%); " +
+				"--s-ink: color-mix(in oklab, #1d1f24, $s-tint 7%); " +
+				"--s-on-accent:#0c0a14 --s-focus: color-mix(in srgb, $s-primary 35%, transparent); " +
 				"--s-radius:12px --s-radius-lg:18px --s-shadow: 0 10px 30px rgba(20,24,40,0.13);",
 			":root, .s-s.base, .s-s.panel, .s-s.raised, .s-s.neutral": "--s-link:#2563eb",
 		});
@@ -189,13 +196,19 @@ A.setSpacingCssVars();
 A.insertGlobalCss({
 	// Derived brand tokens. These only reference the per-mode palette colours, so
 	// they're defined once here and track the active mode (and any re-skin):
-	// `--s-gradient` is the primary→secondary brand sweep used for the headline
-	// mark, primary buttons and the active nav pill; `--s-glow` is a soft coloured
-	// shadow that makes those same elements feel lit; `--s-page-bg` is a faint
+	// `--s-tint` is the brand's mid colour, the hue the neutral greys above lean
+	// toward; `--s-gradient` is the full primary→secondary sweep used where the
+	// brand should *show* (the headline mark, the active nav pill, tab edges);
+	// `--s-gradient-surface` is a compressed, near-vertical cut of that same sweep
+	// for *filled* gradient surfaces (buttons): it reads as one rich colour with
+	// depth rather than a two-colour banner; `--s-glow` is a soft coloured shadow
+	// that makes lit brand elements feel raised; `--s-page-bg` is a faint
 	// twin-corner aurora wash painted on the page surface.
 	":root":
+		"--s-tint: color-mix(in oklab, $s-primary, $s-secondary); " +
 		"--s-gradient: linear-gradient(135deg, $s-primary, $s-secondary); " +
-		"--s-glow: 0 8px 24px color-mix(in srgb, $s-primary 32%, transparent); " +
+		"--s-gradient-surface: linear-gradient(170deg, color-mix(in oklab, $s-primary 85%, $s-secondary), color-mix(in oklab, $s-primary 30%, $s-secondary)); " +
+		"--s-glow: 0 5px 16px color-mix(in srgb, $s-primary 26%, transparent); " +
 		"--s-page-bg: radial-gradient(120% 80% at 100% 0%, color-mix(in oklab, $s-secondary, transparent 86%), transparent 56%), radial-gradient(120% 80% at 0% 0%, color-mix(in oklab, $s-primary, transparent 87%), transparent 56%), $s-page;",
 
 	// Level/role modifier → anchors. Levels (neutral elevations) use the shared
@@ -250,10 +263,11 @@ A.insertGlobalCss({
 	// overrides a component's default `.tonal`/`.outlined` (resetting both the
 	// anchors and the painted background).
 	".s-s.filled": "--s-fg:$s-a --s-bg:$s-b background:$s-bg;",
-	// Paint the brand sweep for a filled `.gradient` surface. Sits after the
-	// variant rules and is keyed on `:not(.tonal):not(.outlined)`, so those
-	// variants keep their solid-primary tint/edge.
-	".s-s.gradient:not(.tonal):not(.outlined)": "background: $s-gradient;",
+	// Paint the brand sweep for a filled `.gradient` surface — the compressed
+	// surface cut, not the full banner sweep. Sits after the variant rules and is
+	// keyed on `:not(.tonal):not(.outlined)`, so those variants keep their
+	// solid-primary tint/edge.
+	".s-s.gradient:not(.tonal):not(.outlined)": "background: $s-gradient-surface;",
 
 	// Contextual accent: the brand pop colour on neutral surfaces. Declared on the
 	// whole neutral group so re-entering a neutral surface under a coloured one

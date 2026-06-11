@@ -1,5 +1,5 @@
 import A from "aberdeen";
-import { type Content, type ContentOptions, type Slot, type Attributes, drawSlot } from "../core.js";
+import { type ContentOptions, type Slot, type Attributes, drawSlot } from "../core.js";
 
 /** Options for {@link box}. */
 export interface BoxOptions extends ContentOptions {
@@ -24,7 +24,7 @@ A.insertGlobalCss({
 		"&": "display:flex flex-direction:column border: 1px solid $s-border; r: $s-radius-lg; overflow:hidden box-shadow: $s-shadow;",
 		"&:not(:first-child)": "margin-top: $3",
 		"> header": "display:flex align-items:center gap:$2 padding: $2 $3; border-bottom: 1px solid $s-border; font-weight:600",
-		"> footer": "display:flex align-items:center gap:$2 padding: $2 $3; border-top: 1px solid $s-border;",
+		"> footer": "display:flex align-items:center justify-content:flex-end gap:$2 padding: $2 $3; border-top: 1px solid $s-border;",
 		"> div": "p:$3 gap:$3",
 	},
 });
@@ -47,8 +47,8 @@ A.insertGlobalCss({
  * S.box(() => A("p#Just some content"));   // shorthand
  * ```
  */
-export function box(opts: BoxOptions | Content = {}): void {
-	const o: BoxOptions = typeof opts === "function" ? { content: opts } : opts;
+export function box(opts: BoxOptions | Slot = {}): void {
+	const o: BoxOptions = typeof opts === "string" || typeof opts === "function" ? { content: opts } : opts;
 
 	A("section.s-box.s-s.panel", o.attrs, () => {
 		// Header and footer get their own scopes so toggling them doesn't recreate
@@ -58,7 +58,7 @@ export function box(opts: BoxOptions | Content = {}): void {
 		});
 
 		A("div", o.contentAttrs, () => {
-			if (o.content) o.content();
+			drawSlot(o.content);
 		});
 
 		A(() => {

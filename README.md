@@ -4,7 +4,7 @@ A small, opinionated TypeScript component library for the [Aberdeen](https://abe
 
 ```ts
 import A from "aberdeen";
-import S from "staffa";
+import * as S from "staffa";
 
 const $user = A.proxy({ name: "", email: "" });
 
@@ -213,7 +213,7 @@ Two-way binding uses Aberdeen proxies: pass `bind: A.ref($obj, "key")` to form f
 </script>
 <script type="module">
   import A from "aberdeen";
-  import S from "staffa/all.js";
+  import * as S from "staffa/all.js";
   // ...
 </script>
 ```
@@ -265,4 +265,19 @@ npm run build      # compile TypeScript to dist/
 npm run typecheck  # check types
 npm run smoke      # render every component in jsdom
 npx http-server    # allows demo to be viewed at http://localhost:8080/demo
+npx shotest test   # visual tests: click through the demo, screenshotting every step
+npx shotest review # review/accept the visual changes against the baseline
+```
+
+The visual tests (`tests/*.spec.ts`) need a build first (`npm run build`); they serve the repo root themselves and click through every demo page. Accepted baselines live in `test-accepted/`.
+
+## AI skill
+
+If you use Claude Code, GitHub Copilot or another AI agents that supports Skills, Staffa includes a `skill/` directory that provides specialized knowledge to the AI about how to use the library effectively.
+
+To use this, it is recommended to symlink the skill into your project's `.claude/skills` directory:
+
+```sh
+mkdir -p .claude/skills
+ln -s ../../node_modules/staffa/skill .claude/skills/staffa
 ```

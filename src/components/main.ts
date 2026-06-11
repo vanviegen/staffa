@@ -1,5 +1,5 @@
 import A from "aberdeen";
-import { type Content, type Slot, type Attributes, drawSlot } from "../core.js";
+import { type Slot, type Attributes, drawSlot } from "../core.js";
 import { type MenuOptions, menuButton, drawMenu } from "./menu.js";
 
 /** Options for {@link main}. */
@@ -13,9 +13,9 @@ export interface MainOptions {
 	/** Leading icon/logo in the top bar. */
 	icon?: Slot;
 	/** Action area on the right of the top bar (buttons, menu, ...). */
-	menu?: Content;
-	/** The scrollable page content. */
-	content?: Content;
+	menu?: Slot;
+	/** The scrollable page content. A string is rendered as rich text. */
+	content?: Slot;
 	/** Footer content, pinned below the scroll area. */
 	footer?: Slot;
 	/**
@@ -62,8 +62,9 @@ A.insertGlobalCss({
 		"> header .s-title": "font-weight:800 font-size:1.1em line-height:1.2 overflow:hidden text-overflow:ellipsis white-space:nowrap letter-spacing:-0.01em background: $s-gradient; -webkit-background-clip:text; background-clip:text; color:transparent; width:fit-content max-width:100%",
 		"> header .s-subtitle": "fg:$s-fg-muted font-size:0.85em overflow:hidden text-overflow:ellipsis white-space:nowrap",
 		"> header .s-menu": "display:flex align-items:center gap:$2",
-		// Body holds sidebar + separator + <main> side by side (only used in sidebar
-		// nav mode). It centres `.s-body-inner`, which caps the trio to maxWidth.
+		// Body always wraps <main> (with or without a sidebar) so max-width centering
+		// and scrollbar alignment work identically in both cases.
+		// .s-body centres .s-body-inner; .s-body-inner caps the content to maxWidth.
 		".s-body": "flex:1 overflow:hidden display:flex flex-direction:row min-height:0 justify-content:center",
 		".s-body-inner": "flex:1 display:flex flex-direction:row min-height:0",
 		// Put the sidebar on the right (content fills the left) for right-hand navs.
@@ -71,20 +72,19 @@ A.insertGlobalCss({
 		// A vertical hairline between sidebar and content, fading out at both ends —
 		// the vertical sibling of the menu's `hr.s-menu-sep`.
 		".s-nav-sep": "width:1px flex-shrink:0 align-self:stretch margin: 0.6rem 0; border:0 background: linear-gradient(to bottom, transparent, $s-border-strong 18%, $s-border-strong 82%, transparent);",
-		// Without a sidebar, <main> is a direct child; with one it lives in .s-body.
-		"> main, .s-body main": "flex:1 overflow-y:auto display:flex flex-direction:column",
-		// The content area fills the scroll region with comfortable padding. Without a
-		// sidebar it caps its own width to maxWidth and centres (applied inline in
-		// drawMainContent); with one, `.s-body-inner` does the capping for the trio.
+		// min-height:0 overrides the flex default of min-height:auto so <main> can
+		// shrink to fit the bounded container and show its own scrollbar.
+		".s-body main": "flex:1 min-height:0 overflow-y:auto display:flex flex-direction:column",
+		// The content area fills the scroll region with comfortable padding.
 		// It is deliberately NOT a boxed "sheet" — content brings its own boxes.
-		"> main > .s-content, .s-body main > .s-content": "width:100% flex:1 p:$3",
+		".s-body main > .s-content": "width:100% flex:1 p:$3",
 		// When <main> actually shows a vertical scrollbar (the `.s-scroll-y` class is
 		// toggled from JS by watchVerticalOverflow), inset it from the shell edge by
 		// $3 so the bar's right edge lines up with the header/footer content (which
 		// sits $3 inside the edge via `.s-bar` padding). The $3 gap between the content
 		// and the bar already comes from `.s-content`'s padding. Without a scrollbar
 		// there's no margin, so the content keeps its single $3 edge — not 2×$3.
-		"> main.s-scroll-y, .s-body main.s-scroll-y": "margin-right:$3",
+		".s-body main.s-scroll-y": "margin-right:$3",
 	},
 	// Sidebar nav panel. Items reuse the shared `.s-menu-item[-link]` /
 	// `.s-menu-sep` styles from menu.ts, so the sidebar and the floating
@@ -110,6 +110,9 @@ A.insertGlobalCss({
 		// On phones a top-level content box becomes a full-bleed block: pull it out
 		// to negate the content padding and drop the rounded corners.
 		".s-content > .s-box": "margin-inline: calc(-1 * $3); r:0 border-inline:0",
+		// At narrow widths, content boxes are full-bleed so there's no inset to
+		// align the scrollbar with — cancel the right margin.
+		".s-main .s-body main.s-scroll-y": "margin-right:0",
 	},
 });
 
@@ -133,7 +136,7 @@ A.insertGlobalCss({
  *     ],
  *   },
  *   navPosition: "left",
- *   menu: () => S.button({ text: "New", attrs: ".small" }),
+ *   menu: () => S.button({ content: "New", attrs: ".small" }),
  *   content: () => drawPage(),
  *   footer: "© 2026",
  * });
@@ -190,30 +193,28 @@ export function main(opts: MainOptions = {}): void {
 						});
 					});
 					A(() => {
-						if (opts.menu) A("div.s-menu", () => opts.menu?.());
+						if (opts.menu) A("div.s-menu", () => drawSlot(opts.menu));
 					});
 				});
 			});
 		});
 
-		// Body — wraps sidebar + separator + main when nav is in sidebar mode. The
-		// trio together caps to maxWidth (via .s-body-inner); main fills the rest.
-		if (hasNav && navPos !== "button") {
-			A("div.s-body", () => {
-				A("div.s-body-inner", () => {
-					A(() => {
-						if (opts.maxWidth != null) A("max-width:", opts.maxWidth);
-					});
+		// Body always wraps <main> so max-width centering and scrollbar alignment
+		// are identical with and without a sidebar nav.
+		A("div.s-body", () => {
+			A("div.s-body-inner", () => {
+				A(() => {
+					if (opts.maxWidth != null) A("max-width:", opts.maxWidth);
+				});
+				if (hasNav && navPos !== "button") {
 					A(`nav.s-nav-panel.s-s.raised.s-nav-${navPos}`, opts.navAttrs, () => {
 						drawMenu(nav.items);
 					});
 					A("div.s-nav-sep aria-hidden=true");
-					drawMainContent(opts, false);
-				});
+				}
+				drawMainContent(opts);
 			});
-		} else {
-			drawMainContent(opts, true);
-		}
+		});
 
 		// Footer — full-width background, content centred to maxWidth via .s-bar.
 		A(() => {
@@ -231,20 +232,10 @@ export function main(opts: MainOptions = {}): void {
 	});
 }
 
-/**
- * Draw the scrollable `<main>` + content area. When `capWidth` is true (no
- * sidebar), the content caps its own width to maxWidth and centres; in sidebar
- * mode the surrounding `.s-body-inner` already caps the sidebar+content trio.
- */
-function drawMainContent(opts: MainOptions, capWidth: boolean): void {
+function drawMainContent(opts: MainOptions): void {
 	const mainEl = A("main", () => {
 		A("div.s-content", opts.contentAttrs, () => {
-			if (capWidth) {
-				A(() => {
-					if (opts.maxWidth != null) A("margin-inline:auto max-width:", opts.maxWidth);
-				});
-			}
-			if (opts.content) opts.content();
+			drawSlot(opts.content);
 		});
 	}) as HTMLElement;
 	watchVerticalOverflow(mainEl);

@@ -1,5 +1,5 @@
 import A from "aberdeen";
-import { type Slot, type Attributes, drawSlot } from "../core.js";
+import { type Slot, type Attributes, drawSlot, mountPortal } from "../core.js";
 import { button } from "./button.js";
 import { buttonGroup } from "./buttonGroup.js";
 import { textline } from "./textline.js";
@@ -60,7 +60,7 @@ A.insertGlobalCss({
 			"display:flex align-items:center gap:$2 padding: $2 $3; " +
 			"border-bottom: 1px solid $s-border; font-weight:600 flex-shrink:0",
 		"> footer":
-			"display:flex align-items:center gap:$2 padding: $2 $3; " +
+			"display:flex align-items:center justify-content:flex-end gap:$2 padding: $2 $3; " +
 			"border-top: 1px solid $s-border; flex-shrink:0",
 		"> div": "p:$3 gap:$3 display:flex flex-direction:column overflow-y:auto flex:1 min-height:0",
 		"&.hidden": "opacity:0 pointer-events:none transform: translate(-50%, calc(-50% + 20px)); pointer-events:none",
@@ -75,7 +75,7 @@ const topDialogId = A.derive(() => {
 	if (keys.length) return keys[keys.length-1];
 });
 
-A.mount(document.body, () => {
+mountPortal(() => {
 	A.onEach(dialogs, ({resolve, opts}, dialogId) => {
 		const close = () => { delete dialogs[dialogId]; };
 
@@ -128,8 +128,8 @@ A.mount(document.body, () => {
  *   header: "Confirm",
  *   content: (close) => {
  *     A("p #Are you sure?");
- *     S.button({ text: "Yes", click: () => { doIt(); close(); } });
- *     S.button({ text: "Cancel", attrs: ".neutral .outlined", click: close });
+ *     S.button({ content: "Yes", click: () => { doIt(); close(); } });
+ *     S.button({ content: "Cancel", attrs: ".neutral .outlined", click: close });
  *   },
  * });
  * ```
@@ -176,7 +176,7 @@ export function alert(message: string, opts: Partial<DialogOptions> = {}): Promi
 		content: (close) => {
 			A("p", () => { A("#", message); });
 			buttonGroup({ layout: "spaced", attrs: "align-self:flex-end", content: () => {
-				button({ text: "OK", click: close });
+				button({ content: "OK", click: close });
 			}});
 		},
 		...opts,
@@ -201,8 +201,8 @@ export function confirm(message: string, opts: Partial<DialogOptions> = {}): Pro
 			content: (close) => {
 				A("p", () => { A("#", message); });
 				buttonGroup({ layout: "spaced", attrs: "align-self:flex-end", content: () => {
-					button({ text: "Cancel", attrs: ".neutral .outlined", click: close });
-					button({ text: "OK", click: () => { confirmed = true; close(); } });
+					button({ content: "Cancel", attrs: ".neutral .outlined", click: close });
+					button({ content: "OK", click: () => { confirmed = true; close(); } });
 				}});
 			},
 			...opts,
@@ -241,8 +241,8 @@ export function prompt(message: string, defaultValue = "", opts: Partial<DialogO
 					});
 					textline({ bind: A.ref($v, "value") });
 					buttonGroup({ layout: "spaced", attrs: "align-self:flex-end", content: () => {
-						button({ text: "Cancel", attrs: ".neutral .outlined", type: "button", click: close });
-						button({ text: "OK", type: "submit" });
+						button({ content: "Cancel", attrs: ".neutral .outlined", type: "button", click: close });
+						button({ content: "OK", type: "submit" });
 					}});
 				});
 			},

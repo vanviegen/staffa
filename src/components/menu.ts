@@ -1,6 +1,6 @@
 import A from "aberdeen";
 import { matchCurrent } from "aberdeen/route";
-import { type Content, type Slot, type Attributes, drawSlot } from "../core.js";
+import { type Slot, type Attributes, drawSlot, mountPortal } from "../core.js";
 import { button, type ButtonOptions } from "./button.js";
 
 /**
@@ -41,10 +41,10 @@ export interface MenuSeparator {
  * An entry in a menu or sidebar nav list. Three forms:
  * - `MenuItem` — a clickable/linkable row with label and optional icon.
  * - `MenuSeparator` — a visual divider (`{ separator: true }`).
- * - A draw function `() => void` — renders custom content (section header,
+ * - A slot (string or draw function) — renders custom content (section header,
  *   avatar, search box, …). Skipped by keyboard navigation.
  */
-export type MenuEntry = MenuItem | MenuSeparator | Content;
+export type MenuEntry = MenuItem | MenuSeparator | Slot;
 
 /** Options for {@link menuButton} and {@link MainOptions.nav}. */
 export interface MenuOptions {
@@ -148,7 +148,7 @@ export function drawMenu(items: MenuEntry[], onActivate?: () => void): void {
 	});
 
 	for (const entry of items) {
-		if (typeof entry === "function") { entry(); continue; }
+		if (typeof entry === "string" || typeof entry === "function") { drawSlot(entry); continue; }
 		if ("separator" in entry) { A("hr.s-menu-sep"); continue; }
 
 		A(entry.href ? "a.s-menu-item-link" : "button.s-menu-item type=button", entry.attrs, () => {
@@ -193,7 +193,7 @@ function positionMenu(menuEl: HTMLElement, rect: DOMRect): void {
 	menuEl.style.top  = Math.max(8, y) + "px";
 }
 
-A.mount(document.body, () => {
+mountPortal(() => {
 	const f = $floating.opts;
 	if (!f) return;
 
@@ -275,7 +275,9 @@ export function menuButton(opts: MenuOptions): void {
 
 	button({
 		icon: () => A("span aria-hidden=true #☰"),
-		ariaLabel: "Open menu",
+		// Only label the trigger "Open menu" when it has no visible text of its
+		// own — an aria-label would otherwise *hide* that text from AT.
+		...(opts.button?.content == null ? { ariaLabel: "Open menu" } : null),
 		attrs: ".neutral .outlined",
 		...opts.button,
 		click: (e: Event) => {

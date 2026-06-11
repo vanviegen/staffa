@@ -1,5 +1,6 @@
 import A from "aberdeen";
 import type { ContentOptions } from "../core.js";
+import { drawSlot } from "../core.js";
 import { type ButtonOptions, button } from "./button.js";
 
 /** Options for {@link buttonGroup}. */
@@ -55,6 +56,6 @@ export function buttonGroup(opts: ButtonGroupOptions = {}): void {
 
 	A(`div.s-bgroup${cls} role=group`, opts.attrs, () => {
 		if (opts.buttons) for (const b of opts.buttons) button(b);
-		if (opts.content) opts.content();
+		drawSlot(opts.content);
 	});
 }

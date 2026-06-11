@@ -29,9 +29,6 @@ export type Attributes = string;
 /** A reactive "value box", such as the result of `A.proxy(x)` or `A.ref(obj, key)`. */
 export type Bindable<T> = { value: T };
 
-/** A content function. It runs inside the relevant element's reactive scope. */
-export type Content = () => void;
-
 /**
  * Something that renders a small piece of content: either a plain string or a
  * draw function (for icons, badges, custom markup, ...).
@@ -52,8 +49,8 @@ export type Slot<Args extends unknown[] = []> = string | ((...args: Args) => voi
 export interface ContentOptions {
 	/** Aberdeen attr/style string applied to the widget's outermost element. */
 	attrs?: Attributes;
-	/** Draws the children of this component. */
-	content?: Content;
+	/** Draws the children of this component. A string is rendered as rich text. */
+	content?: Slot;
 }
 
 let idCounter = 0;
@@ -71,4 +68,18 @@ export function drawSlot<Args extends unknown[] = []>(slot: Slot<Args> | undefin
 	if (slot == null) return;
 	if (typeof slot === "function") slot(...args);
 	else A("rich=", slot);
+}
+
+/**
+ * Mount a portal (tooltip, toast, menu, dialog, …) in its own dedicated
+ * container under `<body>`. Each portal gets a private parent element because
+ * two `A.mount`s sharing one parent can't tell their nodes apart: a redraw of
+ * one (e.g. a tooltip hiding) may sweep up nodes another portal inserted
+ * earlier in the same parent (e.g. an open menu).
+ */
+export function mountPortal(draw: () => void): void {
+	const container = document.createElement("div");
+	container.style.display = "contents";
+	document.body.appendChild(container);
+	A.mount(container, draw);
 }

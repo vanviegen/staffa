@@ -3,3 +3,5 @@ dist/
 demo/demo.js
 *.log
 src/icons.ts
+skill/
+test-results/
