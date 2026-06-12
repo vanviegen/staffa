@@ -41,10 +41,9 @@ A.insertGlobalCss({
 			"transition: background 0.15s, border-color 0.15s, color 0.15s, filter 0.15s, box-shadow 0.15s, transform 0.08s;",
 		"&:focus-visible": "outline:none box-shadow: 0 0 0 3px $s-focus;",
 		"&:disabled, &[aria-disabled=true]": "opacity:0.45 cursor:not-allowed pointer-events:none filter:saturate(0.6)",
-		// Every button lifts a little toward the cursor on hover (the transform is in
-		// the transition list above). The filled `.gradient` CTA below layers a deeper
-		// shadow on top of the same lift, so it still reads as the signature action.
-		"&:hover": "filter: brightness(1.08); transform: translateY(-1px)",
+		// Hover feedback is colour-only (no movement). The filled `.gradient` CTA
+		// below layers a deeper shadow on top, so it still reads as the signature action.
+		"&:hover": "filter: brightness(1.08)",
 		"&.tonal:hover, &.outlined:hover": "background: color-mix(in srgb, $s-b 26%, transparent);",
 		// A filled `.gradient` button (the default) is the app's signature call to
 		// action: a borderless gradient with a hairline top highlight (a hint of
@@ -57,7 +56,7 @@ A.insertGlobalCss({
 		"&.gradient:not(.tonal):not(.outlined)":
 			"border:0 box-shadow: inset 0 1px 0 color-mix(in srgb, white 25%, transparent), $s-glow;",
 		"&.gradient:not(.tonal):not(.outlined):hover":
-			"filter: brightness(1.05); box-shadow: inset 0 1px 0 color-mix(in srgb, white 25%, transparent), 0 7px 18px color-mix(in srgb, $s-primary 34%, transparent); transform: translateY(-1px);",
+			"filter: brightness(1.05); box-shadow: inset 0 1px 0 color-mix(in srgb, white 25%, transparent), 0 7px 18px color-mix(in srgb, $s-primary 34%, transparent);",
 		// Subtle press feedback.
 		"&:active:not(:disabled):not([aria-disabled=true])": "transform: translateY(1px)",
 		// Size: set on the button itself, or inherited from a `.small`/`.large`
@@ -81,13 +80,14 @@ const ROLE_CLASS = /\.(gradient|primary|secondary|neutral|danger|success|warning
  * **Tip:** pair `href` with Aberdeen's `interceptLinks()` (called once at app
  * startup) for SPA-style navigation without manual click handlers:
  * ```ts
+ * import {interceptLinks} from from "aberdeen/route";
  * interceptLinks(); // once at root
  * S.button({ href: "/dashboard", content: "Dashboard" }); // navigates via router
  * ```
  *
  * @example
  * ```ts
- * S.button({ content: "Save", click: save });
+ * S.button({ content: "Save", click: S.alert("Saved.") });
  * S.button({ content: "Delete", attrs: ".danger .outlined", click: del });
  * S.button("Cancel");                        // shorthand for { content: "Cancel" }
  * S.button({ href: "/docs", content: "Docs" }); // renders an <a role=button>

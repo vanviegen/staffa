@@ -55,8 +55,8 @@ A.insertGlobalCss({
  * @example
  * ```ts
  * S.tabs({ tabs: [
- *   { label: "Overview", content: () => A("p#...") },
- *   { label: "Settings", content: () => drawSettings() },
+ *   { label: "Overview", content: () => A("p#Let me give you an overview..") },
+ *   { label: "Settings", content: () => S.checkbox({label: "I agree to anything", checked: true}) },
  * ]});
  * ```
  */

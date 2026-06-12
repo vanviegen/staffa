@@ -137,9 +137,13 @@ A.insertGlobalCss({
  *   },
  *   navPosition: "left",
  *   menu: () => S.button({ content: "New", attrs: ".small" }),
- *   content: () => drawPage(),
+ *   content: drawPage,
  *   footer: "© 2026",
  * });
+ * 
+ * function drawPage() {
+ *   S.box({title: "Hello world", content: "Here's you app.."});
+ * }
  * ```
  */
 export function main(opts: MainOptions = {}): void {

@@ -29,11 +29,12 @@ A.insertGlobalCss({
 
 /**
  * A multi-line text input. Shares the field chrome and styling of
- * {@link textline}, adding `rows` and `resize` controls.
+ * {@link textline}.
  *
  * @example
  * ```ts
- * S.textarea({ label: "Bio", rows: 6, bind: A.ref($user, "bio") });
+ * const $user = A.proxy({bio: ""});
+ * S.textarea({ label: "Bio", bind: A.ref($user, "bio") });
  * ```
  */
 export function textarea(opts: TextareaOptions = {}): void {

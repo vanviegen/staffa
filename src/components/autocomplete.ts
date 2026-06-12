@@ -64,11 +64,18 @@ function normOption(o: AutocompleteOptionInput): AcOption {
  * @example
  * ```ts
  * // Single select from a fixed list
+ * const $sel = A.proxy("Netherlands");
  * S.autocomplete({ label: "Country", options: ["Belgium", "Netherlands"], bind: $sel });
  *
  * // Multi-select, disallowing custom items
- * S.autocomplete({ label: "Tags", multi: true, allowCustom: false,
- *   options: knownTags, bind: A.ref($post, "tags") });
+ * const $tags = A.proxy({value: [] as string[]});
+ * S.autocomplete({
+ *   label: "Tags",
+ *   multi: true,
+ *   allowCustom: false,
+ *   options: ["Rust", "JS", "C++", "Klingon", "Go"],
+ *   bind: A.ref($tags)
+ * });
  * ```
  */
 export function autocomplete(opts: AutocompleteOptions): void {

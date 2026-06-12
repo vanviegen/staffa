@@ -75,6 +75,11 @@ test("overlays: toasts, tooltips, menus and dialogs", async ({ page }) => {
 	await page.getByRole("button", { name: "Edit" }).click();
 	await page.getByText("Edit clicked").waitFor();
 
+	// Context menu: right-click the panel, pick an item.
+	await page.getByText("Right-click (or long-press)").click({ button: "right" });
+	await page.getByRole("button", { name: "Copy", exact: true }).click();
+	await page.getByText("Copied!").waitFor();
+
 	// alert() / confirm() / prompt()
 	await page.getByRole("button", { name: "alert()" }).click();
 	await page.getByText("File saved successfully.").waitFor();

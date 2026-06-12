@@ -71,15 +71,17 @@ export function drawSlot<Args extends unknown[] = []>(slot: Slot<Args> | undefin
 }
 
 /**
- * Mount a portal (tooltip, toast, menu, dialog, …) in its own dedicated
- * container under `<body>`. Each portal gets a private parent element because
- * two `A.mount`s sharing one parent can't tell their nodes apart: a redraw of
- * one (e.g. a tooltip hiding) may sweep up nodes another portal inserted
- * earlier in the same parent (e.g. an open menu).
+ * Mount a portal (tooltip, toast, menu, dialog, …) directly into `<body>`.
+ * Must be called at module top level, where Aberdeen's root scope (whose
+ * element is `document.body`) is current. Separate `A.mount`s sharing a parent
+ * can't tell their nodes apart, but sibling scopes within the root scope track
+ * their positions, so portals coexist without wrapper elements and add nothing
+ * to the DOM while they draw nothing.
+ *
+ * Scope creation is deferred a microtask so that an app drawing into `<body>`
+ * at module top level gets its content *before* the portals, keeping overlays
+ * at the end of the document.
  */
 export function mountPortal(draw: () => void): void {
-	const container = document.createElement("div");
-	container.style.display = "contents";
-	document.body.appendChild(container);
-	A.mount(container, draw);
+	queueMicrotask(() => A(draw));
 }

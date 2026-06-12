@@ -41,6 +41,7 @@ A.insertGlobalCss({
  *
  * @example
  * ```ts
+ * const $user = A.proxy({name: "Kvothe"});
  * S.box({ header: "Profile", contentAttrs: "display:flex flex-direction:column", content: () => {
  *   S.textline({ label: "Name", bind: A.ref($user, "name") });
  * }});

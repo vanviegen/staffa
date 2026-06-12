@@ -52,8 +52,9 @@ All components get their options in a typed object. The object may be an Aberdee
 ```ts
 const $btn = A.proxy({ content: "Save", disabled: false });
 S.button($btn);
-// ...later:
-$btn.disabled = true;  // button updates instantly
+setTimeout(() => // Later..
+  $btn.disabled = true;  // button updates instantly
+}, 3000);
 ```
 
 ### Rich text slots
@@ -175,13 +176,10 @@ Components share naming conventions for options: `attrs` (outermost element), `c
 
 Staffa ships the full [Lucide icon set](https://lucide.dev/icons/) as named exports. Import only the ones you use, so a bundler tree-shakes the rest (the whole set is ~82 kB gzipped):
 
-```ts
-import { sparkles, bell } from "staffa/icons.js";
-```
-
 Each icon is a draw function usable anywhere a slot is accepted (e.g. a button `icon`), or called directly. Customize per call, or globally via `setDefaults()`:
 
 ```ts
+import { sparkles, bell } from "staffa/icons.js";
 S.button({ content: "Save", icon: bell });
 sparkles({ size: "1.5em", color: "var(--s-primary)", strokeWidth: 1.5 });
 ```
@@ -190,7 +188,7 @@ Options: `size`, `color` (defaults to `currentColor`), `strokeWidth`, `cap`, `jo
 
 ### Other
 
-- **`S.menuButton(opts)` / `S.showFloatingMenu(opts)`**: menu actions and floating menus, with keyboard navigation and submenus.
+- **`S.menuButton(opts)` / `S.addContextMenu(opts)` / `S.showFloatingMenu(opts)`**: dropdown menus from a button, right-click/long-press context menus, and the underlying floating menu primitive — with keyboard navigation.
 - **`S.toast(opts)`**: transient notification at the bottom of the viewport.
 - **`S.addTooltip(el, opts)`**: tooltip on hover, attached to an existing element.
 

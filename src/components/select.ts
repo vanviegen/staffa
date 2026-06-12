@@ -31,6 +31,7 @@ A.insertGlobalCss({
  *
  * @example
  * ```ts
+ * const $sel = A.proxy("Netherlands"); 
  * S.select({ label: "Country", options: ["Belgium", "Netherlands"], bind: $sel });
  * ```
  */

@@ -113,11 +113,15 @@ mountPortal(() => {
  *
  * @example
  * ```ts
- * A("button #Save", () => {
+ * S.button(() => {
+ *   A("#Save");
  *   S.addTooltip({ tip: "Saves your work to the cloud" });
  * });
+ * 
+ * A(" ");
  *
- * A("button #Delete", () => {
+ * S.button(() => {
+ *   A(".danger #Delete");
  *   S.addTooltip({ tip: "Dangerous — cannot be undone", placement: "bottom" });
  * });
  * ```

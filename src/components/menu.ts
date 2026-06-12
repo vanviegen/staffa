@@ -72,6 +72,10 @@ export interface FloatingMenuOptions {
 	dropdownAttrs?: Attributes;
 }
 
+/** Options for {@link addContextMenu} — like {@link FloatingMenuOptions}, but
+ * the anchor is the element the handler is attached to. */
+export type ContextMenuOptions = Omit<FloatingMenuOptions, "anchor">;
+
 // Styles shared by the floating dropdown and the sidebar nav, so both look
 // identical. The item styles aren't scoped to a container, so `drawMenu` can
 // render its items into either one.
@@ -235,18 +239,60 @@ mountPortal(() => {
  * no room below), and closes on Escape, Tab, item selection, or any click
  * outside the panel and anchor. Returns a `close()` function.
  *
+ * Menus are usually opened through {@link menuButton} or
+ * {@link addContextMenu}; reach for this primitive when you need to trigger a
+ * menu from some other event, anchored to an arbitrary element.
+ *
  * @example
  * ```ts
- * // Custom context menu:
- * el.addEventListener("contextmenu", (e) => {
- *   e.preventDefault();
- *   S.showFloatingMenu({ items, anchor: el });
+ * // An @-mention picker: typing "@" in the input pops up a user menu.
+ * const users = ['Alice', 'Bob', 'Charlie', 'Dutley']
+ * A("input placeholder=Comment…", () => {
+ *   A("keydown=", (e: KeyboardEvent) => {
+ *     if (e.key !== "@") return;
+ *     S.showFloatingMenu({
+ *       anchor: e.currentTarget as HTMLElement,
+ *       items: users.map((u) => ({ label: u, click: () => S.alert(`Mentioned ${u}!`) })),
+ *     });
+ *   });
  * });
  * ```
  */
 export function showFloatingMenu(opts: FloatingMenuOptions): () => void {
 	$floating.opts = opts;
 	return closeFloating;
+}
+
+/**
+ * Attaches a context menu to the current element: adds a `contextmenu` handler
+ * via {@link A} so a {@link showFloatingMenu | floating menu} opens (instead of
+ * the browser's own menu) on right-click or long-press. The menu is anchored to
+ * the element and closes on Escape, Tab, item selection, or any click outside.
+ *
+ * @example
+ * ```ts
+ * import * as icons from "staffa/icons";
+ *
+ * S.box(() => {
+ *   A("#Right-click / long-tap me!");
+ *   S.addContextMenu({
+ *     items: [
+ *       { label: "AI something", icon: icons.sparkles, click: () => ai() },
+ *       { label: "Launch missiles", icon: icons.rocket, click: () => launch() },
+ *     ],
+ *   });
+ * });
+ * ```
+ */
+export function addContextMenu(opts: ContextMenuOptions): void {
+	let myEl: HTMLElement | null = null;
+	A.clean(() => { if ($floating.opts?.anchor === myEl) closeFloating(); });
+
+	A("contextmenu=", (e: Event) => {
+		e.preventDefault();
+		myEl = e.currentTarget as HTMLElement;
+		showFloatingMenu({ items: opts.items, anchor: myEl, dropdownAttrs: opts.dropdownAttrs });
+	});
 }
 
 /**

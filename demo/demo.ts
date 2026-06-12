@@ -400,6 +400,18 @@ function drawOverlays() {
 					});
 				});
 			});
+
+			// addContextMenu replaces the browser menu on the current element.
+			A("div.s-s.panel.outlined mt:$3 r:$s-radius padding:$3 text-align:center user-select:none fg:$s-fg-muted", () => {
+				A("#Right-click (or long-press) here for a context menu.");
+				S.addContextMenu({
+					items: [
+						{ label: "Cut",   icon: icons.scissors,       click: () => S.toast({ message: "Cut!", type: "warning" }) },
+						{ label: "Copy",  icon: icons.copy,           click: () => S.toast({ message: "Copied!", type: "success" }) },
+						{ label: "Paste", icon: icons.clipboardPaste, disabled: true },
+					],
+				});
+			});
 		},
 	});
 

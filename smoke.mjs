@@ -14,7 +14,7 @@ globalThis.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 0);
 globalThis.cancelAnimationFrame = (id) => clearTimeout(id);
 
 const A = (await import("aberdeen")).default;
-const S = (await import("./dist/index.js")).default;
+const S = await import("./dist/index.js");
 
 const $form = A.proxy({ name: "Frank", email: "", bio: "", remember: false, tags: ["ui"], country: "" });
 
@@ -82,6 +82,12 @@ A.mount(document.body, () => {
 				S.addTooltip({ tip: "Helpful hint" });
 			});
 
+			// Context menu — addContextMenu attaches a contextmenu handler to the current element.
+			A("div.ctx-probe", () => {
+				A("p#Right-click area");
+				S.addContextMenu({ items: [{ label: "Ctx copy", click: () => {} }] });
+			});
+
 			// Menu trigger
 			S.menuButton({
 				button: { content: "Actions", attrs: ".neutral .outlined" },
@@ -134,7 +140,7 @@ await new Promise((r) => setTimeout(r, 50));
 A.runQueue?.();
 
 // Mutate proxied options and confirm reactive updates.
-$btn.text = "After";
+$btn.content = "After";
 $btn.attrs = "data-tag=t2";
 A.runQueue?.();
 await new Promise((r) => setTimeout(r, 20));
@@ -143,6 +149,9 @@ A.runQueue?.();
 // Hover the tooltip anchor to force the portal tip to render (it's only in the
 // DOM while active), then assert the portal popup appeared.
 document.querySelector(".tt-probe")?.dispatchEvent(new window.Event("mouseenter"));
+
+// Right-click the context-menu probe to open its floating menu portal.
+document.querySelector(".ctx-probe")?.dispatchEvent(new window.MouseEvent("contextmenu", { bubbles: true, cancelable: true }));
 A.runQueue?.();
 await new Promise((r) => setTimeout(r, 20));
 A.runQueue?.();
@@ -169,6 +178,8 @@ const checks = {
 	// Tooltip popup is portal-rendered only while hovered; we hovered above.
 	tooltip: html.includes("s-tt-tip") && headCss.includes(".s-tt-tip"),
 	"menu trigger": html.includes("s-menu-list") || html.includes("Actions"),
+	// Context menu opens a floating menu portal; we right-clicked above.
+	"context menu": html.includes("Ctx copy"),
 	"nav sidebar": html.includes("s-nav-panel") && html.includes('href="/"'),
 	toast: html.includes("s-toast") && html.includes("Smoke test toast"),
 };

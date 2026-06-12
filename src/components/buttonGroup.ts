@@ -40,6 +40,8 @@ A.insertGlobalCss({
 /**
  * Groups related buttons, either as a joined segmented control (`attached`) or
  * spaced out. A `role=group` is applied for assistive tech.
+ * 
+ * If you want a single button to be *selected*, use {@link buttonChooser}.
  *
  * @example
  * ```ts

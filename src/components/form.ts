@@ -41,11 +41,12 @@ A.insertGlobalCss({
  *
  * @example
  * ```ts
+ * const $user = A.proxy({name: "Darth", email: "d.vader@example.com"});
  * S.form({
  *   submit: () => save(),
  *   content: () => {
- *     S.textline({ label: "Name", required: true, bind: A.ref($u, "name") });
- *     S.textline({ label: "Email", type: "email", bind: A.ref($u, "email") });
+ *     S.textline({ label: "Name", required: true, bind: A.ref($user, "name") });
+ *     S.textline({ label: "Email", type: "email", bind: A.ref($user, "email") });
  *   },
  *   actions: () => S.button({ content: "Save", type: "submit" }),
  * });

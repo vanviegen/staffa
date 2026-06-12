@@ -31,6 +31,7 @@ A.insertGlobalCss({
  *
  * @example
  * ```ts
+ * const $prefs = A.proxy({newsletter: true});
  * S.checkbox({ label: "Subscribe to newsletter", bind: A.ref($prefs, "newsletter") });
  * ```
  */

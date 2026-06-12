@@ -54,6 +54,8 @@ let toastCount = 0;
 const toasts = A.proxy({} as Record<number, ToastEntry>);
 
 mountPortal(() => {
+	// Only redraws when emptiness flips, keeping the DOM clean while no toasts show.
+	if (A.isEmpty(toasts)) return;
 	A("div.s-toasts aria-live=polite aria-atomic=false", () => {
 		A.onEach(toasts, (entry) => {
 			const { opts } = entry;
@@ -92,8 +94,7 @@ function dismiss(id: number): void {
  * S.toast({ message: "Saved!", type: "success" });
  * S.toast({ title: "Error", message: "Upload failed.", type: "danger", duration: 0 });
  * const off = S.toast({ message: "Uploading…", duration: 0, dismissible: false });
- * // later:
- * off();
+ * setTimeout(off, 3000); // Later..
  * ```
  */
 export function toast(opts: ToastOptions): () => void {

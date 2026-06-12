@@ -128,7 +128,7 @@ mountPortal(() => {
  *   header: "Confirm",
  *   content: (close) => {
  *     A("p #Are you sure?");
- *     S.button({ content: "Yes", click: () => { doIt(); close(); } });
+ *     S.button({ content: "Yes", click: () => { S.alert("Nice!"); close(); } });
  *     S.button({ content: "Cancel", attrs: ".neutral .outlined", click: close });
  *   },
  * });
@@ -189,7 +189,7 @@ export function alert(message: string, opts: Partial<DialogOptions> = {}): Promi
  *
  * @example
  * ```ts
- * if (await S.confirm("Delete this item?")) deleteItem();
+ * if (await S.confirm("Delete this item?")) S.alert("Gone!");
  * ```
  */
 export function confirm(message: string, opts: Partial<DialogOptions> = {}): Promise<boolean> {
@@ -221,7 +221,7 @@ export function confirm(message: string, opts: Partial<DialogOptions> = {}): Pro
  * @example
  * ```ts
  * const name = await S.prompt("Enter your name:", "Alice");
- * if (name !== null) greet(name);
+ * if (name !== null) S.alert(`Hi ${name}!`);
  * ```
  */
 export function prompt(message: string, defaultValue = "", opts: Partial<DialogOptions> = {}): Promise<string | null> {

@@ -48,6 +48,7 @@ export interface TextlineOptions extends FieldOptions {
  *
  * @example
  * ```ts
+ * const $user = A.proxy({email: "test@example.com"});
  * S.textline({ label: "Email", type: "email", required: true, bind: A.ref($user, "email") });
  * ```
  */
