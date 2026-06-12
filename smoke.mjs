@@ -24,7 +24,7 @@ A.mount(document.body, () => {
 		title: "Staffa Smoke Test",
 		subtitle: "rendering everything",
 		maxWidth: "56rem",
-		menu: () => S.button({ text: "New", size: "sm" }),
+		menu: () => S.button({ content: "New", size: "sm" }),
 		nav: {
 			items: [
 				{ label: "Home", href: "/" },
@@ -37,7 +37,7 @@ A.mount(document.body, () => {
 		content: () => {
 			S.box({
 				header: "Account",
-				footer: () => S.button({ text: "Footer button", attrs: ".neutral .outlined" }),
+				footer: () => S.button({ content: "Footer button", attrs: ".neutral .outlined" }),
 				content: () => {
 					S.form({
 						layout: "grid",
@@ -50,7 +50,7 @@ A.mount(document.body, () => {
 							S.autocomplete({ label: "Country", options: ["Belgium", "Netherlands", "Germany"], bind: A.ref($form, "country") });
 							S.autocomplete({ label: "Tags", multi: true, allowCustom: true, options: ["ui", "ux", "css"], bind: A.ref($form, "tags") });
 						},
-						actions: () => S.button({ text: "Save", type: "submit" }),
+						actions: () => S.button({ content: "Save", type: "submit" }),
 					});
 				},
 			});
@@ -65,26 +65,26 @@ A.mount(document.body, () => {
 
 			S.buttonGroup({
 				buttons: [
-					{ text: "Day", attrs: ".neutral .outlined" },
-					{ text: "Week", attrs: ".neutral .outlined" },
-					{ text: "Month", attrs: ".neutral .outlined" },
+					{ content: "Day", attrs: ".neutral .outlined" },
+					{ content: "Week", attrs: ".neutral .outlined" },
+					{ content: "Month", attrs: ".neutral .outlined" },
 				],
 			});
 
-			[".primary .tonal", ".primary .outlined"].forEach((attrs) => S.button({ text: attrs, attrs }));
-			S.button({ text: "disabled", disabled: true });
+			[".primary .tonal", ".primary .outlined"].forEach((attrs) => S.button({ content: attrs, attrs }));
+			S.button({ content: "disabled", disabled: true });
 			S.button("Shorthand string");
 			S.box(() => A("p#Box shorthand content"));
 
 			// Tooltip — addTooltip attaches hover/focus handlers to the current element.
 			A("span.tt-probe display:inline-flex", () => {
-				S.button({ text: "Hover me" });
+				S.button({ content: "Hover me" });
 				S.addTooltip({ tip: "Helpful hint" });
 			});
 
 			// Menu trigger
 			S.menuButton({
-				button: { text: "Actions", attrs: ".neutral .outlined" },
+				button: { content: "Actions", attrs: ".neutral .outlined" },
 				items: [
 					{ label: "Edit", click: () => {} },
 					{ separator: true },
@@ -107,7 +107,7 @@ A.mount(document.body, () => {
 		bind: $tab,
 		tabs: [
 			{ id: "a", label: "A", content: () => S.box({ header: "Boxed", content: () => A("p#hi") }) },
-			{ id: "b", label: "B", content: () => S.buttonGroup({ buttons: [{ text: "x" }, { text: "y" }] }) },
+			{ id: "b", label: "B", content: () => S.buttonGroup({ buttons: [{ content: "x" }, { content: "y" }] }) },
 		],
 	});
 });
@@ -125,7 +125,7 @@ await flush(); // rebuild panel A — styles must still be present
 const headCss = document.head.textContent || "";
 
 // A proxied options object — mutating it should update the DOM in place.
-const $btn = A.proxy({ text: "Before", attrs: "data-tag=t1" });
+const $btn = A.proxy({ content: "Before", attrs: "data-tag=t1" });
 A.mount(document.body, () => S.button($btn));
 
 // Flush Aberdeen's async queue.

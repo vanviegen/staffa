@@ -8,21 +8,19 @@ import * as S from "staffa";
 
 const $user = A.proxy({ name: "", email: "" });
 
-A.mount(document.body, () => {
-  S.main({
-    title: "Sign up",
-    maxWidth: "40rem",
-    content: () => {
-      S.form({
-        submit: () => console.log(A.unproxy($user)),
-        content: () => {
-          S.textline({ label: "Name", required: true, bind: A.ref($user, "name") });
-          S.textline({ label: "Email", type: "email", bind: A.ref($user, "email") });
-        },
-        actions: () => S.button({ text: "Create account", type: "submit" }),
-      });
-    },
-  });
+S.main({
+  title: "Sign up",
+  maxWidth: "40rem",
+  content: () => {
+    S.form({
+      submit: () => console.log(A.unproxy($user)),
+      content: () => {
+        S.textline({ label: "Name", required: true, bind: A.ref($user, "name") });
+        S.textline({ label: "Email", type: "email", bind: A.ref($user, "email") });
+      },
+      actions: () => S.button({ content: "Create account", type: "submit" }),
+    });
+  },
 });
 ```
 
@@ -43,7 +41,7 @@ Aberdeen is a peer dependency. Staffa is published as ESM with TypeScript types.
 Every component takes a single typed options object and draws DOM via Aberdeen. No classes, no web components. The `S` object collects all component functions:
 
 ```ts
-S.button({ text: "Save", disabled: false });
+S.button({ content: "Save", disabled: false });
 S.box({ header: "Settings", content: () => { ... } });
 ```
 
@@ -52,7 +50,7 @@ S.box({ header: "Settings", content: () => { ... } });
 All components get their options in a typed object. The object may be an Aberdeen proxy, if you want to update the component in-place.
 
 ```ts
-const $btn = A.proxy({ text: "Save", disabled: false });
+const $btn = A.proxy({ content: "Save", disabled: false });
 S.button($btn);
 // ...later:
 $btn.disabled = true;  // button updates instantly
@@ -63,7 +61,7 @@ $btn.disabled = true;  // button updates instantly
 Anywhere a component takes content, a `label`, `header`, button `text`, dialog body, etc, you can pass either a string or a `() => void` draw function. Strings render as **rich text**: `*italic*`, `**bold**`, `` `code` ``, `[link](/path)`. All text is safely escaped.
 
 ```ts
-S.button({ text: "Save **now**" });
+S.button({ content: "Save **now**" });
 S.box({ header: "See the [docs](/docs)", content: () => { ... } });
 ```
 
@@ -78,7 +76,7 @@ Staffa builds on **surfaces**: elements marked with `.s-s` that have their own b
 Components are built from these (`S.button` is a `.s-s.primary.filled`, `S.box` a `.s-s.panel`, etc.). Because component options include an optional `attrs` string, which has Aberdeen `A()` string semantics, you can easily override it:
 
 ```ts
-S.button({ text: "Delete", attrs: ".danger" });
+S.button({ content: "Delete", attrs: ".danger" });
 S.box({ attrs: ".raised.outlined", content: () => { ... } });
 ```
 
@@ -120,7 +118,7 @@ If you need further customization, just add some CSS to override the default sty
 A.insertGlobalCss({".s-s.my-surface": "--s-a:white --s-b:#ef6b00"});
 
 S.button({
-  text: "You'll want to click me",
+  content: "You'll want to click me",
   attrs: ".my-surface",
   click: () => S.alert("Good work!", {attrs: ".my-surface"})
 });
@@ -184,7 +182,7 @@ import { sparkles, bell } from "staffa/icons.js";
 Each icon is a draw function usable anywhere a slot is accepted (e.g. a button `icon`), or called directly. Customize per call, or globally via `setDefaults()`:
 
 ```ts
-S.button({ text: "Save", icon: bell });
+S.button({ content: "Save", icon: bell });
 sparkles({ size: "1.5em", color: "var(--s-primary)", strokeWidth: 1.5 });
 ```
 
@@ -281,3 +279,12 @@ To use this, it is recommended to symlink the skill into your project's `.claude
 mkdir -p .claude/skills
 ln -s ../../node_modules/staffa/skill .claude/skills/staffa
 ```
+
+## Breaking changes
+
+- **0.4**
+  - There is no default export anymore: replace `import S from "staffa"` with `import * as S from "staffa"`.
+  - `S.button` no longer has a `text` option: use `content` instead (it accepts a string or a draw function).
+  - The `Content` type is gone: use `Slot` instead. The `Styling` type alias is now exported as `Attributes`.
+  - `S.buttonChooser` uses `undefined` instead of `null` for "nothing selected" (in `bind` and with `allowDeselect`).
+  

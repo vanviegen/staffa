@@ -40,54 +40,52 @@ const colorPickerStyle = A.insertCss({
 
 // ─── Shell ───────────────────────────────────────────────────────────────────
 
-A.mount(document.body, () => {
-	const $navPosition = A.proxy("left") as {value: "left" | "right" | "button"};
-	A(() => {
-		S.main({
-			// The brand sits in a gradient-text header, which sets `color:transparent`;
-			// give the icon an explicit colour so its `currentColor` stroke stays visible.
-			icon: () => icons.sparkles({ color: "var(--s-primary)" }),
-			title: "Staffa",
-			subtitle: "components for Aberdeen",
-			maxWidth: "1280px",
-			nav: {
-				button: { attrs: ".small" },
-				items: [
-					{ label: "Form",     icon: icons.clipboardList,      href: "?menu=form"     },
-					{ label: "Buttons",  icon: icons.mousePointerClick,  href: "?menu=buttons"  },
-					{ label: "Tabs",     icon: icons.folders,            href: "?menu=tabs"     },
-					{ label: "Overlays", icon: icons.bell,               href: "?menu=overlays" },
-					{ label: "Surfaces", icon: icons.palette,            href: "?menu=surfaces" },
-					{ label: "Content",  icon: icons.fileText,           href: "?menu=content"  },
-					{ label: "Icons",    icon: icons.shapes,             href: "?menu=icons"    },
-					{ separator: true },
-					{ label: "Aberdeen docs", icon: icons.arrowUpRight, href: "https://aberdeenjs.org", target: "_blank" },
-				],
-			},
-			navPosition: $navPosition.value,
-			menu: () => {
-					S.buttonChooser({
-						options: { left: icons.panelLeft, right: icons.panelRight, button: icons.menu },
-						bind: $navPosition,
-						attrs: ".small",
-					});
-					drawColorPickers();
-					drawThemeChooser();
-			},
-			footer: () => A("span rich='Built with **Staffa** · © 2026'"),
-			content: () => {
-				A(() => {
-					const page = current.search.menu;
-					if (page === "buttons")       drawButtons();
-					else if (page === "tabs")     drawTabsPage();
-					else if (page === "overlays") drawOverlays();
-					else if (page === "surfaces") drawSurfaces();
-					else if (page === "content")  drawContent();
-					else if (page === "icons")    drawIcons();
-					else                          drawForm();
+const $navPosition = A.proxy("left") as {value: "left" | "right" | "button"};
+A(() => {
+	S.main({
+		// The brand sits in a gradient-text header, which sets `color:transparent`;
+		// give the icon an explicit colour so its `currentColor` stroke stays visible.
+		icon: () => icons.sparkles({ color: "var(--s-primary)" }),
+		title: "Staffa",
+		subtitle: "components for Aberdeen",
+		maxWidth: "1280px",
+		nav: {
+			button: { attrs: ".small" },
+			items: [
+				{ label: "Form",     icon: icons.clipboardList,      href: "?menu=form"     },
+				{ label: "Buttons",  icon: icons.mousePointerClick,  href: "?menu=buttons"  },
+				{ label: "Tabs",     icon: icons.folders,            href: "?menu=tabs"     },
+				{ label: "Overlays", icon: icons.bell,               href: "?menu=overlays" },
+				{ label: "Surfaces", icon: icons.palette,            href: "?menu=surfaces" },
+				{ label: "Content",  icon: icons.fileText,           href: "?menu=content"  },
+				{ label: "Icons",    icon: icons.shapes,             href: "?menu=icons"    },
+				{ separator: true },
+				{ label: "Aberdeen docs", icon: icons.arrowUpRight, href: "https://aberdeenjs.org", target: "_blank" },
+			],
+		},
+		navPosition: $navPosition.value,
+		menu: () => {
+				S.buttonChooser({
+					options: { left: icons.panelLeft, right: icons.panelRight, button: icons.menu },
+					bind: $navPosition,
+					attrs: ".small",
 				});
-			},
-		});
+				drawColorPickers();
+				drawThemeChooser();
+		},
+		footer: () => A("span rich='Built with **Staffa** · © 2026'"),
+		content: () => {
+			A(() => {
+				const page = current.search.menu;
+				if (page === "buttons")       drawButtons();
+				else if (page === "tabs")     drawTabsPage();
+				else if (page === "overlays") drawOverlays();
+				else if (page === "surfaces") drawSurfaces();
+				else if (page === "content")  drawContent();
+				else if (page === "icons")    drawIcons();
+				else                          drawForm();
+			});
+		},
 	});
 });
 

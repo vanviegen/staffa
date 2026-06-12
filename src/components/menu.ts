@@ -260,7 +260,7 @@ export function showFloatingMenu(opts: FloatingMenuOptions): () => void {
  * @example
  * ```ts
  * S.menuButton({
- *   button: { text: "Actions", attrs: ".neutral .outlined" },
+ *   button: { content: "Actions", attrs: ".neutral .outlined" },
  *   items: [
  *     { label: "Edit", icon: () => A("#✎"), click: () => edit() },
  *     { separator: true },
