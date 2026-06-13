@@ -213,20 +213,24 @@ function drawButtons() {
 		contentAttrs: "display:flex flex-direction:column gap:$3",
 		content: () => {
 			for (const variant of variants) {
-				A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
-					A("div text-align:right w:5rem text=", variant);
-					for (const role of roles) {
-						S.button({ content: role, attrs: `.${role} .${variant}` });
-					}
-					S.button({ content: "disabled", attrs: `.primary .${variant}`, disabled: true });
+				A("div display:grid gap:$2 grid-template-columns: 5rem 1fr;", () => {
+					A("div text-align:right fg: $s-fg-muted; text=", variant);
+					A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
+						for (const role of roles) {
+							S.button({ content: role, attrs: `.${role} .${variant}` });
+						}
+						S.button({ content: "disabled", attrs: `.primary .${variant}`, disabled: true });
+					});
 				});
 			}
 
-			A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
-				A("div text-align:right w:5rem #sizes");
-				S.button({ content: "Small", attrs: ".small" });
-				S.button({ content: "Medium" });
-				S.button({ content: "Large", attrs: ".large" });
+			A("div display:grid gap:$2 align-items:center grid-template-columns: 5rem 1fr;", () => {
+				A("div text-align:right fg: $s-fg-muted; #sizes");
+				A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
+					S.button({ content: "Small", attrs: ".small" });
+					S.button({ content: "Medium" });
+					S.button({ content: "Large", attrs: ".large" });
+				});
 			});
 		},
 	});
@@ -553,41 +557,53 @@ function drawContent() {
 
 function drawSurfaces() {
 	const levels = ["base", "panel", "raised"];
-	const roles = ["neutral", "primary", "secondary", "gradient", "danger", "success", "warning"];
+	const accentRoles = ["primary", "secondary", "gradient", "danger", "success", "warning"];
+	const $containing = A.proxy({ value: "panel" });
 
-
-	S.box({
-		header: "Surfaces",
-		content: () => {
-			A("div display:flex flex-direction:column gap:$1", () => {
-				for (const name of [...levels, ...roles]) {
-					A(`div.s-s.${name} padding: $2 $3; r: $s-radius; display:flex gap:$3 align-items:baseline`, () => {
-						A(`div w:7em #.${name}`);
-						A(`span fg: $s-fg-muted; font-size:0.85em #muted`);
-						A(`span fg: $s-fg-faint; font-size:0.85em #faint`);
-						A(`a href=# font-size:0.85em #link`);
-						A(`span fg: $s-accent; font-weight:600 font-size:0.85em #accent`);
-						A(`span padding: 0.15em 0.4em; r:4px border: 1px solid $s-border; font-size:0.8em #border`);
-					});
-				}
+	function drawSurfaceRow(name: string, variant?: string) {
+		const cls = variant ? `div.s-s.${name}.${variant}` : `div.s-s.${name}`;
+		const label = variant ? `.${name}.${variant}` : `.${name}`;
+		A(`${cls} padding: $2 $3; r: $s-radius;`, () => {
+			A("div display:flex gap:$3 align-items:baseline flex-wrap:wrap font-size:0.85em", () => {
+				A("div flex-shrink:0 min-width:9rem #", label);
+				A("span #text");
+				A("span fg: $s-fg-muted; #muted");
+				A("span fg: $s-fg-faint; #faint");
+				A("a href=# #link");
+				A("span fg: $s-accent; font-weight:600 #accent");
+				A("span padding: 0.15em 0.4em; r:4px; border: 1px solid $s-border; font-size:0.8em #border");
 			});
-		},
-	});
+		});
+	}
 
 	S.box({
-		header: "Variants: filled, tonal, outlined",
+		header: "Surfaces & Variants",
 		content: () => {
-			A("div display:flex flex-direction:column gap:$2", () => {
-				for (const name of roles) {
-					A("div display:flex gap:$2 align-items:stretch", () => {
-						A(`span min-width:4.5rem fg: $s-fg-muted; font-size:0.85em display:flex align-items:center #.${name}`);
-						for (const variant of ["filled", "tonal", "outlined"]) {
-							A(`div.s-s.${name}.${variant} padding: $2 $3; r: $s-radius; border: 1px solid $s-border; flex:1 text-align:center`, () => {
-								A(`#${variant}`);
+			A("div mb:$3", () => {
+				S.select({
+					label: "Containing surface",
+					options: [...levels, "neutral", ...accentRoles],
+					bind: $containing,
+				});
+			});
+
+			A(() => {
+				A(`div.s-s.${$containing.value} padding: $3; r: $s-radius;`, () => {
+					A("div display:flex flex-direction:column gap:$2", () => {
+						// Levels + neutral: filled only (tonal/outlined not meaningful here)
+						A("div display:flex flex-direction:column gap:$1", () => {
+							for (const name of [...levels, "neutral"]) drawSurfaceRow(name);
+						});
+						// Accent roles: one row each for filled, tonal, outlined
+						for (const name of accentRoles) {
+							A("div display:flex flex-direction:column gap:$1", () => {
+								drawSurfaceRow(name);
+								drawSurfaceRow(name, "tonal");
+								drawSurfaceRow(name, "outlined");
 							});
 						}
 					});
-				}
+				});
 			});
 		},
 	});
@@ -595,17 +611,17 @@ function drawSurfaces() {
 	S.box({
 		header: "Nesting — tokens resolve to the nearest surface",
 		content: () => {
-			A("div.s-s.primary padding: $3; r: $s-radius;", () => {
+			A("div.s-s.primary padding:$3 r:$s-radius", () => {
 				A("p mt:0 mb:$2 display:flex gap:$2 align-items:center", () => {
 					A("code #code");
-					A("span fg: $s-fg-muted; #muted ·");
-					A("a href=# #link");
+					A("span fg:$s-fg-muted #muted ·");
+					A('a href="#" #link');
 				});
-				A("div.s-s.panel padding: $2 $3; r: $s-radius;", () => {
+				A("div.s-s.panel padding: $2 $3; r:$s-radius", () => {
 					A("p m:0 display:flex gap:$2 align-items:center", () => {
 						A("code #code");
-						A("span fg: $s-fg-muted; #muted ·");
-						A("a href=# #link");
+						A("span fg:$s-fg-muted #muted ·");
+						A('a href="#" #link');
 					});
 				});
 			});
