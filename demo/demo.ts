@@ -1,10 +1,10 @@
 import A from "aberdeen";
-import { current, interceptLinks } from "aberdeen/route";
+import * as route from "aberdeen/route";
 import * as S from "staffa";
 import * as icons from "staffa/icons";
 
 // Enable PWA-style local link interception.
-interceptLinks();
+route.interceptLinks();
 
 const $user = A.proxy({
 	name: "Frank",
@@ -25,8 +25,8 @@ const knownLanguages = ["TypeScript", "JavaScript", "Python", "Rust", "Go", "Jav
 // block that Aberdeen emits *after* the library's own styles, so it cleanly
 // overrides Staffa's --s-primary / --s-secondary (and everything derived from
 // them) at equal specificity. Transient — not persisted.
-A.cssVars["s-primary"] = "#fdda58";
-A.cssVars["s-secondary"] = "#cc5624";
+A.cssVars["s-primary"] = "#89eb47";
+A.cssVars["s-secondary"] = "#ecf000";
 
 // Scoped (generated-class) styling for the swatch row, so it stays out of the
 // global and `s-` namespaces.
@@ -76,14 +76,15 @@ A(() => {
 		footer: () => A("span rich='Built with **Staffa** · © 2026'"),
 		content: () => {
 			A(() => {
-				const page = current.search.menu;
-				if (page === "buttons")       drawButtons();
-				else if (page === "tabs")     drawTabsPage();
+				const page = route.current.search.menu;
+				if (page === "buttons") drawButtons();
+				else if (page === "tabs") drawTabsPage();
 				else if (page === "overlays") drawOverlays();
 				else if (page === "surfaces") drawSurfaces();
-				else if (page === "content")  drawContent();
-				else if (page === "icons")    drawIcons();
-				else                          drawForm();
+				else if (page === "content") drawContent();
+				else if (page === "icons") drawIcons();
+				else if (page === "form") drawForm();
+				else route.current.search.menu = "form";
 			});
 		},
 	});
@@ -263,14 +264,8 @@ function drawTabsPage() {
 			A("p rich='The active tab is stored in `?tab=` — tab state survives a reload and the back button.'");
 			A("div mt:$2", () => {
 				// Bind the tab selection to the `tab` search param.
-				// Reading current.search inside the scope tracks it reactively;
-				// writing current.search replaces the URL in-place (no history push).
-				const tabBind = {
-					get value() { return current.search.tab ?? ""; },
-					set value(v: string) { current.search = { ...current.search, tab: v }; },
-				};
 				S.tabs({
-					bind: tabBind,
+					bind: A.ref(route.current.search, 'tab'),
 					tabs: [
 						{
 							id: "overview",

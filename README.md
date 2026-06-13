@@ -179,7 +179,8 @@ Staffa ships the full [Lucide icon set](https://lucide.dev/icons/) as named expo
 Each icon is a draw function usable anywhere a slot is accepted (e.g. a button `icon`), or called directly. Customize per call, or globally via `setDefaults()`:
 
 ```ts
-import { sparkles, bell } from "staffa/icons.js";
+import * as S from "staffa";
+import { sparkles, bell } from "staffa/icons";
 S.button({ content: "Save", icon: bell });
 sparkles({ size: "1.5em", color: "var(--s-primary)", strokeWidth: 1.5 });
 ```

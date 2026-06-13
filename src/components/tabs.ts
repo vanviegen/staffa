@@ -69,6 +69,11 @@ export function tabs(opts: TabsOptions): void {
 	// Selection state: caller-provided binding, or internal.
 	const $sel: Bindable<string> = opts.bind ?? A.proxy(keyOf(opts.tabs[0] ?? { label: "" }, 0));
 
+	// If the current value isn't a valid tab key, reset to the first tab.
+	if (opts.tabs.length > 0 && !opts.tabs.some((t, i) => keyOf(t, i) === A.peek(() => $sel.value))) {
+		$sel.value = keyOf(opts.tabs[0], 0);
+	}
+
 	const select = (tab: Tab, index: number) => {
 		if (tab.disabled) return;
 		$sel.value = keyOf(tab, index);
