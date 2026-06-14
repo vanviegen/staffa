@@ -113,7 +113,7 @@ test("overlays: toasts, tooltips, menus and dialogs", async ({ page }) => {
 
 test("surfaces: levels, roles, variants and nesting", async ({ page }) => {
 	await page.goto("./?menu=surfaces");
-	await page.getByText("Variants: filled, tonal, outlined").waitFor();
+	await page.getByText("Surfaces & Variants").waitFor();
 	// Scroll the nesting demo into view for its own screenshot.
 	await page.getByText("Nesting — tokens resolve").scrollIntoViewIfNeeded();
 });
@@ -133,7 +133,7 @@ test("icons: gallery, sizing and search", async ({ page }) => {
 
 test("dark mode: surfaces and buttons", async ({ page }) => {
 	await page.goto("./?menu=surfaces");
-	await page.getByText("Variants: filled, tonal, outlined").waitFor();
+	await page.getByText("Surfaces & Variants").waitFor();
 	await page.getByRole("button", { name: "dark" }).click();
 	await page.getByRole("link", { name: "Buttons" }).click();
 	await page.getByText("Variants & sizes").waitFor();

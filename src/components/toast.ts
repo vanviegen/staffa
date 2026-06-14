@@ -13,7 +13,7 @@ export interface ToastOptions {
 	 */
 	type?: "success" | "danger" | "warning" | "neutral"
 	/**
-	 * Auto-dismiss delay in milliseconds. Defaults to `4000`.
+	 * Auto-dismiss delay in milliseconds. Defaults to `6000`.
 	 * Pass `0` to make the toast persistent until dismissed manually.
 	 */
 	duration?: number;
@@ -37,7 +37,7 @@ A.insertGlobalCss({
 		"&":
 			"display:flex align-items:flex-start gap:$2 " +
 			"padding: $3; border: 1px solid $s-border; r:$s-radius box-shadow:$s-shadow " +
-			"pointer-events:auto",
+			"pointer-events:auto position:relative overflow:hidden",
 		".s-toast-body": "display:flex flex-direction:column gap:$1 flex:1 min-width:0",
 		".s-toast-title": "font-weight:700 line-height:1.3",
 		".s-toast-msg": "font-size:0.9em fg:$s-fg-muted line-height:1.4",
@@ -46,6 +46,7 @@ A.insertGlobalCss({
 			"padding: 0 0.15em; r:4px flex-shrink:0 align-self:flex-start",
 		".s-toast-close:hover": "fg:$s-fg",
 		".s-toast-close:focus-visible": "outline:none box-shadow: 0 0 0 3px $s-focus; fg:$s-fg",
+		".s-toast-progress": "position:absolute bottom:0 left:0 right:0 height:2px background:$s-accent width:100%",
 	},
 });
 
@@ -54,15 +55,47 @@ let toastCount = 0;
 const toasts = A.proxy({} as Record<number, ToastEntry>);
 
 mountPortal(() => {
-	// Only redraws when emptiness flips, keeping the DOM clean while no toasts show.
-	if (A.isEmpty(toasts)) return;
+	// In initial peek is here to NOT subscribe to changes once `toasts` first becomes non empty,
+	// leaving the container in the DOM forever after. (So as not to cut of hide animations.)
+	if (A.peek(() => A.isEmpty(toasts)) && A.isEmpty(toasts)) return;
 	A("div.s-toasts aria-live=polite aria-atomic=false", () => {
 		A.onEach(toasts, (entry) => {
-			const { opts } = entry;
+			const { opts, id } = entry;
 			const role = opts.type === "danger" || opts.type === "warning" ? "alert" : "status";
 			const surface = opts.type ?? "neutral";
+			const duration = opts.duration ?? 6000;
+
+			let timer: ReturnType<typeof setTimeout> | undefined;
+			let progressEl: HTMLElement | null = null;
+
+			const startCountdown = () => {
+				clearTimeout(timer);
+				if (progressEl) {
+					progressEl.style.transition = "none";
+					progressEl.style.width = "100%";
+					progressEl.offsetWidth; // force reflow so transition triggers
+					progressEl.style.transition = `width ${duration}ms linear`;
+					progressEl.style.width = "0%";
+				}
+				timer = setTimeout(() => dismiss(id), duration);
+			};
+
+			const stopCountdown = () => {
+				clearTimeout(timer);
+				timer = undefined;
+				if (progressEl) {
+					progressEl.style.transition = "none";
+					progressEl.style.width = "100%";
+				}
+			};
+
+			A.clean(() => clearTimeout(timer));
 
 			A(`div.s-toast.s-s.${surface} role=${role}`, "create=", grow, "destroy=", shrink, opts.attrs, () => {
+				if (duration > 0) {
+					A("mouseenter=", stopCountdown);
+					A("mouseleave=", startCountdown);
+				}
 				A("div.s-toast-body", () => {
 					A(() => {
 						if (opts.title != null) A("div.s-toast-title", () => drawSlot(opts.title));
@@ -73,10 +106,17 @@ mountPortal(() => {
 					if (opts.dismissible === false) return;
 					A("button.s-toast-close type=button aria-label=Dismiss", () => {
 						A("#×");
-						A("click=", () => dismiss(entry.id));
+						A("click=", () => dismiss(id));
 					});
 				});
+				if (duration > 0) {
+					progressEl = A("div.s-toast-progress") as HTMLElement;
+				}
 			});
+
+			if (duration > 0) {
+				requestAnimationFrame(startCountdown);
+			}
 		});
 	});
 });
@@ -87,7 +127,7 @@ function dismiss(id: number): void {
 
 /**
  * Show a toast notification. Returns a `dismiss()` function to remove it
- * programmatically. Auto-dismisses after `duration` ms (default 4 000).
+ * programmatically. Auto-dismisses after `duration` ms (default 6 000).
  *
  * @example
  * ```ts
@@ -100,15 +140,5 @@ function dismiss(id: number): void {
 export function toast(opts: ToastOptions): () => void {
 	const id = ++toastCount;
 	toasts[id] = { id, opts };
-
-	const duration = opts.duration ?? 4000;
-	let timer: ReturnType<typeof setTimeout> | undefined;
-	if (duration > 0) {
-		timer = setTimeout(() => dismiss(id), duration);
-	}
-
-	return () => {
-		if (timer != null) clearTimeout(timer);
-		dismiss(id);
-	};
+	return () => dismiss(id);
 }

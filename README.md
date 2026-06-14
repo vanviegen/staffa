@@ -26,6 +26,10 @@ S.main({
 
 Staffa is made to look decent out of the box, but easily customizable at runtime.
 
+## Screenshot
+
+![Screenshot](screenshot.png)
+
 ## Install
 
 ```sh
