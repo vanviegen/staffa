@@ -281,6 +281,10 @@ ln -s ../../node_modules/staffa/skill .claude/skills/staffa
 
 ## Breaking changes
 
+- **0.5**
+  - Surfaces (`.s-s`) now apply `border-radius` and — for `.tonal` and `.outlined` variants — `border` automatically. Custom surfaces or components that previously set these manually may see doubled or conflicting styles; remove the manual declarations.
+  - `border:0` is now applied to `.s-btn` by default (overriding the browser's 2px button border). Custom button-like components built on `.s-btn` that relied on the browser default border should add an explicit border.
+
 - **0.4**
   - There is no default export anymore: replace `import S from "staffa"` with `import * as S from "staffa"`.
   - `S.button` no longer has a `text` option: use `content` instead (it accepts a string or a draw function).
