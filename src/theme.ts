@@ -244,7 +244,7 @@ A.insertGlobalCss({
 		// Chromium): the thumb uses the surface's derived border token, so the bar
 		// tracks the active mode/re-skin and a nested surface's own colours.
 		"scrollbar-width:thin scrollbar-color: $s-border-strong transparent; " +
-		"background:$s-bg color:$s-fg",
+		"background:$s-bg color:$s-fg r:$s-radius",
 	// WebKit/older-Chromium counterpart to the standard `scrollbar-*` props above:
 	// a transparent track and a rounded thumb (border-clipped to leave breathing
 	// room) that brightens on hover.
@@ -253,12 +253,12 @@ A.insertGlobalCss({
 	".s-s::-webkit-scrollbar-thumb, .s-s ::-webkit-scrollbar-thumb": "background:$s-border-strong border-radius:99px border: 2px solid transparent; background-clip:padding-box",
 	".s-s::-webkit-scrollbar-thumb:hover, .s-s ::-webkit-scrollbar-thumb:hover": "background:$s-fg-faint background-clip:padding-box",
 	// Tonal: the fill colour becomes the ink, over a soft tint of itself.
-	".s-s.tonal": "--s-fg:$s-b --s-bg: color-mix(in srgb, $s-b 16%, transparent);",
+	".s-s.tonal": "--s-fg:$s-b --s-bg: color-mix(in srgb, $s-b 16%, transparent); border: 1px solid $s-border;",
 	// Outlined: the fill colour is the ink; --s-bg *inherits* the parent's bg (the
 	// token the derivations read, so the edge mixes ink with the real surroundings)
 	// while the painted background is transparent, letting that parent fill — even
 	// a gradient or image — show through.
-	".s-s.outlined": "--s-fg:$s-b --s-bg:inherit background:transparent --s-border: color-mix(in srgb, $s-fg 55%, $s-bg);",
+	".s-s.outlined": "--s-fg:$s-b --s-bg:inherit background:transparent --s-border: color-mix(in srgb, $s-fg 55%, $s-bg); border: 1px solid $s-border;",
 	// Filled, explicit — last among the variants so a caller's `attrs: ".filled"`
 	// overrides a component's default `.tonal`/`.outlined` (resetting both the
 	// anchors and the painted background).
@@ -279,6 +279,12 @@ A.insertGlobalCss({
 	// the surface's own ink. (Keyed on the role modifier, so it holds across
 	// variants — and tracks the tonal/outlined fg remap.)
 	".s-s.primary, .s-s.secondary, .s-s.danger, .s-s.success, .s-s.warning, .s-s.gradient": "--s-accent:$s-fg --s-link:$s-fg",
+	// Tonal/outlined nested inside a filled accent surface would lose legibility:
+	// their transparency bleeds into the vivid parent fill. Swap in the neutral
+	// panel as a base so the role color reads as ink rather than fill.
+	// Specificity (4 classes) beats the 2-class variant rules — no !important needed.
+	".s-s.primary .s-s.tonal, .s-s.secondary .s-s.tonal, .s-s.gradient .s-s.tonal, .s-s.danger .s-s.tonal, .s-s.success .s-s.tonal, .s-s.warning .s-s.tonal, .s-s.primary .s-s.outlined, .s-s.secondary .s-s.outlined, .s-s.gradient .s-s.outlined, .s-s.danger .s-s.outlined, .s-s.success .s-s.outlined, .s-s.warning .s-s.outlined":
+		"--s-bg: $s-panel; background: $s-panel;",
 });
 
 // A deliberately light reset. Colours/shape come from the contextual tokens, so

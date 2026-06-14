@@ -30,14 +30,14 @@ export interface ButtonOptions {
 }
 
 // The button is a `.s-s` surface (defaulting to `.primary` in button() below), so
-// its colours come from the surface classes in theme.ts. This rule only handles
-// layout, border, focus, hover and sizing.
+// its colours, border, and border-radius come from the surface classes in theme.ts.
+// This rule only handles layout, focus, hover and sizing.
 A.insertGlobalCss({
 	".s-btn": {
 		"&":
 			"display:inline-flex align-items:center justify-content:center gap:$2 " +
 			"font-weight:600 line-height:1.2 white-space:nowrap cursor:pointer text-decoration:none " +
-			"border: 1px solid $s-border; r: $s-radius; padding: 0.5em 1em; " +
+			"border:0 padding: 0.5em 1em; " +
 			"transition: background 0.15s, border-color 0.15s, color 0.15s, filter 0.15s, box-shadow 0.15s, transform 0.08s;",
 		"&:focus-visible": "outline:none box-shadow: 0 0 0 3px $s-focus;",
 		"&:disabled, &[aria-disabled=true]": "opacity:0.45 cursor:not-allowed pointer-events:none filter:saturate(0.6)",
@@ -54,7 +54,7 @@ A.insertGlobalCss({
 		// artifact where a gradient clipped to a transparent rounded border fringes
 		// the edge with the gradient's far colour.
 		"&.gradient:not(.tonal):not(.outlined)":
-			"border:0 box-shadow: inset 0 1px 0 color-mix(in srgb, white 25%, transparent), $s-glow;",
+			"box-shadow: inset 0 1px 0 color-mix(in srgb, white 25%, transparent), $s-glow;",
 		"&.gradient:not(.tonal):not(.outlined):hover":
 			"filter: brightness(1.05); box-shadow: inset 0 1px 0 color-mix(in srgb, white 25%, transparent), 0 7px 18px color-mix(in srgb, $s-primary 34%, transparent);",
 		// Subtle press feedback.
@@ -71,8 +71,8 @@ A.insertGlobalCss({
 const ROLE_CLASS = /\.(gradient|primary|secondary|neutral|danger|success|warning|base|panel|raised)(\.|\s|$)/;
 
 /**
- * A button. Always carries at least a visible border so its affordance is
- * obvious at a glance.
+ * A button. Tonal and outlined variants show a border; filled variants rely on
+ * their solid background for affordance.
  *
  * Shortcut: pass a string to use it as the label, or a function for custom
  * content.

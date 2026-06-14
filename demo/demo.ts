@@ -563,7 +563,7 @@ function drawSurfaces() {
 	function drawSurfaceRow(name: string, variant?: string) {
 		const cls = variant ? `div.s-s.${name}.${variant}` : `div.s-s.${name}`;
 		const label = variant ? `.${name}.${variant}` : `.${name}`;
-		A(`${cls} padding: $2 $3; r: $s-radius;`, () => {
+		A(`${cls} padding: $2 $3;`, () => {
 			A("div display:flex gap:$3 align-items:baseline flex-wrap:wrap font-size:0.85em", () => {
 				A("div flex-shrink:0 min-width:9rem #", label);
 				A("span #text");
