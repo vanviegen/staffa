@@ -332,6 +332,16 @@ if (typeof document !== "undefined" && typeof requestAnimationFrame === "functio
 	requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove("s-preload")));
 }
 
+// ── Disabled region ───────────────────────────────────────────────────────────
+// aria-disabled="true" on any container dims it and blocks pointer events on
+// it and all descendants, matching the per-element disabled look. Keyboard
+// access to focusable descendants is unaffected — add the `inert` attribute too
+// if you need that.
+A.insertGlobalCss({
+	":disabled, [aria-disabled=true]": "opacity:0.45 filter:saturate(0.6) user-select:none",
+	":disabled, [aria-disabled=true], :disabled *, [aria-disabled=true] *": "pointer-events:none cursor:not-allowed",
+});
+
 // ── Flow content: vertical rhythm & light typography ─────────────────────────
 // Sensible block defaults for *any* content — your own UI just as much as
 // markdown-rendered HTML. The rhythm: strip the browser's block margins, then

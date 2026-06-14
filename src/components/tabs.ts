@@ -41,8 +41,7 @@ A.insertGlobalCss({
 			"border-bottom: 3px solid transparent; margin-bottom:-1px " +
 			"transition: color 0.15s, background 0.15s, border-color 0.15s;",
 		".s-tab:hover:not(:disabled), .s-tab[aria-selected=true]": "color: $s-fg;",
-		".s-tab:disabled": "opacity:0.5 cursor:not-allowed",
-		".s-tab:focus-visible": "outline:none box-shadow: 0 0 0 3px $s-focus; r: $s-radius;",
+".s-tab:focus-visible": "outline:none box-shadow: 0 0 0 3px $s-focus; r: $s-radius;",
 		".s-tab[aria-selected=true]": "border-image: $s-gradient 1;",
 		".s-tabpanel": "display:block",
 	},

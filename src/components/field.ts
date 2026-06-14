@@ -45,8 +45,7 @@ A.insertGlobalCss({
 		"&": "w:100% bg:$s-panel fg:$s-ink border: 1px solid $s-border; r:$s-radius padding: 0.55em 0.7em; transition: border-color 0.15s, box-shadow 0.15s;",
 		"&:hover:not(:disabled)": "border-color:$s-border-strong",
 		"&:focus-visible": "border-color:$s-accent box-shadow: 0 0 0 3px $s-focus; outline:none",
-		"&:disabled": "opacity:0.6 cursor:not-allowed",
-		"&[aria-invalid=true]": "border-color:$s-danger",
+"&[aria-invalid=true]": "border-color:$s-danger",
 	},
 });
 

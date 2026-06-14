@@ -18,7 +18,7 @@ A.insertGlobalCss({
 	".s-check": {
 		"&": "display:flex flex-direction:column gap:$1",
 		"> label": "display:flex align-items:center gap:$2 cursor:pointer user-select:none",
-		"> label:has(input:disabled)": "cursor:not-allowed opacity:0.6",
+		"> label:has(input:disabled)": "cursor:not-allowed opacity:0.45 filter:saturate(0.6)",
 		// Native control styled with accent-color: accessible and zero-fuss.
 		"input": "width:1.15em height:1.15em accent-color:$s-accent cursor:inherit m:0",
 	},
