@@ -13,7 +13,10 @@ S.main({
   maxWidth: "40rem",
   content: () => {
     S.form({
-      submit: () => console.log(A.unproxy($user)),
+      submit: () => S.dialog({
+        header: "Submitted",
+        content: () => A.dump($user)
+      }),
       content: () => {
         S.textline({ label: "Name", required: true, bind: A.ref($user, "name") });
         S.textline({ label: "Email", type: "email", bind: A.ref($user, "email") });
@@ -284,6 +287,8 @@ ln -s ../../node_modules/staffa/skill .claude/skills/staffa
 ```
 
 ## Breaking changes
+
+- **0.6**: None.
 
 - **0.5**
   - Surfaces (`.s-s`) now apply `border-radius` and — for `.tonal` and `.outlined` variants — `border` automatically. Custom surfaces or components that previously set these manually may see doubled or conflicting styles; remove the manual declarations.
