@@ -569,6 +569,54 @@ function drawContent() {
 		},
 	});
 
+	// Bare, unstyled native form controls — no Staffa components, no classes. The
+	// CSS reset alone gives them sane proportions and the surface's accent colour
+	// (so sliders, checkboxes and progress track the brand instead of browser blue).
+	S.box({
+		header: "Native form controls",
+		content: () => {
+			A("p rich='These are raw `<input>`, `<select>`, `<textarea>` and friends — *no* Staffa components. The reset borrows the surface colours and accent, keeping things unsurprising.'");
+
+			A("div display:flex flex-direction:column gap:$3 max-width:24rem", () => {
+				A("input type=text placeholder=Plain text input");
+				A("input type=email value=test@example.com");
+
+				A("select", () => {
+					A("option #Native select");
+					A("option #Second option");
+					A("option #Third option");
+				});
+
+				A("textarea rows=3 #A bare textarea, with the same bordered box as the inputs.");
+
+				A("label display:flex align-items:center gap:$2", () => {
+					A("input type=checkbox checked=true");
+					A("#Checkbox (brand accent-color)");
+				});
+				A("label display:flex align-items:center gap:$2", () => {
+					A("input type=radio name=demo-radio checked=true");
+					A("#Radio one");
+				});
+				A("label display:flex align-items:center gap:$2", () => {
+					A("input type=radio name=demo-radio");
+					A("#Radio two");
+				});
+
+				A("label display:flex flex-direction:column gap:$1", () => {
+					A("span #Range slider");
+					A("input type=range min=0 max=100 value=65");
+				});
+
+				A("progress max=100 value=60 width:100%");
+
+				A("fieldset", () => {
+					A("legend #Fieldset");
+					A("p mt:0 rich='A quiet group box — `<fieldset>` and `<legend>` get a hairline border and tidy spacing.'");
+				});
+			});
+		},
+	});
+
 	// The heading scale, shown together.
 	S.box({
 		header: "Heading scale",

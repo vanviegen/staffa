@@ -19,8 +19,9 @@ A.insertGlobalCss({
 		"&": "display:flex flex-direction:column gap:$1",
 		"> label": "display:flex align-items:center gap:$2 cursor:pointer user-select:none",
 		"> label:has(input:disabled)": "cursor:not-allowed opacity:0.45 filter:saturate(0.6)",
-		// Native control styled with accent-color: accessible and zero-fuss.
-		"input": "width:1.15em height:1.15em accent-color:$s-accent cursor:inherit m:0",
+		// Native control: size and brand accent-color come from the CSS reset; here we
+		// just strip the margin and let it inherit the label's cursor (pointer / not-allowed).
+		"input": "cursor:inherit m:0",
 	},
 });
 

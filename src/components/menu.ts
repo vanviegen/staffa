@@ -104,7 +104,7 @@ A.insertGlobalCss({
 	// identical; the element only differs where link semantics matter (see below).
 	".s-menu-item":
 		"display:flex align-items:center gap:$2 w:100% outline:0 " +
-		"padding: $m2; line-height:1.1 r:$s-radius cursor:pointer text-align:left font-weight:450 " +
+		"padding: $m2 0; line-height:1.1 r:$s-radius cursor:pointer text-align:left font-weight:450 " +
 		"font-size:0.9em border:0 background:transparent fg:$s-text text-decoration:none " +
 		"transition: color 0.12s, transform 0.12s, text-shadow 0.12s;",
 	".s-menu-item:focus-visible:not([aria-current=page]), .s-menu-item:hover:not([aria-disabled=true]):not([aria-current=page])":

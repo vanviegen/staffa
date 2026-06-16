@@ -144,7 +144,34 @@ A.insertGlobalCss({
 	// surfaces, the ink on accent surfaces.
 	a: "color: $s-link-fg; text-decoration:underline text-underline-offset:2px; transition: color 0.12s, filter 0.12s;",
 	"a:hover": "filter: brightness(1.15)",
-	"input, button, textarea, select": "font:inherit color:inherit",
+	"input, button, textarea, select, optgroup": "font:inherit color:inherit",
+	// Bare text-like fields get a calm bordered box derived from the surface. The
+	// styled controls (`.s-input`, autocomplete's `.s-control`) override this via
+	// higher specificity, so this only governs otherwise-unstyled HTML. `:where()`
+	// keeps it at element specificity, so a component class always wins.
+	"input:where(:not([type=checkbox],[type=radio],[type=range],[type=file],[type=color],[type=image],[type=submit],[type=button],[type=reset],[type=hidden])), textarea, select":
+		"background:$s-bg border: 1px solid $s-faint; r:$s-radius-sm padding: 0.45em 0.65em; max-width:100%",
+	// Checkboxes/radios: a touch larger with a pointer cursor. (The brand accent —
+	// `accent-color` — is inherited from the surface, see the `:root, .s-s` rule.)
+	"input:where([type=checkbox],[type=radio])": "width:1.15em height:1.15em cursor:pointer",
+	// Range: a thin pill track (faint, brand-filled on the lower side in Firefox)
+	// with a round brand thumb — no native groove/outline.
+	"input[type=range]": "appearance:none background:transparent cursor:pointer vertical-align:middle",
+	"input[type=range]::-webkit-slider-runnable-track": "height:4px r:99px background:$s-faint",
+	"input[type=range]::-moz-range-track": "height:4px r:99px background:$s-faint",
+	"input[type=range]::-moz-range-progress": "height:4px r:99px background:$s-accent",
+	"input[type=range]::-webkit-slider-thumb": "appearance:none width:16px height:16px margin-top:-6px r:50% background:$s-accent",
+	"input[type=range]::-moz-range-thumb": "width:16px height:16px border:0 r:50% background:$s-accent",
+	"input[type=file]": "cursor:pointer",
+	// Progress: same thin faint pill track + brand fill as the range slider.
+	progress: "appearance:none border:0 height:6px r:99px background:$s-faint overflow:hidden vertical-align:middle",
+	"progress::-webkit-progress-bar": "background:$s-faint r:99px",
+	"progress::-webkit-progress-value": "background:$s-accent r:99px",
+	"progress::-moz-progress-bar": "background:$s-accent r:99px",
+	meter: "vertical-align:middle",
+	// Fieldsets: a quiet group box instead of the browser's heavy inset border.
+	fieldset: "border: 1px solid $s-faint; r:$s-radius-sm padding:$2 min-width:0",
+	legend: "padding: 0 $1; font-weight:600",
 	"code, kbd, samp, pre": "font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;",
 	code: "background: color-mix(in oklab, $s-text, $s-bg 86%); padding: 0.12em 0.34em; r:4px font-size:0.9em",
 	pre: "background: color-mix(in oklab, $s-text, $s-bg 92%); p:$3 r: $s-radius; overflow:auto",
@@ -192,7 +219,7 @@ A.insertGlobalCss({
 	":root, .s-s":
 		"--s-muted: color-mix(in oklab, $s-text, $s-bg 42%); " +
 		"--s-faint: color-mix(in oklab, $s-text, $s-bg 80%); " +
-		"color:$s-text scrollbar-width:thin scrollbar-color: $s-faint transparent;",
+		"color:$s-text accent-color:$s-accent scrollbar-width:thin scrollbar-color: $s-faint transparent;",
 	// Subtle single-colour gradient sheen, painted on every surface (and the page).
 	".s-s, body":
 		"background: linear-gradient(170deg, color-mix(in oklab, $s-bg, white 9%), color-mix(in oklab, $s-bg, black 9%));",
