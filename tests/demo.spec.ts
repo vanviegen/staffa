@@ -113,9 +113,9 @@ test("overlays: toasts, tooltips, menus and dialogs", async ({ page }) => {
 
 test("surfaces: levels, roles, variants and nesting", async ({ page }) => {
 	await page.goto("./?menu=surfaces");
-	await page.getByText("Solid surfaces & variants").waitFor();
+	await page.getByText("Accent surfaces & variants").waitFor();
 	// Scroll the custom-surface demo into view for its own screenshot.
-	await page.getByText("Custom solid surface").scrollIntoViewIfNeeded();
+	await page.getByText("Custom accent surface").scrollIntoViewIfNeeded();
 });
 
 test("content: prose rhythm and heading scale", async ({ page }) => {
@@ -131,9 +131,25 @@ test("icons: gallery, sizing and search", async ({ page }) => {
 	await page.getByText(/\d+ matches/).waitFor();
 });
 
+test("header: display settings live in a configure popover", async ({ page }) => {
+	await page.goto("./");
+	await page.getByText("Account").waitFor();
+
+	// The nav/colour/theme controls are tucked behind the header's configure button.
+	await page.getByRole("button", { name: "Display settings" }).click();
+	await page.getByText("Navigation").waitFor();
+	await page.getByText("Primary colour").waitFor();
+	await page.getByText("Theme").waitFor();
+
+	// A pick inside the popover drives the live theme.
+	await page.getByRole("button", { name: "dark" }).click();
+});
+
 test("dark mode: surfaces and buttons", async ({ page }) => {
 	await page.goto("./?menu=surfaces");
 	await page.getByText("Surfaces & Variants").waitFor();
+	// The theme switch lives in the header's configure popover.
+	await page.getByRole("button", { name: "Display settings" }).click();
 	await page.getByRole("button", { name: "dark" }).click();
 	await page.getByRole("link", { name: "Buttons" }).click();
 	await page.getByText("Variants & sizes").waitFor();

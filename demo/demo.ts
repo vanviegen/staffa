@@ -37,6 +37,12 @@ const colorPickerStyle = A.insertCss({
 	"input[type=color]::-moz-color-swatch": "border:0 border-radius: calc($s-radius - 3px)",
 });
 
+// A labelled row used inside the header's collapsed display-settings popover:
+// label on the left, control on the right.
+const dispRowStyle = A.insertCss({
+	"&": "display:flex align-items:center justify-content:space-between gap:$3; padding: 0.35em 0.5em;",
+});
+
 // ─── Shell ───────────────────────────────────────────────────────────────────
 
 const $navPosition = A.proxy("left") as {value: "left" | "right" | "button"};
@@ -59,19 +65,32 @@ A(() => {
 				{ label: "Content",  icon: icons.fileText,           href: "?menu=content"  },
 				{ label: "Icons",    icon: icons.shapes,             href: "?menu=icons"    },
 				{ separator: true },
-				{ label: "Aberdeen docs", icon: icons.arrowUpRight, href: "https://aberdeenjs.org", target: "_blank" },
+				{ label: "Staffa docs", icon: icons.arrowUpRight, href: "https://wildloop.dev/projects/staffa/", target: "_blank" },
+				{ label: "Aberdeen docs", icon: icons.arrowUpRight, href: "https://wildloop.dev/projects/aberdeen/", target: "_blank" },
 			],
 		},
 		navPosition: $navPosition.value,
-		menu: () => {
-				S.buttonChooser({
+		// Keep the header uncluttered by tucking the display controls behind a
+		// single configure button. The popover lays them out as labelled rows.
+		menu: () => S.menuButton({
+			button: { icon: icons.sliders, ariaLabel: "Display settings", attrs: ".neutral .small" },
+			dropdownAttrs: "min-width:15rem",
+			items: [() => {
+				const row = (label: string, draw: () => void) => {
+					A("label", dispRowStyle, () => {
+						A("span fg:$s-muted font-size:0.9em #", label);
+						draw();
+					});
+				};
+				row("Navigation", () => S.buttonChooser({
 					options: { left: icons.panelLeft, right: icons.panelRight, button: icons.menu },
 					bind: $navPosition,
 					attrs: ".small",
-				});
-				drawColorPickers();
-				drawThemeChooser();
-		},
+				}));
+				row("Primary colour", drawColorPickers);
+				row("Theme", drawThemeChooser);
+			}],
+		}),
 		footer: () => A("span rich='Built with **Staffa** · © 2026'"),
 		content: () => {
 			A(() => {
