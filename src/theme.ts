@@ -133,7 +133,7 @@ A(() => {
 // caller's `attrs` override wins at equal specificity.
 // ---------------------------------------------------------------------------
 
-A.setSpacingCssVars();
+A.setSpacingCssVars(1.1);
 
 A.insertGlobalCss({
 	// What follows is a lightweight CSS reset. Semantic HTML should keep working, but less ugly/with some reasonable defaults.
@@ -162,9 +162,9 @@ A.insertGlobalCss({
 	// Color theming
 	":root":
 		// Brand + semantic colours (settable). One brand colour drives everything.
-		"--s-primary:#00a884 --s-danger:#dc5b41 --s-success:#00a884 --s-warning:#ef6b00 --s-link:#2f6fed " +
+		"--s-primary:#00a884 --s-danger:#dc5b41 --s-success:#00a884 --s-warning:#ef6b00 --s-link:#3f8cd8 " +
 		// Shape/effect — single values, reused across components.
-		"--s-radius:12px --s-radius-lg:18px " +
+		"--s-radius-sm:6px --s-radius:12px --s-radius-lg:18px " +
 		"--s-focus: color-mix(in srgb, $s-primary 38%, transparent); " +
 		// Brand sweep for the headline mark, the active nav pill, the selected tab.
 		"--s-gradient: linear-gradient(135deg, color-mix(in oklab, $s-primary, white 16%), color-mix(in oklab, $s-primary, black 14%));",

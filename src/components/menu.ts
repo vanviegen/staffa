@@ -1,6 +1,6 @@
 import A from "aberdeen";
 import { matchCurrent } from "aberdeen/route";
-import { type Slot, type Attributes, drawSlot, mountPortal } from "../core.js";
+import { type Slot, type Attributes, drawSlot, mountPortal, focusFirst } from "../core.js";
 import { button, type ButtonOptions } from "./button.js";
 
 /**
@@ -100,30 +100,20 @@ A.insertGlobalCss({
 		"overflow-y:auto max-height:min(80vh,28rem) " +
 		"transition: opacity 0.15s, transform 0.15s;",
 	".s-menu-list.hidden": "opacity:0 pointer-events:none transform:translateY(-6px)",
-	".s-menu-item, .s-menu-item-link":
-		"display:flex align-items:center gap:$2 w:100% " +
-		"padding: 0.5em 0.65em; r:$s-radius cursor:pointer text-align:left " +
+	// One class for both the `<a>` (link) and `<button>` forms — they look
+	// identical; the element only differs where link semantics matter (see below).
+	".s-menu-item":
+		"display:flex align-items:center gap:$2 w:100% outline:0 " +
+		"padding: $m2; line-height:1.1 r:$s-radius cursor:pointer text-align:left font-weight:450 " +
 		"font-size:0.9em border:0 background:transparent fg:$s-text text-decoration:none " +
-		"transition: background 0.12s, color 0.12s, transform 0.12s, box-shadow 0.12s;",
-	// A translucent ink tint (rather than an *opaque* mix) so the hover fades in
-	// cleanly: transitioning background from `transparent` toward an opaque colour
-	// flashes through dark mid-tones in browsers that interpolate non-premultiplied.
-	// Staying ink-hued at low alpha keeps the fade the right colour throughout.
-	".s-menu-item:hover:not([aria-disabled=true]):not([aria-current=page]), .s-menu-item-link:hover:not([aria-current=page])":
-		"background: color-mix(in srgb, $s-text 10%, transparent);",
-	// Active (current page): a filled brand-gradient pill with a soft glow — the
-	// one place the menu shows real colour, so the current page is unmistakable.
-	".s-menu-item[aria-current=page], .s-menu-item-link[aria-current=page]":
-		"color:white font-weight:450 background: $s-gradient; box-shadow: 0 3px 10px color-mix(in srgb, $s-primary 38%, transparent);",
-	".s-menu-item[aria-current=page] .s-menu-icon, .s-menu-item-link[aria-current=page] .s-menu-icon":
-		"color:white",
-	".s-menu-item[aria-current=page]:hover, .s-menu-item-link[aria-current=page]:hover":
-		"filter:brightness(1.06)",
-	".s-menu-item:focus-visible, .s-menu-item-link:focus-visible":
-		"outline:none background: color-mix(in srgb, $s-text 10%, transparent); box-shadow: 0 0 0 2px inset $s-focus;",
-	".s-menu-item[aria-disabled=true], .s-menu-item-link[aria-disabled=true]":
+		"transition: color 0.12s, transform 0.12s, text-shadow 0.12s;",
+	".s-menu-item:focus-visible:not([aria-current=page]), .s-menu-item:hover:not([aria-disabled=true]):not([aria-current=page])":
+		"filter:none color: color-mix(in lab, $s-primary 33%, $s-text);",
+	".s-menu-item[aria-current=page]":
+		"text-shadow: 0 0 2px $s-primary; color: color-mix(in lab, $s-primary 50%, $s-text); filter:brightness(1.15)",
+	".s-menu-item[aria-disabled=true]":
 		"opacity:0.45 cursor:not-allowed pointer-events:none",
-	".s-menu-icon": "fg:$s-muted flex-shrink:0",
+	".s-menu-icon": "flex-shrink:0",
 	// A soft hairline that fades out at both ends, rather than a hard full-width
 	// rule — quieter, and it reads as a grouping cue instead of a divider bar.
 	// `hr.` (not just `.`) so this wins over the global hr flow-margin rule.
@@ -149,10 +139,18 @@ A.insertGlobalCss({
 export function drawMenu(items: MenuEntry[], onActivate?: () => void): void {
 	// Roving focus via the DOM: query the live item elements on each keypress.
 	A("keydown=", (e: KeyboardEvent) => {
+		// Link items navigate through interceptLinks' own Enter handler, which
+		// preventDefault()s the activation — so no synthetic `click` fires, and the
+		// click-bound `onActivate` (which closes a floating menu) never runs. Close it
+		// ourselves, deferred so this keydown finishes dispatching (and navigates) first.
+		if (e.key === "Enter" && (e.target as HTMLElement).tagName === "A") {
+			queueMicrotask(() => onActivate?.());
+			return;
+		}
 		if (e.key !== "ArrowDown" && e.key !== "ArrowUp" && e.key !== "Home" && e.key !== "End") return;
 		e.preventDefault();
 		const container = e.currentTarget as HTMLElement;
-		const els = [...container.querySelectorAll<HTMLElement>(".s-menu-item, .s-menu-item-link")]
+		const els = [...container.querySelectorAll<HTMLElement>(".s-menu-item")]
 			.filter((el) => el.getAttribute("aria-disabled") !== "true");
 		if (!els.length) return;
 		const cur = els.indexOf(document.activeElement as HTMLElement);
@@ -169,7 +167,7 @@ export function drawMenu(items: MenuEntry[], onActivate?: () => void): void {
 		if (typeof entry === "string" || typeof entry === "function") { drawSlot(entry); continue; }
 		if ("separator" in entry) { A("hr.s-menu-sep"); continue; }
 
-		A(entry.href ? "a.s-menu-item-link" : "button.s-menu-item type=button", entry.attrs, () => {
+		A(entry.href ? "a.s-menu-item" : "button.s-menu-item type=button", entry.attrs, () => {
 			if (entry.href) {
 				A("href=", entry.href);
 				if (entry.target) A("target=", entry.target);
@@ -197,6 +195,15 @@ function closeFloating(): void {
 	const anchor = $floating.opts?.anchor;
 	$floating.opts = null;
 	anchor?.focus();
+}
+
+/**
+ * Whether a floating menu is currently open. Reflects live state (cleared the
+ * instant it closes), unlike the DOM — the panel lingers briefly while its
+ * `destroy=` transition plays out.
+ */
+export function isFloatingMenuOpen(): boolean {
+	return $floating.opts != null;
 }
 
 function positionMenu(menuEl: HTMLElement, rect: { left: number; right: number; top: number; bottom: number }): void {
@@ -242,9 +249,10 @@ mountPortal(() => {
 		// pointer location for a context menu — otherwise below the anchor.
 		const rect = f.at ? { left: f.at.x, right: f.at.x, top: f.at.y, bottom: f.at.y } : f.anchor.getBoundingClientRect();
 		positionMenu(menuEl, rect);
-		menuEl.querySelector<HTMLElement>(
-			".s-menu-item:not([aria-disabled=true]), .s-menu-item-link:not([aria-disabled=true])",
-		)?.focus();
+		// Focus the active (current-page) item if there is one — so opening lands
+		// where you are — else the first focusable element (covers custom slot
+		// content, like a settings dropdown, not just `.s-menu-item`s).
+		focusFirst(menuEl, ".s-menu-item[aria-current=page]");
 	});
 });
 

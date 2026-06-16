@@ -1,6 +1,7 @@
 import A from "aberdeen";
 import { type Slot, type Attributes, drawSlot } from "../core.js";
-import { type MenuOptions, menuButton, drawMenu } from "./menu.js";
+import { type MenuOptions, menuButton, drawMenu, isFloatingMenuOpen } from "./menu.js";
+import { isDialogOpen } from "./dialog.js";
 
 /** Options for {@link main}. */
 export interface MainOptions {
@@ -90,7 +91,7 @@ A.insertGlobalCss({
 		// there's no margin, so the content keeps its single $3 edge — not 2×$3.
 		".s-body main.s-scroll-y": "margin-right:$3",
 	},
-	// Sidebar nav panel. Items reuse the shared `.s-menu-item[-link]` /
+	// Sidebar nav panel. Items reuse the shared `.s-menu-item` /
 	// `.s-menu-sep` styles from menu.ts, so the sidebar and the floating
 	// dropdown stay visually identical.
 	// Borderless and transparent so the page's aurora shows through — an airy,
@@ -99,7 +100,7 @@ A.insertGlobalCss({
 		// Extra horizontal padding leaves room for the active pill's glow, which the
 		// vertical scroll (overflow-y:auto, which also clips overflow-x) would
 		// otherwise cut off at the panel edges.
-		"&": "display:flex flex-direction:column overflow-y:auto flex-shrink:0 max-width:228px padding:$3 gap:$1 background:transparent border:0",
+		"&": "display:flex flex-direction:column overflow-y:auto flex-shrink:0 max-width:228px padding:$3 gap:$1",
 	},
 	// In button-only mode (or always-button navPosition), hide the sidebar and
 	// show the trigger. In sidebar mode, show the panel and hide the trigger.
@@ -156,7 +157,7 @@ export function main(opts: MainOptions = {}): void {
 	const hasNav = nav != null && nav.items.length > 0;
 	const navCls = hasNav ? (navPos === "button" ? ".s-nav-btn-only" : `.s-nav-${navPos}`) : "";
 
-	A(`div.s-main${navCls}`, opts.attrs, () => {
+	const root = A(`div.s-main${navCls}`, opts.attrs, () => {
 		// Top bar.
 		A(() => {
 			const hasBar =
@@ -215,7 +216,7 @@ export function main(opts: MainOptions = {}): void {
 					if (opts.maxWidth != null) A("max-width:", opts.maxWidth);
 				});
 				if (hasNav && navPos !== "button") {
-					A(`nav.s-nav-panel.s-s.neutral.s-nav-${navPos}`, opts.navAttrs, () => {
+					A(`nav.s-nav-panel.s-nav-${navPos}`, opts.navAttrs, () => {
 						drawMenu(nav.items);
 					});
 					A("div.s-nav-sep aria-hidden=true");
@@ -237,7 +238,33 @@ export function main(opts: MainOptions = {}): void {
 				});
 			}
 		});
-	});
+	}) as HTMLElement;
+
+	// Escape jumps to the navigation: into the sidebar's current item when the
+	// sidebar is showing, or — when collapsed to (or always) a button — open the
+	// dropdown (which focuses its current item). Listens on `document` so it works
+	// wherever focus is, but bows out while another overlay (a dialog, or an
+	// already-open menu) is up — those handle Escape themselves.
+	if (hasNav) {
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key !== "Escape" || e.defaultPrevented) return;
+			// An open dialog or menu owns Escape itself — don't also jump to the nav.
+			if (isDialogOpen() || isFloatingMenuOpen()) return;
+			// `offsetParent` is null when the sidebar is hidden (display:none).
+			const panel = root.querySelector<HTMLElement>(".s-nav-panel");
+			if (panel?.offsetParent != null) {
+				const item =
+					panel.querySelector<HTMLElement>("[aria-current=page]") ??
+					panel.querySelector<HTMLElement>(".s-menu-item:not([aria-disabled=true])");
+				if (item) { e.preventDefault(); item.focus(); }
+				return;
+			}
+			const trigger = root.querySelector<HTMLElement>(".s-nav-trigger button");
+			if (trigger) { e.preventDefault(); trigger.click(); }
+		};
+		document.addEventListener("keydown", onKey);
+		A.clean(() => document.removeEventListener("keydown", onKey));
+	}
 }
 
 function drawMainContent(opts: MainOptions): void {

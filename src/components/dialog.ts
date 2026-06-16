@@ -1,5 +1,5 @@
 import A from "aberdeen";
-import { type Slot, type Attributes, drawSlot, mountPortal } from "../core.js";
+import { type Slot, type Attributes, drawSlot, mountPortal, focusFirst } from "../core.js";
 import { button } from "./button.js";
 import { buttonGroup } from "./buttonGroup.js";
 import { textline } from "./textline.js";
@@ -77,6 +77,11 @@ const topDialogId = A.derive(() => {
 	if (keys.length) return keys[keys.length-1];
 });
 
+/** Whether any dialog is currently open (live state, not the lingering DOM). */
+export function isDialogOpen(): boolean {
+	return topDialogId.value != null;
+}
+
 mountPortal(() => {
 	A.onEach(dialogs, ({resolve, opts}, dialogId) => {
 		const close = () => { delete dialogs[dialogId]; };
@@ -95,7 +100,7 @@ mountPortal(() => {
 		});
 
 		// Dialog itself
-		A("div.s-dialog.neutral.s-s.extra-shadow create=hidden destroy=hidden", opts.attrs, () => {
+		const dialogEl = A("div.s-dialog.neutral.s-s.extra-shadow create=hidden destroy=hidden", opts.attrs, () => {
 			A(() => {
 				if (opts.header != null) {
 					A("header.s-s.neutral", opts.headerAttrs, () => drawSlot(opts.header));
@@ -111,7 +116,11 @@ mountPortal(() => {
 					A("footer.s-s.neutral", opts.footerAttrs, () => drawSlot(opts.footer));
 				}
 			});
-		});
+		}) as HTMLElement;
+
+		// Once laid out, move focus into the dialog (first focusable element) so it's
+		// keyboard-ready and focus doesn't linger on whatever opened it.
+		requestAnimationFrame(() => { if (document.body.contains(dialogEl)) focusFirst(dialogEl); });
 	});
 })
 

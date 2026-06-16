@@ -71,6 +71,33 @@ export function drawSlot<Args extends unknown[] = []>(slot: Slot<Args> | undefin
 	else A("rich=", slot);
 }
 
+/** Selector matching the natively focusable elements we care about. */
+const FOCUSABLE_SELECTOR = "a[href], button, input, select, textarea, [tabindex]";
+
+/**
+ * Move keyboard focus to the first focusable element inside `container`, skipping
+ * disabled, `aria-disabled`, `tabindex=-1` and hidden ones. When `prefer` (a
+ * selector) matches a focusable element it wins — e.g. a menu's current item — so
+ * opening lands where the user already is. Returns whether anything was focused.
+ *
+ * Shared by overlays (the floating menu, dialogs) so "open → focus the right
+ * thing" behaves identically everywhere. Call it after the element is in the DOM
+ * and laid out (typically inside a `requestAnimationFrame`).
+ */
+export function focusFirst(container: HTMLElement, prefer?: string): boolean {
+	const ok = (el: Element): el is HTMLElement =>
+		el instanceof HTMLElement &&
+		!el.hasAttribute("disabled") &&
+		el.getAttribute("aria-disabled") !== "true" &&
+		el.tabIndex >= 0 &&
+		el.getClientRects().length > 0;
+	const target =
+		(prefer ? [...container.querySelectorAll(prefer)].find(ok) : undefined) ??
+		[...container.querySelectorAll(FOCUSABLE_SELECTOR)].find(ok);
+	target?.focus();
+	return target != null;
+}
+
 /**
  * Mount a portal (tooltip, toast, menu, dialog, …) directly into `<body>`.
  * Must be called at module top level, where Aberdeen's root scope (whose

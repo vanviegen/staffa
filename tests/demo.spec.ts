@@ -145,6 +145,17 @@ test("header: display settings live in a configure popover", async ({ page }) =>
 	await page.getByRole("button", { name: "dark" }).click();
 });
 
+test("menu: dropdown autofocuses its first focusable control", async ({ page }) => {
+	await page.goto("./");
+	await page.getByText("Account").waitFor();
+	// The settings dropdown holds custom content (no menu items); opening it should
+	// still move focus to the first focusable control inside it.
+	await page.getByRole("button", { name: "Display settings" }).click();
+	await page.getByText("Navigation").waitFor();
+	const focused = page.locator(".s-menu-list :focus");
+	await expect(focused).toHaveCount(1);
+});
+
 test("dark mode: surfaces and buttons", async ({ page }) => {
 	await page.goto("./?menu=surfaces");
 	await page.getByText("Surfaces & Variants").waitFor();
@@ -155,4 +166,47 @@ test("dark mode: surfaces and buttons", async ({ page }) => {
 	await page.getByText("Variants & sizes").waitFor();
 	await page.getByRole("link", { name: "Form" }).click();
 	await page.getByText("Account").waitFor();
+});
+
+test("nav: Escape from the content moves focus to the current sidebar item", async ({ page }) => {
+	await page.goto("./?menu=form");
+	await page.getByText("Account").waitFor();
+	// Escape on a fresh load (focus on <body>) should land on the sidebar's current
+	// (active) item, shown with the primary-ring focus highlight.
+	await page.keyboard.press("Escape");
+	await expect(page.getByRole("link", { name: "Form" })).toBeFocused();
+});
+
+test("nav: Escape opens the dropdown and Enter on an item closes it", async ({ page }) => {
+	// Narrow the shell so the sidebar collapses to a hamburger dropdown.
+	await page.setViewportSize({ width: 480, height: 800 });
+	await page.goto("./?menu=form");
+	await page.getByText("Account").waitFor();
+
+	// Escape opens the dropdown with the current item ("Form") focused.
+	await page.keyboard.press("Escape");
+	await expect(page.getByRole("link", { name: "Form" })).toBeFocused();
+
+	// Activating a link with Enter navigates *and* closes the popup, returning focus
+	// to the trigger (closeFloating focuses the anchor).
+	await page.getByRole("link", { name: "Buttons" }).focus();
+	await page.keyboard.press("Enter");
+	await page.getByText("Variants & sizes").waitFor();
+	await expect(page.getByRole("button", { name: "Open navigation" })).toBeFocused();
+});
+
+test("nav: the dropdown reopens right after closing", async ({ page }) => {
+	await page.setViewportSize({ width: 480, height: 800 });
+	await page.goto("./?menu=form");
+	await page.getByText("Account").waitFor();
+	// Match only an *open* panel — a just-closed one lingers in the DOM (hidden)
+	// while its fade-out transition plays.
+	const openMenu = page.locator(".s-menu-list:not(.hidden)");
+
+	await page.keyboard.press("Escape"); // open
+	await expect(openMenu).toHaveCount(1);
+	await page.keyboard.press("Escape"); // close — focus returns to the trigger
+	await expect(page.getByRole("button", { name: "Open navigation" })).toBeFocused();
+	await page.keyboard.press("Escape"); // reopen, ignoring the fading-out panel
+	await expect(openMenu).toHaveCount(1);
 });

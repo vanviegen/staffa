@@ -37,8 +37,8 @@ A.insertGlobalCss({
 	".s-btn": {
 		"&":
 			"display:inline-flex align-items:center justify-content:center gap:$2 " +
-			"font-weight:450 line-height:1.2 white-space:nowrap cursor:pointer text-decoration:none " +
-			"padding: 0.5em 1em; " +
+			"font-weight:450 line-height:1.1 white-space:nowrap cursor:pointer text-decoration:none " +
+			"padding: $m2 $m3; " +
 			"transition: background 0.15s, border-color 0.15s, color 0.15s, filter 0.15s, box-shadow 0.15s, transform 0.08s;",
 		// Focus ring via `outline` (not box-shadow) so it survives a `.no-shadow`
 		// (which hard-clears box-shadow). Modern browsers round it to the border-radius.
@@ -55,8 +55,8 @@ A.insertGlobalCss({
 		"&:active:not(:disabled)": "transform: translateY(1px)",
 		// Size: set on the button itself, or inherited from a `.small`/`.large`
 		// parent (e.g. a buttonGroup), so a container can size all its buttons at once.
-		"&.small, .small > &": "padding: 0.32em 0.7em; font-size:0.85em",
-		"&.large, .large > &": "padding: 0.66em 1.3em; font-size:1.1em",
+		"&.small, .small > &": "padding: $m1 $m2; font-size:0.85em border-radius:$s-radius-sm",
+		"&.large, .large > &": "font-size:1.4em border-radius:$s-radius-lg",
 	},
 });
 
