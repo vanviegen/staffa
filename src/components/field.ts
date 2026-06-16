@@ -36,14 +36,17 @@ export interface FieldOptions {
 A.insertGlobalCss({
 	".s-field": {
 		"&": "display:flex flex-direction:column gap:$1",
-		"> label": "font-weight:600 font-size:0.9em fg:$s-fg user-select:none",
+		"> label": "font-weight:600 font-size:0.9em fg:$s-text user-select:none",
 	},
 	".s-req": "fg:$s-danger margin-left:2px",
-	".s-help": "font-size:0.82em fg:$s-fg-muted",
+	".s-help": "font-size:0.82em fg:$s-muted",
 	".s-error": "font-size:0.82em fg:$s-danger",
 	".s-input": {
-		"&": "w:100% bg:$s-panel fg:$s-ink border: 1px solid $s-border; r:$s-radius padding: 0.55em 0.7em; transition: border-color 0.15s, box-shadow 0.15s;",
-		"&:hover:not(:disabled)": "border-color:$s-border-strong",
+		// A light inset field, derived from the surrounding surface: the surface
+		// background nudged slightly toward its ink, with the ink as text. Adapts to
+		// whatever surface (and mode) holds the field, no fixed input colour needed.
+		"&": "w:100% background: color-mix(in oklab, $s-bg, $s-text 4%); color:$s-text border: 1px solid $s-faint; r:$s-radius padding: 0.55em 0.7em; transition: border-color 0.15s, box-shadow 0.15s;",
+		"&:hover:not(:disabled)": "border-color: color-mix(in oklab, $s-text, $s-bg 55%);",
 		"&:focus-visible": "border-color:$s-accent box-shadow: 0 0 0 3px $s-focus; outline:none",
 "&[aria-invalid=true]": "border-color:$s-danger",
 	},

@@ -68,54 +68,68 @@ export interface FloatingMenuOptions {
 	items: MenuEntry[];
 	/** Element to anchor the menu to (positioned just below it, flips up if needed). */
 	anchor: HTMLElement;
+	/**
+	 * Position the menu at this viewport point (e.g. a pointer location) instead
+	 * of just below the anchor. Used by {@link addContextMenu} to open at the
+	 * exact click/tap target.
+	 */
+	at?: { x: number; y: number };
+	/**
+	 * Also close the menu when the anchor itself is clicked. By default a click on
+	 * the anchor is ignored (so a trigger button can run its own toggle), but a
+	 * context menu — whose anchor has no click handler — wants the click to close.
+	 */
+	closeOnAnchorClick?: boolean;
 	/** Aberdeen attr/style string on the floating panel. */
 	dropdownAttrs?: Attributes;
 }
 
 /** Options for {@link addContextMenu} — like {@link FloatingMenuOptions}, but
  * the anchor is the element the handler is attached to. */
-export type ContextMenuOptions = Omit<FloatingMenuOptions, "anchor">;
+export type ContextMenuOptions = Omit<FloatingMenuOptions, "anchor" | "at" | "closeOnAnchorClick">;
 
 // Styles shared by the floating dropdown and the sidebar nav, so both look
 // identical. The item styles aren't scoped to a container, so `drawMenu` can
 // render its items into either one.
 A.insertGlobalCss({
+	// Border comes from the `.s-s.neutral` surface; the panel only overrides the radius
+	// (lg) and opts into elevation via `.shadow` (added on the element below).
 	".s-menu-list":
 		"position:fixed z-index:350 min-width:10rem display:flex flex-direction:column p:$1 " +
-		"border: 1px solid $s-border; r:$s-radius-lg box-shadow:$s-shadow " +
+		"r:$s-radius-lg " +
 		"overflow-y:auto max-height:min(80vh,28rem) " +
 		"transition: opacity 0.15s, transform 0.15s;",
 	".s-menu-list.hidden": "opacity:0 pointer-events:none transform:translateY(-6px)",
 	".s-menu-item, .s-menu-item-link":
 		"display:flex align-items:center gap:$2 w:100% " +
 		"padding: 0.5em 0.65em; r:$s-radius cursor:pointer text-align:left " +
-		"font-size:0.9em border:0 background:transparent fg:$s-fg text-decoration:none " +
+		"font-size:0.9em border:0 background:transparent fg:$s-text text-decoration:none " +
 		"transition: background 0.12s, color 0.12s, transform 0.12s, box-shadow 0.12s;",
 	// A translucent ink tint (rather than an *opaque* mix) so the hover fades in
 	// cleanly: transitioning background from `transparent` toward an opaque colour
 	// flashes through dark mid-tones in browsers that interpolate non-premultiplied.
 	// Staying ink-hued at low alpha keeps the fade the right colour throughout.
 	".s-menu-item:hover:not([aria-disabled=true]):not([aria-current=page]), .s-menu-item-link:hover:not([aria-current=page])":
-		"background: color-mix(in srgb, $s-fg 10%, transparent);",
+		"background: color-mix(in srgb, $s-text 10%, transparent);",
 	// Active (current page): a filled brand-gradient pill with a soft glow — the
 	// one place the menu shows real colour, so the current page is unmistakable.
 	".s-menu-item[aria-current=page], .s-menu-item-link[aria-current=page]":
-		"color:$s-on-accent font-weight:600 background: $s-gradient; box-shadow: 0 3px 10px color-mix(in srgb, $s-primary 38%, transparent);",
+		"color:white font-weight:450 background: $s-gradient; box-shadow: 0 3px 10px color-mix(in srgb, $s-primary 38%, transparent);",
 	".s-menu-item[aria-current=page] .s-menu-icon, .s-menu-item-link[aria-current=page] .s-menu-icon":
-		"color:$s-on-accent",
+		"color:white",
 	".s-menu-item[aria-current=page]:hover, .s-menu-item-link[aria-current=page]:hover":
 		"filter:brightness(1.06)",
 	".s-menu-item:focus-visible, .s-menu-item-link:focus-visible":
-		"outline:none background: color-mix(in srgb, $s-fg 10%, transparent); box-shadow: 0 0 0 2px inset $s-focus;",
+		"outline:none background: color-mix(in srgb, $s-text 10%, transparent); box-shadow: 0 0 0 2px inset $s-focus;",
 	".s-menu-item[aria-disabled=true], .s-menu-item-link[aria-disabled=true]":
 		"opacity:0.45 cursor:not-allowed pointer-events:none",
-	".s-menu-icon": "fg:$s-fg-muted flex-shrink:0",
+	".s-menu-icon": "fg:$s-muted flex-shrink:0",
 	// A soft hairline that fades out at both ends, rather than a hard full-width
 	// rule — quieter, and it reads as a grouping cue instead of a divider bar.
 	// `hr.` (not just `.`) so this wins over the global hr flow-margin rule.
 	"hr.s-menu-sep":
 		"border:0 height:1px margin: $1 0.6rem; " +
-		"background: linear-gradient(to right, transparent, $s-border-strong 18%, $s-border-strong 82%, transparent);",
+		"background: linear-gradient(to right, transparent, $s-faint 18%, $s-faint 82%, transparent);",
 });
 
 /**
@@ -185,7 +199,7 @@ function closeFloating(): void {
 	anchor?.focus();
 }
 
-function positionMenu(menuEl: HTMLElement, rect: DOMRect): void {
+function positionMenu(menuEl: HTMLElement, rect: { left: number; right: number; top: number; bottom: number }): void {
 	const mw = menuEl.offsetWidth, mh = menuEl.offsetHeight;
 	const vw = window.innerWidth,  vh = window.innerHeight;
 	const gap = 4;
@@ -201,7 +215,7 @@ mountPortal(() => {
 	const f = $floating.opts;
 	if (!f) return;
 
-	const menuEl = A("div.s-menu-list.s-s.panel create=hidden destroy=hidden", f.dropdownAttrs, () => {
+	const menuEl = A("div.s-menu-list.s-s.neutral.shadow create=hidden destroy=hidden", f.dropdownAttrs, () => {
 		drawMenu(f.items, closeFloating);
 	}) as HTMLElement;
 
@@ -209,7 +223,7 @@ mountPortal(() => {
 	// any click outside the panel + anchor closes; Escape/Tab close.
 	const onClick = (e: MouseEvent) => {
 		const t = e.target as Node;
-		if (!menuEl.contains(t) && !f.anchor.contains(t)) closeFloating();
+		if (!menuEl.contains(t) && (f.closeOnAnchorClick || !f.anchor.contains(t))) closeFloating();
 	};
 	const onKey = (e: KeyboardEvent) => {
 		if (e.key === "Escape" || e.key === "Tab") { e.preventDefault(); closeFloating(); }
@@ -224,7 +238,10 @@ mountPortal(() => {
 	// Position after layout, then focus the first enabled item.
 	requestAnimationFrame(() => {
 		if (!document.body.contains(menuEl)) return;
-		positionMenu(menuEl, f.anchor.getBoundingClientRect());
+		// Position at the supplied point (a zero-size rect) when given — e.g. the
+		// pointer location for a context menu — otherwise below the anchor.
+		const rect = f.at ? { left: f.at.x, right: f.at.x, top: f.at.y, bottom: f.at.y } : f.anchor.getBoundingClientRect();
+		positionMenu(menuEl, rect);
 		menuEl.querySelector<HTMLElement>(
 			".s-menu-item:not([aria-disabled=true]), .s-menu-item-link:not([aria-disabled=true])",
 		)?.focus();
@@ -288,10 +305,18 @@ export function addContextMenu(opts: ContextMenuOptions): void {
 	let myEl: HTMLElement | null = null;
 	A.clean(() => { if ($floating.opts?.anchor === myEl) closeFloating(); });
 
-	A("contextmenu=", (e: Event) => {
+	A("contextmenu=", (e: MouseEvent) => {
 		e.preventDefault();
 		myEl = e.currentTarget as HTMLElement;
-		showFloatingMenu({ items: opts.items, anchor: myEl, dropdownAttrs: opts.dropdownAttrs });
+		// Anchor at the exact click/tap point, and close on a plain click of the
+		// element (it has no toggle handler of its own).
+		showFloatingMenu({
+			items: opts.items,
+			anchor: myEl,
+			at: { x: e.clientX, y: e.clientY },
+			closeOnAnchorClick: true,
+			dropdownAttrs: opts.dropdownAttrs,
+		});
 	});
 }
 
@@ -306,7 +331,7 @@ export function addContextMenu(opts: ContextMenuOptions): void {
  * @example
  * ```ts
  * S.menuButton({
- *   button: { content: "Actions", attrs: ".neutral .outlined" },
+ *   button: { content: "Actions", attrs: ".neutral" },
  *   items: [
  *     { label: "Edit", icon: () => A("#✎"), click: () => edit() },
  *     { separator: true },
@@ -324,7 +349,7 @@ export function menuButton(opts: MenuOptions): void {
 		// Only label the trigger "Open menu" when it has no visible text of its
 		// own — an aria-label would otherwise *hide* that text from AT.
 		...(opts.button?.content == null ? { ariaLabel: "Open menu" } : null),
-		attrs: ".neutral .outlined",
+		attrs: ".neutral",
 		...opts.button,
 		click: (e: Event) => {
 			myEl = e.currentTarget as HTMLElement;

@@ -48,20 +48,22 @@ A.insertGlobalCss({
 		"&": "position:fixed inset:0 z-index:200 display:block background: rgba(0,0,0,0.55); transition: opacity 0.4s ease-in-out;",
 		"&.hidden": "opacity:0 pointer-events:none",
 	},
+	// The dialog panel is a `.s-s.neutral.extra-shadow` surface: border, radius (lg)
+	// and the deep floating shadow come from the surface itself (see theme.ts).
 	".s-dialog": {
 		"&":
 			"position:fixed z-index:200 top:50% left:50% " +
 			"display:flex flex-direction:column " +
 			"transform:translate(-50%,-50%) " +
 			"min-width:20rem max-width:min(90vw,44rem) max-height:min(88vh,800px) " +
-			"border: 1px solid $s-border; r: $s-radius-lg; box-shadow: $s-shadow; overflow:hidden " +
+			"r: $s-radius-lg; overflow:hidden " +
 			"transition: opacity 0.2s ease-out, transform 0.2s ease-out;",
 		"> header":
 			"display:flex align-items:center gap:$2 padding: $2 $3; " +
-			"border-bottom: 1px solid $s-border; font-weight:600 flex-shrink:0",
+			"border:0 border-bottom: 1px solid $s-faint; r:0 font-weight:600 flex-shrink:0",
 		"> footer":
 			"display:flex align-items:center justify-content:flex-end gap:$2 padding: $2 $3; " +
-			"border-top: 1px solid $s-border; flex-shrink:0",
+			"border:0 border-top: 1px solid $s-faint; r:0 flex-shrink:0",
 		"> div": "p:$3 gap:$3 display:flex flex-direction:column overflow-y:auto flex:1 min-height:0",
 		"&.hidden": "opacity:0 pointer-events:none transform: translate(-50%, calc(-50% + 20px)); pointer-events:none",
 	},
@@ -93,10 +95,10 @@ mountPortal(() => {
 		});
 
 		// Dialog itself
-		A("div.s-dialog.s-s.panel create=hidden destroy=hidden", opts.attrs, () => {
+		A("div.s-dialog.neutral.s-s.extra-shadow create=hidden destroy=hidden", opts.attrs, () => {
 			A(() => {
 				if (opts.header != null) {
-					A("header.s-s.raised", opts.headerAttrs, () => drawSlot(opts.header));
+					A("header.s-s.neutral", opts.headerAttrs, () => drawSlot(opts.header));
 				}
 			});
 
@@ -106,7 +108,7 @@ mountPortal(() => {
 
 			A(() => {
 				if (opts.footer != null) {
-					A("footer.s-s.raised", opts.footerAttrs, () => drawSlot(opts.footer));
+					A("footer.s-s.neutral", opts.footerAttrs, () => drawSlot(opts.footer));
 				}
 			});
 		});
@@ -129,7 +131,7 @@ mountPortal(() => {
  *   content: (close) => {
  *     A("p #Are you sure?");
  *     S.button({ content: "Yes", click: () => { S.alert("Nice!"); close(); } });
- *     S.button({ content: "Cancel", attrs: ".neutral .outlined", click: close });
+ *     S.button({ content: "Cancel", attrs: ".neutral", click: close });
  *   },
  * });
  * ```
@@ -201,7 +203,7 @@ export function confirm(message: string, opts: Partial<DialogOptions> = {}): Pro
 			content: (close) => {
 				A("p", () => { A("#", message); });
 				buttonGroup({ layout: "spaced", attrs: "align-self:flex-end", content: () => {
-					button({ content: "Cancel", attrs: ".neutral .outlined", click: close });
+					button({ content: "Cancel", attrs: ".neutral", click: close });
 					button({ content: "OK", click: () => { confirmed = true; close(); } });
 				}});
 			},
@@ -241,7 +243,7 @@ export function prompt(message: string, defaultValue = "", opts: Partial<DialogO
 					});
 					textline({ bind: A.ref($v, "value") });
 					buttonGroup({ layout: "spaced", attrs: "align-self:flex-end", content: () => {
-						button({ content: "Cancel", attrs: ".neutral .outlined", type: "button", click: close });
+						button({ content: "Cancel", attrs: ".neutral", type: "button", click: close });
 						button({ content: "OK", type: "submit" });
 					}});
 				});

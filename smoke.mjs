@@ -37,7 +37,7 @@ A.mount(document.body, () => {
 		content: () => {
 			S.box({
 				header: "Account",
-				footer: () => S.button({ content: "Footer button", attrs: ".neutral .outlined" }),
+				footer: () => S.button({ content: "Footer button", attrs: ".neutral" }),
 				content: () => {
 					S.form({
 						layout: "grid",
@@ -65,9 +65,9 @@ A.mount(document.body, () => {
 
 			S.buttonGroup({
 				buttons: [
-					{ content: "Day", attrs: ".neutral .outlined" },
-					{ content: "Week", attrs: ".neutral .outlined" },
-					{ content: "Month", attrs: ".neutral .outlined" },
+					{ content: "Day", attrs: ".neutral" },
+					{ content: "Week", attrs: ".neutral" },
+					{ content: "Month", attrs: ".neutral" },
 				],
 			});
 
@@ -90,7 +90,7 @@ A.mount(document.body, () => {
 
 			// Menu trigger
 			S.menuButton({
-				button: { content: "Actions", attrs: ".neutral .outlined" },
+				button: { content: "Actions", attrs: ".neutral" },
 				items: [
 					{ label: "Edit", click: () => {} },
 					{ separator: true },

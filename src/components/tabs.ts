@@ -33,14 +33,14 @@ export interface TabsOptions {
 A.insertGlobalCss({
 	".s-tabs": {
 		"&": "display:flex flex-direction:column gap:$3",
-		".s-tablist": "display:flex gap:$1 align-items:stretch overflow-x:auto scrollbar-width:none border-bottom: 1px solid $s-border;",
+		".s-tablist": "display:flex gap:$1 align-items:stretch overflow-x:auto scrollbar-width:none border-bottom: 1px solid $s-faint;",
 		".s-tablist::-webkit-scrollbar": "display:none",
 		".s-tab":
 			"display:inline-flex align-items:center gap:$2 cursor:pointer background:transparent " +
-			"border:0 color: $s-fg-muted; font-weight:600 padding: 0.6em 0.9em; " +
+			"border:0 color: $s-muted; font-weight:600 padding: 0.6em 0.9em; " +
 			"border-bottom: 3px solid transparent; margin-bottom:-1px " +
 			"transition: color 0.15s, background 0.15s, border-color 0.15s;",
-		".s-tab:hover:not(:disabled), .s-tab[aria-selected=true]": "color: $s-fg;",
+		".s-tab:hover:not(:disabled), .s-tab[aria-selected=true]": "color: $s-text;",
 ".s-tab:focus-visible": "outline:none box-shadow: 0 0 0 3px $s-focus; r: $s-radius;",
 		".s-tab[aria-selected=true]": "border-image: $s-gradient 1;",
 		".s-tabpanel": "display:block",

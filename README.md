@@ -75,20 +75,29 @@ S.box({ header: "See the [docs](/docs)", content: () => { ... } });
 
 ### Surfaces
 
-Staffa builds on **surfaces**: elements marked with `.s-s` that have their own background and derived text/border tokens. Add modifier classes to colour them:
+Staffa builds on **surfaces**: elements marked with `.s-s` that have their own background and derived text/border tokens. There are two families:
 
-- **level**: `.base`, `.panel`, `.raised`
-- **role**: `.primary`, `.secondary`, `.gradient`, `.neutral`, `.danger`, `.success`, `.warning`
-- **variant**: `.filled`, `.tonal`, `.outlined`
+- **Neutral surfaces** — `.neutral` (and the implicit page at `:root`). A calm neutral whose shade steps automatically with nesting depth (page → panel → raised, capped). Use them for cards, bars, popovers — anything that just holds content. No variants.
+- **Accent surfaces** — `.primary`, `.danger`, `.success`, `.warning`, `.link` (a bare `.s-s` defaults to primary). A bright fill with white ink, painted as a subtle single-colour gradient. They take a **variant**: `.filled` (default), `.tonal`, or `.outlined`. A surface nested *inside* an accent surface is always rendered filled, so it can't bleed into the vivid parent.
 
-Components are built from these (`S.button` is a `.s-s.primary.filled`, `S.box` a `.s-s.panel`, etc.). Because component options include an optional `attrs` string, which has Aberdeen `A()` string semantics, you can easily override it:
+Components are built from these (`S.button` is a `.s-s.primary`, `S.box` a `.s-s.neutral`, etc.). Because component options include an optional `attrs` string, which has Aberdeen `A()` string semantics, you can easily override it:
 
 ```ts
 S.button({ content: "Delete", attrs: ".danger" });
-S.box({ attrs: ".raised.outlined", content: () => { ... } });
+S.button({ content: "Cancel", attrs: ".neutral" });       // neutral button
+S.box({ attrs: ".primary", content: () => { ... } });
 ```
 
-Inside any surface, CSS variables are defined for suitable foreground colors (`$s-fg`, `$s-bg`, `$s-fg-muted`, `$s-border`, `$s-accent`, ...), with `color` defaulting to `$s-fg`. By using these, components has access to various foreground colors that will look regardless of the surface it is drawing on.
+Inside any surface (including `:root`), CSS variables are defined for the background and a set of safe foreground colors: `$s-bg`, `$s-text` (also applied as `color`), `$s-muted`, `$s-accent` (the surface's "pop" — the brand primary on neutral surfaces, the ink on accent surfaces), and `$s-faint`. By using these, components adapt to wherever they're nested.
+
+The colour tokens are mode-independent and settable: `$s-primary` (the one brand colour — it tints the neutrals and defines `.s-s.primary`), `$s-danger`, `$s-success`, `$s-warning`, and `$s-link` (the link colour, which is also the fill of the `.s-s.link` surface). Links render in `$s-link` on neutral surfaces and in the ink on accent surfaces.
+
+**Borders & shadows.** Neutral surfaces carry a subtle hairline border on their own (so a card looks like a card without any component help). Any surface can be lifted with `.shadow` or `.extra-shadow`: on a neutral surface that's a neutral drop shadow, on an accent surface it's a self-coloured glow (a lit button is just a `.primary` surface with `.shadow`), and on `.tonal`/`.outlined` it's ignored. `.no-shadow` removes a component's built-in shadow:
+
+```ts
+S.box({ attrs: ".extra-shadow", content: () => { ... } });   // a more raised card
+S.button({ content: "Quiet", attrs: ".no-shadow" });          // drop the button glow
+```
 
 ### Dark and light modes
 
@@ -108,22 +117,20 @@ Staffa includes a lightweight CSS reset that makes bare semantic HTML look a bit
 
 ### Theming
 
-The first step in theming is just setting some CSS variables, most commonly the primary and secondary color. This can be done through CSS directly, or using Aberdeen:
+The first step in theming is just setting some CSS variables. Everything derives from a single brand colour, `s-primary` (the neutral surface shades are tinted toward it too), so often that's all you need. This can be done through CSS directly, or using Aberdeen:
 
 ```ts
 A.cssVars["s-primary"] = "#fdda58";
-A.cssVars["s-secondary"] = "#cc5624";
 A.cssVars["s-danger"] = "#ee4422";
 A.cssVars["s-radius"] = "4px";
 ```
 
 See `src/theme.ts` for what other CSS variables are being used.
 
-If you need further customization, just add some CSS to override the default styling. For instance, to add your own surface type:
+If you need further customization, just add some CSS to override the default styling. For instance, to add your own accent surface, set its background (and, if needed, its ink) — the subtle gradient and the rest of the tokens follow automatically:
 
 ```ts
-// In filled mode, 's-a' is the foreground and 's-b' is the background. "outlined" and "tonal" use the colors in different ways.
-A.insertGlobalCss({".s-s.my-surface": "--s-a:white --s-b:#ef6b00"});
+A.insertGlobalCss({".s-s.my-surface": "--s-bg:#ef6b00 --s-text:#fff"});
 
 S.button({
   content: "You'll want to click me",
@@ -131,6 +138,8 @@ S.button({
   click: () => S.alert("Good work!", {attrs: ".my-surface"})
 });
 ```
+
+Custom surface class names may be anything (other than the built-in modifiers `.tonal`, `.outlined`, `.small`, `.large`). The `.tonal` and `.outlined` variants work on your surface for free.
 
 Note that when changing CSS like this, things *may* break if you upgrade Staffa. The recommended update strategy is therefore: don't!
 
@@ -140,10 +149,10 @@ If you want to make changes that are dependent upon the current light/dark mode 
 A(() => {
   if (S.getDarkMode()) {
     A.cssVars["s-primary"] = "#aa9944";
-    A.insertGlobalCss({".s-s.my-surface": "--s-a:white --s-b:#444444"});
+    A.insertGlobalCss({".s-s.my-surface": "--s-bg:#444444 --s-text:#fff"});
   } else {
     A.cssVars["s-primary"] = "#fdda58";
-    A.insertGlobalCss({".s-s.my-surface": "--s-a:black --s-b:#cccccc"});
+    A.insertGlobalCss({".s-s.my-surface": "--s-bg:#cccccc --s-text:#000"});
   }
 });
 ```
@@ -236,7 +245,7 @@ Staffa is designed for extension. A component is simply a plain function taking 
 
 3. **Reach for reactivity deliberately.** Pass option strings straight to `A` as positional args (the caller's scope). Only wrap a dedicated `A(() => ...)` scope where it matters: input elements (recreation loses focus), or large subtrees you don't want to redraw. Use `A.peek(() => ...)` when you need a value but must not subscribe.
 
-4. **Build on surfaces.** Mark elements `.s-s` and add level/role/variant modifiers. Inside them, use the contextual foreground color CSS variables (`$s-fg`, `$s-bg`, `$s-border`, ...) so components adapt to wherever they're nested. Hard-coding colors in components shouldn't be needed, but if you must, make sure you set *both* foreground and background.
+4. **Build on surfaces.** Mark elements `.s-s` and add `.neutral` or an accent role (`.primary`, `.danger`, …) plus an optional variant. Inside them, use the contextual CSS variables (`$s-text`, `$s-bg`, `$s-muted`, `$s-accent`, `$s-faint`, ...) so components adapt to wherever they're nested. Hard-coding colors in components shouldn't be needed, but if you must, make sure you set *both* foreground and background.
 
 5. **No outer margins.** Components don't margin themselves; spacing is the parent's job. Content components set default `padding` on the content element; `contentAttrs` overrides it.
 
@@ -287,6 +296,12 @@ ln -s ../../node_modules/staffa/skill .claude/skills/staffa
 ```
 
 ## Breaking changes
+
+- **0.7** — the surface model was reduced to two families: **neutral** (`.neutral`) and **accent** (`.primary`/`.danger`/`.success`/`.warning`/`.link`). Apps that only use the high-level `S.*` components need no changes. Code that uses surface classes or tokens directly must update:
+  - **Surface levels gone.** Replace `.base`/`.panel`/`.raised`/`.neutral`/`.nest` with the single `.neutral` class.
+  - **`.secondary` and `.gradient` gone.** Drop any `s-secondary` colour override; there's no `s-secondary` anymore. The default button is now `.primary`.
+  - **Tokens renamed.** `--s-fg`→`--s-text`, `--s-fg-muted`→`--s-muted`, `--s-border`→`--s-faint`. Removed: `--s-fg-faint`, `--s-border-strong`, `--s-ink`, `--s-on-accent`, `--s-page`/`--s-panel`/`--s-raised`, `--s-neutral`, `--s-tint`, `--s-glow`, `--s-shadow`, `--s-gradient-surface`. A custom surface now sets `--s-bg`/`--s-text` (was the `--s-a`/`--s-b` anchors).
+  - **Borders/shadows moved onto surfaces.** Components no longer draw their own border/shadow. If you relied on `S.box`/`S.dialog`/etc. elevation, it now comes from the surface; pass `.no-shadow` to drop it, or `.shadow`/`.extra-shadow` to add it on any surface.
 
 - **0.6**: None.
 

@@ -46,9 +46,9 @@ A.insertGlobalCss({
  * @example
  * ```ts
  * S.buttonGroup({ buttons: [
- *   { content: "Day", attrs: ".neutral .outlined" },
- *   { content: "Week", attrs: ".neutral .outlined" },
- *   { content: "Month", attrs: ".neutral .outlined" },
+ *   { content: "Day", attrs: ".neutral" },
+ *   { content: "Week", attrs: ".neutral" },
+ *   { content: "Month", attrs: ".neutral" },
  * ]});
  * ```
  */

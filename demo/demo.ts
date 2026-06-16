@@ -23,16 +23,15 @@ const knownLanguages = ["TypeScript", "JavaScript", "Python", "Rust", "Go", "Jav
 
 // Default brand palette for the demo. A.cssVars writes a `:root` custom-property
 // block that Aberdeen emits *after* the library's own styles, so it cleanly
-// overrides Staffa's --s-primary / --s-secondary (and everything derived from
-// them) at equal specificity. Transient — not persisted.
-A.cssVars["s-primary"] = "#89eb47";
-A.cssVars["s-secondary"] = "#ecf000";
+// overrides Staffa's --s-primary (and everything derived from it) at equal
+// specificity. Transient — not persisted.
+A.cssVars["s-primary"] = "#00a884";
 
 // Scoped (generated-class) styling for the swatch row, so it stays out of the
 // global and `s-` namespaces.
 const colorPickerStyle = A.insertCss({
 	"&": "display:flex align-items:center gap:$1",
-	"input[type=color]": "w:1.9rem h:1.9rem p:0 border: 1px solid $s-border-strong; r:$s-radius bg:transparent cursor:pointer",
+	"input[type=color]": "w:1.9rem h:1.9rem p:0 border: 1px solid $s-faint; r:$s-radius bg:transparent cursor:pointer",
 	"input[type=color]::-webkit-color-swatch-wrapper": "padding:2px",
 	"input[type=color]::-webkit-color-swatch": "border:0 border-radius: calc($s-radius - 3px)",
 	"input[type=color]::-moz-color-swatch": "border:0 border-radius: calc($s-radius - 3px)",
@@ -94,9 +93,10 @@ A(() => {
 
 
 /**
- * Two swatches that re-skin the brand's primary/secondary colours live, bound
- * straight to A.cssVars so a pick updates the `:root` token — and thus the whole
- * theme — reactively. Transient: nothing persisted, a reload restores defaults.
+ * A swatch that re-skins the brand's primary colour live, bound straight to
+ * A.cssVars so a pick updates the `:root` token — and thus the whole theme,
+ * since every surface tint derives from it — reactively. Transient: nothing
+ * persisted, a reload restores the default.
  */
 function drawColorPickers() {
 	// Object syntax (not the string mini-language) so the spaces in the aria-labels
@@ -104,9 +104,6 @@ function drawColorPickers() {
 	A("div", colorPickerStyle, () => {
 		A("input type=color", { "aria-label": "Primary colour", bind: A.ref(A.cssVars, "s-primary") }, () => {
 			S.addTooltip({ tip: "Primary colour" });
-		});
-		A("input type=color", { "aria-label": "Secondary colour", bind: A.ref(A.cssVars, "s-secondary") }, () => {
-			S.addTooltip({ tip: "Secondary colour" });
 		});
 	});
 }
@@ -121,6 +118,10 @@ function drawThemeChooser() {
 		attrs: ".small",
 	});
 }
+
+// Custom accent surface used in the surfaces demo page: set --s-bg (the fill) and
+// --s-text (the ink); the subtle gradient and the rest of the tokens follow.
+A.insertGlobalCss({".s-s.brand-orange": "--s-bg:#ef6b00 --s-text:#fff"});
 
 // ─── Pages ───────────────────────────────────────────────────────────────────
 
@@ -179,7 +180,7 @@ function drawForm() {
 					S.checkbox({ label: "Subscribe to the newsletter", name: "newsletter", bind: A.ref($user, "newsletter") });
 				},
 				actions: () => {
-					S.button({ content: "Cancel", attrs: ".neutral .tonal" });
+					S.button({ content: "Cancel", attrs: ".neutral" });
 					S.button({ content: "Save", type: "submit" });
 				},
 				submit: (data) => {
@@ -205,7 +206,8 @@ function drawForm() {
 }
 
 function drawButtons() {
-	const roles = ["gradient", "primary", "secondary", "neutral", "danger", "success"];
+	// Accent roles carry the three variants; `.neutral` is the neutral button.
+	const roles = ["primary", "danger", "success", "warning", "link"];
 	const variants = ["filled", "tonal", "outlined"];
 
 	S.box({
@@ -214,7 +216,7 @@ function drawButtons() {
 		content: () => {
 			for (const variant of variants) {
 				A("div display:grid gap:$2 grid-template-columns: 5rem 1fr;", () => {
-					A("div text-align:right fg: $s-fg-muted; text=", variant);
+					A("div text-align:right fg: $s-muted; text=", variant);
 					A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
 						for (const role of roles) {
 							S.button({ content: role, attrs: `.${role} .${variant}` });
@@ -224,8 +226,16 @@ function drawButtons() {
 				});
 			}
 
+			A("div display:grid gap:$2 grid-template-columns: 5rem 1fr;", () => {
+				A("div text-align:right fg: $s-muted; #neutral");
+				A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
+					S.button({ content: "neutral", attrs: ".neutral" });
+					S.button({ content: "disabled", attrs: ".neutral", disabled: true });
+				});
+			});
+
 			A("div display:grid gap:$2 align-items:center grid-template-columns: 5rem 1fr;", () => {
-				A("div text-align:right fg: $s-fg-muted; #sizes");
+				A("div text-align:right fg: $s-muted; #sizes");
 				A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
 					S.button({ content: "Small", attrs: ".small" });
 					S.button({ content: "Medium" });
@@ -242,7 +252,7 @@ function drawButtons() {
 			A("h4 mt:0 #Segmented group (attached)");
 			S.buttonGroup({
 				buttons: [
-					{ content: "Day",   attrs: ".neutral .outlined" },
+					{ content: "Day",   attrs: ".neutral" },
 					{ content: "Week",  attrs: ".danger .tonal" },
 					{ content: "Month" },
 				],
@@ -307,11 +317,11 @@ function drawOverlays() {
 	S.box({
 		header: "Toast notifications",
 		content: () => {
-			A("p m:0 fg:$s-fg-muted font-size:0.9em #Click to fire a toast. Each dismisses independently.");
+			A("p m:0 fg:$s-muted font-size:0.9em #Click to fire a toast. Each dismisses independently.");
 			A("div display:flex gap:$2 flex-wrap:wrap mt:$2", () => {
 				S.button({
 					content: "Neutral",
-					attrs: ".neutral .outlined",
+					attrs: ".neutral",
 					click: () => S.toast({ message: "A neutral notification." }),
 				});
 				S.button({
@@ -331,7 +341,7 @@ function drawOverlays() {
 				});
 				S.button({
 					content: "Persistent",
-					attrs: ".neutral .outlined",
+					attrs: ".neutral",
 					click: () => {
 						const dismiss = S.toast({ title: "In progress", message: "Dismiss manually or wait 8 s.", duration: 0 });
 						setTimeout(dismiss, 8000);
@@ -339,7 +349,7 @@ function drawOverlays() {
 				});
 				S.button({
 					content: "No close button",
-					attrs: ".neutral .outlined",
+					attrs: ".neutral",
 					click: () => S.toast({ message: "Auto-dismisses in 2 s.", duration: 2000, dismissible: false }),
 				});
 			});
@@ -350,13 +360,13 @@ function drawOverlays() {
 	S.box({
 		header: "Tooltips",
 		content: () => {
-			A("p m:0 fg:$s-fg-muted font-size:0.9em #Portal-rendered — never clipped. Hover or focus the buttons to see the tips.");
+			A("p m:0 fg:$s-muted font-size:0.9em #Portal-rendered — never clipped. Hover or focus the buttons to see the tips.");
 			A("div display:flex gap:$4 flex-wrap:wrap align-items:center mt:$2", () => {
-				A("span display:inline-flex", () => { S.addTooltip({ tip: "Appears above (default)" });            S.button({ content: "Top",      attrs: ".neutral .outlined" }); });
-				A("span display:inline-flex", () => { S.addTooltip({ placement: "bottom", tip: "Appears below" }); S.button({ content: "Bottom",   attrs: ".neutral .outlined" }); });
-				A("span display:inline-flex", () => { S.addTooltip({ placement: "left",   tip: "Appears to the left" }); S.button({ content: "Left", attrs: ".neutral .outlined" }); });
-				A("span display:inline-flex", () => { S.addTooltip({ placement: "right",  tip: "Appears to the right" }); S.button({ content: "Right", attrs: ".neutral .outlined" }); });
-				A("span display:inline-flex", () => { S.addTooltip({ tip: "Supports **bold** and `code` in tips" }); S.button({ content: "Rich tip", attrs: ".neutral .outlined" }); });
+				A("span display:inline-flex", () => { S.addTooltip({ tip: "Appears above (default)" });            S.button({ content: "Top",      attrs: ".neutral" }); });
+				A("span display:inline-flex", () => { S.addTooltip({ placement: "bottom", tip: "Appears below" }); S.button({ content: "Bottom",   attrs: ".neutral" }); });
+				A("span display:inline-flex", () => { S.addTooltip({ placement: "left",   tip: "Appears to the left" }); S.button({ content: "Left", attrs: ".neutral" }); });
+				A("span display:inline-flex", () => { S.addTooltip({ placement: "right",  tip: "Appears to the right" }); S.button({ content: "Right", attrs: ".neutral" }); });
+				A("span display:inline-flex", () => { S.addTooltip({ tip: "Supports **bold** and `code` in tips" }); S.button({ content: "Rich tip", attrs: ".neutral" }); });
 				A("span display:inline-flex", () => { S.addTooltip({ tip: "Still describes why it's disabled" });    S.button({ content: "Disabled", disabled: true }); });
 			});
 		},
@@ -366,10 +376,10 @@ function drawOverlays() {
 	S.box({
 		header: "Action menus",
 		content: () => {
-			A("p m:0 fg:$s-fg-muted font-size:0.9em #Portal-rendered — never clipped. Full keyboard nav: arrows, Enter, Escape.");
+			A("p m:0 fg:$s-muted font-size:0.9em #Portal-rendered — never clipped. Full keyboard nav: arrows, Enter, Escape.");
 			A("div display:flex gap:$3 flex-wrap:wrap align-items:center mt:$2", () => {
 				S.menuButton({
-					button: { content: "Actions", attrs: ".neutral .outlined" },
+					button: { content: "Actions", attrs: ".neutral" },
 					items: [
 						{ label: "Edit",      icon: icons.pencil,  click: () => S.toast({ message: "Edit clicked",   type: "success" }) },
 						{ label: "Duplicate", icon: icons.copy,    click: () => S.toast({ message: "Duplicated",     type: "neutral" }) },
@@ -380,7 +390,7 @@ function drawOverlays() {
 				});
 
 				S.menuButton({
-					button: { content: "With link & disabled", attrs: ".neutral .tonal" },
+					button: { content: "With link & disabled", attrs: ".neutral" },
 					items: [
 						{ label: "View docs", href: "https://aberdeenjs.org", target: "_blank" },
 						{ label: "Share", click: () => S.toast({ message: "Link copied!", type: "success" }) },
@@ -401,7 +411,7 @@ function drawOverlays() {
 			});
 
 			// addContextMenu replaces the browser menu on the current element.
-			A("div.s-s.panel.outlined mt:$3 r:$s-radius padding:$3 text-align:center user-select:none fg:$s-fg-muted", () => {
+			A("div.s-s.neutral mt:$3 padding:$3 text-align:center user-select:none fg:$s-muted", () => {
 				A("#Right-click (or long-press) here for a context menu.");
 				S.addContextMenu({
 					items: [
@@ -427,13 +437,13 @@ function drawOverlays() {
 					},
 				});
 				S.button({
-					content: "confirm()", attrs: ".neutral .tonal", click: async () => {
+					content: "confirm()", attrs: ".neutral", click: async () => {
 						const ok = await S.confirm("Delete this item?");
 						$result.value = `confirm → ${ok}`;
 					},
 				});
 				S.button({
-					content: "prompt()", attrs: ".neutral .outlined", click: async () => {
+					content: "prompt()", attrs: ".neutral", click: async () => {
 						const name = await S.prompt("Enter your name:", "Alice");
 						$result.value = name === null ? "prompt → cancelled" : `prompt → "${name}"`;
 					},
@@ -464,7 +474,7 @@ function drawOverlays() {
 										});
 									},
 								});
-								S.button({ content: "Close", attrs: ".neutral .outlined", click: closeOuter });
+								S.button({ content: "Close", attrs: ".neutral", click: closeOuter });
 							},
 						});
 					},
@@ -556,74 +566,61 @@ function drawContent() {
 }
 
 function drawSurfaces() {
-	const levels = ["base", "panel", "raised"];
-	const accentRoles = ["primary", "secondary", "gradient", "danger", "success", "warning"];
-	const $containing = A.proxy({ value: "panel" });
+	const accentRoles = ["primary", "danger", "success", "warning", "link"];
 
-	function drawSurfaceRow(name: string, variant?: string) {
-		const cls = variant ? `div.s-s.${name}.${variant}` : `div.s-s.${name}`;
-		const label = variant ? `.${name}.${variant}` : `.${name}`;
-		A(`${cls} padding: $2 $3;`, () => {
-			A("div display:flex gap:$3 align-items:baseline flex-wrap:wrap font-size:0.85em", () => {
-				A("div flex-shrink:0 min-width:9rem #", label);
-				A("span #text");
-				A("span fg: $s-fg-muted; #muted");
-				A("span fg: $s-fg-faint; #faint");
-				A("a href=# #link");
-				A("span fg: $s-accent; font-weight:600 #accent");
-				A("span padding: 0.15em 0.4em; r:4px; border: 1px solid $s-border; font-size:0.8em #border");
-			});
+	// A token sampler: every contextual foreground colour shown on the current surface.
+	function drawTokenRow(label: string) {
+		A("div display:flex gap:$3 align-items:baseline flex-wrap:wrap font-size:0.85em", () => {
+			A("div flex-shrink:0 min-width:9rem #", label);
+			A("span #text");
+			A("span fg: $s-muted; #muted");
+			A("a href=# #link");
+			A("span fg: $s-accent; font-weight:500 #accent");
+			A("span padding: 0.15em 0.4em; r:4px; border: 1px solid $s-faint; font-size:0.8em #faint border");
 		});
 	}
 
-	S.box({
-		header: "Surfaces & Variants",
-		content: () => {
-			A("div mb:$3", () => {
-				S.select({
-					label: "Containing surface",
-					options: [...levels, "neutral", ...accentRoles],
-					bind: $containing,
-				});
+	// Drawn directly on the page content (NOT in a box) so the first row really is
+	// the page surface (`:root`), with each nested `.neutral` one shade deeper.
+	A("h2 mt:0 #Neutral surfaces — shade steps with depth");
+	A("p mt:0 mb:$3 fg:$s-muted font-size:0.9em rich='`.s-s.neutral` needs no level name: the page (`:root`), then each nested `.neutral`, steps through the neutral shades automatically (capped). Tokens resolve to the nearest surface.'");
+	drawTokenRow(":root (page)");
+	A("div.s-s.neutral padding: $2 $3; mt:$2", () => {
+		drawTokenRow(".neutral");
+		A("div.s-s.neutral padding: $2 $3; mt:$2", () => {
+			drawTokenRow(".neutral .neutral");
+			A("div.s-s.neutral padding: $2 $3; mt:$2", () => {
+				drawTokenRow(".neutral ³ (capped)");
 			});
+		});
+	});
 
-			A(() => {
-				A(`div.s-s.${$containing.value} padding: $3; r: $s-radius;`, () => {
-					A("div display:flex flex-direction:column gap:$2", () => {
-						// Levels + neutral: filled only (tonal/outlined not meaningful here)
-						A("div display:flex flex-direction:column gap:$1", () => {
-							for (const name of [...levels, "neutral"]) drawSurfaceRow(name);
-						});
-						// Accent roles: one row each for filled, tonal, outlined
-						for (const name of accentRoles) {
-							A("div display:flex flex-direction:column gap:$1", () => {
-								drawSurfaceRow(name);
-								drawSurfaceRow(name, "tonal");
-								drawSurfaceRow(name, "outlined");
-							});
+	S.box({
+		attrs: "mt:$3",
+		header: "Accent surfaces & variants",
+		content: () => {
+			A("p mt:0 mb:$2 fg:$s-muted font-size:0.9em rich='Bright fill, white ink, a subtle auto-gradient. `.tonal` and `.outlined` recolour the ink instead of the fill. `.link` is the link-coloured surface.'");
+			A("div display:flex flex-direction:column gap:$2", () => {
+				for (const name of accentRoles) {
+					A("div display:flex flex-direction:column gap:$1", () => {
+						for (const variant of ["", "tonal", "outlined"]) {
+							const cls = variant ? `div.s-s.${name}.${variant}` : `div.s-s.${name}`;
+							const label = variant ? `.${name}.${variant}` : `.${name}`;
+							A(`${cls} padding: $2 $3;`, () => drawTokenRow(label));
 						}
 					});
-				});
+				}
 			});
 		},
 	});
 
 	S.box({
-		header: "Nesting — tokens resolve to the nearest surface",
+		header: "Nested inside an accent surface is forced filled",
 		content: () => {
-			A("div.s-s.primary padding:$3 r:$s-radius", () => {
-				A("p mt:0 mb:$2 display:flex gap:$2 align-items:center", () => {
-					A("code #code");
-					A("span fg:$s-fg-muted #muted ·");
-					A('a href="#" #link');
-				});
-				A("div.s-s.panel padding: $2 $3; r:$s-radius", () => {
-					A("p m:0 display:flex gap:$2 align-items:center", () => {
-						A("code #code");
-						A("span fg:$s-fg-muted #muted ·");
-						A('a href="#" #link');
-					});
-				});
+			A("p mt:0 mb:$2 fg:$s-muted font-size:0.9em rich='A `.tonal`/`.outlined` body would bleed into the vivid parent, so surfaces nested inside an accent surface always render filled.'");
+			A("div.s-s.primary padding:$3 display:flex flex-direction:column gap:$2", () => {
+				A("div.s-s.neutral padding: $2 $3;", () => drawTokenRow("a .neutral island"));
+				A("div.s-s.danger.tonal padding: $2 $3;", () => drawTokenRow(".danger.tonal → filled"));
 			});
 		},
 	});
@@ -634,20 +631,52 @@ function drawSurfaces() {
 			A("pre mt:0 mb:$2", () => A("#",
 `// Register styles once — tokens resolve to whatever surface wraps the widget:
 A.insertGlobalCss({
-  ".my-card": "bg:$s-bg fg:$s-fg border: 1px solid $s-border; r:$s-radius p:$3",
-  ".my-card .note": "fg:$s-fg-muted",
+  ".my-card": "bg:$s-bg fg:$s-text border: 1px solid $s-faint; r:$s-radius p:$3",
+  ".my-card .note": "fg:$s-muted",
   ".my-card a": "color:$s-link",
 });
 
 // Wrap content in any surface — all children adapt automatically:
-A("div.s-s.primary", () => {
-  A("div.my-card", () => { /* tokens adapt to primary fill */ });
+A("div.s-s.neutral", () => {
+  A("div.my-card", () => { /* neutral card */ });
 });
-A("div.s-s.danger.tonal", () => {
-  A("div.my-card", () => { /* tokens adapt to danger tint */ });
+A("div.s-s.primary", () => {
+  A("div.my-card", () => { /* tokens adapt to the primary fill */ });
 });`
 			));
-			A("p m:0 fg: $s-fg-muted; font-size:0.9em rich='**Tip:** on filled accent surfaces `--s-link` and `--s-accent` fall back to the surface ink so they stay legible.'");
+		},
+	});
+
+	S.box({
+		header: "Custom accent surface",
+		content: () => {
+			A("pre mt:0 mb:$2", () => A("#",
+`// Just set the background (and ink); the gradient + variants follow:
+A.insertGlobalCss({".s-s.brand-orange": "--s-bg:#ef6b00 --s-text:#fff"});
+
+S.button({ content: "Click me", attrs: ".brand-orange" });`
+			));
+			A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
+				S.button({ content: "Filled",   attrs: ".brand-orange" });
+				S.button({ content: "Tonal",    attrs: ".brand-orange .tonal" });
+				S.button({ content: "Outlined", attrs: ".brand-orange .outlined" });
+			});
+		},
+	});
+
+	S.box({
+		header: "Elevation",
+		content: () => {
+			A("p mt:0 mb:$3 fg:$s-muted font-size:0.9em rich='Neutral surfaces carry a hairline border on their own. Add `.shadow` or `.extra-shadow` to lift them, or `.no-shadow` to drop a component default (here, a button glow).'");
+			A("div display:flex gap:$3 flex-wrap:wrap", () => {
+				for (const [label, cls] of [["border only", ""], [".shadow", ".shadow"], [".extra-shadow", ".extra-shadow"]] as const) {
+					A(`div.s-s.link${cls} padding:$3 r:$s-radius-lg min-width:8rem text-align:center`, () => A("#", label));
+				}
+			});
+			A("div display:flex gap:$2 flex-wrap:wrap align-items:center mt:$3", () => {
+				S.button({ content: "Default glow" });
+				S.button({ content: "No shadow", attrs: ".no-shadow" });
+			});
 		},
 	});
 }
@@ -655,17 +684,17 @@ A("div.s-s.danger.tonal", () => {
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 
 function drawIconCell(name: string, fn: (opts?: icons.IconOptions) => void) {
-	A("div.s-s.panel display:flex flex-direction:column align-items:center justify-content:center gap:$1 padding:$2 r:$s-radius text-align:center", () => {
+	A("div.s-s.neutral display:flex flex-direction:column align-items:center justify-content:center gap:$1 padding:$2 text-align:center", () => {
 		S.addTooltip({ tip: name });
 		fn({ size: 26 });
-		A("small fg:$s-fg-muted font-size:0.7em overflow:hidden text-overflow:ellipsis white-space:nowrap max-width:100% text=", name);
+		A("small fg:$s-muted font-size:0.7em overflow:hidden text-overflow:ellipsis white-space:nowrap max-width:100% text=", name);
 	});
 }
 
 function drawIconSample(label: string, draw: () => void) {
 	A("div display:flex flex-direction:column align-items:center gap:$1 w:6rem text-align:center", () => {
 		draw();
-		A("small fg:$s-fg-muted font-size:0.72em #", label);
+		A("small fg:$s-muted font-size:0.72em #", label);
 	});
 }
 
@@ -691,7 +720,7 @@ function drawIcons() {
 	S.box({
 		header: "Gallery",
 		content: () => {
-			A("p m:0 mb:$2 fg:$s-fg-muted font-size:0.9em rich='Each icon is a tree-shakable named export — `import { house } from \"staffa/icons\"` — that draws an inline `<svg>` into the current scope. Hover for the name.'");
+			A("p m:0 mb:$2 fg:$s-muted font-size:0.9em rich='Each icon is a tree-shakable named export — `import { house } from \"staffa/icons\"` — that draws an inline `<svg>` into the current scope. Hover for the name.'");
 			A("div display:grid gap:$2 grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));", () => {
 				for (const name of showcaseIcons) drawIconCell(name, iconByName[name]);
 			});
@@ -701,7 +730,7 @@ function drawIcons() {
 	S.box({
 		header: "Sizing",
 		content: () => {
-			A("p m:0 mb:$2 fg:$s-fg-muted font-size:0.9em rich='`size` accepts a number (px) or any CSS length. Pass `\"1em\"` to scale with the surrounding text.'");
+			A("p m:0 mb:$2 fg:$s-muted font-size:0.9em rich='`size` accepts a number (px) or any CSS length. Pass `\"1em\"` to scale with the surrounding text.'");
 			A("div display:flex gap:$3 align-items:flex-end flex-wrap:wrap", () => {
 				for (const size of [16, 24, 32, 48, 64]) {
 					drawIconSample(`${size}px`, () => icons.house({ size }));
@@ -731,7 +760,7 @@ function drawIcons() {
 				drawIconSample("cap/join: round", () => icons.activity({ size: 32, strokeWidth: 4, cap: "round", join: "round" }));
 				drawIconSample("attrs", () => icons.star({ size: 32, attrs: "fg:gold transform:rotate(15deg)" }));
 			});
-			A("p mt:$3 mb:0 fg:$s-fg-muted font-size:0.9em rich='Stroke colour defaults to `currentColor`, so an icon inherits its text colour. `attrs` is an Aberdeen attr/style string applied straight to the `<svg>` — handy for transforms, opacity or a one-off `fg:`.'");
+			A("p mt:$3 mb:0 fg:$s-muted font-size:0.9em rich='Stroke colour defaults to `currentColor`, so an icon inherits its text colour. `attrs` is an Aberdeen attr/style string applied straight to the `<svg>` — handy for transforms, opacity or a one-off `fg:`.'");
 			A("pre mt:$2 mb:0", () => A("#",
 `// Shift the module-wide defaults once, at startup:
 import { setDefaults } from "staffa/icons";
@@ -744,9 +773,9 @@ setDefaults({ size: "1.25em", strokeWidth: 1.5 });`));
 		content: () => {
 			A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
 				S.button({ content: "New", icon: icons.plus });
-				S.button({ content: "Download", icon: icons.download, attrs: ".neutral .outlined" });
+				S.button({ content: "Download", icon: icons.download, attrs: ".neutral" });
 				S.button({ content: "Delete", icon: icons.trash2, attrs: ".danger .tonal" });
-				S.button({ icon: icons.settings, ariaLabel: "Settings", attrs: ".neutral .outlined" });
+				S.button({ icon: icons.settings, ariaLabel: "Settings", attrs: ".neutral" });
 			});
 			A("p mt:$3 mb:0 rich='Buttons take an `icon` slot. Because icons stroke themselves in `currentColor`, they tint to match whatever surface or text wraps them — no per-button colour needed.'");
 		},
@@ -761,7 +790,7 @@ setDefaults({ size: "1.25em", strokeWidth: 1.5 });`));
 				const q = $q.value.trim().toLowerCase();
 				const matches = q ? allIcons.filter(([name]) => name.toLowerCase().includes(q)) : allIcons;
 				const cap = 120;
-				A("p m:0 mb:$2 fg:$s-fg-muted font-size:0.85em #",
+				A("p m:0 mb:$2 fg:$s-muted font-size:0.85em #",
 					`${matches.length} match${matches.length === 1 ? "" : "es"}${matches.length > cap ? ` — showing the first ${cap}` : ""}`);
 				A("div display:grid gap:$2 grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));", () => {
 					for (const [name, fn] of matches.slice(0, cap)) drawIconCell(name, fn);

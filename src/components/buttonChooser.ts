@@ -52,7 +52,7 @@ export function buttonChooser(opts: ButtonChooserOptions): void {
 				// Icon-only options (draw-function labels) get the id as their
 				// accessible name; plain-text labels speak for themselves.
 				ariaLabel: typeof label === "function" ? id : undefined,
-				attrs: selected === id ? ".primary" : ".neutral .outlined",
+				attrs: selected === id ? ".primary" : ".neutral",
 				click: () => {
 					opts.bind.value = (opts.allowDeselect && selected === id) ? undefined : id;
 				},

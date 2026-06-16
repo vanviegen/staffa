@@ -13,8 +13,9 @@ import A from "aberdeen";
  * An Aberdeen attribute/style/class string, e.g. `"display:flex gap:$3 .my-class"`.
  * 
  * Common values are our surface modifier classes:
- * - for colors: `.panel` `.raised` `.neutral` `.primary` `.secondary` `.gradient` `.danger` `.success` and `.warning`
- * - for variant: `.filled` `.tonal` and `.outlined`
+ * - neutral surface: `.neutral` (shade steps with nesting depth)
+ * - accent surface: `.primary` `.danger` `.success` `.warning` and `.link`
+ * - accent variant: `.filled` `.tonal` and `.outlined`
  *
  * These strings are passed straight through to {@link A} as positional
  * arguments, so they accept the full Aberdeen shorthand syntax: CSS shortcuts

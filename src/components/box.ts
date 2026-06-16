@@ -15,16 +15,21 @@ export interface BoxOptions extends ContentOptions {
 	footerAttrs?: Attributes;
 }
 
-// The box itself is a `.panel` surface; its header/footer are `.raised`
-// surfaces (classes set on the elements in `box()` below). Colours and borders
-// come from the contextual tokens, so a box stays legible on whatever surface
-// it's nested in.
+// The box itself is a `.neutral` surface; its header/footer are `.neutral` surfaces
+// too — nested one level deeper, so they pick up the next elevation shade
+// automatically. Colours and borders come from the contextual tokens, so a box
+// stays legible on whatever surface it's nested in.
+// The box is just a `.s-s.neutral.shadow` surface: its border and shadow come from
+// the surface itself (see theme.ts), not from here. `.s-box` only does layout and
+// the header/footer dividers. Header/footer are `.neutral` surfaces too (one level
+// deeper, for the raised shade), so we cancel their full surface border down to a
+// single divider.
 A.insertGlobalCss({
 	".s-box": {
-		"&": "display:flex flex-direction:column border: 1px solid $s-border; r: $s-radius-lg; overflow:hidden box-shadow: $s-shadow;",
+		"&": "display:flex flex-direction:column overflow:hidden r: $s-radius-lg;",
 		"&:not(:first-child)": "margin-top: $3",
-		"> header": "display:flex align-items:center gap:$2 padding: $2 $3; border-bottom: 1px solid $s-border; font-weight:600",
-		"> footer": "display:flex align-items:center justify-content:flex-end gap:$2 padding: $2 $3; border-top: 1px solid $s-border;",
+		"> header": "display:flex align-items:center gap:$2 padding: $2 $3; border:0 border-bottom: 1px solid $s-faint; r:0 font-weight:600",
+		"> footer": "display:flex align-items:center justify-content:flex-end gap:$2 padding: $2 $3; border:0 border-top: 1px solid $s-faint; r:0",
 		"> div": "p:$3 gap:$3",
 	},
 });
@@ -51,11 +56,11 @@ A.insertGlobalCss({
 export function box(opts: BoxOptions | Slot = {}): void {
 	const o: BoxOptions = typeof opts === "string" || typeof opts === "function" ? { content: opts } : opts;
 
-	A("section.s-box.s-s.panel", o.attrs, () => {
+	A("section.s-box.s-s.neutral.shadow", o.attrs, () => {
 		// Header and footer get their own scopes so toggling them doesn't recreate
 		// the body (which may hold focused inputs / lots of content).
 		A(() => {
-			if (o.header != null) A("header.s-s.raised", o.headerAttrs, () => drawSlot(o.header));
+			if (o.header != null) A("header.s-s.neutral", o.headerAttrs, () => drawSlot(o.header));
 		});
 
 		A("div", o.contentAttrs, () => {
@@ -63,7 +68,7 @@ export function box(opts: BoxOptions | Slot = {}): void {
 		});
 
 		A(() => {
-			if (o.footer != null) A("footer.s-s.raised", o.footerAttrs, () => drawSlot(o.footer));
+			if (o.footer != null) A("footer.s-s.neutral", o.footerAttrs, () => drawSlot(o.footer));
 		});
 	});
 }

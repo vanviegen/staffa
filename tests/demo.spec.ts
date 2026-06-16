@@ -36,8 +36,8 @@ test("buttons: variants, sizes and groups", async ({ page }) => {
 	await page.getByRole("link", { name: "Buttons" }).click();
 	await page.getByText("Variants & sizes").waitFor();
 
-	// Hover the signature gradient button so the lift/glow is captured.
-	await page.getByRole("button", { name: "gradient" }).first().hover();
+	// Hover the signature primary button so the lift/glow is captured.
+	await page.getByRole("button", { name: "primary" }).first().hover();
 	await page.getByRole("button", { name: "Month" }).click();
 });
 
@@ -113,9 +113,9 @@ test("overlays: toasts, tooltips, menus and dialogs", async ({ page }) => {
 
 test("surfaces: levels, roles, variants and nesting", async ({ page }) => {
 	await page.goto("./?menu=surfaces");
-	await page.getByText("Surfaces & Variants").waitFor();
-	// Scroll the nesting demo into view for its own screenshot.
-	await page.getByText("Nesting — tokens resolve").scrollIntoViewIfNeeded();
+	await page.getByText("Solid surfaces & variants").waitFor();
+	// Scroll the custom-surface demo into view for its own screenshot.
+	await page.getByText("Custom solid surface").scrollIntoViewIfNeeded();
 });
 
 test("content: prose rhythm and heading scale", async ({ page }) => {

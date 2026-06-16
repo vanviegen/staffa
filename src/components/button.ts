@@ -20,7 +20,8 @@ export interface ButtonOptions {
 	/**
 	 * Aberdeen attr/style string applied to the button. A button is a surface, so
 	 * pass surface modifier classes here to restyle it, e.g. `".danger"`,
-	 * `".neutral .outlined"`. Defaults to a filled `.primary` surface.
+	 * `".danger .outlined"`, or `".neutral"` for a neutral button. Defaults to a
+	 * filled `.primary` surface.
 	 *
 	 * Size is set here too, with `.small` or `.large` (medium is the default and
 	 * needs no class), e.g. `".danger .small"`. A `.small`/`.large` parent (such
@@ -36,26 +37,20 @@ A.insertGlobalCss({
 	".s-btn": {
 		"&":
 			"display:inline-flex align-items:center justify-content:center gap:$2 " +
-			"font-weight:600 line-height:1.2 white-space:nowrap cursor:pointer text-decoration:none " +
-			"border:0 padding: 0.5em 1em; " +
+			"font-weight:450 line-height:1.2 white-space:nowrap cursor:pointer text-decoration:none " +
+			"padding: 0.5em 1em; " +
 			"transition: background 0.15s, border-color 0.15s, color 0.15s, filter 0.15s, box-shadow 0.15s, transform 0.08s;",
-		"&:focus-visible": "outline:none box-shadow: 0 0 0 3px $s-focus;",
-		// Hover feedback is colour-only (no movement). The filled `.gradient` CTA
-		// below layers a deeper shadow on top, so it still reads as the signature action.
-		"&:hover": "filter: brightness(1.08)",
-		"&.tonal:hover, &.outlined:hover": "background: color-mix(in srgb, $s-b 26%, transparent);",
-		// A filled `.gradient` button (the default) is the app's signature call to
-		// action: a borderless gradient with a hairline top highlight (a hint of
-		// top-lighting that sells the fill as a lit, rounded shape) over a soft glow.
-		// The gradient fill itself comes from the `.s-s.gradient` surface rule in
-		// theme.ts. No border: a filled gradient reads as one solid shape. Dropping
-		// the border (rather than making it transparent) also sidesteps a Chromium
-		// artifact where a gradient clipped to a transparent rounded border fringes
-		// the edge with the gradient's far colour.
-		"&.gradient:not(.tonal):not(.outlined)":
-			"box-shadow: inset 0 1px 0 color-mix(in srgb, white 25%, transparent), $s-glow;",
-		"&.gradient:not(.tonal):not(.outlined):hover":
-			"filter: brightness(1.05); box-shadow: inset 0 1px 0 color-mix(in srgb, white 25%, transparent), 0 7px 18px color-mix(in srgb, $s-primary 34%, transparent);",
+		// Focus ring via `outline` (not box-shadow) so it survives a `.no-shadow`
+		// (which hard-clears box-shadow). Modern browsers round it to the border-radius.
+		"&:focus-visible": "outline: 3px solid $s-focus; outline-offset: 1px;",
+		// The button carries `.shadow` (added in button() below); on a filled accent
+		// surface that resolves to the signature self-coloured glow, on a neutral
+		// `.neutral` button to nothing, on tonal/outlined to nothing — all via theme.ts.
+		"&:hover": "filter: brightness(1.06)",
+		// Tonal/outlined hover deepen their translucent fill; a neutral `.neutral`
+		// button (which is already near-white) darkens toward its ink instead.
+		"&.tonal:hover, &.outlined:hover": "background: color-mix(in srgb, $s-bg 24%, transparent);",
+		"&.neutral:hover": "filter:none background: color-mix(in srgb, $s-text 8%, $s-bg);",
 		// Subtle press feedback.
 		"&:active:not(:disabled)": "transform: translateY(1px)",
 		// Size: set on the button itself, or inherited from a `.small`/`.large`
@@ -64,10 +59,6 @@ A.insertGlobalCss({
 		"&.large, .large > &": "padding: 0.66em 1.3em; font-size:1.1em",
 	},
 });
-
-// Surface-role classes a caller may pass in `attrs`. When one is present we skip
-// the default `.gradient` base so the two roles don't stack on one element.
-const ROLE_CLASS = /\.(gradient|primary|secondary|neutral|danger|success|warning|base|panel|raised)(\.|\s|$)/;
 
 /**
  * A button. Tonal and outlined variants show a border; filled variants rely on
@@ -87,6 +78,7 @@ const ROLE_CLASS = /\.(gradient|primary|secondary|neutral|danger|success|warning
  * @example
  * ```ts
  * S.button({ content: "Save", click: S.alert("Saved.") });
+ * S.button({ content: "Cancel", attrs: ".neutral", click: cancel }); // neutral button
  * S.button({ content: "Delete", attrs: ".danger .outlined", click: del });
  * S.button("Cancel");                        // shorthand for { content: "Cancel" }
  * S.button({ href: "/docs", content: "Docs" }); // renders an <a role=button>
@@ -97,12 +89,11 @@ export function button(opts: ButtonOptions | Slot = {}): void {
 
 	const tag = o.href != null ? "a" : "button";
 
-	// A filled `.gradient` surface by default — the signature CTA. If the caller's
-	// `attrs` already names a surface role we omit the default, so `.danger`,
-	// `.neutral .outlined`, etc. fully take over (rather than stacking two roles).
-	// A bare variant/size (`.outlined`, `.small`) keeps the gradient base.
-	const role = o.attrs && ROLE_CLASS.test(o.attrs) ? "" : ".gradient";
-	A(`${tag}.s-btn.s-s${role}`, o.attrs, () => {
+	// A bare `.s-s` is a filled accent surface defaulting to `.primary` (see
+	// theme.ts) — the signature CTA. The caller's `attrs` simply names another
+	// role (`.danger`, `.neutral`, a custom `.brand`) or variant (`.outlined`); no
+	// role detection needed, since the default lives in CSS, not here.
+	A(`${tag}.s-btn.s-s.shadow`, o.attrs, () => {
 		if (o.href != null) {
 			A(`href=${o.href} role=button`);
 			if (o.disabled) A("aria-disabled=true");

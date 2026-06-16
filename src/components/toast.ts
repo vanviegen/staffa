@@ -36,16 +36,15 @@ A.insertGlobalCss({
 	".s-toast": {
 		"&":
 			"display:flex align-items:flex-start gap:$2 " +
-			"padding: $3; border: 1px solid $s-border; r:$s-radius box-shadow:$s-shadow " +
+			"padding: $3; " +
 			"pointer-events:auto position:relative overflow:hidden",
 		".s-toast-body": "display:flex flex-direction:column gap:$1 flex:1 min-width:0",
 		".s-toast-title": "font-weight:700 line-height:1.3",
-		".s-toast-msg": "font-size:0.9em fg:$s-fg-muted line-height:1.4",
 		".s-toast-close":
-			"cursor:pointer border:0 background:transparent fg:$s-fg-muted font-size:1.1em line-height:1 " +
+			"cursor:pointer border:0 background:transparent fg:$s-muted font-size:1.1em line-height:1 " +
 			"padding: 0 0.15em; r:4px flex-shrink:0 align-self:flex-start",
-		".s-toast-close:hover": "fg:$s-fg",
-		".s-toast-close:focus-visible": "outline:none box-shadow: 0 0 0 3px $s-focus; fg:$s-fg",
+		".s-toast-close:hover": "fg:$s-text",
+		".s-toast-close:focus-visible": "outline:none box-shadow: 0 0 0 3px $s-focus; fg:$s-text",
 		".s-toast-progress": "position:absolute bottom:0 left:0 right:0 height:2px background:$s-accent width:100%",
 	},
 });
@@ -58,11 +57,12 @@ mountPortal(() => {
 	// In initial peek is here to NOT subscribe to changes once `toasts` first becomes non empty,
 	// leaving the container in the DOM forever after. (So as not to cut of hide animations.)
 	if (A.peek(() => A.isEmpty(toasts)) && A.isEmpty(toasts)) return;
-	A("div.s-toasts aria-live=polite aria-atomic=false", () => {
+	A("div.s-toasts", () => {
 		A.onEach(toasts, (entry) => {
 			const { opts, id } = entry;
 			const role = opts.type === "danger" || opts.type === "warning" ? "alert" : "status";
-			const surface = opts.type ?? "neutral";
+			// "neutral" (the default) is a neutral surface; the rest are accent surfaces.
+			const surface = opts.type == null || opts.type === "neutral" ? "neutral" : opts.type;
 			const duration = opts.duration ?? 6000;
 
 			let timer: ReturnType<typeof setTimeout> | undefined;
@@ -91,7 +91,7 @@ mountPortal(() => {
 
 			A.clean(() => clearTimeout(timer));
 
-			A(`div.s-toast.s-s.${surface} role=${role}`, "create=", grow, "destroy=", shrink, opts.attrs, () => {
+			A(`div.s-toast.s-s.${surface}.extra-shadow aria-live=polite role=${role}`, "create=", grow, "destroy=", shrink, opts.attrs, () => {
 				if (duration > 0) {
 					A("mouseenter=", stopCountdown);
 					A("mouseleave=", startCountdown);

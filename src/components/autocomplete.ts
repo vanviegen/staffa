@@ -35,20 +35,23 @@ export interface AutocompleteOptions extends FieldOptions {
 A.insertGlobalCss({
 	".s-ac": {
 		"&": "position:relative",
-		"> .s-control": "display:flex flex-wrap:wrap align-items:center gap:$1 bg:$s-panel fg:$s-ink border: 1px solid $s-border; r:$s-radius padding: 0.3em 0.4em; cursor:text; transition: border-color 0.15s, box-shadow 0.15s;",
-		"> .s-control:hover": "border-color:$s-border-strong",
+		// Same light inset field as `.s-input` (see field.ts), derived from the surface.
+		"> .s-control": "display:flex flex-wrap:wrap align-items:center gap:$1 background: color-mix(in oklab, $s-bg, $s-text 4%); color:$s-text border: 1px solid $s-faint; r:$s-radius padding: 0.3em 0.4em; cursor:text; transition: border-color 0.15s, box-shadow 0.15s;",
+		"> .s-control:hover": "border-color: color-mix(in oklab, $s-text, $s-bg 55%);",
 		"> .s-control:focus-within": "border-color:$s-accent box-shadow: 0 0 0 3px $s-focus;",
 		"&[aria-invalid=true] > .s-control": "border-color:$s-danger",
-		".s-chip": "display:inline-flex align-items:center gap:$1 font-size:0.85em bg:$s-raised border: 1px solid $s-border; r:$s-radius padding: 0.1em 0.2em 0.1em 0.5em;",
-		".s-chip > button": "cursor:pointer border:0 background:transparent fg:$s-fg-muted font-size:1.1em line-height:1 padding: 0 0.2em; r:4px",
-		".s-chip > button:hover": "fg:$s-fg background:$s-border",
+		".s-chip": "display:inline-flex align-items:center gap:$1 font-size:0.85em background: color-mix(in oklab, $s-bg, $s-text 10%); border: 1px solid $s-faint; r:$s-radius padding: 0.1em 0.2em 0.1em 0.5em;",
+		".s-chip > button": "cursor:pointer border:0 background:transparent fg:$s-muted font-size:1.1em line-height:1 padding: 0 0.2em; r:4px",
+		".s-chip > button:hover": "fg:$s-text background:$s-faint",
 		"input": "flex:1 min-width:6ch border:0 background:transparent color:inherit outline:none padding:0.25em",
-		"> .s-menu": "position:absolute top:100% left:0 right:0 z-index:20 margin-top:4px max-height:15rem overflow-y:auto list-style:none p:$1 margin-bottom:0 bg:$s-panel border: 1px solid $s-border; r:$s-radius box-shadow:$s-shadow",
+		// The popup is a `.s-s.neutral.shadow` surface (see below): background, border,
+		// radius and elevation all come from the surface.
+		"> .s-menu": "position:absolute top:100% left:0 right:0 z-index:20 margin-top:4px max-height:15rem overflow-y:auto list-style:none p:$1 margin-bottom:0",
 		"> .s-menu li": "margin:0",
 		".s-option": "padding: 0.45em 0.6em; r:6px cursor:pointer transition: background 0.1s;",
-		".s-option[aria-selected=true]": "background: color-mix(in srgb, $s-fg 10%, transparent);",
+		".s-option[aria-selected=true]": "background: color-mix(in srgb, $s-text 10%, transparent);",
 		".s-add": "fg:$s-accent font-style:italic",
-		".s-empty": "padding: 0.45em 0.6em; fg:$s-fg-muted",
+		".s-empty": "padding: 0.45em 0.6em; fg:$s-muted",
 	},
 });
 
@@ -191,7 +194,7 @@ export function autocomplete(opts: AutocompleteOptions): void {
 				const q = $st.query.trim();
 				const showAdd = opts.allowCustom !== false && q !== "" && !list.some((o) => o.label.toLowerCase() === q.toLowerCase());
 
-				A("ul.s-menu role=listbox", `id=${menuId}`, () => {
+				A("ul.s-menu.s-s.neutral.shadow role=listbox", `id=${menuId}`, () => {
 					list.forEach((option, i) => {
 						A("li.s-option role=option", `id=${menuId}-opt-${i}`, () => {
 							A(() => A("aria-selected=", $st.active === i ? "true" : "false"));

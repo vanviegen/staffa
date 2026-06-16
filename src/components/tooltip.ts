@@ -14,13 +14,14 @@ export interface TooltipOptions {
 	attrs?: Attributes;
 }
 
+// The tip is a `.s-s.neutral.shadow` surface (it portals to <body>, so it renders at
+// the page's next neutral shade), which provides its background, ink, border,
+// radius and elevation.
 A.insertGlobalCss({
 	".s-tt-tip": {
 		"&":
 			"position:fixed z-index:500 " +
 			"max-width:20rem w:max-content " +
-			"bg:$s-raised fg:$s-fg border: 1px solid $s-border-strong; " +
-			"r:$s-radius box-shadow:$s-shadow " +
 			"padding: 0.3em 0.65em; font-size:0.85em line-height:1.4 " +
 			"pointer-events:none",
 	},
@@ -85,7 +86,7 @@ mountPortal(() => {
 	const { opts, anchor } = active;
 	const placement = opts.placement ?? "top";
 
-	const tipEl = A("div.s-tt-tip role=tooltip visibility:hidden", opts.attrs, () => {
+	const tipEl = A("div.s-tt-tip.s-s.neutral.shadow role=tooltip visibility:hidden", opts.attrs, () => {
 		A("mouseenter=", () => {
 			if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
 		});

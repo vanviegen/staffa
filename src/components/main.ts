@@ -54,27 +54,31 @@ A.insertGlobalCss({
 		"&": "display:flex flex-direction:column min-height:100vh max-height:100vh container-type:inline-size",
 		// Header/footer stretch their background the full shell width; their inner
 		// `.s-bar` caps to maxWidth and centres, so chrome aligns with the content.
-		"> header": "border-bottom: 1px solid $s-border; position:sticky top:0 z-index:10",
-		"> footer": "border-top: 1px solid $s-border; fg:$s-fg-muted",
+		// The top bar is a full-width `.neutral` surface; cancel its surface border and
+		// radius down to just the bottom divider (it spans edge to edge).
+		"> header": "border:0 border-bottom: 1px solid $s-faint; r:0 position:sticky top:0 z-index:10",
+		"> footer": "border-top: 1px solid $s-faint; fg:$s-muted",
 		"> header > .s-bar, > footer > .s-bar": "display:flex align-items:center width:100% margin-inline:auto gap:$3 padding: $2 $3;",
 		"> header .s-header-icon": "display:flex align-items:center font-size:1.4em background: $s-gradient; -webkit-background-clip:text; background-clip:text; color:transparent;",
 		"> header .s-titles": "display:flex flex-direction:column min-width:0 flex:1",
 		"> header .s-title": "font-weight:800 font-size:1.1em line-height:1.2 overflow:hidden text-overflow:ellipsis white-space:nowrap letter-spacing:-0.01em background: $s-gradient; -webkit-background-clip:text; background-clip:text; color:transparent; width:fit-content max-width:100%",
-		"> header .s-subtitle": "fg:$s-fg-muted font-size:0.85em overflow:hidden text-overflow:ellipsis white-space:nowrap",
+		"> header .s-subtitle": "fg:$s-muted font-size:0.85em overflow:hidden text-overflow:ellipsis white-space:nowrap",
 		"> header .s-menu": "display:flex align-items:center gap:$2",
 		// Body always wraps <main> (with or without a sidebar) so max-width centering
 		// and scrollbar alignment work identically in both cases.
 		// .s-body centres .s-body-inner; .s-body-inner caps the content to maxWidth.
 		".s-body": "flex:1 overflow:hidden display:flex flex-direction:row min-height:0 justify-content:center",
-		".s-body-inner": "flex:1 display:flex flex-direction:row min-height:0",
+		".s-body-inner": "flex:1 min-width:0 display:flex flex-direction:row min-height:0",
 		// Put the sidebar on the right (content fills the left) for right-hand navs.
 		"&.s-nav-right .s-body-inner": "flex-direction:row-reverse",
 		// A vertical hairline between sidebar and content, fading out at both ends —
 		// the vertical sibling of the menu's `hr.s-menu-sep`.
-		".s-nav-sep": "width:1px flex-shrink:0 align-self:stretch margin: 0.6rem 0; border:0 background: linear-gradient(to bottom, transparent, $s-border-strong 18%, $s-border-strong 82%, transparent);",
-		// min-height:0 overrides the flex default of min-height:auto so <main> can
-		// shrink to fit the bounded container and show its own scrollbar.
-		".s-body main": "flex:1 min-height:0 overflow-y:auto display:flex flex-direction:column",
+		".s-nav-sep": "width:1px flex-shrink:0 align-self:stretch margin: 0.6rem 0; border:0 background: linear-gradient(to bottom, transparent, $s-faint 18%, $s-faint 82%, transparent);",
+		// min-height:0 / min-width:0 override the flex default of min-*:auto so <main>
+		// can shrink to fit the bounded container (rather than letting wide content push
+		// the whole body — and any sidebar — past the viewport edge). overflow-x:hidden
+		// clips overlong content on the right; vertically it scrolls.
+		".s-body main": "flex:1 min-width:0 min-height:0 overflow-x:hidden overflow-y:auto display:flex flex-direction:column",
 		// The content area fills the scroll region with comfortable padding.
 		// It is deliberately NOT a boxed "sheet" — content brings its own boxes.
 		".s-body main > .s-content": "width:100% flex:1 p:$3",
@@ -95,7 +99,7 @@ A.insertGlobalCss({
 		// Extra horizontal padding leaves room for the active pill's glow, which the
 		// vertical scroll (overflow-y:auto, which also clips overflow-x) would
 		// otherwise cut off at the panel edges.
-		"&": "display:flex flex-direction:column overflow-y:auto flex-shrink:0 max-width:228px padding:$3 gap:$1 background:transparent",
+		"&": "display:flex flex-direction:column overflow-y:auto flex-shrink:0 max-width:228px padding:$3 gap:$1 background:transparent border:0",
 	},
 	// In button-only mode (or always-button navPosition), hide the sidebar and
 	// show the trigger. In sidebar mode, show the panel and hide the trigger.
@@ -152,7 +156,7 @@ export function main(opts: MainOptions = {}): void {
 	const hasNav = nav != null && nav.items.length > 0;
 	const navCls = hasNav ? (navPos === "button" ? ".s-nav-btn-only" : `.s-nav-${navPos}`) : "";
 
-	A(`div.s-main.s-s.base${navCls}`, opts.attrs, () => {
+	A(`div.s-main${navCls}`, opts.attrs, () => {
 		// Top bar.
 		A(() => {
 			const hasBar =
@@ -162,7 +166,7 @@ export function main(opts: MainOptions = {}): void {
 				opts.menu != null ||
 				hasNav;
 			if (!hasBar) return;
-			A("header.s-s.raised", opts.topbarAttrs, () => {
+			A("header.s-s.neutral", opts.topbarAttrs, () => {
 				A("div.s-bar", () => {
 					// Cap the bar's content to maxWidth and centre it within the full-width header.
 					A(() => {
@@ -178,7 +182,7 @@ export function main(opts: MainOptions = {}): void {
 								button: {
 									icon: () => A("span aria-hidden=true #☰"),
 									ariaLabel: "Open navigation",
-									attrs: ".neutral .outlined .small",
+									attrs: ".neutral .small",
 									...nav.button,
 								},
 							});
@@ -211,7 +215,7 @@ export function main(opts: MainOptions = {}): void {
 					if (opts.maxWidth != null) A("max-width:", opts.maxWidth);
 				});
 				if (hasNav && navPos !== "button") {
-					A(`nav.s-nav-panel.s-s.raised.s-nav-${navPos}`, opts.navAttrs, () => {
+					A(`nav.s-nav-panel.s-s.neutral.s-nav-${navPos}`, opts.navAttrs, () => {
 						drawMenu(nav.items);
 					});
 					A("div.s-nav-sep aria-hidden=true");
