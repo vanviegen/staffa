@@ -53,6 +53,10 @@ A.insertGlobalCss({
 	".s-main": {
 		// container-type so @container queries below can respond to shell width.
 		"&": "display:flex flex-direction:column min-height:100vh max-height:100vh container-type:inline-size",
+		// <body> carries a default $3 padding; when the shell is a direct child of it,
+		// cancel that padding with matching negative margins so the chrome still spans
+		// edge to edge (and the 100vh sizing stays exact).
+		"body > &": "margin: calc(-1 * $3)",
 		// Header/footer stretch their background the full shell width; their inner
 		// `.s-bar` caps to maxWidth and centres, so chrome aligns with the content.
 		// The top bar is a full-width `.neutral` surface; cancel its surface border and

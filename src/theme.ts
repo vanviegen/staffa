@@ -139,7 +139,7 @@ A.insertGlobalCss({
 	// What follows is a lightweight CSS reset. Semantic HTML should keep working, but less ugly/with some reasonable defaults.
 	"*, *::before, *::after": "box-sizing:border-box",
 	html: "text-size-adjust:100%",
-	body: "m:0 line-height:1.5 font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing:antialiased background-color:$s-bg text:$s-text",
+	body: "m:0 p:$3 line-height:1.5 font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing:antialiased background-color:$s-bg text:$s-text",
 	// Links resolve to the contextual link foreground: the link colour on nesting
 	// surfaces, the ink on accent surfaces.
 	a: "color: $s-link-fg; text-decoration:underline text-underline-offset:2px; transition: color 0.12s, filter 0.12s;",
