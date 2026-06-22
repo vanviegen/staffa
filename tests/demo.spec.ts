@@ -1,4 +1,4 @@
-import { test, expect } from "shotest";
+import { test, expect, type Page } from "shotest";
 
 // Click-through of every page of the Staffa demo. ShoTest screenshots each
 // wrapped action, so these double as a visual baseline for the whole library.
@@ -69,6 +69,11 @@ test("overlays: toasts, tooltips, menus and dialogs", async ({ page }) => {
 	// Tooltip on hover.
 	await page.getByRole("button", { name: "Rich tip" }).hover();
 	await page.getByText("in tips").waitFor();
+	// Move off and let the tooltip fully disappear before moving on: its hide is a
+	// 100 ms wall-clock timer, so otherwise it can still be lingering in the menu
+	// screenshots below (notably under load).
+	await page.mouse.move(0, 0);
+	await page.waitForSelector(".s-tt-tip", { state: "detached" });
 
 	// Action menu: open, pick an item, see the confirming toast.
 	await page.getByRole("button", { name: "Actions" }).click();
@@ -79,6 +84,13 @@ test("overlays: toasts, tooltips, menus and dialogs", async ({ page }) => {
 	await page.getByText("Right-click (or long-press)").click({ button: "right" });
 	await page.getByRole("button", { name: "Copy", exact: true }).click();
 	await page.getByText("Copied!").waitFor();
+
+	// The toasts fired above auto-dismiss on a wall clock (6 s), so by the time the
+	// dialog steps below run they're mid-expiry — present in some screenshots and
+	// gone in others depending on machine speed. Reload to a clean slate so the
+	// dialog screenshots are deterministic (no stray toasts straddling them).
+	await page.reload();
+	await page.getByText("Toast notifications").waitFor();
 
 	// alert() / confirm() / prompt()
 	await page.getByRole("button", { name: "alert()" }).click();
@@ -140,6 +152,7 @@ test("header: display settings live in a configure popover", async ({ page }) =>
 	await page.getByText("Navigation").waitFor();
 	await page.getByText("Primary colour").waitFor();
 	await page.getByText("Theme").waitFor();
+	await settleMenu(page);
 
 	// A pick inside the popover drives the live theme.
 	await page.getByRole("button", { name: "dark" }).click();
@@ -152,6 +165,7 @@ test("menu: dropdown autofocuses its first focusable control", async ({ page }) 
 	// still move focus to the first focusable control inside it.
 	await page.getByRole("button", { name: "Display settings" }).click();
 	await page.getByText("Navigation").waitFor();
+	await settleMenu(page);
 	const focused = page.locator(".s-menu-list :focus");
 	await expect(focused).toHaveCount(1);
 });
@@ -161,6 +175,7 @@ test("dark mode: surfaces and buttons", async ({ page }) => {
 	await page.getByText("Surfaces & Variants").waitFor();
 	// The theme switch lives in the header's configure popover.
 	await page.getByRole("button", { name: "Display settings" }).click();
+	await settleMenu(page);
 	await page.getByRole("button", { name: "dark" }).click();
 	await page.getByRole("link", { name: "Buttons" }).click();
 	await page.getByText("Variants & sizes").waitFor();
@@ -210,3 +225,15 @@ test("nav: the dropdown reopens right after closing", async ({ page }) => {
 	await page.keyboard.press("Escape"); // reopen, ignoring the fading-out panel
 	await expect(openMenu).toHaveCount(1);
 });
+
+// A floating menu/popover fades in via a `.hidden` → opaque transition. Playwright's
+// visibility (and ShoTest's waitFor) ignores opacity, so a panel that is technically
+// "visible" can still be mid-fade — present in some screenshots and faded/absent in
+// others. Wait for it to fully settle before the next screenshot. (waitForFunction
+// isn't wrapped by ShoTest, so this adds no screenshot of its own.)
+function settleMenu(page: Page) {
+	return page.waitForFunction(() => {
+		const m = document.querySelector(".s-menu-list");
+		return !!m && !m.classList.contains("hidden") && getComputedStyle(m).opacity === "1";
+	});
+}
