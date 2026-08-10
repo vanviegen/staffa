@@ -123,6 +123,22 @@ test("overlays: toasts, tooltips, menus and dialogs", async ({ page }) => {
 	await primary.getByRole("button", { name: "Close" }).click();
 });
 
+test("dialogs: Escape closes only the top-most dialog", async ({ page }) => {
+	await page.goto("./?menu=overlays");
+	await page.getByRole("button", { name: "dialog in dialog" }).click();
+	await page.getByRole("button", { name: "Open secondary" }).click();
+	await page.getByText("Smaller than primary.").waitFor();
+
+	// Escape dismisses the secondary dialog; the primary one stays up.
+	await page.keyboard.press("Escape");
+	await page.waitForSelector('text="Smaller than primary."', { state: "detached" });
+	await expect(page.locator(".s-dialog", { hasText: "Primary dialog" })).toBeVisible();
+
+	// A second Escape dismisses the primary dialog too.
+	await page.keyboard.press("Escape");
+	await page.waitForSelector('text="Primary dialog"', { state: "detached" });
+});
+
 test("surfaces: levels, roles, variants and nesting", async ({ page }) => {
 	await page.goto("./?menu=surfaces");
 	await page.getByText("Accent surfaces & variants").waitFor();
@@ -224,6 +240,26 @@ test("nav: the dropdown reopens right after closing", async ({ page }) => {
 	await expect(page.getByRole("button", { name: "Open navigation" })).toBeFocused();
 	await page.keyboard.press("Escape"); // reopen, ignoring the fading-out panel
 	await expect(openMenu).toHaveCount(1);
+});
+
+test("autocomplete: Escape dismisses only the open list, not the layer beneath", async ({ page }) => {
+	await page.goto("./?menu=form");
+	await page.getByText("Account").waitFor();
+
+	const input = page.getByLabel("Language");
+	await input.fill("Type");
+	await expect(page.getByRole("option", { name: "TypeScript" })).toBeVisible();
+
+	// The first Escape is consumed by the open list — it closes, and focus stays
+	// in the input instead of jumping to the nav. (waitForSelector: ShoTest's
+	// wrapped expect can't assert on absent elements.)
+	await page.keyboard.press("Escape");
+	await page.waitForSelector("ul[role=listbox]", { state: "detached" });
+	await expect(input).toBeFocused();
+
+	// With no layer left to dismiss, a second Escape falls through to the nav jump.
+	await page.keyboard.press("Escape");
+	await expect(page.getByRole("link", { name: "Form" })).toBeFocused();
 });
 
 // A floating menu/popover fades in via a `.hidden` → opaque transition. Playwright's

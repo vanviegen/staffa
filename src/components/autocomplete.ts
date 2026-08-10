@@ -261,8 +261,14 @@ export function autocomplete(opts: AutocompleteOptions): void {
 				$st.open = false;
 			}
 		} else if (e.key === "Escape") {
-			$st.open = false;
-			if (!opts.multi) $st.query = labelFor(selectedValues()[0] ?? "");
+			// Only consume Escape while the list is showing: it dismisses the
+			// innermost layer, so a surrounding dialog must not also close. With the
+			// list already closed, let it pass through to the dialog/nav handlers.
+			if ($st.open) {
+				e.preventDefault();
+				$st.open = false;
+				if (!opts.multi) $st.query = labelFor(selectedValues()[0] ?? "");
+			}
 		} else if (e.key === "Backspace" && opts.multi && $st.query === "") {
 			const sel = selectedValues();
 			if (sel.length) remove(sel[sel.length - 1]!);

@@ -149,17 +149,23 @@ export function dialog(opts: DialogOptions): Promise<void> {
 	if (!dialogCount) {
 		// Install Esc handler the first time we create a dialog
 		document.addEventListener("keydown", (e: KeyboardEvent) => {
-			if (e.key === "Escape" && opts.allowCancel !== false) {
-				const ds = A.unproxy(dialogs);
-				// Search for top-most dialog
-				for(let i=dialogCount; i>0; i--) {
-					if (ds[i]) {
-						if (ds[i].opts.allowCancel !== false) {
-							// The clean handler should call resolve and onClose
-							delete dialogs[i];
-						}
-						break;
+			// A layer above us that consumed Escape (an open floating menu's capture
+			// handler, or a widget inside the dialog like an open autocomplete list)
+			// marks it with preventDefault — the dialog must not also act on it.
+			if (e.key !== "Escape" || e.defaultPrevented) return;
+			const ds = A.unproxy(dialogs);
+			// Search for top-most dialog
+			for(let i=dialogCount; i>0; i--) {
+				if (ds[i]) {
+					// A dialog owns Escape, closable or not — handlers beneath it
+					// must not also act (main()'s nav jump and cooperative page
+					// handlers check defaultPrevented, or S.isDialogOpen()).
+					e.preventDefault();
+					if (ds[i].opts.allowCancel !== false) {
+						// The clean handler should call resolve and onClose
+						delete dialogs[i];
 					}
+					break;
 				}
 			}
 		});
