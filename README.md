@@ -77,7 +77,7 @@ S.box({ header: "See the [docs](/docs)", content: () => { ... } });
 
 Staffa builds on **surfaces**: elements marked with `.s-s` that have their own background and derived text/border tokens. There are two families:
 
-- **Neutral surfaces** — `.neutral` (and the implicit page at `:root`). A calm neutral whose shade steps automatically with nesting depth (page → panel → raised, capped). Use them for cards, bars, popovers — anything that just holds content. No variants.
+- **Neutral surfaces** — `.neutral` (and the implicit page at `:root`). A calm neutral whose shade steps automatically with nesting depth (each level a step away from the page colour, up to a cap). Use them for cards, bars, popovers — anything that just holds content. No variants.
 - **Accent surfaces** — `.primary`, `.danger`, `.success`, `.warning`, `.link` (a bare `.s-s` defaults to primary). A bright fill with white ink, painted as a subtle single-colour gradient. They take a **variant**: `.filled` (default), `.tonal`, or `.outlined`. A surface nested *inside* an accent surface is always rendered filled, so it can't bleed into the vivid parent.
 
 Components are built from these (`S.button` is a `.s-s.primary`, `S.box` a `.s-s.neutral`, etc.). Because component options include an optional `attrs` string, which has Aberdeen `A()` string semantics, you can easily override it:
@@ -110,6 +110,110 @@ S.setDarkMode(undefined);  // follow OS
 ```
 
 *Hint:* A `buttonChooser` is probably the right component for a color scheme selector.
+
+### Panel-stack navigation
+
+Give `S.main()` a `routes` table instead of a `content` slot, and it takes over navigation for you. Each route draws one screen of your app. Staffa calls those screens **panels**, and it shows as many of them at a time as comfortably fit.
+
+On a phone that means one panel at a time: a link opens a new panel on top of it, and closing that one brings the previous back, the way most mobile apps work. On a wider screen, panels that would have covered each other sit side by side instead. Pick a project from a list and it opens *beside* the list; pick another and it takes the first one's place. Your code doesn't know the difference.
+
+```ts
+S.main({
+  title: "Trackle",
+  nav: { items: [{ label: "Projects", href: "/projects" }] },
+  routes: {
+    "/projects": drawProjectList,
+    "/projects/[projectId]": drawProject,
+    "/projects/[projectId]/tasks/[taskId=integer]": drawProjectTask,
+  },
+  notFound: ($page) => S.box({ header: "Not found", content: $page.path }),
+});
+
+function drawProject($page: S.Page<{ projectId: string }>) {
+  const { projectId } = $page.params;    // typed from the route key
+  A(`a href=/projects/${projectId}/tasks/1 #Open the first task`);
+}
+
+// Etc..
+```
+
+Each handler gets a `$page` object holding the params from its route, along with the things Staffa needs to know about the panel: its title, how much room it wants, whether it's still loading. It's an Aberdeen proxy, so you can set those later (when your data arrives, say) and the shell keeps up.
+
+**Route keys.** A segment wrapped in brackets is a param:
+
+- `[name]` matches one segment, as a string.
+- `[name=integer]` matches one segment, as a number.
+- `[...name]` matches the rest of the path, as a string. It has to be the last thing in the key, and it needs at least one segment to match.
+
+The first key that matches wins, and a segment a param refuses simply doesn't match, so it falls through to a later route, or to `notFound`. TypeScript reads each key and types that handler's `$page.params` from it, so `params.taskId` above really is a `number`.
+
+`integer` only accepts spellings that survive a round trip back to the same URL: `42` and `-7` and `0`, but not `007`, `1.5`, `0x10`, `-0` or anything past `Number.MAX_SAFE_INTEGER`. Otherwise `/tasks/42` and `/tasks/0042` would be two different paths for one record, and could sit open in two panels at once. For ids that aren't safe integers, such as snowflakes, use a plain `[id]` and keep them as strings.
+
+`[...name]` hands you the remaining path exactly as it appears in the URL, still percent-encoded. Decoding it for you would be lossy: an encoded slash inside a segment would come back looking just like a separator. When you want the pieces, `name.split("/").map(decodeURIComponent)` gives them to you. (Single-segment params have no such ambiguity, so those *are* decoded.)
+
+**Navigating is just links.** Write ordinary `<a href="/...">` links; Staffa handles the clicks (so don't also call Aberdeen's `interceptLinks()`).
+
+- A link inside a panel opens its target on top of that panel, closing anything that was above it first. That's why clicking a second project replaces the open project instead of adding a third column.
+- Add `data-panel=replace` and the link replaces the panel it sits in, rather than opening on top of it. That's what you want for prev/next buttons.
+- A link to something that's already open goes back to it instead of opening it twice. The same path is never in the stack twice.
+- A link that isn't inside a panel (a nav item, or one in a dialog) has no panel to build on, so it replaces the stack as a whole: the page you asked for, with its ancestor pages opened beneath it (see [below](#ancestors)). Panels that the new stack also contains stay as they are, so clicking the nav item for the section you're already in won't reset it. Clicking a nav item and opening that same URL in a fresh tab therefore give you the same columns.
+
+From code, `S.panels.push(path)` opens a panel on top of the top one, `.replace(path)` opens one in place of the top one, and `.close(path?)` closes the top panel (or a named one). `S.panels.stack` is the list of open paths.
+
+**How much room a panel takes** is up to `$page.layout`. The content area is the page, at most 1280px wide, minus the nav sidebar:
+
+| `layout` | How wide the panel gets | Good for |
+| --- | --- | --- |
+| `"small"` | 360 to 540px once two fit side by side. Below that, the whole content area (so up to ~730px). | lists, detail forms, anything that reads well at phone width |
+| `"medium"` (default) | The whole content area: up to ~1100px, and the screen width on a phone. | ordinary screens; the safe default |
+| `"large"` | The whole window, with no upper limit: ~1750px on a 1920px screen. | boards, wide tables, dense dashboards |
+
+Those numbers assume a nav sidebar of around 170px; without a sidebar, add that back (a medium then reaches the full 1280px). Nothing fits beside a medium on a standard 1280px page, but on a wide enough window a small still can, and the page grows past 1280px to hold both.
+
+A panel's width depends only on the size of the window, never on what else is open. So opening or closing a panel never resizes the ones already on screen, and never reflows what someone was reading. A lone small leaves its other half empty, and that is exactly where the next small lands. When more columns fit than the standard 1280px page holds (three smalls, say), the page itself grows, staying centred, to hold them.
+
+**The rest of `$page`:**
+
+- `params` and `path`: read-only.
+- `title`: shown in `document.title` while this panel is the top one.
+- `layout`: as above. It's read once, right after your handler runs, so set it there.
+- `loading`: set it while you're fetching. A new panel waits a moment before sliding in, so it can arrive with real content instead of empty, and shows a loading indicator if the wait drags on.
+- `close()`: closes this panel, wherever it sits in the stack.
+- `requestClose`: your chance to say no. Everything that would close the panel waits for it: Escape, the panel's own ✕ or Cancel button, the browser's back button, a link that would close it, `S.panels.close()`. Return `false` to keep the panel open.
+
+```ts
+$page.requestClose = async () => !$task.dirty || await S.confirm("Discard unsaved changes?");
+```
+
+**Every panel provides its own way out.** Staffa draws no back arrows and no ✕ of its own, because a panel knows better than the shell does what leaving it should look like: Cancel and Save buttons, or a ✕ in the corner of a box. So say it yourself:
+
+```ts
+S.box({ header: "Task 42", close: true, content: drawTask });   // a ✕ in the box's corner
+S.button({ content: "Cancel", attrs: ".neutral", click: () => $page.close() });
+S.panels.close();              // the top panel
+S.panels.close("/projects/7"); // that panel, wherever it is
+```
+
+`S.box`'s `close: true` works out for itself which panel it's in, so the same code closes the right thing whether it's one column of several or a whole phone screen. (Pass a function instead if you'd rather do something else.)
+
+Closing the top panel goes back to whatever was underneath it. Closing one that *isn't* on top takes just that one away: the columns to its right stay where they are and keep their state, and the URL doesn't change, because the top panel didn't move. Either way it becomes a history entry, so the browser's back button brings the panel back.
+
+Staffa itself contributes two things: the Escape key, which closes the top panel (and jumps to the navigation once you're at the bottom of the stack), and making the browser's back button do the right thing. Both ask `requestClose` first.
+
+<a id="ancestors"></a>
+
+**The back button, and links from elsewhere.** The URL holds the top panel; the rest of the stack is stored beside it in the browser's history entry. So back and forward step through whole arrangements of columns, and a reload brings the same columns back.
+
+A URL that arrives without any of that (a shared link, a bookmark, a new tab) has nothing to restore, so Staffa builds the stack from the path: it walks the parent paths and opens each one you have a route for. With the routes above, `/projects/7/tasks/42` opens as three panels: the project list, project 7, and task 42. A parent path you have no route for is skipped, so if you don't want one screen appearing under another, just don't give it a route.
+
+Search params and the `#hash` belong to the top panel only. Anything a panel deeper in the stack needs in order to redraw itself has to live in its path.
+
+**A few more things.**
+
+- `stacking: false` shows only the top panel, however wide the screen. Everything else behaves the same: the URL, the back button, `requestClose`, and the panels' own close buttons.
+- Only one routed `S.main()` can be mounted at a time; a second one throws. That's what lets `S.panels` be a plain module-level object. Each handler still gets its own `$page` rather than there being one global "current page", since several panels are alive at once.
+- Navigating with `aberdeen/route`'s own `go()` works and still asks `requestClose`, but, like a link from outside a panel, it builds the whole stack from the path. So prefer `S.panels`. If your app registered its own navigation guard before mounting (an auth redirect, say), it keeps working: Staffa asks it first, and puts it back when the shell goes away.
+- Deep links need your static server to serve the app for unknown paths (the usual SPA fallback). For `http-server` that's `-P`, as in the demo command below.
 
 ### CSS reset
 
@@ -163,8 +267,8 @@ Components share naming conventions for options: `attrs` (outermost element), `c
 
 ### Layout & containers
 
-- **`S.main(opts)`**: app shell, a sticky header with `icon`, `title`, `subtitle`, `menu`; scrollable content area; footer. Set `maxWidth` to center the content.
-- **`S.box(opts | content)`**: surface with optional `header`/`footer` and padded body. Pass a function for shorthand `{ content }`.
+- **`S.main(opts)`**: app shell, a sticky header with `icon`, `title`, `subtitle`, `menu`; scrollable content area; footer. Set `maxWidth` to center the content. Give it a `nav` for a sidebar that collapses to a hamburger below 640 px — where the nav becomes a full page sliding in from the left, handing over to the chosen screen with a matching slide in from the right. Instead of a single `content` slot it can take a `routes` table — see [Panel-stack navigation](#panel-stack-navigation).
+- **`S.box(opts | content)`**: surface with optional `header`/`footer` and padded body. Pass a function for shorthand `{ content }`. `close: true` adds a ✕ that closes the panel the box is in (see [Panel-stack navigation](#panel-stack-navigation)); `close: fn` runs your own dismissal.
 - **`S.tabs(opts)`**: tablist with live panels and keyboard navigation.
 - **`S.form(opts | content)`**: form aligning fields in a column or responsive grid, with an `actions` bar. Prevents the default page reload.
 
@@ -220,6 +324,8 @@ Two-way binding uses Aberdeen proxies: pass `bind: A.ref($obj, "key")` to form f
 {
   "imports": {
     "aberdeen": "https://cdn.jsdelivr.net/npm/aberdeen/dist/src/aberdeen.js",
+    "aberdeen/route": "https://cdn.jsdelivr.net/npm/aberdeen/dist/src/route.js",
+    "aberdeen/transitions": "https://cdn.jsdelivr.net/npm/aberdeen/dist/src/transitions.js",
     "staffa/all.js": "https://cdn.jsdelivr.net/npm/staffa/dist/staffa.esm.js"
   }
 }
@@ -267,7 +373,7 @@ The previous section is good advice for any project-specific custom, but should 
 2. Define `<Name>Options` extending `ContentOptions`, `FieldOptions`, or a plain interface. Add TSDoc on every option.
 3. Add a TSDoc `@example` on the function.
 4. Register in `src/index.ts` (the `S` object + type re-export).
-5. Extend `smoke.mjs` to render it. Run `npm run smoke` and `npm run build`.
+5. Add it to the demo, cover it in the visual tests (`tests/*.spec.ts`), and run `npm run build` and `npm run typecheck`.
 
 See `src/components/button.ts` and `src/components/dialog.ts` for examples.
 
@@ -276,8 +382,8 @@ See `src/components/button.ts` and `src/components/dialog.ts` for examples.
 ```sh
 npm run build      # compile TypeScript to dist/
 npm run typecheck  # check types
-npm run smoke      # render every component in jsdom
-npx http-server    # allows demo to be viewed at http://localhost:8080/demo
+npx http-server -P "http://localhost:8080/demo/index.html?"   # demo at http://localhost:8080/demo
+                   # (-P is the SPA fallback the demo's routed URLs need)
 npx shotest test   # visual tests: click through the demo, screenshotting every step
 npx shotest review # review/accept the visual changes against the baseline
 ```

@@ -7,25 +7,30 @@
         <!--
   No bundler needed: the import map resolves the bare "aberdeen" and "staffa"
   specifiers to their built ESM files, and the UI itself lives in demo.ts
-  (compiled to demo.js). Serve the project root over HTTP, e.g.:
-      npx serve .      (then open /demo/)
+  (compiled to demo.js). Serve the project root over HTTP with an SPA fallback,
+  so the demo's routed URLs (/demo/icons/heart, ...) reach this page too:
+      npx http-server -P "http://localhost:8080/demo/index.html?"   (then open /demo/)
   Make sure you've run `npm run build` first, so both
   dist/ and demo/demo.js exist.
+
+  All URLs below are root-absolute on purpose: this same page is served for
+  /demo/icons/heart, where a relative "./demo.js" would resolve into
+  /demo/icons/demo.js and 404.
 -->
         <script type="importmap">
             {
                 "imports": {
-                    "aberdeen": "../node_modules/aberdeen/dist/src/aberdeen.js",
-                    "aberdeen/route": "../node_modules/aberdeen/dist/src/route.js",
-                    "aberdeen/transitions": "../node_modules/aberdeen/dist/src/transitions.js",
-                    "aberdeen/dispatcher": "../node_modules/aberdeen/dist/src/dispatcher.js",
-                    "staffa": "../dist/index.js",
-                    "staffa/icons": "../dist/icons.js"
+                    "aberdeen": "/node_modules/aberdeen/dist/src/aberdeen.js",
+                    "aberdeen/route": "/node_modules/aberdeen/dist/src/route.js",
+                    "aberdeen/transitions": "/node_modules/aberdeen/dist/src/transitions.js",
+                    "aberdeen/dispatcher": "/node_modules/aberdeen/dist/src/dispatcher.js",
+                    "staffa": "/dist/index.js",
+                    "staffa/icons": "/dist/icons.js"
                 }
             }
         </script>
     </head>
     <body>
-        <script type="module" src="./demo.js"></script>
+        <script type="module" src="/demo/demo.js"></script>
     </body>
 </html>

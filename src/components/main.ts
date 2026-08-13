@@ -1,10 +1,12 @@
 import A from "aberdeen";
-import { type Slot, type Attributes, drawSlot } from "../core.js";
-import { type MenuOptions, menuButton, drawMenu, isFloatingMenuOpen } from "./menu.js";
+import { type Slot, type Attributes, drawSlot, focusFirst, NARROW_PX } from "../core.js";
+import { type MenuOptions, drawMenu, showFloatingMenu, isFloatingMenuOpen, closeFloatingMenu } from "./menu.js";
+import { button } from "./button.js";
 import { isDialogOpen } from "./dialog.js";
+import { PanelController, type Page, type RouteHandler, type RouteTable, type Routes } from "./panels.js";
 
 /** Options for {@link main}. */
-export interface MainOptions {
+export interface MainOptions<R = Routes> {
 	/** Aberdeen attr/style string applied to the outermost shell element. */
 	attrs?: Attributes;
 	/** App/page title shown in the top bar. */
@@ -15,8 +17,80 @@ export interface MainOptions {
 	icon?: Slot;
 	/** Action area on the right of the top bar (buttons, menu, ...). */
 	menu?: Slot;
-	/** The scrollable page content. A string is rendered as rich text. */
+	/**
+	 * The scrollable page content. A string is rendered as rich text.
+	 * Mutually exclusive with {@link MainOptions.routes}.
+	 */
 	content?: Slot;
+	/**
+	 * Paths mapped to the functions that draw them, which hands navigation over
+	 * to the shell. Each route draws one screen of your app, called a panel, and
+	 * as many panels as fit are shown at a time: one at a time on a phone,
+	 * several side by side on a wider screen. Mutually exclusive with
+	 * {@link MainOptions.content}.
+	 *
+	 * A segment wrapped in brackets is a param: `[name]` matches one segment as
+	 * a string, `[name=integer]` matches one segment as a number, and a trailing
+	 * `[...name]` matches the rest of the path as one raw (still percent-encoded)
+	 * string, so it has to come last and needs at least one segment to match.
+	 * The first key that matches wins, a segment a param refuses falls through
+	 * to a later route (or to {@link MainOptions.notFound}), and each handler's
+	 * `$page.params` is typed from its own key.
+	 *
+	 * `integer` accepts only spellings that survive a round trip back to the
+	 * same URL, so `/tasks/0042` is not a second path for `/tasks/42`. Ids that
+	 * aren't safe integers, such as snowflakes, want a plain `[id]`.
+	 *
+	 * Navigating is just links: the shell handles the clicks itself, so do *not*
+	 * also call Aberdeen's `interceptLinks()`. A link opens its target on top of
+	 * the panel it sits in, closing anything that was above it first, unless it
+	 * carries `data-panel=replace`, which replaces its own panel instead. A link
+	 * to something already open goes back to it rather than opening it twice.
+	 * From code, use {@link panels} (`S.panels.push()` and friends): navigating
+	 * with `aberdeen/route`'s own `go()` works and still asks the panels'
+	 * {@link Page.requestClose}, but builds the whole stack from the path. A
+	 * navigation guard the app registered before mounting (an auth redirect,
+	 * say) keeps working: the shell asks it first, and puts it back when the
+	 * shell goes away.
+	 *
+	 * The shell draws no back arrows and no ✕ of its own: **every panel provides
+	 * its own way out**, with `S.box`'s `close` option for a ✕, or
+	 * {@link Page.close} behind a Cancel button. Escape and the browser's back
+	 * button are the shell's contribution.
+	 *
+	 * Only one routed shell can be mounted at a time (a second one throws),
+	 * which is what lets {@link panels} be a plain module-level object. Each
+	 * handler still gets its own `$page` rather than there being one global
+	 * "current page", since several panels are alive at once. It's that argument
+	 * that carries the per-route typing of `params`.
+	 *
+	 * @example
+	 * ```ts
+	 * S.main({
+	 *   title: "Trackle",
+	 *   nav: { items: [{ label: "Projects", href: "/projects" }] },
+	 *   routes: {
+	 *     "/projects": ($page) => { $page.title = "Projects"; drawProjects(); },
+	 *     "/projects/[id]": ($page) => drawProject($page.params.id),  // typed string
+	 *   },
+	 *   notFound: ($page) => S.box({ header: "Not found", content: $page.path }),
+	 * });
+	 * ```
+	 */
+	routes?: R;
+	/**
+	 * Draws the panel for a path none of the routes match. There are no params
+	 * to go with it, so `$page.params` is empty; the path itself is in
+	 * `$page.path`.
+	 */
+	notFound?: RouteHandler<{}>;
+	/**
+	 * Set `false` to show only the top panel, however wide the screen (the nav
+	 * sidebar still sits beside it). Everything else behaves the same: the URL,
+	 * the back button, `requestClose`, and the panels' own close buttons. This
+	 * only changes how many you see. Defaults to `true`.
+	 */
+	stacking?: boolean;
 	/** Footer content, pinned below the scroll area. */
 	footer?: Slot;
 	/**
@@ -26,6 +100,10 @@ export interface MainOptions {
 	 * sidebar) — cap to this width and centre horizontally. When unset, everything
 	 * fills the available width. Either way the content shares the page surface —
 	 * it is not boxed.
+	 *
+	 * Ignored when you pass {@link MainOptions.routes}: there the open panels
+	 * decide the width (see {@link Page.layout}), and the header and footer line
+	 * themselves up with them.
 	 */
 	maxWidth?: string;
 	/** Aberdeen attr/style string applied to the content area. */
@@ -35,18 +113,25 @@ export interface MainOptions {
 	/**
 	 * Navigation menu. When provided, renders a sidebar (in `"left"` / `"right"`
 	 * mode) or a button+dropdown (in `"button"` mode). The sidebar automatically
-	 * collapses to button mode when the shell is too narrow.
+	 * collapses to a button when the shell is too narrow — which there opens the
+	 * nav as a full page sliding in from the left, not as a dropdown.
 	 */
 	nav?: MenuOptions;
 	/**
 	 * Where to render the nav. Defaults to `"left"`.
 	 * - `"left"` / `"right"`: sidebar next to the content area; collapses to a
-	 *   button+dropdown in the top bar when the shell width drops below 640 px.
-	 * - `"button"`: always a button+dropdown, never a sidebar.
+	 *   button in the top bar when the shell width drops below 640 px.
+	 * - `"button"`: always a button, never a sidebar.
+	 *
+	 * The button opens a dropdown on a wide shell, and — below 640 px — a
+	 * full-page nav that slides in from the left, handing over to the chosen
+	 * screen with a matching slide in from the right.
 	 */
 	navPosition?: "left" | "right" | "button";
 	/** Aberdeen attr/style string applied to the sidebar nav panel. */
 	navAttrs?: Attributes;
+	/** Aberdeen attr/style string applied to the narrow-screen full-page nav. */
+	navPageAttrs?: Attributes;
 }
 
 A.insertGlobalCss({
@@ -72,7 +157,9 @@ A.insertGlobalCss({
 		// Body always wraps <main> (with or without a sidebar) so max-width centering
 		// and scrollbar alignment work identically in both cases.
 		// .s-body centres .s-body-inner; .s-body-inner caps the content to maxWidth.
-		".s-body": "flex:1 overflow:hidden display:flex flex-direction:row min-height:0 justify-content:center",
+		// It's also the positioning + clipping context for the narrow-screen nav page,
+		// which slides in and out across its left edge.
+		".s-body": "flex:1 overflow:hidden display:flex flex-direction:row min-height:0 justify-content:center position:relative",
 		".s-body-inner": "flex:1 min-width:0 display:flex flex-direction:row min-height:0",
 		// Put the sidebar on the right (content fills the left) for right-hand navs.
 		"&.s-nav-right .s-body-inner": "flex-direction:row-reverse",
@@ -83,7 +170,14 @@ A.insertGlobalCss({
 		// can shrink to fit the bounded container (rather than letting wide content push
 		// the whole body — and any sidebar — past the viewport edge). overflow-x:hidden
 		// clips overlong content on the right; vertically it scrolls.
-		".s-body main": "flex:1 min-width:0 min-height:0 overflow-x:hidden overflow-y:auto display:flex flex-direction:column",
+		// The transition is dormant (nothing else moves <main>); it's there for the
+		// incoming half of the nav-page hand-off — see `slideContentIn`.
+		".s-body main":
+			"flex:1 min-width:0 min-height:0 overflow-x:hidden overflow-y:auto display:flex flex-direction:column " +
+			"transition: transform 0.3s ease;",
+		// A one-shot starting position: parked one screen to the right, with the
+		// transition off so it snaps there. Removing the class animates it home.
+		".s-body main.s-slide-in": "transform: translateX(100%); transition:none",
 		// The content area fills the scroll region with comfortable padding.
 		// It is deliberately NOT a boxed "sheet" — content brings its own boxes.
 		".s-body main > .s-content": "width:100% flex:1 p:$3",
@@ -94,6 +188,25 @@ A.insertGlobalCss({
 		// and the bar already comes from `.s-content`'s padding. Without a scrollbar
 		// there's no margin, so the content keeps its single $3 edge — not 2×$3.
 		".s-body main.s-scroll-y": "margin-right:$3",
+		// Routed mode takes its width from the panel stack instead of from
+		// `maxWidth`: the layout engine publishes the ensemble width (sidebar +
+		// separator + content area) as --s-shell-w — the standard 1280px page
+		// normally, the window's edges while a "large" panel is up — and the body
+		// row and the bars cap themselves to it. So the chrome lines up with the
+		// columns and the lot stays centred in the shell.
+		"&.s-routed > .s-body > .s-body-inner": "max-width: var(--s-shell-w, 100%);",
+		"&.s-routed > header > .s-bar": "max-width: var(--s-shell-w, 100%);",
+		"&.s-routed > footer > .s-bar": "max-width: var(--s-shell-w, 100%);",
+		// Changing the custom property animates the max-widths consuming it, with no
+		// JS in the loop: the chrome recentres in step with the panel whose arrival
+		// or departure moved it, over the same --s-panel-ms (see panels.ts). During
+		// a window resize (and the very first pass) the layout engine raises
+		// `.s-shell-snap` so the new width is adopted instantly instead of chasing
+		// the window through a transition.
+		"&.s-routed > .s-body > .s-body-inner, &.s-routed > header > .s-bar, &.s-routed > footer > .s-bar":
+			"transition: max-width var(--s-panel-ms) ease;",
+		"&.s-routed.s-shell-snap > .s-body > .s-body-inner, &.s-routed.s-shell-snap > header > .s-bar, &.s-routed.s-shell-snap > footer > .s-bar":
+			"transition:none",
 	},
 	// Sidebar nav panel. Items reuse the shared `.s-menu-item` /
 	// `.s-menu-sep` styles from menu.ts, so the sidebar and the floating
@@ -106,6 +219,27 @@ A.insertGlobalCss({
 		// otherwise cut off at the panel edges.
 		"&": "display:flex flex-direction:column overflow-y:auto flex-shrink:0 max-width:228px padding:$3 gap:$1",
 	},
+	// The narrow-screen nav: a full "page" that slides in over the content from the
+	// left, rather than a dropdown — on a phone a nav is a screenful of UI, not a
+	// popup. Picking an item slides it back out while the chosen screen comes in
+	// from the right (see `slideContentIn`), so the two tile across the viewport
+	// and navigation reads as a lateral move between screens.
+	".s-nav-page": {
+		// It covers the body area only, so the top bar (whose trigger has become an
+		// ✕) and the footer stay put — the shell itself never blinks.
+		"&":
+			// z-index sits under the sticky header's 10: the two never overlap (the
+			// body starts below the bar), but the bar should still win if they ever do.
+			"position:absolute inset:0 z-index:5 display:flex flex-direction:column " +
+			"overflow-y:auto overscroll-behavior:contain border:0 r:0 padding:$2 gap:$1 " +
+			"transition: transform 0.3s ease;",
+		// Parked one screen to the left: the state the `create=`/`destroy=` hooks
+		// transition out of and back into.
+		"&.s-nav-page-off": "transform:translateX(-100%) pointer-events:none",
+		// Roomier rows than the dropdown's: this is the whole screen, and every row
+		// is a thumb target.
+		".s-menu-item": "padding: $2 $3; min-height:3rem font-size:1.05em gap:$3",
+	},
 	// In button-only mode (or always-button navPosition), hide the sidebar and
 	// show the trigger. In sidebar mode, show the panel and hide the trigger.
 	// CSS @container queries handle the responsive collapse automatically.
@@ -113,7 +247,7 @@ A.insertGlobalCss({
 	".s-main.s-nav-btn-only .s-nav-panel": "display:none",
 	".s-main.s-nav-btn-only .s-nav-trigger": "display:flex",
 	// Collapse sidebar → button when shell is narrow.
-	"@container (max-width: 640px)": {
+	[`@container (max-width: ${NARROW_PX}px)`]: {
 		".s-main.s-nav-left .s-nav-panel, .s-main.s-nav-right .s-nav-panel, .s-main .s-nav-sep": "display:none",
 		".s-main.s-nav-left .s-nav-trigger, .s-main.s-nav-right .s-nav-trigger": "display:flex",
 		// On phones a top-level content box becomes a full-bleed block: pull it out
@@ -131,6 +265,14 @@ A.insertGlobalCss({
  * footer. With {@link MainOptions.maxWidth} the content area is centred and its
  * width capped. Add a `nav` to get a responsive sidebar (auto-collapses to a
  * menu button below 640 px, or always a button with `navPosition: "button"`).
+ * Below 640 px that button opens the nav as a full page sliding in from the
+ * left; picking an item slides it away as the chosen screen enters from the
+ * right.
+ *
+ * Instead of a single `content` slot, pass {@link MainOptions.routes} and the
+ * shell takes over navigation: each route draws one screen, called a panel,
+ * and as many panels as fit are shown at a time, side by side on a wide screen
+ * and one at a time on a phone. See {@link MainOptions.routes} and {@link Page}.
  *
  * @example
  * ```ts
@@ -155,13 +297,33 @@ A.insertGlobalCss({
  * }
  * ```
  */
-export function main(opts: MainOptions = {}): void {
+// The self-referential constraint is what types each handler's `$page.params`
+// from its own route key. It deliberately has no default: giving `R` one makes
+// TypeScript fall back to it for contextual typing, and every `$page.params`
+// silently degrades to `any`. Callers that pass no `routes` are unaffected —
+// `MainOptions`'s own default kicks in there.
+export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): void {
 	const nav = opts.nav;
 	const navPos = opts.navPosition ?? "left";
 	const hasNav = nav != null && nav.items.length > 0;
 	const navCls = hasNav ? (navPos === "button" ? ".s-nav-btn-only" : `.s-nav-${navPos}`) : "";
+	// Whether the narrow-screen full-page nav is showing. Per shell, so nested or
+	// sibling `main()`s can't fight over it.
+	const $nav = A.proxy({ open: false });
 
-	const root = A(`div.s-main${navCls}`, opts.attrs, () => {
+	const routes = opts.routes as Routes | undefined;
+	if (routes != null && opts.content != null) {
+		throw new Error("Staffa: S.main() takes either `content` or `routes`, not both");
+	}
+	// The panel stack owns the routing, so it starts observing (and building its
+	// stack from) the URL before any of the shell is drawn — the top bar's back
+	// button already needs to know how deep we are.
+	const ctl = routes ? new PanelController({ ...opts, routes, title: opts.title }) : null;
+	// Routed mode caps the shell to the ensemble width the layout engine publishes,
+	// rather than to `maxWidth`.
+	const capWidth = ctl ? null : opts.maxWidth;
+
+	const root = A(`div.s-main${navCls}${ctl ? ".s-routed" : ""}`, opts.attrs, () => {
 		// Top bar.
 		A(() => {
 			const hasBar =
@@ -175,23 +337,13 @@ export function main(opts: MainOptions = {}): void {
 				A("div.s-bar", () => {
 					// Cap the bar's content to maxWidth and centre it within the full-width header.
 					A(() => {
-						if (opts.maxWidth != null) A("max-width:", opts.maxWidth);
+						if (capWidth != null) A("max-width:", capWidth);
 					});
 					// Nav trigger button — visible when sidebar is hidden (button mode or narrow viewport).
 					A(() => {
 						if (!hasNav) return;
 						// .s-nav-trigger: CSS toggles display based on sidebar visibility.
-						A("div.s-nav-trigger", () => {
-							menuButton({
-								...nav,
-								button: {
-									icon: () => A("span aria-hidden=true #☰"),
-									ariaLabel: "Open navigation",
-									attrs: ".neutral .small",
-									...nav.button,
-								},
-							});
-						});
+						A("div.s-nav-trigger", () => drawNavTrigger(nav, $nav));
 					});
 
 					A(() => {
@@ -217,7 +369,7 @@ export function main(opts: MainOptions = {}): void {
 		A("div.s-body", () => {
 			A("div.s-body-inner", () => {
 				A(() => {
-					if (opts.maxWidth != null) A("max-width:", opts.maxWidth);
+					if (capWidth != null) A("max-width:", capWidth);
 				});
 				if (hasNav && navPos !== "button") {
 					A(`nav.s-nav-panel.s-nav-${navPos}`, opts.navAttrs, () => {
@@ -225,7 +377,11 @@ export function main(opts: MainOptions = {}): void {
 					});
 					A("div.s-nav-sep aria-hidden=true");
 				}
-				drawMainContent(opts);
+				drawMainContent(opts, ctl);
+			});
+			// The narrow-screen nav page, laid over the body it slides across.
+			A(() => {
+				if (hasNav && $nav.open) drawNavPage(nav, opts.navPageAttrs, $nav);
 			});
 		});
 
@@ -235,7 +391,7 @@ export function main(opts: MainOptions = {}): void {
 				A("footer", () => {
 					A("div.s-bar", () => {
 						A(() => {
-							if (opts.maxWidth != null) A("max-width:", opts.maxWidth);
+							if (capWidth != null) A("max-width:", capWidth);
 						});
 						drawSlot(opts.footer);
 					});
@@ -244,16 +400,34 @@ export function main(opts: MainOptions = {}): void {
 		});
 	}) as HTMLElement;
 
-	// Escape jumps to the navigation: into the sidebar's current item when the
-	// sidebar is showing, or — when collapsed to (or always) a button — open the
-	// dropdown (which focuses its current item). Listens on `document` so it works
-	// wherever focus is, but bows out while another overlay (a dialog, or an
-	// already-open menu) is up — those handle Escape themselves.
-	if (hasNav) {
+	// Escape peels back a panel of UI, and finally jumps to the navigation: into
+	// the sidebar's current item when the sidebar is showing, or — when collapsed
+	// to (or always) a button — open the nav (dropdown or full page, whichever the
+	// shell width calls for), which focuses its current item. Listens on
+	// `document` so it works wherever focus is, but bows out while another overlay
+	// (a dialog, or an already-open menu) is up — those handle Escape themselves.
+	if (hasNav || ctl) {
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key !== "Escape" || e.defaultPrevented) return;
 			// An open dialog or menu owns Escape itself — don't also jump to the nav.
 			if (isDialogOpen() || isFloatingMenuOpen()) return;
+			const trigger = root.querySelector<HTMLElement>(".s-nav-trigger button");
+			// So does the full-page nav: dismiss it and hand focus back to its trigger.
+			if ($nav.open) {
+				e.preventDefault();
+				$nav.open = false;
+				trigger?.focus();
+				return;
+			}
+			// Above the stack root, Escape closes the top panel — the same guarded
+			// close as a page's own ✕ or the browser's back button. It is, with
+			// browser back, the only way out the shell itself provides.
+			if (ctl && ctl.$state.paths.length > 1) {
+				e.preventDefault();
+				void ctl.closeTop();
+				return;
+			}
+			if (!hasNav) return;
 			// `offsetParent` is null when the sidebar is hidden (display:none).
 			const panel = root.querySelector<HTMLElement>(".s-nav-panel");
 			if (panel?.offsetParent != null) {
@@ -263,7 +437,6 @@ export function main(opts: MainOptions = {}): void {
 				if (item) { e.preventDefault(); item.focus(); }
 				return;
 			}
-			const trigger = root.querySelector<HTMLElement>(".s-nav-trigger button");
 			if (trigger) { e.preventDefault(); trigger.click(); }
 		};
 		document.addEventListener("keydown", onKey);
@@ -271,7 +444,105 @@ export function main(opts: MainOptions = {}): void {
 	}
 }
 
-function drawMainContent(opts: MainOptions): void {
+/**
+ * The hamburger in the top bar, shown whenever the sidebar isn't. What it opens
+ * depends on how much room the shell has: a dropdown when there's plenty, and —
+ * below {@link NARROW_PX} — the full-page nav, which suits a phone far better
+ * than a popup. Either way a second click closes again.
+ */
+function drawNavTrigger(nav: MenuOptions, $nav: { open: boolean }): void {
+	let myEl: HTMLElement | null = null;
+	A.clean(() => { if (myEl) closeFloatingMenu(myEl); });
+
+	button({
+		// The glyph doubles as the state: ☰ to open the page, ✕ to dismiss it. Its
+		// own scope, so toggling doesn't rebuild (and re-focus) the button.
+		icon: () => A(() => A("span aria-hidden=true #", $nav.open ? "✕" : "☰")),
+		ariaLabel: "Open navigation",
+		attrs: ".neutral .small",
+		...nav.button,
+		click: (e: Event) => {
+			myEl = e.currentTarget as HTMLElement;
+			const shell = myEl.closest<HTMLElement>(".s-main");
+			if (shell != null && shell.clientWidth <= NARROW_PX) { $nav.open = !$nav.open; return; }
+			// Wide shell: the classic dropdown. A click on the trigger never reaches
+			// the menu's own outside-click handler, so toggle it here.
+			if (isFloatingMenuOpen(myEl)) closeFloatingMenu(myEl);
+			else showFloatingMenu({ items: nav.items, anchor: myEl, dropdownAttrs: nav.dropdownAttrs });
+		},
+	});
+}
+
+/**
+ * The narrow-screen navigation: a full page sliding in over the content from the
+ * left. Picking an item slides it back out while the chosen screen enters from
+ * the right, so the two tile across the viewport and the whole thing reads as a
+ * lateral move rather than a popup blinking out.
+ */
+function drawNavPage(nav: MenuOptions, attrs: Attributes | undefined, $nav: { open: boolean }): void {
+	// Whether this close is a *navigation* — the only kind that hands over to an
+	// incoming screen. Dismissing the page just uncovers the content again.
+	let navigated = false;
+
+	const pageEl = A(
+		"nav.s-nav-page.s-s.neutral aria-label=Navigation create=s-nav-page-off destroy=s-nav-page-off",
+		attrs,
+		() => drawMenu(nav.items, () => { navigated = true; $nav.open = false; }),
+	) as HTMLElement;
+
+	const shell = pageEl.closest<HTMLElement>(".s-main");
+	const behind = pageEl.parentElement?.querySelector<HTMLElement>(":scope > .s-body-inner");
+	// Content mode's incoming half of the hand-off. In routed mode there is no
+	// <main> to slide: the chosen screen is a freshly pushed panel, which plays
+	// its own enter animation, so this correctly finds nothing.
+	const content = behind?.querySelector<HTMLElement>(":scope > main");
+
+	// The content is fully covered, but without this it stays tabbable and visible
+	// to screen readers underneath the page.
+	behind?.setAttribute("inert", "");
+
+	// Widening the shell past the collapse point brings the sidebar back, leaving
+	// this page covering the content for no reason — so bow out.
+	if (shell != null && typeof ResizeObserver !== "undefined") {
+		const ro = new ResizeObserver(() => { if (shell.clientWidth > NARROW_PX) $nav.open = false; });
+		ro.observe(shell);
+		A.clean(() => ro.disconnect());
+	}
+
+	A.clean(() => {
+		behind?.removeAttribute("inert");
+		if (!navigated) return;
+		// Same tick as the page's own destroy transition, so both halves of the
+		// hand-off move in lockstep.
+		if (content) slideContentIn(content);
+		shell?.querySelector<HTMLElement>(".s-nav-trigger button")?.focus();
+	});
+
+	// Land on the current page's entry (or the first one) once we're laid out.
+	requestAnimationFrame(() => {
+		if (document.body.contains(pageEl)) focusFirst(pageEl, ".s-menu-item[aria-current=page]");
+	});
+}
+
+/**
+ * Play the incoming half of the nav-page hand-off: park `el` one screen to the
+ * right, then let its CSS transition carry it home. Reading `offsetWidth` in
+ * between forces the browser to adopt the parked position as the "before" state,
+ * which is what makes the removal animate instead of doing nothing at all.
+ */
+function slideContentIn(el: HTMLElement): void {
+	el.classList.add("s-slide-in");
+	void el.offsetWidth;
+	el.classList.remove("s-slide-in");
+}
+
+function drawMainContent(opts: MainOptions<any>, ctl: PanelController | null): void {
+	// Routed mode replaces the single scrollable <main> with the panel viewport,
+	// which manages its own columns (and their scrolling) from JS.
+	if (ctl) {
+		ctl.drawStack();
+		return;
+	}
 	const mainEl = A("main", () => {
 		A("div.s-content", opts.contentAttrs, () => {
 			drawSlot(opts.content);

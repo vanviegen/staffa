@@ -42,7 +42,7 @@ test("buttons: variants, sizes and groups", async ({ page }) => {
 });
 
 test("tabs: URL-linked and scrollable strip", async ({ page }) => {
-	await page.goto("./?menu=tabs");
+	await page.goto("./tabs");
 	await page.getByText("URL-linked tabs").waitFor();
 
 	await page.getByRole("tab", { name: "Details" }).click();
@@ -57,7 +57,7 @@ test("tabs: URL-linked and scrollable strip", async ({ page }) => {
 });
 
 test("overlays: toasts, tooltips, menus and dialogs", async ({ page }) => {
-	await page.goto("./?menu=overlays");
+	await page.goto("./overlays");
 	await page.getByText("Toast notifications").waitFor();
 
 	// Toasts: fire two; they stack at the bottom.
@@ -124,7 +124,7 @@ test("overlays: toasts, tooltips, menus and dialogs", async ({ page }) => {
 });
 
 test("dialogs: Escape closes only the top-most dialog", async ({ page }) => {
-	await page.goto("./?menu=overlays");
+	await page.goto("./overlays");
 	await page.getByRole("button", { name: "dialog in dialog" }).click();
 	await page.getByRole("button", { name: "Open secondary" }).click();
 	await page.getByText("Smaller than primary.").waitFor();
@@ -140,20 +140,20 @@ test("dialogs: Escape closes only the top-most dialog", async ({ page }) => {
 });
 
 test("surfaces: levels, roles, variants and nesting", async ({ page }) => {
-	await page.goto("./?menu=surfaces");
+	await page.goto("./surfaces");
 	await page.getByText("Accent surfaces & variants").waitFor();
 	// Scroll the custom-surface demo into view for its own screenshot.
 	await page.getByText("Custom accent surface").scrollIntoViewIfNeeded();
 });
 
 test("content: prose rhythm and heading scale", async ({ page }) => {
-	await page.goto("./?menu=content");
+	await page.goto("./content");
 	await page.getByText("Prose & flow content").waitFor();
 	await page.getByText("Heading scale").scrollIntoViewIfNeeded();
 });
 
 test("icons: gallery, sizing and search", async ({ page }) => {
-	await page.goto("./?menu=icons");
+	await page.goto("./icons");
 	await page.getByText("Gallery").waitFor();
 	await page.getByLabel(/Filter all/).fill("arrow");
 	await page.getByText(/\d+ matches/).waitFor();
@@ -187,7 +187,7 @@ test("menu: dropdown autofocuses its first focusable control", async ({ page }) 
 });
 
 test("dark mode: surfaces and buttons", async ({ page }) => {
-	await page.goto("./?menu=surfaces");
+	await page.goto("./surfaces");
 	await page.getByText("Surfaces & Variants").waitFor();
 	// The theme switch lives in the header's configure popover.
 	await page.getByRole("button", { name: "Display settings" }).click();
@@ -200,7 +200,7 @@ test("dark mode: surfaces and buttons", async ({ page }) => {
 });
 
 test("nav: Escape from the content moves focus to the current sidebar item", async ({ page }) => {
-	await page.goto("./?menu=form");
+	await page.goto("./form");
 	await page.getByText("Account").waitFor();
 	// Escape on a fresh load (focus on <body>) should land on the sidebar's current
 	// (active) item, shown with the primary-ring focus highlight.
@@ -208,42 +208,61 @@ test("nav: Escape from the content moves focus to the current sidebar item", asy
 	await expect(page.getByRole("link", { name: "Form" })).toBeFocused();
 });
 
-test("nav: Escape opens the dropdown and Enter on an item closes it", async ({ page }) => {
-	// Narrow the shell so the sidebar collapses to a hamburger dropdown.
+test("nav: narrow screens get a full-page nav instead of a dropdown", async ({ page }) => {
+	// Narrow the shell so the sidebar collapses to a hamburger.
 	await page.setViewportSize({ width: 480, height: 800 });
-	await page.goto("./?menu=form");
+	await page.goto("./form");
 	await page.getByText("Account").waitFor();
 
-	// Escape opens the dropdown with the current item ("Form") focused.
+	// The nav takes over the whole content area, and the hamburger becomes an ✕.
+	await page.getByRole("button", { name: "Open navigation" }).click();
+	await expect(page.locator(".s-nav-page:not(.s-nav-page-off)")).toHaveCount(1);
+
+	// Picking an item hands over to that screen.
+	await page.getByRole("link", { name: "Overlays" }).click();
+	await page.getByText("Toast notifications").waitFor();
+
+	// Reopening and dismissing with the ✕ leaves the content as it was.
+	await page.getByRole("button", { name: "Open navigation" }).click();
+	await page.getByRole("button", { name: "Open navigation" }).click();
+	await page.getByText("Toast notifications").waitFor();
+});
+
+test("nav: Escape opens the full-page nav and Enter on an item closes it", async ({ page }) => {
+	await page.setViewportSize({ width: 480, height: 800 });
+	await page.goto("./form");
+	await page.getByText("Account").waitFor();
+
+	// Escape opens the nav page with the current item ("Form") focused.
 	await page.keyboard.press("Escape");
 	await expect(page.getByRole("link", { name: "Form" })).toBeFocused();
 
-	// Activating a link with Enter navigates *and* closes the popup, returning focus
-	// to the trigger (closeFloating focuses the anchor).
+	// Activating a link with Enter navigates *and* closes the page, returning focus
+	// to the trigger.
 	await page.getByRole("link", { name: "Buttons" }).focus();
 	await page.keyboard.press("Enter");
 	await page.getByText("Variants & sizes").waitFor();
 	await expect(page.getByRole("button", { name: "Open navigation" })).toBeFocused();
 });
 
-test("nav: the dropdown reopens right after closing", async ({ page }) => {
+test("nav: the full-page nav reopens right after closing", async ({ page }) => {
 	await page.setViewportSize({ width: 480, height: 800 });
-	await page.goto("./?menu=form");
+	await page.goto("./form");
 	await page.getByText("Account").waitFor();
-	// Match only an *open* panel — a just-closed one lingers in the DOM (hidden)
-	// while its fade-out transition plays.
-	const openMenu = page.locator(".s-menu-list:not(.hidden)");
+	// Match only an *open* page — a just-closed one lingers in the DOM, parked off
+	// to the left, while its slide-out plays.
+	const openNav = page.locator(".s-nav-page:not(.s-nav-page-off)");
 
 	await page.keyboard.press("Escape"); // open
-	await expect(openMenu).toHaveCount(1);
+	await expect(openNav).toHaveCount(1);
 	await page.keyboard.press("Escape"); // close — focus returns to the trigger
 	await expect(page.getByRole("button", { name: "Open navigation" })).toBeFocused();
-	await page.keyboard.press("Escape"); // reopen, ignoring the fading-out panel
-	await expect(openMenu).toHaveCount(1);
+	await page.keyboard.press("Escape"); // reopen, ignoring the sliding-out page
+	await expect(openNav).toHaveCount(1);
 });
 
-test("autocomplete: Escape dismisses only the open list, not the layer beneath", async ({ page }) => {
-	await page.goto("./?menu=form");
+test("autocomplete: Escape dismisses only the open list, not the panel beneath", async ({ page }) => {
+	await page.goto("./form");
 	await page.getByText("Account").waitFor();
 
 	const input = page.getByLabel("Language");
@@ -257,9 +276,339 @@ test("autocomplete: Escape dismisses only the open list, not the layer beneath",
 	await page.waitForSelector("ul[role=listbox]", { state: "detached" });
 	await expect(input).toBeFocused();
 
-	// With no layer left to dismiss, a second Escape falls through to the nav jump.
+	// With no panel left to dismiss, a second Escape falls through to the nav jump.
 	await page.keyboard.press("Escape");
 	await expect(page.getByRole("link", { name: "Form" })).toBeFocused();
+});
+
+// ─── Routed panel stack ──────────────────────────────────────────────────────
+
+// A panel that's on its way out lingers in the DOM for the length of its exit
+// animation, and one that's scrolled off-canvas to the left is marked `inert`.
+const livePanels = ".s-panel:not(.s-panel-closing)";
+const visiblePanels = ".s-panel:not(.s-panel-closing):not([inert])";
+
+/** The deepest panel that isn't on its way out — where "the current screen" is. */
+function topPanel(page: Page) {
+	return page.locator(livePanels).last();
+}
+
+/**
+ * The live panel whose content matches `text`. Used instead of a `getByText` on
+ * a box header, because a header with `close: true` also holds its ✕ — and a
+ * case-insensitive substring match on "Small A" would hit "Push small A" links.
+ */
+function panelWith(page: Page, text: RegExp) {
+	return page.locator(livePanels, { hasText: text });
+}
+
+test("panels: a phone pushes and pops one screen at a time", async ({ page }) => {
+	await page.setViewportSize({ width: 480, height: 800 });
+	await page.goto("./icons");
+	await page.getByText("Gallery").waitFor();
+
+	// Tapping an icon pushes its detail; the gallery stays mounted, off-canvas.
+	await page.getByRole("link", { name: "heart", exact: true }).click();
+	await expect(page).toHaveURL(/\/demo\/icons\/heart$/);
+	await page.getByText('import { heart }').waitFor();
+	await expect(page.locator(visiblePanels)).toHaveCount(1);
+
+	// The shell draws no back chrome at all: the detail's own ✕ (S.box's `close`
+	// option) is the way back, on a phone exactly as on a wide screen.
+	await topPanel(page).getByRole("button", { name: "Close" }).click();
+	await expect(page).toHaveURL(/\/demo\/icons$/);
+	await page.getByText("Gallery").waitFor();
+
+	// The browser's back button does exactly the same thing.
+	await page.getByRole("link", { name: "star", exact: true }).click();
+	await page.getByText("import { star }").waitFor();
+	await page.goBack();
+	await expect(page).toHaveURL(/\/demo\/icons$/);
+	await expect(page.locator(visiblePanels)).toHaveCount(1);
+});
+
+test("panels: Escape pops a panel, and only then opens the nav", async ({ page }) => {
+	await page.setViewportSize({ width: 480, height: 800 });
+	// A deep link with no history beneath it: the stack is derived from the route
+	// table, and closing falls back to replacing the entry.
+	await page.goto("./icons/heart");
+	await page.getByText("import { heart }").waitFor();
+
+	await page.keyboard.press("Escape");
+	await expect(page).toHaveURL(/\/demo\/icons$/);
+	await page.getByText("Gallery").waitFor();
+
+	// At the stack root there's nothing left to close, so Escape falls through to
+	// the existing "jump to the nav" behaviour.
+	await page.keyboard.press("Escape");
+	await expect(page.locator(".s-nav-page:not(.s-nav-page-off)")).toHaveCount(1);
+});
+
+test("panels: a deep link derives its columns, and links replace the top one", async ({ page }) => {
+	// The gallery and the detail are both "small", so they pair up as two columns
+	// on any ordinary desktop width.
+	// /demo/icons matches a route, so it becomes the panel beneath
+	// /demo/icons/heart (while /demo, which has no route, is skipped).
+	await page.goto("./icons/heart");
+	await page.getByText("Gallery").waitFor();
+	await page.getByText("import { heart }").waitFor();
+	await expect(page.locator(livePanels)).toHaveCount(2);
+	// The top panel's `$page.title` prefixes the shell's own title.
+	await expect(page).toHaveTitle("heart · Staffa");
+
+	// A click inside the gallery panel truncates everything above *that* panel
+	// before pushing, so the detail is replaced rather than stacked.
+	await page.getByRole("link", { name: "star", exact: true }).click();
+	await expect(page).toHaveURL(/\/demo\/icons\/star$/);
+	await page.getByText("import { star }").waitFor();
+	await expect(page.locator(livePanels)).toHaveCount(2);
+
+	// `data-panel=replace` paging swaps the detail in place — still no third column.
+	// (Scoped to the top panel: the one being replaced lingers while it fades.)
+	await topPanel(page).getByRole("link", { name: "Next" }).click();
+	await page.getByText("import { bookmark }").waitFor();
+	await expect(page.locator(livePanels)).toHaveCount(2);
+
+	// The stack lives in the history entry, so a reload reproduces both columns.
+	await page.reload();
+	await page.getByText("Gallery").waitFor();
+	await page.getByText("import { bookmark }").waitFor();
+	await expect(page.locator(livePanels)).toHaveCount(2);
+});
+
+test("panels: a link to an already-open panel returns to it", async ({ page }) => {
+	await page.goto("./icons/heart");
+	await page.getByText("import { heart }").waitFor();
+	await expect(page.locator(livePanels)).toHaveCount(2);
+
+	// /demo/icons is already the panel beneath, so this closes down to it instead
+	// of opening a duplicate.
+	await topPanel(page).getByRole("link", { name: "All icons" }).click();
+	await expect(page).toHaveURL(/\/demo\/icons$/);
+	await page.getByText("Gallery").waitFor();
+	await expect(page.locator(livePanels)).toHaveCount(1);
+	// The gallery is top-most again, so its title takes over.
+	await expect(page).toHaveTitle("Icons · Staffa");
+});
+
+test("panels: a close guard vetoes the first attempt", async ({ page }) => {
+	await page.goto("./form/guard");
+	await page.getByText("The first close attempt").waitFor();
+	await expect(page.locator(livePanels)).toHaveCount(2);
+
+	// The guard refuses the first close...
+	await page.keyboard.press("Escape");
+	await expect(page.getByText("The guard has been used up")).toBeVisible();
+	await expect(page).toHaveURL(/\/demo\/form\/guard$/);
+
+	// ...and lets the second one through.
+	await page.keyboard.press("Escape");
+	await expect(page).toHaveURL(/\/demo\/form$/);
+	await expect(page.locator(livePanels)).toHaveCount(1);
+});
+
+test("panels: an [id=integer] route only matches spellings that round-trip", async ({ page }) => {
+	await page.goto("./panels");
+	await page.getByText("Typed route params").waitFor();
+
+	// The handler receives a real number, not a string that looks like one.
+	await page.getByRole("link", { name: "Open item 42" }).click();
+	await expect(page).toHaveURL(/\/demo\/panels\/item\/42$/);
+	await page.getByText("params.id is number 42, so id + 1 is 43.").waitFor();
+
+	// "007" would be a second URL for the same record, so it isn't a match at
+	// all: no route claims it, and it lands in notFound.
+	await page.goto("./panels/item/007");
+	await page.getByText("There is no page at /demo/panels/item/007.").waitFor();
+});
+
+test("panels: a vetoed browser back travels forward again", async ({ page }) => {
+	// Build real history: the guard panel is *pushed*, so there is an entry
+	// beneath it for the browser's back button to head for.
+	await page.goto("./panels");
+	await page.getByText("Push a panel").waitFor();
+	await page.getByRole("link", { name: "Push the close-guard panel" }).click();
+	await page.getByText("The first close attempt").waitFor();
+
+	// The guard refuses: the router travels the history right back, so the URL
+	// and the panels end up exactly where they were.
+	await page.goBack();
+	await expect(page.getByText("The guard has been used up")).toBeVisible();
+	await expect(page).toHaveURL(/\/demo\/form\/guard$/);
+	await expect(page.locator(livePanels)).toHaveCount(2);
+
+	// Used up, the next back pops the guard panel like any other.
+	await page.goBack();
+	await expect(page).toHaveURL(/\/demo\/panels$/);
+	await page.getByText("Push a panel").waitFor();
+});
+
+test("panels: an origin-less link asks every removed panel's guard", async ({ page }) => {
+	await page.goto("./form/guard");
+	await page.getByText("The first close attempt").waitFor();
+	await expect(page.locator(livePanels)).toHaveCount(2);
+
+	// A link outside any panel (a nav item, a link in a dialog) derives its
+	// target's whole stack. Here the derived stack — /demo/panels, /demo/panels/a
+	// and the unrouted path on top — shares nothing with the open one, so *both*
+	// open panels are removed, and both must pass their close guards: the guarded
+	// panel's depth doesn't line up with any depth of the new stack, which is
+	// exactly the shape that used to slip past the guards.
+	await page.evaluate(() => {
+		const a = document.createElement("a");
+		a.href = "/demo/panels/a/nowhere";
+		a.textContent = "Somewhere else";
+		a.style.cssText = "position:fixed;left:8px;bottom:8px;z-index:99";
+		document.body.appendChild(a);
+	});
+	await page.getByRole("link", { name: "Somewhere else" }).click();
+
+	// The guard vetoes: nothing navigated, nothing closed.
+	await expect(page.getByText("The guard has been used up")).toBeVisible();
+	await expect(page).toHaveURL(/\/demo\/form\/guard$/);
+	await expect(page.locator(livePanels)).toHaveCount(2);
+
+	// Used up, the second attempt goes through to the derived stack.
+	await page.getByRole("link", { name: "Somewhere else" }).click();
+	await expect(page).toHaveURL(/\/demo\/panels\/a\/nowhere$/);
+	await page.getByText("There is no page at /demo/panels/a/nowhere.").waitFor();
+	await expect(page.locator(livePanels)).toHaveCount(3);
+});
+
+test("panels: a small starts at half width, and the next lands in its open room", async ({ page }) => {
+	await page.goto("./panels");
+	await page.getByText("Push a panel").waitFor();
+
+	// A lone "small" is half the content area, left-aligned, its other half open.
+	const playground = page.locator(livePanels).first();
+	const before = (await playground.boundingBox())!;
+	const region = (await page.locator(".s-panels").boundingBox())!;
+	expect(before.width).toBeLessThan(region.width * 0.6);
+	expect(before.x).toBeCloseTo(region.x, 1);
+
+	// The next small lands in exactly that open room: nothing on screen moves or
+	// resizes — widths depend only on the window, never on what else is open.
+	await page.getByRole("link", { name: "Push small A" }).click();
+	await panelWith(page, /Small A/).waitFor();
+	await expect(page.locator(visiblePanels)).toHaveCount(2);
+	expect(await playground.boundingBox()).toEqual(before);
+});
+
+test("panels: the page stretches past 1280 when a third column fits", async ({ page }) => {
+	// Wide enough for three small columns (~3×540 plus the sidebar).
+	await page.setViewportSize({ width: 1920, height: 900 });
+	await page.goto("./panels");
+	await page.getByText("Push a panel").waitFor();
+
+	// Alone (and even two-up) the shell is the standard centred 1280px page.
+	const inner = page.locator(".s-body-inner");
+	expect((await inner.boundingBox())!.width).toBeLessThanOrEqual(1280);
+
+	// A third column genuinely fits, so the page stretches — centred — to hold
+	// all three, bars included; each column keeps its window-given width.
+	await page.getByRole("link", { name: "Push small A" }).click();
+	await panelWith(page, /Small A/).waitFor();
+	await topPanel(page).getByRole("link", { name: "Push small B" }).click();
+	await panelWith(page, /Small B/).waitFor();
+	await expect(page.locator(visiblePanels)).toHaveCount(3);
+	expect((await inner.boundingBox())!.width).toBeGreaterThan(1600);
+
+	// Closing the third settles the page back to the standard width.
+	await topPanel(page).getByRole("button", { name: "Cancel" }).click();
+	await page.waitForFunction(() =>
+		document.querySelector(".s-body-inner")!.getBoundingClientRect().width <= 1280);
+	await expect(page.locator(visiblePanels)).toHaveCount(2);
+});
+
+test("panels: a large panel grows the page to the window's edges", async ({ page }) => {
+	// Wider than the standard 1280px page, so there's somewhere to grow to.
+	await page.setViewportSize({ width: 1800, height: 900 });
+	await page.goto("./panels");
+	await page.getByText("Push a panel").waitFor();
+
+	// The standard page: the body (and the bars) cap at 1280px, centred.
+	const inner = page.locator(".s-body-inner");
+	expect((await inner.boundingBox())!.width).toBeLessThanOrEqual(1280);
+
+	// While a "large" is up, the whole page stretches to the screen edges...
+	await page.getByRole("link", { name: "Push a large panel" }).click();
+	await panelWith(page, /A large panel/).waitFor();
+	expect((await inner.boundingBox())!.width).toBeGreaterThan(1700);
+
+	// ...and settles back to the standard width when it closes.
+	await topPanel(page).getByRole("button", { name: "Cancel" }).click();
+	await page.getByText("Push a panel").waitFor();
+	await page.waitForFunction(() =>
+		document.querySelector(".s-body-inner")!.getBoundingClientRect().width <= 1280);
+});
+
+test("panels: a page closes itself while another column sits on top of it", async ({ page }) => {
+	await page.goto("./panels");
+	await page.getByText("Push a panel").waitFor();
+
+	// Stack up playground → A → B. Only two halves fit, so the playground is
+	// crowded out from underneath and A and B sit two-up.
+	await page.getByRole("link", { name: "Push small A" }).click();
+	await panelWith(page, /Small A/).waitFor();
+	await topPanel(page).getByRole("link", { name: "Push small B" }).click();
+	await panelWith(page, /Small B/).waitFor();
+	await expect(page.locator(livePanels)).toHaveCount(3);
+	await expect(page.locator(visiblePanels)).toHaveCount(2);
+
+	// A's ✕ closes A — which is *not* the top panel, so it is spliced out of the
+	// stack: B keeps its state and the URL (the top panel never moved), and the
+	// playground is revealed in the room A gave up.
+	const smallA = page.locator(livePanels, { hasText: /Small A/ });
+	await smallA.getByRole("button", { name: "Close" }).click();
+	await expect(page).toHaveURL(/\/demo\/panels\/b$/);
+	await page.getByText("Push a panel").waitFor();
+	await expect(page.locator(visiblePanels)).toHaveCount(2);
+	// (A plain count: ShoTest's wrapped expect can't assert on absent elements.)
+	expect(await page.locator(livePanels, { hasText: /Small A/ }).count()).toBe(0);
+
+	// The splice is a history entry like any other, so back undoes it.
+	await page.goBack();
+	await panelWith(page, /Small A/).waitFor();
+	await expect(page.locator(livePanels)).toHaveCount(3);
+});
+
+test("panels: closing the top column reveals the one crowded out beneath it", async ({ page }) => {
+	await page.goto("./panels");
+	await page.getByText("Push a panel").waitFor();
+
+	await page.getByRole("link", { name: "Push small A" }).click();
+	await panelWith(page, /Small A/).waitFor();
+	await topPanel(page).getByRole("link", { name: "Push small B" }).click();
+	await panelWith(page, /Small B/).waitFor();
+	// Three panels, room for two: the playground is hidden beneath the run.
+	await expect(page.locator(livePanels)).toHaveCount(3);
+	await expect(page.locator(visiblePanels)).toHaveCount(2);
+
+	// The top panel's own Cancel button ($page.close()) frees the room the hidden
+	// column needs, and it fades back in at the left edge.
+	await topPanel(page).getByRole("button", { name: "Cancel" }).click();
+	await expect(page).toHaveURL(/\/demo\/panels\/a$/);
+	await page.getByText("Push a panel").waitFor();
+	await expect(page.locator(visiblePanels)).toHaveCount(2);
+});
+
+test("panels: stacking off keeps a single column at any width", async ({ page }) => {
+	await page.goto("./panels");
+	await page.getByText("Push a panel").waitFor();
+	// The playground's own checkbox flips the shell's `stacking` option.
+	await page.getByLabel("Show as many columns as fit").uncheck();
+
+	// Only the top panel shows now, however much room there is.
+	await page.getByRole("link", { name: "Push small A" }).click();
+	await panelWith(page, /Small A/).waitFor();
+	await expect(page.locator(visiblePanels)).toHaveCount(1);
+
+	// Escape still pops the stack, at any width — with the page's own ✕ and the
+	// browser's back button, that's the whole way back.
+	await page.setViewportSize({ width: 480, height: 800 });
+	await page.keyboard.press("Escape");
+	await expect(page).toHaveURL(/\/demo\/panels$/);
+	await page.getByText("Push a panel").waitFor();
 });
 
 // A floating menu/popover fades in via a `.hidden` → opaque transition. Playwright's

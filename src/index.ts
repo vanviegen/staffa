@@ -41,7 +41,8 @@ export { buttonGroup, type ButtonGroupOptions } from "./components/buttonGroup.j
 export { checkbox, type CheckboxOptions } from "./components/checkbox.js";
 export { form, type FormOptions } from "./components/form.js";
 export { main, type MainOptions } from "./components/main.js";
-export { menuButton, showFloatingMenu, addContextMenu, isFloatingMenuOpen, type MenuOptions, type MenuEntry, type MenuItem, type MenuSeparator, type FloatingMenuOptions, type ContextMenuOptions } from "./components/menu.js";
+export { panels, type Page, type Routes, type RouteHandler, type RouteTable, type PathParams, type SegParams } from "./components/panels.js";
+export { menuButton, showFloatingMenu, addContextMenu, isFloatingMenuOpen, closeFloatingMenu, type MenuOptions, type MenuEntry, type MenuItem, type MenuSeparator, type FloatingMenuOptions, type ContextMenuOptions } from "./components/menu.js";
 export { dialog, alert, confirm, prompt, isDialogOpen, type DialogOptions } from "./components/dialog.js";
 export { select, type SelectOptions, type SelectOptionInput } from "./components/select.js";
 export { tabs, type Tab, type TabsOptions } from "./components/tabs.js";

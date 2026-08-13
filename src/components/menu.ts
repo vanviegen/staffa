@@ -201,9 +201,22 @@ function closeFloating(): void {
  * Whether a floating menu is currently open. Reflects live state (cleared the
  * instant it closes), unlike the DOM — the panel lingers briefly while its
  * `destroy=` transition plays out.
+ *
+ * @param anchor When given, only reports `true` for a menu opened from *this*
+ *   anchor — so a component can ask about its own menu rather than any menu.
  */
-export function isFloatingMenuOpen(): boolean {
-	return $floating.opts != null;
+export function isFloatingMenuOpen(anchor?: HTMLElement): boolean {
+	const opts = $floating.opts;
+	return opts != null && (anchor == null || opts.anchor === anchor);
+}
+
+/**
+ * Close the open floating menu (if any), returning focus to its anchor. With an
+ * `anchor`, only closes when the open menu belongs to it, so dismissing your own
+ * menu can't steal someone else's.
+ */
+export function closeFloatingMenu(anchor?: HTMLElement): void {
+	if (isFloatingMenuOpen(anchor)) closeFloating();
 }
 
 function positionMenu(menuEl: HTMLElement, rect: { left: number; right: number; top: number; bottom: number }): void {

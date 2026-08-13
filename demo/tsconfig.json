@@ -20,5 +20,5 @@
       "staffa/icons": ["../dist/icons.d.ts"]
     }
   },
-  "include": ["demo.ts"]
+  "include": ["demo.ts", "types.ts"]
 }

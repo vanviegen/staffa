@@ -54,6 +54,14 @@ export interface ContentOptions {
 	content?: Slot;
 }
 
+/**
+ * Shell width — not viewport width — at or below which the app shell goes
+ * "narrow": the nav sidebar collapses to a hamburger, and a routed panel stack
+ * has room for exactly one full-bleed column. Shared by the `@container` queries
+ * that do the switching and by the JS that has to agree with them.
+ */
+export const NARROW_PX = 640;
+
 let idCounter = 0;
 /** Generates a process-unique id, used to wire `<label for>` to its control. */
 export function uniqueId(prefix = "s"): string {
