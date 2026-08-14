@@ -1,6 +1,6 @@
 import A from "aberdeen";
 import { type Slot, type Attributes, drawSlot, focusFirst, NARROW_PX } from "../core.js";
-import { type MenuOptions, drawMenu, showFloatingMenu, isFloatingMenuOpen, closeFloatingMenu } from "./menu.js";
+import { type MenuOptions, drawMenu, showFloatingMenu, isFloatingMenuOpen, closeFloatingMenu, menuGlyph, closeGlyph } from "./menu.js";
 import { button } from "./button.js";
 import { isDialogOpen } from "./dialog.js";
 import { PanelController, type Page, type RouteHandler, type RouteTable, type Routes } from "./panels.js";
@@ -211,12 +211,12 @@ A.insertGlobalCss({
 	// Sidebar nav panel. Items reuse the shared `.s-menu-item` /
 	// `.s-menu-sep` styles from menu.ts, so the sidebar and the floating
 	// dropdown stay visually identical.
-	// Borderless and transparent so the page's aurora shows through — an airy,
-	// floating sidebar whose only chrome is the active item's gradient pill.
+	// Borderless and transparent so the page's own surface shows through — an airy,
+	// floating sidebar whose only chrome is the active item's accent colouring.
 	".s-nav-panel": {
-		// Extra horizontal padding leaves room for the active pill's glow, which the
-		// vertical scroll (overflow-y:auto, which also clips overflow-x) would
-		// otherwise cut off at the panel edges.
+		// The generous horizontal padding is what keeps the rows clear of the content
+		// separator on one side and the shell edge on the other; the vertical scroll
+		// (overflow-y:auto, which also clips overflow-x) leaves no room to bleed past it.
 		"&": "display:flex flex-direction:column overflow-y:auto flex-shrink:0 max-width:228px padding:$3 gap:$1",
 	},
 	// The narrow-screen nav: a full "page" that slides in over the content from the
@@ -457,8 +457,11 @@ function drawNavTrigger(nav: MenuOptions, $nav: { open: boolean }): void {
 	button({
 		// The glyph doubles as the state: ☰ to open the page, ✕ to dismiss it. Its
 		// own scope, so toggling doesn't rebuild (and re-focus) the button.
-		icon: () => A(() => A("span aria-hidden=true #", $nav.open ? "✕" : "☰")),
+		icon: () => A(() => ($nav.open ? closeGlyph : menuGlyph)({ size: "1.5em" })),
 		ariaLabel: "Open navigation",
+		// Quiet chrome, matching the `menu` slot's own buttons at the other end of the
+		// bar: the trigger is a way *in* to the app, not something to be sold on, and a
+		// filled brand button here shouts down the title it sits next to.
 		attrs: ".neutral .small",
 		...nav.button,
 		click: (e: Event) => {

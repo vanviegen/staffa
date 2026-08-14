@@ -269,7 +269,7 @@ Components share naming conventions for options: `attrs` (outermost element), `c
 
 - **`S.main(opts)`**: app shell, a sticky header with `icon`, `title`, `subtitle`, `menu`; scrollable content area; footer. Set `maxWidth` to center the content. Give it a `nav` for a sidebar that collapses to a hamburger below 640 px — where the nav becomes a full page sliding in from the left, handing over to the chosen screen with a matching slide in from the right. Instead of a single `content` slot it can take a `routes` table — see [Panel-stack navigation](#panel-stack-navigation).
 - **`S.box(opts | content)`**: surface with optional `header`/`footer` and padded body. Pass a function for shorthand `{ content }`. `close: true` adds a ✕ that closes the panel the box is in (see [Panel-stack navigation](#panel-stack-navigation)); `close: fn` runs your own dismissal.
-- **`S.tabs(opts)`**: tablist with live panels and keyboard navigation.
+- **`S.tabs(opts)`**: tablist with live panels and keyboard navigation. More tabs than fit make the strip scroll, with a ‹ / › button appearing at whichever end still has something to reach — so it's not just a swipe target. Selecting a tab any other way (the arrow keys, a `bind` written from elsewhere) scrolls it into view.
 - **`S.form(opts | content)`**: form aligning fields in a column or responsive grid, with an `actions` bar. Prevents the default page reload.
 
 ### Form fields

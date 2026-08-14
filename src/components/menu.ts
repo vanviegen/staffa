@@ -1,7 +1,18 @@
 import A from "aberdeen";
 import { matchCurrent } from "aberdeen/route";
 import { type Slot, type Attributes, drawSlot, mountPortal, focusFirst } from "../core.js";
+import { mk } from "../icons-helpers.js";
 import { button, type ButtonOptions } from "./button.js";
+
+// The two glyphs the shell draws for itself. As inline SVG (built with the icon
+// set's own helper, so no icon data is pulled in) rather than the `☰`/`✕`
+// characters: a text glyph is at the mercy of the system font, and next to a real
+// icon it lands thin and undersized. These match Lucide's `menu` and `x` exactly,
+// so a nav trigger sits beside app icons as an equal.
+/** `☰` — opens a menu or the nav. */
+export const menuGlyph = mk('<path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/>');
+/** `✕` — dismisses what the {@link menuGlyph} opened. */
+export const closeGlyph = mk('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>');
 
 /**
  * A clickable item in a menu or sidebar nav.
@@ -109,8 +120,12 @@ A.insertGlobalCss({
 		"transition: color 0.12s, transform 0.12s, text-shadow 0.12s;",
 	".s-menu-item:focus-visible:not([aria-current=page]), .s-menu-item:hover:not([aria-disabled=true]):not([aria-current=page])":
 		"filter:none color: color-mix(in lab, $s-primary 33%, $s-text);",
-	".s-menu-item[aria-current=page]":
-		"text-shadow: 0 0 2px $s-primary; color: color-mix(in lab, $s-primary 50%, $s-text); filter:brightness(1.15)",
+	// The active row is simply drawn in the surface's accent — the brand colour on a
+	// neutral surface, the ink on an accent one. No glow and no brightening: those
+	// pushed it off the brand colour, so it read as a lit-up variant of it rather
+	// than as the colour itself. `filter:none` keeps the global `a:hover` brighten
+	// off it too, since the hover rule above deliberately skips the active row.
+	".s-menu-item[aria-current=page]": "color:$s-accent filter:none",
 	".s-menu-item[aria-disabled=true]":
 		"opacity:0.45 cursor:not-allowed pointer-events:none",
 	".s-menu-icon": "flex-shrink:0",
@@ -366,7 +381,7 @@ export function menuButton(opts: MenuOptions): void {
 	A.clean(() => { if ($floating.opts?.anchor === myEl) closeFloating(); });
 
 	button({
-		icon: () => A("span aria-hidden=true #☰"),
+		icon: () => menuGlyph({ size: "1.4em" }),
 		// Only label the trigger "Open menu" when it has no visible text of its
 		// own — an aria-label would otherwise *hide* that text from AT.
 		...(opts.button?.content == null ? { ariaLabel: "Open menu" } : null),

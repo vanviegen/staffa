@@ -49,12 +49,15 @@ const dispRowStyle = A.insertCss({
 
 // Each icon cell is a real link into `/demo/icons/[name]`, which opens the icon's
 // detail as a panel: a column beside the gallery on a wide screen, a pushed
-// screen on a phone. Inheriting the colour and dropping the underline keep it
-// looking like the plain tile it was. Declared up here (like the icon data
+// screen on a phone. It's the bare glyph — no box and no caption, so a screenful
+// reads as an icon *set* rather than as a table; the name is a hover away in the
+// tooltip and a click away in the detail. Declared up here (like the icon data
 // below) so an initial mount straight onto an icons route can use it.
 const iconCellStyle = A.insertCss({
-	"&": "text-decoration:none fg:inherit cursor:pointer",
-	"&[aria-current=page]": "outline: 2px solid $s-primary; outline-offset:-2px",
+	"&": "display:flex align-items:center justify-content:center aspect-ratio:1 r:$s-radius " +
+		"text-decoration:none fg:$s-text cursor:pointer transition: color 0.12s, background 0.12s;",
+	"&:hover": "fg:$s-accent background: color-mix(in srgb, $s-accent 10%, transparent)",
+	"&[aria-current=page]": "fg:$s-accent background: color-mix(in srgb, $s-accent 16%, transparent)",
 });
 
 // ─── Icon data ───────────────────────────────────────────────────────────────
@@ -93,7 +96,6 @@ A(() => {
 		title: "Staffa",
 		subtitle: "components for Aberdeen",
 		nav: {
-			button: { attrs: ".small" },
 			items: [
 				{ label: "Form",     icon: icons.clipboardList,      href: "/demo/form"     },
 				{ label: "Buttons",  icon: icons.mousePointerClick,  href: "/demo/buttons"  },
@@ -988,20 +990,20 @@ S.button({ content: "Click me", attrs: ".brand-orange" });`
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 
 function drawIconCell(name: string, fn: (opts?: icons.IconOptions) => void) {
-	A("a.s-s.neutral display:flex flex-direction:column align-items:center justify-content:center gap:$1 padding:$2 text-align:center",
-		iconCellStyle, "href=", `/demo/icons/${name}`, () => {
+	A("a", iconCellStyle, "href=", `/demo/icons/${name}`, () => {
+		// With the caption gone the link has no text of its own, so name it explicitly
+		// — for screen readers, and so `getByRole("link", { name })` still finds it.
+		A("aria-label=", name);
 		A(() => { if (route.matchCurrent(`/demo/icons/${name}`)) A("aria-current=page"); });
 		S.addTooltip({ tip: name });
 		fn({ size: 26 });
-		A("small fg:$s-muted font-size:0.7em overflow:hidden text-overflow:ellipsis white-space:nowrap max-width:100% text=", name);
 	});
 }
 
 /**
- * The detail panel for a single icon. Its links show off the three link
- * behaviours: `data-panel=replace` swaps this panel in place (prev/next paging),
- * a link to the already-open gallery *returns* to it rather than stacking a
- * duplicate, and the gallery's own cells push/replace from their own panel.
+ * The detail panel for a single icon. Its way out is the box's own ✕ (`close:
+ * true`), and its pager buttons carry `data-panel=replace`, so stepping through
+ * icons swaps this panel in place instead of stacking a third one.
  */
 function drawIconDetail($page: S.Page<{ name: string }>) {
 	const name = $page.params.name;
@@ -1032,14 +1034,12 @@ function drawIconDetail($page: S.Page<{ name: string }>) {
 	A("nav display:flex align-items:center justify-content:space-between gap:$2 mt:$3", () => {
 		// `data-panel=replace`: paging swaps this panel instead of stacking a third.
 		drawIconPager(list[(at - 1 + list.length) % list.length], "← Previous");
-		// Already an open panel, so this closes back down to the gallery.
-		A("a href=/demo/icons #All icons");
 		drawIconPager(list[(at + 1) % list.length], "Next →");
 	});
 }
 
 function drawIconPager(name: string, label: string) {
-	A("a data-panel=replace", "href=", `/demo/icons/${name}`, "#", label);
+	S.button({ href: `/demo/icons/${name}`, content: label, attrs: ".neutral data-panel=replace" });
 }
 
 function drawIconSample(label: string, draw: () => void) {
@@ -1054,7 +1054,7 @@ function drawIcons() {
 		header: "Gallery",
 		content: () => {
 			A("p m:0 mb:$2 fg:$s-muted font-size:0.9em rich='Each icon is a tree-shakable named export — `import { house } from \"staffa/icons\"` — that draws an inline `<svg>` into the current scope. Click one for its detail panel.'");
-			A("div display:grid gap:$2 grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));", () => {
+			A("div display:grid gap:$1 grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));", () => {
 				for (const name of showcaseIcons) drawIconCell(name, iconByName[name]);
 			});
 		},
@@ -1125,7 +1125,7 @@ setDefaults({ size: "1.25em", strokeWidth: 1.5 });`));
 				const cap = 120;
 				A("p m:0 mb:$2 fg:$s-muted font-size:0.85em #",
 					`${matches.length} match${matches.length === 1 ? "" : "es"}${matches.length > cap ? ` — showing the first ${cap}` : ""}`);
-				A("div display:grid gap:$2 grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));", () => {
+				A("div display:grid gap:$1 grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));", () => {
 					for (const [name, fn] of matches.slice(0, cap)) drawIconCell(name, fn);
 				});
 			});

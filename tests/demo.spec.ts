@@ -51,7 +51,19 @@ test("tabs: URL-linked and scrollable strip", async ({ page }) => {
 	await expect(page.getByText("The History tab.")).toBeVisible();
 	await expect(page.getByRole("tab", { name: "Disabled" })).toBeDisabled();
 
-	// The second tab strip scrolls; activate a late tab.
+	// The second strip has more tabs than fit, so it scrolls. Narrow the window
+	// until it does even at demo width, and step through it with the ✕/› buttons
+	// the strip grows for exactly this — the affordance a bare scroll area lacks.
+	await page.setViewportSize({ width: 640, height: 900 });
+	const strip = page.locator(".s-tabbar").last();
+	// Only the "scroll right" button is up at rest: there's nothing to the left yet.
+	await expect(strip).toHaveClass(/s-can-right/);
+	await expect(strip).not.toHaveClass(/s-can-left/);
+
+	await strip.locator(".s-tabscroll-right").click({ force: true });
+	await expect(strip).toHaveClass(/s-can-left/);
+
+	// A tab that was off the end is now in reach; selecting it keeps it in view.
 	await page.getByRole("tab", { name: "Tab 9", exact: true }).click();
 	await expect(page.getByText("Content for tab 9.")).toBeVisible();
 });
@@ -365,7 +377,8 @@ test("panels: a deep link derives its columns, and links replace the top one", a
 
 	// `data-panel=replace` paging swaps the detail in place — still no third column.
 	// (Scoped to the top panel: the one being replaced lingers while it fades.)
-	await topPanel(page).getByRole("link", { name: "Next" }).click();
+	// The pagers are `S.button({ href })`s, so they're `<a role=button>`.
+	await topPanel(page).getByRole("button", { name: "Next" }).click();
 	await page.getByText("import { bookmark }").waitFor();
 	await expect(page.locator(livePanels)).toHaveCount(2);
 
@@ -377,18 +390,20 @@ test("panels: a deep link derives its columns, and links replace the top one", a
 });
 
 test("panels: a link to an already-open panel returns to it", async ({ page }) => {
-	await page.goto("./icons/heart");
-	await page.getByText("import { heart }").waitFor();
+	await page.goto("./panels/medium");
+	// Not the box header: the playground beneath holds a "Push a medium panel" link
+	// that a substring match would also hit.
+	await page.getByText("it fills the standard content area").waitFor();
 	await expect(page.locator(livePanels)).toHaveCount(2);
 
-	// /demo/icons is already the panel beneath, so this closes down to it instead
+	// /demo/panels is already the panel beneath, so this closes down to it instead
 	// of opening a duplicate.
-	await topPanel(page).getByRole("link", { name: "All icons" }).click();
-	await expect(page).toHaveURL(/\/demo\/icons$/);
-	await page.getByText("Gallery").waitFor();
+	await topPanel(page).getByRole("link", { name: "Back to the playground" }).click();
+	await expect(page).toHaveURL(/\/demo\/panels$/);
+	await page.getByText("Push a panel").waitFor();
 	await expect(page.locator(livePanels)).toHaveCount(1);
-	// The gallery is top-most again, so its title takes over.
-	await expect(page).toHaveTitle("Icons · Staffa");
+	// The playground is top-most again, so its title takes over.
+	await expect(page).toHaveTitle("Panels · Staffa");
 });
 
 test("panels: a close guard vetoes the first attempt", async ({ page }) => {
