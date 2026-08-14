@@ -115,6 +115,11 @@ export interface MainOptions<R = Routes> {
 	 * mode) or a button+dropdown (in `"button"` mode). The sidebar automatically
 	 * collapses to a button when the shell is too narrow — which there opens the
 	 * nav as a full page sliding in from the left, not as a dropdown.
+	 *
+	 * `items` may be a reactive array: the shell reads it inside the sidebar's own
+	 * scope, so an item arriving or leaving redraws the sidebar and nothing else.
+	 * The content beside it — in routed mode, the whole panel stack — is left
+	 * alone.
 	 */
 	nav?: MenuOptions;
 	/**
@@ -303,10 +308,14 @@ A.insertGlobalCss({
 // silently degrades to `any`. Callers that pass no `routes` are unaffected —
 // `MainOptions`'s own default kicks in there.
 export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): void {
+	// Whether there is a nav to show is deliberately NOT worked out here: `items`
+	// may well be a reactive array, and reading it in the shell's own scope would
+	// subscribe *the whole shell* to it — an item arriving later would redraw the
+	// lot, and in routed mode that means tearing the panel stack down and building
+	// it again from the URL. So every use below reads `nav.items` inside its own
+	// scope, and only that scope redraws.
 	const nav = opts.nav;
 	const navPos = opts.navPosition ?? "left";
-	const hasNav = nav != null && nav.items.length > 0;
-	const navCls = hasNav ? (navPos === "button" ? ".s-nav-btn-only" : `.s-nav-${navPos}`) : "";
 	// Whether the narrow-screen full-page nav is showing. Per shell, so nested or
 	// sibling `main()`s can't fight over it.
 	const $nav = A.proxy({ open: false });
@@ -317,13 +326,26 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): void {
 	}
 	// The panel stack owns the routing, so it starts observing (and building its
 	// stack from) the URL before any of the shell is drawn — the top bar's back
-	// button already needs to know how deep we are.
-	const ctl = routes ? new PanelController({ ...opts, routes, title: opts.title }) : null;
+	// button already needs to know how deep we are. Its options are listed one by
+	// one rather than spread from `opts`: a spread reads every key, which on a
+	// proxied options object subscribes this scope to all of them.
+	const ctl = routes
+		? new PanelController({ routes, notFound: opts.notFound, stacking: opts.stacking, title: opts.title })
+		: null;
 	// Routed mode caps the shell to the ensemble width the layout engine publishes,
 	// rather than to `maxWidth`.
 	const capWidth = ctl ? null : opts.maxWidth;
 
-	const root = A(`div.s-main${navCls}${ctl ? ".s-routed" : ""}`, opts.attrs, () => {
+	const root = A(`div.s-main${ctl ? ".s-routed" : ""}`, opts.attrs, () => {
+		// Which nav mode the shell is in — sidebar or button — as a class on the
+		// shell, for the CSS below to hang the responsive collapse off. Its own
+		// scope (see `nav` above), so a nav appearing or emptying out only retags
+		// the shell rather than redrawing it.
+		A(() => {
+			if (nav == null || !nav.items.length) return;
+			A(navPos === "button" ? ".s-nav-btn-only" : `.s-nav-${navPos}`);
+		});
+
 		// Top bar.
 		A(() => {
 			const hasBar =
@@ -331,7 +353,7 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): void {
 				opts.subtitle != null ||
 				opts.icon != null ||
 				opts.menu != null ||
-				hasNav;
+				(nav != null && nav.items.length > 0);
 			if (!hasBar) return;
 			A("header.s-s.neutral", opts.topbarAttrs, () => {
 				A("div.s-bar", () => {
@@ -341,7 +363,7 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): void {
 					});
 					// Nav trigger button — visible when sidebar is hidden (button mode or narrow viewport).
 					A(() => {
-						if (!hasNav) return;
+						if (nav == null || !nav.items.length) return;
 						// .s-nav-trigger: CSS toggles display based on sidebar visibility.
 						A("div.s-nav-trigger", () => drawNavTrigger(nav, $nav));
 					});
@@ -371,17 +393,20 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): void {
 				A(() => {
 					if (capWidth != null) A("max-width:", capWidth);
 				});
-				if (hasNav && navPos !== "button") {
+				// The sidebar, in its own scope so a changing item list redraws just
+				// it — never the content area beside it (see `nav` above).
+				A(() => {
+					if (nav == null || !nav.items.length || navPos === "button") return;
 					A(`nav.s-nav-panel.s-nav-${navPos}`, opts.navAttrs, () => {
 						drawMenu(nav.items);
 					});
 					A("div.s-nav-sep aria-hidden=true");
-				}
+				});
 				drawMainContent(opts, ctl);
 			});
 			// The narrow-screen nav page, laid over the body it slides across.
 			A(() => {
-				if (hasNav && $nav.open) drawNavPage(nav, opts.navPageAttrs, $nav);
+				if (nav != null && nav.items.length && $nav.open) drawNavPage(nav, opts.navPageAttrs, $nav);
 			});
 		});
 
@@ -406,7 +431,7 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): void {
 	// shell width calls for), which focuses its current item. Listens on
 	// `document` so it works wherever focus is, but bows out while another overlay
 	// (a dialog, or an already-open menu) is up — those handle Escape themselves.
-	if (hasNav || ctl) {
+	if (nav != null || ctl) {
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key !== "Escape" || e.defaultPrevented) return;
 			// An open dialog or menu owns Escape itself — don't also jump to the nav.
@@ -427,7 +452,9 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): void {
 				void ctl.closeTop();
 				return;
 			}
-			if (!hasNav) return;
+			// Whether there is a nav at all is asked of the DOM, not of `nav.items`:
+			// a subscription here would be one on the shell's own scope again, and
+			// an empty nav simply has neither of the two elements below.
 			// `offsetParent` is null when the sidebar is hidden (display:none).
 			const panel = root.querySelector<HTMLElement>(".s-nav-panel");
 			if (panel?.offsetParent != null) {

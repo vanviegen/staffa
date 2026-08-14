@@ -172,11 +172,13 @@ Those numbers assume a nav sidebar of around 170px; without a sidebar, add that 
 
 A panel's width depends only on the size of the window, never on what else is open. So opening or closing a panel never resizes the ones already on screen, and never reflows what someone was reading. A lone small leaves its other half empty, and that is exactly where the next small lands. When more columns fit than the standard 1280px page holds (three smalls, say), the page itself grows, staying centred, to hold them.
 
+The panel is sized before your handler runs, so anything inside it that measures its own box — a chart, a virtualised list, a column count — gets a real one from the first frame rather than a zero-width one. A new panel starts at whatever `layout` says at that point, which is the default, so a handler that *assigns* `layout` is drawn at the medium width and reflowed immediately after. Assigning it later works too: the panel reflows to its new width without being redrawn, so nothing in it is rebuilt or loses its state, and the columns beside it move over.
+
 **The rest of `$page`:**
 
 - `params` and `path`: read-only.
 - `title`: shown in `document.title` while this panel is the top one.
-- `layout`: as above. It's read once, right after your handler runs, so set it there.
+- `layout`: as above, and live — set it whenever you like and the panel reflows.
 - `loading`: set it while you're fetching. A new panel waits a moment before sliding in, so it can arrive with real content instead of empty, and shows a loading indicator if the wait drags on.
 - `close()`: closes this panel, wherever it sits in the stack.
 - `requestClose`: your chance to say no. Everything that would close the panel waits for it: Escape, the panel's own ✕ or Cancel button, the browser's back button, a link that would close it, `S.panels.close()`. Return `false` to keep the panel open.
@@ -197,6 +199,8 @@ S.panels.close("/projects/7"); // that panel, wherever it is
 `S.box`'s `close: true` works out for itself which panel it's in, so the same code closes the right thing whether it's one column of several or a whole phone screen. (Pass a function instead if you'd rather do something else.)
 
 Closing the top panel goes back to whatever was underneath it. Closing one that *isn't* on top takes just that one away: the columns to its right stay where they are and keep their state, and the URL doesn't change, because the top panel didn't move. Either way it becomes a history entry, so the browser's back button brings the panel back.
+
+A closed panel is torn down at once: its `A.clean()` hooks run the moment it closes, so subscriptions, timers and requests stop there and then. Only its element hangs around, inert and frozen, for the length of the exit animation.
 
 Staffa itself contributes two things: the Escape key, which closes the top panel (and jumps to the navigation once you're at the bottom of the stack), and making the browser's back button do the right thing. Both ask `requestClose` first.
 
@@ -267,7 +271,7 @@ Components share naming conventions for options: `attrs` (outermost element), `c
 
 ### Layout & containers
 
-- **`S.main(opts)`**: app shell, a sticky header with `icon`, `title`, `subtitle`, `menu`; scrollable content area; footer. Set `maxWidth` to center the content. Give it a `nav` for a sidebar that collapses to a hamburger below 640 px — where the nav becomes a full page sliding in from the left, handing over to the chosen screen with a matching slide in from the right. Instead of a single `content` slot it can take a `routes` table — see [Panel-stack navigation](#panel-stack-navigation).
+- **`S.main(opts)`**: app shell, a sticky header with `icon`, `title`, `subtitle`, `menu`; scrollable content area; footer. Set `maxWidth` to center the content. Give it a `nav` for a sidebar that collapses to a hamburger below 640 px — where the nav becomes a full page sliding in from the left, handing over to the chosen screen with a matching slide in from the right. Its `items` may be a reactive array; adding or removing one redraws just the sidebar, never the content beside it. Instead of a single `content` slot it can take a `routes` table — see [Panel-stack navigation](#panel-stack-navigation).
 - **`S.box(opts | content)`**: surface with optional `header`/`footer` and padded body. Pass a function for shorthand `{ content }`. `close: true` adds a ✕ that closes the panel the box is in (see [Panel-stack navigation](#panel-stack-navigation)); `close: fn` runs your own dismissal.
 - **`S.tabs(opts)`**: tablist with live panels and keyboard navigation. More tabs than fit make the strip scroll, with a ‹ / › button appearing at whichever end still has something to reach — so it's not just a swipe target. Selecting a tab any other way (the arrow keys, a `bind` written from elsewhere) scrolls it into view.
 - **`S.form(opts | content)`**: form aligning fields in a column or responsive grid, with an `actions` bar. Prevents the default page reload.

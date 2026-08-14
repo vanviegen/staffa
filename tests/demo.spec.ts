@@ -626,6 +626,59 @@ test("panels: stacking off keeps a single column at any width", async ({ page })
 	await page.getByText("Push a panel").waitFor();
 });
 
+test("panels: a panel is sized before it draws, and resizes without redrawing", async ({ page }) => {
+	await page.goto("./panels");
+	await page.getByText("Push a panel").waitFor();
+	await page.getByRole("link", { name: "Push the sizing & lifecycle panel" }).click();
+	await panelWith(page, /Sizing & lifecycle/).waitFor();
+
+	// The width the handler measured *while drawing* is the width the column
+	// really has — not the zero-width box of a panel that hasn't been laid out.
+	const panel = topPanel(page);
+	const medium = (await panel.boundingBox())!;
+	const drawnWidth = Number(await page.getByTestId("drawn-width").textContent());
+	expect(Math.abs(drawnWidth - medium.width)).toBeLessThan(1.5);
+	await expect(page.getByTestId("live-draws")).toHaveText("1");
+
+	// Asking for another size reflows the column in place: it narrows to half the
+	// content area, which frees the room the playground beneath needs — and the
+	// panel itself is never redrawn.
+	await panel.getByRole("button", { name: "small" }).click();
+	await expect(page.locator(visiblePanels)).toHaveCount(2);
+	expect((await panel.boundingBox())!.width).toBeLessThan(medium.width * 0.7);
+	await expect(page.getByTestId("live-draws")).toHaveText("1");
+});
+
+test("panels: a closing panel is torn down at once, and only its element lingers", async ({ page }) => {
+	await page.goto("./panels");
+	await page.getByText("Push a panel").waitFor();
+	await page.getByRole("link", { name: "Push the sizing & lifecycle panel" }).click();
+	await panelWith(page, /Sizing & lifecycle/).waitFor();
+
+	// The panel's `A.clean` hooks run when it closes, while its own element is
+	// still on screen playing the fade — not when the animation is over.
+	await topPanel(page).getByRole("button", { name: "Close" }).click();
+	await expect(page.getByText("torn down while still fading out")).toBeVisible();
+});
+
+test("panels: a nav item arriving redraws the sidebar, not the columns", async ({ page }) => {
+	await page.goto("./panels");
+	await page.getByText("Push a panel").waitFor();
+	await page.getByRole("link", { name: "Push the sizing & lifecycle panel" }).click();
+	await panelWith(page, /Sizing & lifecycle/).waitFor();
+
+	// The shell's item list is a proxy array; adding to it must not resubscribe
+	// (and so rebuild) the shell around the open columns.
+	await page.getByLabel("Add a Scratch nav item").check();
+	await expect(page.locator(".s-nav-panel").getByRole("link", { name: "Scratch" })).toBeVisible();
+	await expect(page.locator(livePanels)).toHaveCount(2);
+	await expect(page.getByTestId("live-draws")).toHaveText("1");
+
+	await page.getByLabel("Add a Scratch nav item").uncheck();
+	await expect(page.locator(".s-nav-panel").getByRole("link", { name: "Scratch" })).toHaveCount(0);
+	await expect(page.getByTestId("live-draws")).toHaveText("1");
+});
+
 // A floating menu/popover fades in via a `.hidden` → opaque transition. Playwright's
 // visibility (and ShoTest's waitFor) ignores opacity, so a panel that is technically
 // "visible" can still be mid-fade — present in some screenshots and faded/absent in

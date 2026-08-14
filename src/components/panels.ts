@@ -111,8 +111,19 @@ export interface Page<P = Record<string, string | number | string[]>> {
 	 *
 	 * A panel's width depends only on the size of the window, never on what else
 	 * is open, so opening or closing a panel never resizes the ones already on
-	 * screen. This is read **once**, right after your handler runs, so set it
-	 * there; later changes are ignored.
+	 * screen.
+	 *
+	 * The panel is sized from this **before** your handler runs, so anything that
+	 * measures its own box has a real one from the first frame. What it is sized
+	 * at is whatever this says at that moment, which for a brand-new panel is the
+	 * default: a handler that *assigns* `layout` is drawn at the medium width and
+	 * reflowed immediately after — in time for the frame, but not for a
+	 * measurement taken in the same breath.
+	 *
+	 * Assigning it later works just as well. When your data arrives and you find
+	 * you want the wide one, the panel reflows to its new width without being
+	 * redrawn — so nothing in it is rebuilt or loses its state — and the columns
+	 * beside it move over.
 	 */
 	layout?: "small" | "medium" | "large";
 	/**
@@ -279,6 +290,14 @@ const SHELL_PX = 1280;
 const GUTTER_PX = 24;
 /** Don't pair smalls when half the content area would be narrower than this. */
 const PAIR_MIN_PX = 360;
+/**
+ * Panels are layered by their depth in the stack, two `z-index` steps per panel:
+ * a panel sits on the odd layer for its depth, and a *closing* one drops to the
+ * even layer just below, where it is frozen for the length of its fade. So a
+ * panel that replaces another comes in over it, while one that closes fades out
+ * over whatever it was covering — which is the way round both should read.
+ */
+const LAYER_STEP = 2;
 
 // ─── Module-level styling ────────────────────────────────────────────────────
 
@@ -286,16 +305,19 @@ A.insertGlobalCss({
 	":root": `--s-panel-ms:${PANEL_MS}ms`,
 	// The clipping viewport that the columns slide through. Panels are absolutely
 	// positioned inside it, with their width and x offset set from JS (see
-	// `layout()`), so they can animate between arrangements.
-	".s-panels": "flex:1 min-width:0 min-height:0 position:relative overflow:hidden",
+	// `layout()`), so they can animate between arrangements. `isolation` keeps the
+	// layers they stack themselves in (see LAYER_STEP) to themselves: the region
+	// as a whole still sits under the shell's own chrome — the sticky top bar, and
+	// the nav page that slides across the body — however deep the stack gets.
+	".s-panels": "flex:1 min-width:0 min-height:0 position:relative overflow:hidden isolation:isolate",
 	".s-panel": {
 		// A panel rests at a plain `left` offset and carries no transform: a
 		// transformed element is composited, which costs it subpixel text
 		// antialiasing. `transform` is used only to play the enter/exit slides,
-		// where the compositing is what makes them cheap. There is deliberately
-		// no `width` transition: widths depend only on the window, change only in
-		// `.s-shell-snap` passes, and a column's content never reflows while the
-		// arrangement moves.
+		// where the compositing is what makes them cheap. There is deliberately no
+		// `width` transition: a width changes only when the window resizes or when
+		// the page itself asks for another layout, and animating one would reflow
+		// the column's content on every frame of it.
 		// Every duration is `--s-panel-ms`, so a column's move, its neighbour's fade
 		// and the chrome recentering around them all run as one motion. The drift
 		// eases out (it should read as a slow settle) while the fade runs *linear*
@@ -303,6 +325,10 @@ A.insertGlobalCss({
 		// zero, which looks like the panel vanishing rather than fading.
 		// No `overflow:hidden` here: the scroll container below clips the content
 		// itself, and the pair hairline sits in the gutter *outside* the panel.
+		// Layering is set from JS (`layout()` and `beginClose`) rather than left to
+		// DOM order: a closing panel is no longer part of the reactive list, so
+		// where its element sits among the live ones is Aberdeen's business, not a
+		// thing to depend on. `LAYER_*` says what the numbers mean.
 		"&":
 			"position:absolute top:0 bottom:0 left:0 display:flex flex-direction:column " +
 			"visibility:visible transition: left var(--s-panel-ms) ease, transform var(--s-panel-ms) ease-out, opacity var(--s-panel-ms) linear, visibility 0s;",
@@ -324,8 +350,8 @@ A.insertGlobalCss({
 		// dropped, which is what makes the panel settle instead of jumping.
 		"&.s-panel-enter": "opacity:0 transition:none transform: translateX(8cqw);",
 		// On its way out: fading where it stands, drifting the same short distance,
-		// and out of reach while it does. It is removed from the DOM when the fade
-		// itself ends (see `beginClose`), never part-way through it.
+		// and out of reach while it does. It leaves the DOM when the fade itself
+		// ends (see `playExit`), never part-way through it.
 		"&.s-panel-closing": "opacity:0 pointer-events:none transform: translateX(8cqw);",
 		// Crowded out from under the visible run. It keeps its DOM (and thus its
 		// scroll position and half-typed forms), so `display:none` is out —
@@ -390,14 +416,33 @@ interface PanelEntry {
 	placed?: boolean;
 	/** Whether its `loading` hold has already expired, so it can't hold again. */
 	holdDone?: boolean;
-	/** What the panel asked for, read once — right after its handler ran. */
+	/** What the panel asks for, kept in step with its `$page.layout`. */
 	layout: "small" | "medium" | "large";
 	/**
-	 * The width it was last laid out at. Visible panels get a fresh value every
-	 * pass (widths are a pure function of the content area and small-pairing);
-	 * hidden and closing panels keep this, so nothing invisible ever reflows.
+	 * The width it was last laid out at. Set before the panel's content is first
+	 * drawn, so that content has a real box to measure itself against. Visible
+	 * panels get a fresh value every pass (widths are a pure function of the
+	 * content area and small-pairing); hidden and closing panels keep this, so
+	 * nothing invisible ever reflows.
 	 */
 	width: number;
+}
+
+/**
+ * What the shell measures out to, and with it the width every panel size gets.
+ * A pure function of the window, so it is the same for every panel in a pass.
+ */
+interface Geometry {
+	/** The body row: everything the columns and the sidebar share. */
+	total: number;
+	/** What sits beside the columns — the sidebar and its hairline, if shown. */
+	chrome: number;
+	/** Half the standard content area, or all of it when a half would be too narrow. */
+	small: number;
+	/** The standard content area: the 1280px page minus the chrome. */
+	medium: number;
+	/** Everything the window has beside the chrome, with no upper limit. */
+	large: number;
 }
 
 // ─── Controller ──────────────────────────────────────────────────────────────
@@ -430,6 +475,8 @@ export class PanelController {
 	 */
 	$state = A.proxy({ paths: [] as string[], topId: 0 });
 	private containerEl?: HTMLElement;
+	/** The shell's measurements, shared by everything drawn since they were taken. */
+	private geom?: Geometry;
 	/** The body width at the last layout; a change means a window resize → snap. */
 	private lastBodyW = -1;
 	private layoutQueued = false;
@@ -569,6 +616,9 @@ export class PanelController {
 	 * rule 5 promises to keep.
 	 */
 	private commit(target: string[], nav: string): void {
+		// The panels this commit mounts size themselves as they draw, so make them
+		// measure the shell as it is now rather than trusting the last pass's numbers.
+		this.geom = undefined;
 		const existing = new Map(this.live.map((entry) => [entry.path, entry]));
 		const next: PanelEntry[] = [];
 		for (const path of target) {
@@ -621,32 +671,49 @@ export class PanelController {
 	}
 
 	/**
-	 * Start a panel's exit: it lingers in the DOM, inert and fading, and is dropped
-	 * only when the fade itself ends. Removing it on a fixed timer instead would
-	 * race the transition — pull the element a frame early and the panel appears to
-	 * fade half-way and then vanish. The timeout is just a fallback for when no
-	 * `transitionend` is coming at all (transitions off, or an element that never
-	 * got placed).
+	 * Take a panel out of the shell. The *scope* goes now: its cleaners run this
+	 * tick, so whatever the panel registered with `A.clean` — subscriptions,
+	 * timers, an open portal — is torn down when the panel closes, not when its
+	 * animation is over. Only the element lingers, to play that animation, which
+	 * is what the `destroy=` hook in `drawPanel` is for: Aberdeen hands the
+	 * element to {@link playExit} instead of removing it.
 	 */
 	private beginClose(entry: PanelEntry): void {
 		entry.closing = true;
-		const el = entry.el;
+		// Frozen one layer below where it was, which is still above everything it
+		// was covering: it fades out over the panel it uncovers, and under the one
+		// that takes its place (see LAYER_STEP). Set here, while the element is
+		// still ours — a moment later the scope, and with it `entry.el`, is gone.
+		if (entry.el) entry.el.style.zIndex = String(LAYER_STEP * this.live.indexOf(entry));
+		this.byId.delete(entry.id);
+		delete this.$ids[String(entry.id)];
+	}
+
+	/**
+	 * A closed panel's send-off, run by Aberdeen once the panel's scope is gone (so
+	 * the content it shows is frozen, which is exactly what a departing column
+	 * should be): it fades where it stands, inert, and leaves the DOM when the fade
+	 * itself ends. Removing it on a fixed timer instead would race the transition —
+	 * pull the element a frame early and the panel appears to fade half-way and
+	 * then vanish. The timeout is just a fallback for when no `transitionend` is
+	 * coming at all (transitions off, or an element that never got placed).
+	 */
+	private playExit(entry: PanelEntry, el: HTMLElement): void {
+		// Only a close is worth animating. A panel being *redrawn* (a reactive
+		// dependency in its handler) replaces its element through here too, and that
+		// one simply goes, so the new one isn't drawn over a ghost of the old.
+		if (!entry.closing) { el.remove(); return; }
+		el.classList.add("s-panel-closing");
+		el.setAttribute("inert", "");
 		const drop = () => {
-			if (!this.byId.has(entry.id)) return;
-			this.byId.delete(entry.id);
-			delete this.$ids[String(entry.id)];
-		};
-		if (el) {
-			el.classList.add("s-panel-closing");
-			el.setAttribute("inert", "");
-			el.addEventListener("transitionend", (e: TransitionEvent) => {
-				if (e.target === el && e.propertyName === "opacity") drop();
-			});
-		}
-		const timer = setTimeout(() => {
+			clearTimeout(timer);
 			this.timers.delete(timer);
-			drop();
-		}, PANEL_MS + 80);
+			el.remove();
+		};
+		el.addEventListener("transitionend", (e: TransitionEvent) => {
+			if (e.target === el && e.propertyName === "opacity") drop();
+		});
+		const timer = setTimeout(drop, PANEL_MS + 80);
 		this.timers.add(timer);
 	}
 
@@ -801,6 +868,11 @@ export class PanelController {
 	 */
 	drawStack(): void {
 		const container = A("div.s-panels role=main", () => {
+			// Published before the first panel draws, rather than from the return
+			// value below: a panel sizes itself from the shell's measurements (see
+			// `measure`), and the first ones do that while this very call is still
+			// running. `A()` without arguments is "the element we're in".
+			this.containerEl = A() as HTMLElement;
 			A.onEach(
 				this.$ids,
 				(_order, id) => this.drawPanel(Number(id)),
@@ -808,7 +880,6 @@ export class PanelController {
 			);
 		}) as HTMLElement;
 
-		this.containerEl = container;
 		if (typeof ResizeObserver !== "undefined") {
 			const ro = new ResizeObserver(() => this.layout());
 			// The region *and* the body it sits in: the region alone misses a shell
@@ -825,8 +896,30 @@ export class PanelController {
 	private drawPanel(id: number): void {
 		const entry = this.byId.get(id);
 		if (!entry) return;
+		let el: HTMLElement | undefined;
 
-		const el = A("section.s-panel", () => {
+		// How much room the panel wants, resolved *before* its content is drawn: an
+		// element that arrives without a width has no box for its content to measure
+		// itself against until the next frame's layout pass, which is a frame too
+		// late for anything that sizes itself from its container. So the panel is
+		// created at the width the window gives its layout — "medium" until the page
+		// says otherwise. Reactively, too: a page that changes its mind later (when
+		// its data arrives, say) reflows in place rather than being redrawn, and the
+		// columns beside it slide over to make room.
+		A(() => {
+			const asked = entry.$page.layout;
+			entry.layout = asked === "small" || asked === "large" ? asked : "medium";
+			const width = this.roomFor(entry.layout);
+			if (!width) return;
+			entry.width = width;
+			// The first run has no element to put it on yet — it's created with this
+			// width, just below. Later runs are the page changing its layout.
+			if (!el) return;
+			el.style.width = `${width}px`;
+			this.scheduleLayout();
+		});
+
+		el = A(`section.s-panel${entry.width ? ` w:${entry.width}px` : ""}`, "destroy=", (node: HTMLElement) => this.playExit(entry, node), () => {
 			const contentEl = A("div.s-content", () => {
 				entry.draw(entry.$page);
 				// After the content, so there is something to scroll when restoring.
@@ -843,18 +936,12 @@ export class PanelController {
 			});
 		}) as HTMLElement;
 
-		// How much room the panel wants, settled right after its handler's
-		// synchronous run — deliberately once: a column that changed its mind
-		// later would reflow itself and shove its neighbours around.
-		const asked = A.peek(entry.$page, "layout");
-		entry.layout = asked === "small" || asked === "large" ? asked : "medium";
-
 		entry.el = el;
-		// Nothing animates from the arbitrary initial position; `layout()` gives
-		// the panel its real geometry (and turns transitions back on) in the
-		// upcoming frame, before anything is painted. A redraw (a reactive
-		// dependency inside the handler) lands here too, with a brand-new element
-		// that has to be placed again before it may animate.
+		// It has its width, but nothing animates from the arbitrary initial spot;
+		// `layout()` gives the panel its place in the run (and turns transitions
+		// back on) in the upcoming frame, before anything is painted. A redraw (a
+		// reactive dependency inside the handler) lands here too, with a brand-new
+		// element that has to be placed again before it may animate.
 		entry.placed = false;
 		el.style.transition = "none";
 		A.clean(() => { if (entry.el === el) entry.el = undefined; });
@@ -880,43 +967,22 @@ export class PanelController {
 	}
 
 	/**
-	 * Size and position every panel, and publish the width of the whole ensemble
-	 * (sidebar + separator + columns) for the shell to centre itself on.
+	 * Measure the shell, and with it the width the window gives a panel of each
+	 * layout. Measured on the *shell*, not on the panel region: the region's width
+	 * is the layout engine's own output, so reading it back would nail the layout
+	 * to whatever it happened to be a frame ago. Fractional widths throughout — a
+	 * rounded column edge would drift a pixel away from the chrome above it.
 	 *
-	 * This is everything CSS can't work out for itself: which panels exist, which
-	 * of them are visible, how wide each one is and where it sits. All the motion
-	 * between two of these arrangements is CSS's job.
+	 * `undefined` while the shell has no width to speak of (it isn't in a document
+	 * yet, or it's `display:none`); the next pass tries again.
 	 */
-	private layout(): void {
+	private measure(): Geometry | undefined {
 		const container = this.containerEl;
 		const inner = container?.parentElement;
 		const body = inner?.parentElement;
-		const shell = container?.closest<HTMLElement>(".s-main");
-		if (!container || !inner || !body || !shell) return;
-		const n = this.live.length;
-		// A panel that hasn't drawn yet has no width to contribute, which would make
-		// this pass's arithmetic (and any enter animation it triggers) meaningless.
-		// Every mount schedules another pass, so simply wait for it.
-		if (!n || this.live.some((entry) => !entry.el)) return;
-
-		// Measured on the *shell*, not on the region: the region's width is this
-		// function's own output, so reading it back would nail the layout to
-		// whatever it happened to be a frame ago. Fractional widths throughout — a
-		// rounded column edge would drift a pixel away from the chrome above it.
+		if (!container || !inner || !body) return undefined;
 		const total = body.getBoundingClientRect().width;
-		if (!total) return;
-
-		const stacking = this.opts.stacking !== false;
-
-		// A window resize (or the very first pass) must be adopted instantly —
-		// geometry tracking the window through a 450ms transition reads as lag,
-		// and a shell animating itself into place on load reads as a glitch.
-		// `.s-shell-snap` suppresses every standing transition for this one pass.
-		const snap = this.lastBodyW !== total;
-		if (snap) {
-			this.lastBodyW = total;
-			shell.classList.add("s-shell-snap");
-		}
+		if (!total) return undefined;
 
 		// Everything that sits beside the columns: the sidebar and its hairline,
 		// either of which may be display:none on a narrow shell.
@@ -929,18 +995,74 @@ export class PanelController {
 		// beside the sidebar is the *standard* content area. Widths are a pure
 		// function of the window — never of what else is open — so a panel NEVER
 		// resizes because a neighbour came or went; only a window resize (the
-		// snap pass above) changes them:
+		// snap pass in `layout`) changes them:
 		// - "medium" fills the standard content area exactly;
 		// - "small" is half of it (minus the gutter) whenever that half is still
 		//   a usable column, and the whole of it on narrower screens;
 		// - "large" ignores the standard width and takes everything the window
 		//   has — which also means nothing ever fits beside it.
-		const stdRoom = Math.max(0, Math.min(SHELL_PX, total) - chrome);
-		const fullRoom = Math.max(0, total - chrome);
-		const halfW = (stdRoom - GUTTER_PX) / 2;
-		const smallW = halfW >= PAIR_MIN_PX ? halfW : stdRoom;
-		const width = (entry: PanelEntry) =>
-			entry.layout === "small" ? smallW : entry.layout === "large" ? fullRoom : stdRoom;
+		const medium = Math.max(0, Math.min(SHELL_PX, total) - chrome);
+		const half = (medium - GUTTER_PX) / 2;
+		return {
+			total,
+			chrome,
+			small: half >= PAIR_MIN_PX ? half : medium,
+			medium,
+			large: Math.max(0, total - chrome),
+		};
+	}
+
+	/**
+	 * The measurements this pass runs on. Taken once per layout pass and per
+	 * commit, and shared with the panels drawn in between — they all size
+	 * themselves against the same shell, and a `getBoundingClientRect()` each
+	 * would be a forced reflow each, in the middle of building their DOM.
+	 */
+	private geometry(): Geometry | undefined {
+		return (this.geom ??= this.measure());
+	}
+
+	/** How wide a panel of this layout is, right now; 0 while the shell can't be measured. */
+	private roomFor(layout: PanelEntry["layout"]): number {
+		return this.geometry()?.[layout] ?? 0;
+	}
+
+	/**
+	 * Size and position every panel, and publish the width of the whole ensemble
+	 * (sidebar + separator + columns) for the shell to centre itself on.
+	 *
+	 * This is everything CSS can't work out for itself: which panels exist, which
+	 * of them are visible, how wide each one is and where it sits. All the motion
+	 * between two of these arrangements is CSS's job.
+	 */
+	private layout(): void {
+		const container = this.containerEl;
+		const shell = container?.closest<HTMLElement>(".s-main");
+		if (!container || !shell) return;
+		const n = this.live.length;
+		// A panel that hasn't drawn yet has no width to contribute, which would make
+		// this pass's arithmetic (and any enter animation it triggers) meaningless.
+		// Every mount schedules another pass, so simply wait for it.
+		if (!n || this.live.some((entry) => !entry.el)) return;
+
+		// This pass measures afresh — it is the one thing that runs after a resize.
+		this.geom = undefined;
+		const geom = this.geometry();
+		if (!geom) return;
+
+		const stacking = this.opts.stacking !== false;
+
+		// A window resize (or the very first pass) must be adopted instantly —
+		// geometry tracking the window through a 450ms transition reads as lag,
+		// and a shell animating itself into place on load reads as a glitch.
+		// `.s-shell-snap` suppresses every standing transition for this one pass.
+		const snap = this.lastBodyW !== geom.total;
+		if (snap) {
+			this.lastBodyW = geom.total;
+			shell.classList.add("s-shell-snap");
+		}
+
+		const width = (entry: PanelEntry) => geom[entry.layout];
 
 		// The visible run: as many top-of-stack panels as the window fits, at the
 		// sizes the window gives them. The top panel always shows.
@@ -949,7 +1071,7 @@ export class PanelController {
 		if (stacking) {
 			for (let i = n - 2; i >= 0; i--) {
 				const sum = runSum + GUTTER_PX + width(this.live[i]);
-				if (sum > fullRoom) break;
+				if (sum > geom.large) break;
 				runSum = sum;
 				first = i;
 			}
@@ -961,7 +1083,7 @@ export class PanelController {
 		// wider than the window. So the page is the familiar 1280px until extra
 		// columns genuinely fit, and stretches — centred — to hold the ones that
 		// do; with a "large" up that's the window's edges.
-		const area = Math.min(fullRoom, Math.max(stdRoom, runSum));
+		const area = Math.min(geom.large, Math.max(geom.medium, runSum));
 
 		for (let i = first; i < n; i++) this.live[i].width = width(this.live[i]);
 		// Panels that have never been visible get their would-be width too, so a
@@ -975,7 +1097,7 @@ export class PanelController {
 		// The consumers transition their max-width (see main.ts), so the
 		// recentring plays along with the panel that caused it instead of
 		// snapping.
-		shell.style.setProperty("--s-shell-w", `${chrome + area}px`);
+		shell.style.setProperty("--s-shell-w", `${geom.chrome + area}px`);
 
 		// Phase 1 — every panel's *start* state for this frame. Panels already on
 		// screen simply move (their standing transition animates it); freshly
@@ -988,8 +1110,10 @@ export class PanelController {
 			const el = entry.el!;
 			const shown = i >= first;
 			// Visible panels are left-aligned in the content area, a gutter apart;
-			// hidden ones park at its left edge, keeping their last width.
-			place(el, shown ? x : 0, entry.width);
+			// hidden ones park at its left edge, keeping their last width. Deeper
+			// panels layer over shallower ones, each on the odd layer for its depth
+			// (see LAYER_STEP).
+			place(el, shown ? x : 0, entry.width, LAYER_STEP * i + 1);
 			if (shown) x += entry.width + GUTTER_PX;
 			el.classList.toggle("s-panel-sep", shown && i > first);
 			// Hidden panels fade out over the left edge and, once faded, stop being
@@ -1036,10 +1160,11 @@ export class PanelController {
 	}
 }
 
-/** Put a panel at rest: `x` from the region's left edge, `width` pixels wide. */
-function place(el: HTMLElement, x: number, width: number): void {
+/** Put a panel at rest: `x` from the region's left edge, `width` pixels wide, on layer `z`. */
+function place(el: HTMLElement, x: number, width: number, z: number): void {
 	el.style.left = `${x}px`;
 	el.style.width = `${width}px`;
+	el.style.zIndex = String(z);
 }
 
 // ─── Guards ──────────────────────────────────────────────────────────────────

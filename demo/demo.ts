@@ -84,10 +84,39 @@ const showcaseIcons = [
 // ─── Shell ───────────────────────────────────────────────────────────────────
 
 const $navPosition = A.proxy("left") as {value: "left" | "right" | "button"};
-// Live shell options that the demo's own pages can flip. The S.main() call below
-// reads them inside a reactive scope, so a change redraws the shell in place (the
-// panel stack itself is rebuilt from the URL, columns and all).
-const $shell = A.proxy({ stacking: true });
+// Live shell settings the demo's own pages flip. `stacking` is read by the
+// S.main() call below, inside a reactive scope, so a change redraws the shell in
+// place (the panel stack itself is rebuilt from the URL, columns and all).
+// `extraNavItem` is just the state of the checkbox that adds a nav item, which
+// mutates the item list below instead — deliberately *not* the whole shell.
+const $shell = A.proxy({ stacking: true, extraNavItem: false });
+
+// The panel-lifecycle demo's state. Declared up here (like the icon data below)
+// because the S.main() call is evaluated as this module loads, and an initial
+// mount straight onto /demo/panels draws the playground there and then.
+/** What `drawLivePanel` notes about itself, shown back in the playground. */
+const $panelLog = A.proxy([] as string[]);
+/** How often `drawLivePanel` has run, so it can show that it *hasn't* run again. */
+let liveDraws = 0;
+
+// The nav items as a *proxy* array, which the panels playground adds one to at
+// runtime. The shell reads it in the sidebar's own scope, so an item arriving
+// redraws the sidebar and nothing else — the open columns keep their place and
+// their state.
+const $navItems = A.proxy<S.MenuEntry[]>([
+	{ label: "Form",     icon: icons.clipboardList,      href: "/demo/form"     },
+	{ label: "Buttons",  icon: icons.mousePointerClick,  href: "/demo/buttons"  },
+	{ label: "Tabs",     icon: icons.folders,            href: "/demo/tabs"     },
+	{ label: "Overlays", icon: icons.bell,               href: "/demo/overlays" },
+	{ label: "Surfaces", icon: icons.palette,            href: "/demo/surfaces" },
+	{ label: "Content",  icon: icons.fileText,           href: "/demo/content"  },
+	{ label: "Icons",    icon: icons.shapes,             href: "/demo/icons"    },
+	{ label: "Panels",   icon: icons.layers,             href: "/demo/panels"   },
+	{ separator: true },
+	{ label: "Staffa docs", icon: icons.arrowUpRight, href: "https://wildloop.dev/projects/staffa/", target: "_blank" },
+	{ label: "Aberdeen docs", icon: icons.arrowUpRight, href: "https://wildloop.dev/projects/aberdeen/", target: "_blank" },
+]);
+
 A(() => {
 	S.main({
 		// The brand sits in a gradient-text header, which sets `color:transparent`;
@@ -95,21 +124,7 @@ A(() => {
 		icon: () => icons.sparkles({ color: "var(--s-primary)" }),
 		title: "Staffa",
 		subtitle: "components for Aberdeen",
-		nav: {
-			items: [
-				{ label: "Form",     icon: icons.clipboardList,      href: "/demo/form"     },
-				{ label: "Buttons",  icon: icons.mousePointerClick,  href: "/demo/buttons"  },
-				{ label: "Tabs",     icon: icons.folders,            href: "/demo/tabs"     },
-				{ label: "Overlays", icon: icons.bell,               href: "/demo/overlays" },
-				{ label: "Surfaces", icon: icons.palette,            href: "/demo/surfaces" },
-				{ label: "Content",  icon: icons.fileText,           href: "/demo/content"  },
-				{ label: "Icons",    icon: icons.shapes,             href: "/demo/icons"    },
-				{ label: "Panels",   icon: icons.layers,             href: "/demo/panels"   },
-				{ separator: true },
-				{ label: "Staffa docs", icon: icons.arrowUpRight, href: "https://wildloop.dev/projects/staffa/", target: "_blank" },
-				{ label: "Aberdeen docs", icon: icons.arrowUpRight, href: "https://wildloop.dev/projects/aberdeen/", target: "_blank" },
-			],
-		},
+		nav: { items: $navItems },
 		navPosition: $navPosition.value,
 		// Keep the header uncluttered by tucking the display controls behind a
 		// single configure button. The popover lays them out as labelled rows.
@@ -152,6 +167,7 @@ A(() => {
 			"/demo/icons":                   ($page) => { $page.title = "Icons"; $page.layout = "small"; drawIcons(); },
 			"/demo/icons/[name]":            drawIconDetail,
 			"/demo/panels":                  drawPanelsPlayground,
+			"/demo/panels/live":             drawLivePanel,
 			"/demo/panels/item/[id=integer]": drawItemPanel,
 			"/demo/panels/a":                ($page) => drawSmallPanel($page, "A", "b"),
 			"/demo/panels/b":                ($page) => drawSmallPanel($page, "B", "a"),
@@ -338,6 +354,7 @@ function drawPanelsPlayground($page: S.Page) {
 				A("a href=/demo/panels/medium #Push a medium panel");
 				A("a href=/demo/panels/large #Push a large panel");
 				A("a href=/demo/form/guard #Push the close-guard panel");
+				A("a href=/demo/panels/live #Push the sizing & lifecycle panel");
 			});
 			A("div display:flex gap:$2 flex-wrap:wrap mt:$3", () => {
 				S.button({
@@ -350,6 +367,18 @@ function drawPanelsPlayground($page: S.Page) {
 	});
 
 	S.box({ header: "The stack", content: drawStackList });
+
+	// Only once there is something to say — see `drawLivePanel`, which writes here
+	// as it is torn down, from a panel that is by then only an animation.
+	A(() => {
+		if (!$panelLog.length) return;
+		S.box({
+			header: "Panel lifecycle",
+			content: () => A("ul m:0 padding-left:1.3em", () => {
+				A(() => { for (const line of $panelLog) A("li #", line); });
+			}),
+		});
+	});
 
 	S.box({
 		header: "Typed route params",
@@ -367,6 +396,77 @@ function drawPanelsPlayground($page: S.Page) {
 		content: () => {
 			A("p mt:0 rich='With `stacking: false` only the top panel is shown, however wide the screen — Escape, the browser’s back button, in-app links and the panels’ own ✕ buttons all still work the same.'");
 			S.checkbox({ label: "Show as many columns as fit", bind: A.ref($shell, "stacking") });
+		},
+	});
+}
+
+/**
+ * Sizing and lifecycle in one column:
+ *
+ * - The panel already has its width when the handler runs, so it can measure the
+ *   box it is drawing into instead of waiting a frame for one. This one keeps
+ *   the default `"medium"`, which is the width it is created at; a handler that
+ *   *assigns* `$page.layout` is drawn at the default and reflowed a tick later.
+ * - `$page.layout` is live: picking another size reflows this column (and slides
+ *   whatever is beside it over) without redrawing it — the draw count below
+ *   stays where it is.
+ * - Adding a nav item mutates the shell's (proxied) item list. The sidebar
+ *   redraws; the columns don't, so this panel is not rebuilt either.
+ * - Closing it tears it down there and then; the element only lingers to play
+ *   its fade, which is exactly what the log line it leaves behind says.
+ */
+function drawLivePanel($page: S.Page) {
+	$page.title = "Sizing & lifecycle";
+	// The default, spelled out so the size picker below has something selected.
+	$page.layout = "medium";
+
+	// `A()` with no arguments is the element we're drawing into — the panel's
+	// content area, which already has the width its column was given.
+	const contentEl = A() as HTMLElement;
+	const drawnWidth = Math.round(contentEl.offsetWidth);
+	const draws = ++liveDraws;
+
+	A.clean(() => {
+		// Still connected: the panel's scope is gone the moment it closes, while
+		// the element it drew hangs around for the length of the exit animation.
+		$panelLog.push(contentEl.isConnected
+			? `#${draws} torn down while still fading out`
+			: `#${draws} torn down after it was gone`);
+		if ($panelLog.length > 4) $panelLog.shift();
+	});
+
+	S.box({
+		header: "Sizing & lifecycle",
+		close: true,
+		content: () => {
+			A("p mt:0 rich='A panel is sized *before* its draw function runs, so anything that measures its own box — a chart, a virtualised list, a column count — gets a real one from the first frame.'");
+			A("p m:0 #Measured while drawing: ");
+			A("code data-testid=drawn-width #", String(drawnWidth));
+			A("p mb:0 rich='Pick another size: the column reflows, and whatever is beside it slides over. It is not redrawn, so nothing in it is rebuilt or loses its state.'");
+			S.buttonChooser({
+				options: { small: "small", medium: "medium", large: "large" },
+				bind: A.ref($page, "layout"),
+				attrs: ".small",
+			});
+			A("p mb:0 #Drawn ");
+			A("code data-testid=live-draws #", String(draws));
+			A("# time(s) since the page loaded.");
+		},
+		footer: () => S.button({ content: "Cancel", attrs: ".neutral", click: () => void $page.close() }),
+	});
+
+	S.box({
+		header: "A live nav",
+		content: () => {
+			A("p mt:0 rich='The shell reads its `nav.items` inside the sidebar’s own scope, so adding one redraws the sidebar — and only the sidebar. The columns, this one included, stay exactly as they are.'");
+			S.checkbox({
+				label: "Add a Scratch nav item",
+				bind: A.ref($shell, "extraNavItem"),
+				change: () => {
+					if ($shell.extraNavItem) $navItems.splice(8, 0, { label: "Scratch", icon: icons.sparkles, href: "/demo/panels" });
+					else $navItems.splice($navItems.findIndex((i) => (i as S.MenuItem).label === "Scratch"), 1);
+				},
+			});
 		},
 	});
 }
