@@ -158,7 +158,9 @@ The first key that matches wins, and a segment a param refuses simply doesn't ma
 - A link to something that's already open goes back to it instead of opening it twice. The same path is never in the stack twice.
 - A link that isn't inside a panel (a nav item, or one in a dialog) has no panel to build on, so it replaces the stack as a whole: the page you asked for, with its ancestor pages opened beneath it (see [below](#ancestors)). Panels that the new stack also contains stay as they are, so clicking the nav item for the section you're already in won't reset it. Clicking a nav item and opening that same URL in a fresh tab therefore give you the same columns.
 
-From code, `S.panels.push(path)` opens a panel on top of the top one, `.replace(path)` opens one in place of the top one, and `.close(path?)` closes the top panel (or a named one). `S.panels.stack` is the list of open paths.
+From code, `S.panels.push(path)` opens a panel on top of the top one, `.replace(path)` opens one in place of the top one, `.open(path, beneath?)` opens a whole arrangement at once (the way a nav item does — see [below](#ancestors)), and `.close(path?)` closes the top panel (or a named one). `S.panels.stack` is the list of open paths.
+
+Navigating faster than the shell can settle is fine: closing travels through the browser's history, so it takes a moment to land, and anything asked for in the meantime waits for it rather than being dropped. Two quick Escapes (or back gestures) peel two panels, each aimed at the stack the one before it was heading for. A `requestClose` that says no clears what was queued behind it, so an Escape can't sail past the panel that just refused to close.
 
 **How much room a panel takes** is up to `$page.layout`. The content area is the page, at most 1280px wide, minus the nav sidebar:
 
@@ -209,6 +211,26 @@ Staffa itself contributes two things: the Escape key, which closes the top panel
 **The back button, and links from elsewhere.** The URL holds the top panel; the rest of the stack is stored beside it in the browser's history entry. So back and forward step through whole arrangements of columns, and a reload brings the same columns back.
 
 A URL that arrives without any of that (a shared link, a bookmark, a new tab) has nothing to restore, so Staffa builds the stack from the path: it walks the parent paths and opens each one you have a route for. With the routes above, `/projects/7/tasks/42` opens as three panels: the project list, project 7, and task 42. A parent path you have no route for is skipped, so if you don't want one screen appearing under another, just don't give it a route.
+
+That only works for URLs that spell their own context out. A flat one — `/thread/[id]`, where a push notification lands — has no parent path to walk, so it would open as a lone column with nothing beneath it and nothing for Escape to do. `ancestors` is where you say what belongs under it. It's keyed by the same path templates as `routes`, so each entry gets that key's params, matched and typed:
+
+```ts
+S.main({
+  routes: {
+    "/mailbox/[id]": drawMailbox,
+    "/thread/[id=integer]": drawThread,
+  },
+  ancestors: {
+    "/thread/[id=integer]": ({ id }) => [`/mailbox/${mailboxOf(id)}`],   // id is a number
+  },
+});
+```
+
+Return the paths shallowest first, or nothing to leave that path to the parent-path walk — which is also what a route you don't list gets, so you only name the ones whose URL doesn't say where they belong. It's asked for every navigation that has no panel to build on, so a nav item and a fresh tab still agree.
+
+It has to answer without drawing anything, which is why it lives here rather than on `$page`: the panels being replaced are asked their `requestClose` *before* the navigation is applied, and that is before any route handler could have run.
+
+From code, `S.panels.open(path, beneath?)` opens the same kind of arrangement, either asking `ancestors` for the stack or taking the one you hand it.
 
 Search params and the `#hash` belong to the top panel only. Anything a panel deeper in the stack needs in order to redraw itself has to live in its path.
 
@@ -271,7 +293,7 @@ Components share naming conventions for options: `attrs` (outermost element), `c
 
 ### Layout & containers
 
-- **`S.main(opts)`**: app shell, a sticky header with `icon`, `title`, `subtitle`, `menu`; scrollable content area; footer. Set `maxWidth` to center the content. Give it a `nav` for a sidebar that collapses to a hamburger below 640 px — where the nav becomes a full page sliding in from the left, handing over to the chosen screen with a matching slide in from the right. Its `items` may be a reactive array; adding or removing one redraws just the sidebar, never the content beside it. Instead of a single `content` slot it can take a `routes` table — see [Panel-stack navigation](#panel-stack-navigation).
+- **`S.main(opts)`**: app shell, a sticky header with `icon`, `title`, `subtitle`, `menu`; scrollable content area; footer. Set `maxWidth` to center the content. Give it a `nav` for a sidebar that collapses to a hamburger below 640 px — where the nav becomes a full page sliding in from the left, handing over to the chosen screen with a matching slide in from the right. Its `items` may be a reactive array; adding or removing one redraws just the sidebar, never the content beside it. A navigation dismisses the collapsed nav by itself, links in your own custom rows included; `S.closeNav()` does it for the rows that *don't* navigate. Instead of a single `content` slot it can take a `routes` table — see [Panel-stack navigation](#panel-stack-navigation).
 - **`S.box(opts | content)`**: surface with optional `header`/`footer` and padded body. Pass a function for shorthand `{ content }`. `close: true` adds a ✕ that closes the panel the box is in (see [Panel-stack navigation](#panel-stack-navigation)); `close: fn` runs your own dismissal.
 - **`S.tabs(opts)`**: tablist with live panels and keyboard navigation. More tabs than fit make the strip scroll, with a ‹ / › button appearing at whichever end still has something to reach — so it's not just a swipe target. Selecting a tab any other way (the arrow keys, a `bind` written from elsewhere) scrolls it into view.
 - **`S.form(opts | content)`**: form aligning fields in a column or responsive grid, with an `actions` bar. Prevents the default page reload.
@@ -313,7 +335,8 @@ Options: `size`, `color` (defaults to `currentColor`), `strokeWidth`, `cap`, `jo
 
 ### Other
 
-- **`S.menuButton(opts)` / `S.addContextMenu(opts)` / `S.showFloatingMenu(opts)`**: dropdown menus from a button, right-click/long-press context menus, and the underlying floating menu primitive — with keyboard navigation.
+- **`S.menuButton(opts)` / `S.addContextMenu(opts)` / `S.showFloatingMenu(opts)`**: dropdown menus from a button, right-click/long-press context menus, and the underlying floating menu primitive — with keyboard navigation. A menu closes itself when the page navigates.
+- **`S.closeNav()`**: dismisses `S.main`'s navigation when it's showing as an overlay (the full page on a phone, the dropdown on a wider screen). For custom nav rows that act without navigating.
 - **`S.toast(opts)`**: transient notification at the bottom of the viewport.
 - **`S.addTooltip(el, opts)`**: tooltip on hover, attached to an existing element.
 
@@ -405,23 +428,8 @@ mkdir -p .claude/skills
 ln -s ../../node_modules/staffa/skill .claude/skills/staffa
 ```
 
-## Breaking changes
+## Changelog
 
-- **0.7** — the surface model was reduced to two families: **neutral** (`.neutral`) and **accent** (`.primary`/`.danger`/`.success`/`.warning`/`.link`). Apps that only use the high-level `S.*` components need no changes. Code that uses surface classes or tokens directly must update:
-  - **Surface levels gone.** Replace `.base`/`.panel`/`.raised`/`.neutral`/`.nest` with the single `.neutral` class.
-  - **`.secondary` and `.gradient` gone.** Drop any `s-secondary` colour override; there's no `s-secondary` anymore. The default button is now `.primary`.
-  - **Tokens renamed.** `--s-fg`→`--s-text`, `--s-fg-muted`→`--s-muted`, `--s-border`→`--s-faint`. Removed: `--s-fg-faint`, `--s-border-strong`, `--s-ink`, `--s-on-accent`, `--s-page`/`--s-panel`/`--s-raised`, `--s-neutral`, `--s-tint`, `--s-glow`, `--s-shadow`, `--s-gradient-surface`. A custom surface now sets `--s-bg`/`--s-text` (was the `--s-a`/`--s-b` anchors).
-  - **Borders/shadows moved onto surfaces.** Components no longer draw their own border/shadow. If you relied on `S.box`/`S.dialog`/etc. elevation, it now comes from the surface; pass `.no-shadow` to drop it, or `.shadow`/`.extra-shadow` to add it on any surface.
+What changed in each release, and what to do about the breaking ones, is in [CHANGELOG.md](CHANGELOG.md).
 
-- **0.6**: None.
-
-- **0.5**
-  - Surfaces (`.s-s`) now apply `border-radius` and — for `.tonal` and `.outlined` variants — `border` automatically. Custom surfaces or components that previously set these manually may see doubled or conflicting styles; remove the manual declarations.
-  - `border:0` is now applied to `.s-btn` by default (overriding the browser's 2px button border). Custom button-like components built on `.s-btn` that relied on the browser default border should add an explicit border.
-
-- **0.4**
-  - There is no default export anymore: replace `import S from "staffa"` with `import * as S from "staffa"`.
-  - `S.button` no longer has a `text` option: use `content` instead (it accepts a string or a draw function).
-  - The `Content` type is gone: use `Slot` instead. The `Styling` type alias is now exported as `Attributes`.
-  - `S.buttonChooser` uses `undefined` instead of `null` for "nothing selected" (in `bind` and with `allowDeselect`).
-  
+*Hint:* the recommended update strategy for a library this young is: don't. Pin it, and read the changelog before you move.

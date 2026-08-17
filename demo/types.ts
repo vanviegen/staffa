@@ -54,7 +54,26 @@ S.main({
 		// @ts-expect-error — an unmatched path carries no params.
 		$page.params.anything;
 	},
+	// `ancestors` is keyed by the same templates, and types each entry's params
+	// from its own key — so it never has to take the path apart again.
+	ancestors: {
+		"/projects/[projectId]/tasks/[taskId=integer]": (params, path) => {
+			assert<Exact<typeof params.projectId, string>>();
+			assert<Exact<typeof params.taskId, number>>();
+			assert<Exact<typeof path, string>>();
+			return [`/projects/${params.projectId}`];
+		},
+		// Saying nothing leaves the path to the parent-path derivation.
+		"/icons/[name]": () => undefined,
+	},
 	stacking: false,
+});
+
+// A key that isn't in the route table is a typo, and typos are type errors.
+S.main({
+	routes: { "/projects/[id]": () => {} },
+	// @ts-expect-error — no such route.
+	ancestors: { "/projekts/[id]": () => [] },
 });
 
 // A plain, non-routed shell keeps inferring exactly as it always did.

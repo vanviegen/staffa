@@ -173,6 +173,20 @@ A(() => {
 			"/demo/panels/b":                ($page) => drawSmallPanel($page, "B", "a"),
 			"/demo/panels/medium":           drawMediumPanel,
 			"/demo/panels/large":            drawLargePanel,
+			// A deliberately *flat* URL: neither /demo nor /demo/thread is a route,
+			// so there is no prefix to walk and nothing would open beneath it. What
+			// belongs there is `ancestors`' job, below.
+			"/demo/thread/[id=integer]":     drawThreadPanel,
+		},
+		// Where a path that arrives cold — a shared link, a notification — belongs
+		// when it can't say so itself. `/demo/thread/7` has no routed prefix to
+		// walk, so without this it would open as a lone column with no way back;
+		// with it, the playground opens underneath, exactly as if you had walked
+		// there. Keyed like a route, so `id` arrives matched and typed (a number
+		// here) instead of being parsed back out of the path. Every other route is
+		// left to the prefix derivation by simply not being listed.
+		ancestors: {
+			"/demo/thread/[id=integer]": ({ id }) => [id > 100 ? "/demo/panels/a" : "/demo/panels"],
 		},
 		notFound: ($page) => {
 			S.box({
@@ -362,6 +376,15 @@ function drawPanelsPlayground($page: S.Page) {
 					attrs: ".neutral",
 					click: () => S.panels.push("/demo/panels/b"),
 				});
+				// The other way in: a whole arrangement at once, for a screen whose
+				// URL doesn't say where it belongs. Here the stack under it is spelled
+				// out; `S.panels.open("/demo/thread/8")` alone would ask the shell's
+				// `ancestors` for it, which is what a cold link to the same path gets.
+				S.button({
+					content: "S.panels.open()",
+					attrs: ".neutral",
+					click: () => S.panels.open("/demo/thread/8", ["/demo/panels"]),
+				});
 			});
 		},
 	});
@@ -463,11 +486,54 @@ function drawLivePanel($page: S.Page) {
 				label: "Add a Scratch nav item",
 				bind: A.ref($shell, "extraNavItem"),
 				change: () => {
-					if ($shell.extraNavItem) $navItems.splice(8, 0, { label: "Scratch", icon: icons.sparkles, href: "/demo/panels" });
-					else $navItems.splice($navItems.findIndex((i) => (i as S.MenuItem).label === "Scratch"), 1);
+					// A slot, not a `MenuItem`: custom content the shell can't reason
+					// about, which is exactly what `S.closeNav()` is there for.
+					if ($shell.extraNavItem) $navItems.splice(8, 0, drawScratchNavRow);
+					else $navItems.splice($navItems.findIndex((i) => typeof i === "function"), 1);
 				},
 			});
 		},
+	});
+}
+
+/**
+ * A screen behind a *flat* URL — the shape a push notification or a shared link
+ * lands on. Nothing in `/demo/thread/7` says which list it came out of, so the
+ * shell's `ancestors` option is what puts the playground beneath it; without
+ * that it would open alone, with nothing to close back to.
+ */
+function drawThreadPanel($page: S.Page<{ id: number }>) {
+	const { id } = $page.params;
+	$page.title = `Thread ${id}`;
+	$page.layout = "small";
+
+	S.box({
+		header: `Thread ${id}`,
+		close: true,
+		content: () => {
+			A("p mt:0 rich='A flat URL: there is no `/demo/thread` screen to walk up to, so the shell asked the app what belongs underneath. Escape (or the ✕) goes back to it.'");
+			A("a href=/demo/panels #Back to the playground");
+		},
+	});
+}
+
+/**
+ * A custom nav row: a plain slot, so the shell knows nothing about what it
+ * draws. The link still dismisses the nav, because *any* navigation does; the
+ * button navigates nowhere, so it says so itself with `S.closeNav()`.
+ */
+function drawScratchNavRow() {
+	A("div display:flex align-items:center gap:$2", () => {
+		A("a.s-menu-item href=/demo/buttons flex:1 #Scratch");
+		S.button({
+			content: "Note",
+			attrs: ".neutral .small",
+			click: () => {
+				S.closeNav();
+				$panelLog.push("scratch action, no navigation");
+				if ($panelLog.length > 4) $panelLog.shift();
+			},
+		});
 	});
 }
 

@@ -1,1 +1,1 @@
-Read `README.md` before you proceed.
+AGENTS.md

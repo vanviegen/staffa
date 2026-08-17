@@ -63,6 +63,23 @@ export type Routes = Record<string, RouteHandler>;
  */
 export type RouteTable<R> = { [K in keyof R & string]: (page: Page<Prettify<PathParams<K>>>) => void };
 
+/**
+ * What belongs beneath a path that arrives cold, worked out from the params of
+ * the path itself. Return the paths shallowest first, or nothing to leave this
+ * one to the parent-path derivation.
+ */
+export type AncestorsHandler<P = any> = (params: P, path: string) => readonly string[] | undefined | void;
+
+/**
+ * A table of {@link AncestorsHandler}s keyed by path template, the same way
+ * `routes` is — so each one's `params` are matched and typed from its own key
+ * rather than parsed out of the path a second time. The keys are checked
+ * against the route table, so a stale one is a type error.
+ */
+export type AncestorTable<R> = {
+	[K in keyof R & string]?: (params: Prettify<PathParams<K>>, path: string) => readonly string[] | undefined | void;
+};
+
 // ─── The Page object ─────────────────────────────────────────────────────────
 
 /**
@@ -210,11 +227,12 @@ function splitPath(path: string): string[] {
 }
 
 /**
- * Turn a route key into segment tokens, throwing on malformed templates. A
+ * Turn a path template into segment tokens, throwing on malformed ones. A
  * segment is a param only when it is *entirely* a bracket group, so a literal
- * segment that merely contains brackets (`/v[1]beta`) stays literal.
+ * segment that merely contains brackets (`/v[1]beta`) stays literal. Used for
+ * both tables keyed by a path template: `routes` and `ancestors`.
  */
-function compileRoute(key: string, draw: RouteHandler): CompiledRoute {
+function compileKey(key: string): { key: string; segs: Seg[] } {
 	const parts = splitPath(key);
 	const segs = parts.map((part, i): Seg => {
 		if (!part.startsWith("[") || !part.endsWith("]")) return { kind: "lit", value: part };
@@ -232,7 +250,7 @@ function compileRoute(key: string, draw: RouteHandler): CompiledRoute {
 		}
 		return { kind: "param", name, matcher };
 	});
-	return { key, segs, draw };
+	return { key, segs };
 }
 
 /** Percent-decode a path segment, leaving it alone when it isn't valid encoding. */
@@ -240,7 +258,7 @@ function decodeSeg(value: string): string {
 	try { return decodeURIComponent(value); } catch { return value; }
 }
 
-function matchRoute(r: CompiledRoute, segments: string[]): Record<string, any> | null {
+function matchRoute(r: { segs: Seg[] }, segments: string[]): Record<string, any> | null {
 	const params: Record<string, any> = {};
 	for (let i = 0; i < r.segs.length; i++) {
 		const seg = r.segs[i];
@@ -451,6 +469,8 @@ interface Geometry {
 export interface PanelStackOptions {
 	routes: Routes;
 	notFound?: RouteHandler<{}>;
+	/** What to open beneath a path that arrives cold. See {@link MainOptions.ancestors}. */
+	ancestors?: Record<string, AncestorsHandler | undefined>;
 	/** Set `false` to show only the top panel, however much room there is. */
 	stacking?: boolean;
 	/** The shell's own title, used as the suffix of `document.title`. */
@@ -462,6 +482,8 @@ let active: PanelController | null = null;
 
 export class PanelController {
 	private compiled: CompiledRoute[];
+	/** The `ancestors` table, compiled like the routes it is keyed by. */
+	private ancestors: { key: string; segs: Seg[]; fn: AncestorsHandler }[];
 	private opts: PanelStackOptions;
 	/** The live stack, shallow-to-deep. Closing panels are no longer part of it. */
 	private live: PanelEntry[] = [];
@@ -481,6 +503,12 @@ export class PanelController {
 	private lastBodyW = -1;
 	private layoutQueued = false;
 	private timers = new Set<ReturnType<typeof setTimeout>>();
+	/** The stack the navigation in flight is heading for; see {@link intended}. */
+	private intent: string[] | null = null;
+	/** The navigation the router hasn't settled yet, if any. */
+	private settling: Promise<boolean> | null = null;
+	/** The one navigation waiting behind it; see {@link issue}. */
+	private queued: { run: () => boolean | Promise<boolean>; settle: (ok: boolean) => void } | null = null;
 
 	constructor(opts: PanelStackOptions) {
 		if (active) {
@@ -488,7 +516,10 @@ export class PanelController {
 		}
 		active = this;
 		this.opts = opts;
-		this.compiled = Object.entries(opts.routes).map(([key, draw]) => compileRoute(key, draw));
+		this.compiled = Object.entries(opts.routes).map(([key, draw]) => ({ ...compileKey(key), draw }));
+		this.ancestors = Object.entries(opts.ancestors ?? {})
+			.filter((entry): entry is [string, AncestorsHandler] => entry[1] != null)
+			.map(([key, fn]) => ({ ...compileKey(key), fn }));
 
 		// The router consults this guard before any navigation is applied — ours,
 		// a link's, browser back/forward, even a direct route.go() by app code —
@@ -520,6 +551,10 @@ export class PanelController {
 		A.clean(() => {
 			for (const t of this.timers) clearTimeout(t);
 			this.timers.clear();
+			// Nothing is going to navigate a shell that isn't there: whatever was
+			// waiting its turn is answered rather than left hanging.
+			this.queued?.settle(false);
+			this.queued = null;
 			route.setGuard(appGuard);
 			if (active === this) active = null;
 		});
@@ -543,21 +578,52 @@ export class PanelController {
 	}
 
 	/**
-	 * The one derivation rule for origin-less navigation (§2.8): probe every
-	 * prefix of the path against the route table; the matching prefixes become
-	 * the stack. Prefixes without a route are simply skipped, so an app that
-	 * doesn't want one screen stacked under another just doesn't route that
-	 * prefix. The path itself is always the top panel, matched or not.
+	 * The stack for origin-less navigation: a cold deep link, a nav item, a
+	 * `route.go()` — anything arriving without a panel to build on and without a
+	 * snapshot to restore.
+	 *
+	 * The app's {@link PanelStackOptions.ancestors} gets first say, since only it
+	 * can know what belongs under a path that doesn't spell its own context out
+	 * (a `/thread/[id]` reached from a notification). Failing that — or when it
+	 * has no opinion — every prefix of the path is probed against the route table
+	 * and the matching ones become the stack. Either way, a path with no route is
+	 * skipped rather than opened as a "not found" column, so an app that doesn't
+	 * want one screen stacked under another simply doesn't route it. The path
+	 * itself is always the top panel, matched or not.
 	 */
 	deriveStack(path: string): string[] {
-		const segments = splitPath(path);
+		const top = normalizePath(path);
+		const asked = this.askAncestors(top);
+		const beneath = asked ? asked.map(normalizePath) : this.prefixesOf(top);
 		const stack: string[] = [];
-		for (let i = 1; i < segments.length; i++) {
-			const prefix = "/" + segments.slice(0, i).join("/");
-			if (this.matches(prefix)) stack.push(prefix);
+		for (const ancestor of beneath) {
+			if (ancestor !== top && !stack.includes(ancestor) && this.matches(ancestor)) stack.push(ancestor);
 		}
-		stack.push(normalizePath(path));
+		stack.push(top);
 		return stack;
+	}
+
+	/**
+	 * Ask the `ancestors` table what belongs beneath `path`. The first key that
+	 * matches answers — with its own matched params, so it never has to take the
+	 * path apart itself — and `undefined` from it means "no opinion", leaving the
+	 * path to the prefix derivation just as an unlisted one is.
+	 */
+	private askAncestors(path: string): readonly string[] | undefined {
+		const segments = splitPath(path);
+		for (const entry of this.ancestors) {
+			const params = matchRoute(entry, segments);
+			if (params) return entry.fn(params, path) ?? undefined;
+		}
+		return undefined;
+	}
+
+	/** Every prefix of `path` that has a route, shallowest first. */
+	private prefixesOf(path: string): string[] {
+		const segments = splitPath(path);
+		const found: string[] = [];
+		for (let i = 1; i < segments.length; i++) found.push("/" + segments.slice(0, i).join("/"));
+		return found;
 	}
 
 	/** The stack a route implies: its snapshot topped by its path, or — without a snapshot — derived. */
@@ -665,7 +731,7 @@ export class PanelController {
 		entry.$page = A.proxy({
 			params,
 			path,
-			close: () => this.closePanelAt(this.live.indexOf(entry)),
+			close: () => this.closePath(entry.path),
 		}) as Page<any>;
 		return entry;
 	}
@@ -720,6 +786,57 @@ export class PanelController {
 	// ── Navigation ─────────────────────────────────────────────────────────
 
 	/**
+	 * The stack navigation works from: the one we're on the way to while a change
+	 * is still settling, and the one on screen otherwise.
+	 *
+	 * Settling takes a moment more often than it looks: an async
+	 * {@link Page.requestClose}, and every `route.back()`, which travels through
+	 * the browser's history and lands on a `popstate`. Working from the committed
+	 * stack in that window would make a second Escape ask for the panel the first
+	 * one is already taking away — so two quick Escapes would peel one panel.
+	 */
+	private intended(): string[] {
+		return this.intent ?? this.paths();
+	}
+
+	/**
+	 * Put a navigation to the router, or — while one is still settling — behind
+	 * the one that is. Only the newest waits: each was worked out against
+	 * {@link intended}, so the newest is the one that means what the user last
+	 * asked for, and the one it displaces resolves `false`.
+	 *
+	 * A refusal empties the queue instead of running it. A veto is a "no, keep
+	 * this open", and the Escape queued behind it was aimed a panel deeper — with
+	 * the veto standing, running it would close the very panel that just said no.
+	 */
+	private issue(target: string[], run: () => boolean | Promise<boolean>): Promise<boolean> {
+		this.intent = target;
+		if (this.settling) {
+			this.queued?.settle(false);
+			return new Promise<boolean>((settle) => { this.queued = { run, settle }; });
+		}
+		return this.start(run);
+	}
+
+	private start(run: () => boolean | Promise<boolean>): Promise<boolean> {
+		const done = (ok: boolean): boolean => {
+			this.settling = null;
+			const next = this.queued;
+			this.queued = null;
+			// The router applies a change (and runs Aberdeen's queue, so our own
+			// commit has happened) before it settles us, which is what lets the next
+			// one go straight out: it asks the guards of the panels it removes from
+			// the stack as it stands now, not the one it was queued against.
+			if (ok && next) this.start(next.run).then(next.settle, () => next.settle(false));
+			else { this.intent = null; next?.settle(false); }
+			return ok;
+		};
+		const settling = Promise.resolve(run()).then(done, (e) => { console.error(e); return done(false); });
+		this.settling = settling;
+		return settling;
+	}
+
+	/**
 	 * Navigate back to a stack that is a truncation of the current one — the shared
 	 * implementation of Escape, a page closing itself, return-links and
 	 * `S.panels.close()`. `route.back()` prefers the history entry where that
@@ -729,23 +846,26 @@ export class PanelController {
 	 * promise reports its verdict.
 	 */
 	private goBackTo(target: string[]): Promise<boolean> {
-		return route.back({ path: target[target.length - 1] }, { state: { panels: target.slice(0, -1) } });
+		return this.issue(target, () =>
+			route.back({ path: target[target.length - 1] }, { state: { panels: target.slice(0, -1) } }));
 	}
 
 	/** Close every panel above `index` (guarded). Resolves `false` when vetoed. */
 	closeDownTo(index: number): Promise<boolean> {
-		if (index < 0 || index >= this.live.length - 1) return Promise.resolve(false);
-		return this.goBackTo(this.paths().slice(0, index + 1));
+		const paths = this.intended();
+		if (index < 0 || index >= paths.length - 1) return Promise.resolve(false);
+		return this.goBackTo(paths.slice(0, index + 1));
 	}
 
 	/** Guarded close of the top panel. */
 	closeTop(): Promise<boolean> {
-		return this.closeDownTo(this.live.length - 2);
+		return this.closeDownTo(this.intended().length - 2);
 	}
 
 	/**
-	 * Guarded close of the panel at `index`, top of the stack or not — what a
-	 * page's own close affordances ({@link Page.close}, a box's ✕) come down to.
+	 * Guarded close of whichever panel is open at `path`, top of the stack or not
+	 * — what a page's own close affordances ({@link Page.close}, a box's ✕) come
+	 * down to. `false` when that path isn't open.
 	 *
 	 * The top panel pops back to the snapshot beneath it. Any other panel is
 	 * *spliced* out: its guard runs, the columns above it keep their place and
@@ -755,11 +875,13 @@ export class PanelController {
 	 * why it goes through `route.go` here rather than through `navigate()`, whose
 	 * "link to the panel we're already on" check would see a no-op.
 	 */
-	closePanelAt(index: number): Promise<boolean> {
-		if (index < 0 || index >= this.live.length) return Promise.resolve(false);
-		if (index === this.live.length - 1) return this.closeTop();
-		const target = this.paths().filter((_, i) => i !== index);
-		return Promise.resolve(route.go({
+	closePath(path: string): Promise<boolean> {
+		const paths = this.intended();
+		const index = paths.indexOf(normalizePath(path));
+		if (index < 0) return Promise.resolve(false);
+		if (index === paths.length - 1) return this.closeDownTo(index - 1);
+		const target = paths.filter((_, i) => i !== index);
+		return this.issue(target, () => route.go({
 			path: target[target.length - 1],
 			// The top panel keeps its search params and hash: it isn't going
 			// anywhere, and `go()` would otherwise default them away.
@@ -769,41 +891,38 @@ export class PanelController {
 		}));
 	}
 
-	/** Guarded close of whichever panel `path` is open as. False when it isn't open. */
-	closeByPath(path: string): Promise<boolean> {
-		const wanted = normalizePath(path);
-		return this.closePanelAt(this.live.findIndex((entry) => entry.path === wanted));
-	}
-
 	/** Guarded close of the panel whose `.s-panel` element this is. */
 	closePanelEl(el: HTMLElement): Promise<boolean> {
-		return this.closePanelAt(this.live.findIndex((entry) => entry.el === el));
+		const entry = this.live.find((e) => e.el === el);
+		return entry ? this.closePath(entry.path) : Promise.resolve(false);
 	}
 
 	/**
-	 * Navigate to `href`. `originIndex` is the depth of the panel the link lives
-	 * in (−1 when it has none — a nav item or a programmatic call, which derives
-	 * the whole stack instead). `replace` swaps the originating panel rather than
-	 * stacking on top of it.
+	 * Navigate to `href`. `origin` is the path of the panel the link lives in, or
+	 * `null` when it has none — a nav item, or a programmatic call, which builds
+	 * the whole stack instead (see {@link deriveStack}). `replace` swaps the
+	 * originating panel rather than stacking on top of it, and `beneath` says what
+	 * the stack under the target is outright, for callers that know.
 	 */
-	navigate(href: string, originIndex: number, replace = false): void {
+	navigate(href: string, origin: string | null, replace = false, beneath?: readonly string[]): void {
 		let url: URL;
 		try { url = new URL(href, location.href); } catch { return; }
 		const path = normalizePath(url.pathname);
 		const search = Object.fromEntries(new URLSearchParams(url.search));
 		const hash = url.hash;
+		const paths = this.intended();
 
 		// A link to a panel that is already open is a return, not a navigation —
 		// so a stack can never hold the same path twice.
-		const open = this.live.findIndex((e) => e.path === path);
-		if (open >= 0 && open < this.live.length - 1) { void this.closeDownTo(open); return; }
-		if (open >= 0) {
+		const open = paths.indexOf(path);
+		if (open >= 0 && open < paths.length - 1 && !beneath) { void this.closeDownTo(open); return; }
+		if (open >= 0 && !beneath) {
 			// The target is the panel we're already on. Going nowhere — but the link
 			// may still carry a different search or hash, which belong to the top
 			// panel: record that as a history entry, leaving the stack alone (the
 			// panel reconciles by path, so it isn't even redrawn).
 			if (url.search === location.search && (url.hash || "") === (location.hash || "")) return;
-			route.go({ path, search, hash, state: { panels: this.paths().slice(0, -1) } });
+			void this.issue(paths, () => route.go({ path, search, hash, state: { panels: paths.slice(0, -1) } }));
 			return;
 		}
 
@@ -812,15 +931,24 @@ export class PanelController {
 		// The route guard (checkChange) asks every panel this removes — a set
 		// defined by the target stack, wherever those panels happen to sit —
 		// before the change is applied; a veto leaves everything untouched.
-		const beneath = originIndex < 0
-			? this.deriveStack(path).slice(0, -1)
-			: this.paths().slice(0, replace ? originIndex : originIndex + 1);
-		route.go({ path, search, hash, state: { panels: beneath } });
+		const originIndex = origin == null ? -1 : paths.indexOf(origin);
+		const under = beneath
+			? beneath.map(normalizePath).filter((p) => p !== path)
+			: originIndex < 0
+				? this.deriveStack(path).slice(0, -1)
+				: paths.slice(0, replace ? originIndex : originIndex + 1);
+		void this.issue([...under, path], () => route.go({ path, search, hash, state: { panels: under } }));
 	}
 
 	/** Programmatic push/replace, with the top panel as the implied origin. */
 	pushPath(path: string, replace: boolean): void {
-		this.navigate(path, this.live.length - 1, replace);
+		const paths = this.intended();
+		this.navigate(path, paths[paths.length - 1] ?? null, replace);
+	}
+
+	/** Programmatic open-as-a-whole-stack: `beneath` as given, or derived. */
+	openPath(path: string, beneath?: readonly string[]): void {
+		this.navigate(path, null, false, beneath);
 	}
 
 	// ── Link interception ──────────────────────────────────────────────────
@@ -836,8 +964,8 @@ export class PanelController {
 	private interceptLinks(): void {
 		route.interceptLinks((url, anchor) => {
 			const panel = anchor.closest<HTMLElement>(".s-panel");
-			const originIndex = panel ? this.live.findIndex((entry) => entry.el === panel) : -1;
-			this.navigate(url.href, originIndex, anchor.getAttribute("data-panel") === "replace");
+			const origin = panel ? this.live.find((entry) => entry.el === panel) : undefined;
+			this.navigate(url.href, origin?.path ?? null, anchor.getAttribute("data-panel") === "replace");
 			return true;
 		});
 	}
@@ -1252,6 +1380,25 @@ export const panels = {
 		requireActive().pushPath(path, true);
 	},
 	/**
+	 * Opens `path` as a whole arrangement rather than on top of what's there: the
+	 * same thing a nav item or a fresh tab does. Without `beneath`, the stack under
+	 * it is worked out the way a cold link's is (see `S.main()`'s `ancestors`);
+	 * with it, the paths you give are opened underneath, shallowest first.
+	 *
+	 * That's the one for a screen whose URL doesn't say where it belongs — the
+	 * thread a notification opens — and for seeding a stack from code in general.
+	 * Panels the new arrangement also holds stay as they are, and any it drops are
+	 * asked their {@link Page.requestClose} first.
+	 *
+	 * @example
+	 * ```ts
+	 * S.panels.open(`/thread/${id}`, [`/mailbox/${mailboxId}`]);
+	 * ```
+	 */
+	open(path: string, beneath?: readonly string[]): void {
+		requireActive().openPath(path, beneath);
+	},
+	/**
 	 * Closes the top panel, or, given a `path`, whichever panel is open at it,
 	 * asking {@link Page.requestClose} first. A panel that isn't on top is taken
 	 * out on its own, leaving the columns to its right exactly as they are.
@@ -1261,7 +1408,7 @@ export const panels = {
 	 */
 	close(path?: string): Promise<boolean> {
 		const ctl = requireActive();
-		return path == null ? ctl.closeTop() : ctl.closeByPath(path);
+		return path == null ? ctl.closeTop() : ctl.closePath(path);
 	},
 	/** The paths of the open panels, oldest first. Reactive: safe to read in a scope. */
 	get stack(): readonly string[] {

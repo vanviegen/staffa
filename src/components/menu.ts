@@ -1,5 +1,5 @@
 import A from "aberdeen";
-import { matchCurrent } from "aberdeen/route";
+import { matchCurrent, current as currentRoute } from "aberdeen/route";
 import { type Slot, type Attributes, drawSlot, mountPortal, focusFirst } from "../core.js";
 import { mk } from "../icons-helpers.js";
 import { button, type ButtonOptions } from "./button.js";
@@ -263,6 +263,12 @@ mountPortal(() => {
 	const onKey = (e: KeyboardEvent) => {
 		if (e.key === "Escape" || e.key === "Tab") { e.preventDefault(); closeFloating(); }
 	};
+	// A menu is a transient overlay: whatever navigation it started, it hands over
+	// to. Items do that themselves (`closeFloating` is `drawMenu`'s `onActivate`
+	// above), but custom slot content — a link in a row the menu knows nothing
+	// about — doesn't, and neither does a navigation from anywhere else.
+	const openedAt = A.peek(currentRoute, "path");
+	A(() => { if (currentRoute.path !== openedAt) closeFloating(); });
 	document.addEventListener("click", onClick, true);
 	document.addEventListener("keydown", onKey, true);
 	A.clean(() => {

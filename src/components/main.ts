@@ -1,9 +1,10 @@
 import A from "aberdeen";
+import { current as currentRoute } from "aberdeen/route";
 import { type Slot, type Attributes, drawSlot, focusFirst, NARROW_PX } from "../core.js";
 import { type MenuOptions, drawMenu, showFloatingMenu, isFloatingMenuOpen, closeFloatingMenu, menuGlyph, closeGlyph } from "./menu.js";
 import { button } from "./button.js";
 import { isDialogOpen } from "./dialog.js";
-import { PanelController, type Page, type RouteHandler, type RouteTable, type Routes } from "./panels.js";
+import { PanelController, type AncestorsHandler, type AncestorTable, type Page, type RouteHandler, type RouteTable, type Routes } from "./panels.js";
 
 /** Options for {@link main}. */
 export interface MainOptions<R = Routes> {
@@ -84,6 +85,48 @@ export interface MainOptions<R = Routes> {
 	 * `$page.path`.
 	 */
 	notFound?: RouteHandler<{}>;
+	/**
+	 * What to open **beneath** a path that arrives cold — a shared link, a
+	 * bookmark, a push notification, a nav item — with no stack of its own to
+	 * restore. Keyed by path template exactly like {@link MainOptions.routes}, so
+	 * each entry gets that key's params, matched and typed, rather than taking
+	 * the path apart a second time.
+	 *
+	 * Without this, the stack is derived from the path: every prefix that has a
+	 * route becomes a column, so `/projects/7/tasks/42` opens three deep. That
+	 * only works for URLs that spell their own context out. A flat one —
+	 * `/thread/[id]`, where a notification lands — has no prefix to walk, so it
+	 * opens as a single column with nothing under it and nothing to close back
+	 * to. This is where you say what that context is:
+	 *
+	 * ```ts
+	 * S.main({
+	 *   routes: {
+	 *     "/mailbox/[id]": drawMailbox,
+	 *     "/thread/[id=integer]": drawThread,
+	 *   },
+	 *   ancestors: {
+	 *     "/thread/[id=integer]": ({ id }) => [`/mailbox/${mailboxOf(id)}`],  // id: number
+	 *   },
+	 * });
+	 * ```
+	 *
+	 * Return the paths shallowest first; the path itself goes on top. Return
+	 * nothing to leave a path to the prefix derivation, which is also what an
+	 * unlisted one gets — so you only list the routes whose URL doesn't say where
+	 * it belongs. Paths you have no route for are skipped, as they are there.
+	 *
+	 * This is asked for every origin-less navigation, so a nav item and a fresh
+	 * tab still land on the same columns; a link *inside* a panel builds on that
+	 * panel instead and never asks. It has to answer without drawing anything,
+	 * since the panels being replaced are asked their {@link Page.requestClose}
+	 * before the navigation is applied — before any handler could run. From code,
+	 * {@link panels}.`open()` takes the same list directly.
+	 */
+	// `NoInfer`, because `R` is inferred from `routes` alone: a second inference
+	// site for it would make TypeScript reconcile the two, and every handler's
+	// `$page` would quietly degrade to `any` (see the note on `main` below).
+	ancestors?: AncestorTable<NoInfer<R>>;
 	/**
 	 * Set `false` to show only the top panel, however wide the screen (the nav
 	 * sidebar still sits beside it). Everything else behaves the same: the URL,
@@ -330,7 +373,13 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): void {
 	// one rather than spread from `opts`: a spread reads every key, which on a
 	// proxied options object subscribes this scope to all of them.
 	const ctl = routes
-		? new PanelController({ routes, notFound: opts.notFound, stacking: opts.stacking, title: opts.title })
+		? new PanelController({
+			routes,
+			notFound: opts.notFound,
+			ancestors: opts.ancestors,
+			stacking: opts.stacking,
+			title: opts.title,
+		})
 		: null;
 	// Routed mode caps the shell to the ensemble width the layout engine publishes,
 	// rather than to `maxWidth`.
@@ -472,6 +521,37 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): void {
 }
 
 /**
+ * Dismisses whichever collapsed nav is showing, if either is: at most one shell
+ * has its nav up as an overlay at a time, so this needs nothing passed in. Set
+ * by the two things that open one (see {@link closeNav}).
+ */
+let openNav: (() => void) | null = null;
+
+/**
+ * Close the navigation, if it's showing as an overlay: the full page it becomes
+ * on a narrow shell, or the dropdown its button opens on a wider one. A sidebar
+ * isn't an overlay and has nothing to dismiss, so there it does nothing.
+ *
+ * A navigation closes the nav by itself, links in your own custom rows included,
+ * so this is for the items that *don't* navigate — one that opens a dialog, or
+ * flips a setting, and should still get the nav out of the way.
+ *
+ * @example
+ * ```ts
+ * S.main({
+ *   nav: { items: [
+ *     { label: "Inbox", href: "/inbox" },
+ *     () => S.button({ content: "New message", click: () => { S.closeNav(); compose(); } }),
+ *   ]},
+ *   routes: { ... },
+ * });
+ * ```
+ */
+export function closeNav(): void {
+	openNav?.();
+}
+
+/**
  * The hamburger in the top bar, shown whenever the sidebar isn't. What it opens
  * depends on how much room the shell has: a dropdown when there's plenty, and —
  * below {@link NARROW_PX} — the full-page nav, which suits a phone far better
@@ -480,6 +560,10 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): void {
 function drawNavTrigger(nav: MenuOptions, $nav: { open: boolean }): void {
 	let myEl: HTMLElement | null = null;
 	A.clean(() => { if (myEl) closeFloatingMenu(myEl); });
+	// The dropdown form of the same overlay, for `closeNav()` (see `openNav`).
+	// The floating menu bows out on a navigation by itself, so this is only ever
+	// asked to dismiss one that isn't going anywhere.
+	const dismiss = () => { if (myEl) closeFloatingMenu(myEl); };
 
 	button({
 		// The glyph doubles as the state: ☰ to open the page, ✕ to dismiss it. Its
@@ -498,7 +582,10 @@ function drawNavTrigger(nav: MenuOptions, $nav: { open: boolean }): void {
 			// Wide shell: the classic dropdown. A click on the trigger never reaches
 			// the menu's own outside-click handler, so toggle it here.
 			if (isFloatingMenuOpen(myEl)) closeFloatingMenu(myEl);
-			else showFloatingMenu({ items: nav.items, anchor: myEl, dropdownAttrs: nav.dropdownAttrs });
+			else {
+				openNav = dismiss;
+				showFloatingMenu({ items: nav.items, anchor: myEl, dropdownAttrs: nav.dropdownAttrs });
+			}
 		},
 	});
 }
@@ -513,12 +600,24 @@ function drawNavPage(nav: MenuOptions, attrs: Attributes | undefined, $nav: { op
 	// Whether this close is a *navigation* — the only kind that hands over to an
 	// incoming screen. Dismissing the page just uncovers the content again.
 	let navigated = false;
+	const dismiss = () => { navigated = true; $nav.open = false; };
 
 	const pageEl = A(
 		"nav.s-nav-page.s-s.neutral aria-label=Navigation create=s-nav-page-off destroy=s-nav-page-off",
 		attrs,
-		() => drawMenu(nav.items, () => { navigated = true; $nav.open = false; }),
+		() => drawMenu(nav.items, dismiss),
 	) as HTMLElement;
+
+	// This is the shell's one nav overlay, so `closeNav()` knows where to aim.
+	openNav = dismiss;
+	A.clean(() => { if (openNav === dismiss) openNav = null; });
+
+	// Whatever the page navigated to, it hands over to: the items do that
+	// themselves (`dismiss` above), but custom slot content — a link in a row the
+	// shell knows nothing about — doesn't, and neither does a navigation from
+	// anywhere else. Its own scope, so it can't redraw the page it closes.
+	const openedAt = A.peek(currentRoute, "path");
+	A(() => { if (currentRoute.path !== openedAt) dismiss(); });
 
 	const shell = pageEl.closest<HTMLElement>(".s-main");
 	const behind = pageEl.parentElement?.querySelector<HTMLElement>(":scope > .s-body-inner");

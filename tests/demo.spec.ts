@@ -679,6 +679,76 @@ test("panels: a nav item arriving redraws the sidebar, not the columns", async (
 	await expect(page.getByTestId("live-draws")).toHaveText("1");
 });
 
+test("panels: two quick Escapes peel two panels", async ({ page }) => {
+	await page.goto("./panels");
+	await page.getByText("Push a panel").waitFor();
+	await page.getByRole("link", { name: "Push small A" }).click();
+	await panelWith(page, /Small A/).waitFor();
+	await topPanel(page).getByRole("link", { name: "Push small B" }).click();
+	await panelWith(page, /Small B/).waitFor();
+	await expect(page.locator(livePanels)).toHaveCount(3);
+
+	// Back to back, with no time for the first to land: closing travels through
+	// the browser's history, and the second Escape must aim at the stack the
+	// first one is heading for rather than the one still on screen.
+	await page.evaluate(() => {
+		const escape = () => document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+		escape();
+		escape();
+	});
+	await expect(page).toHaveURL(/\/demo\/panels$/);
+	await expect(page.locator(livePanels)).toHaveCount(1);
+});
+
+test("panels: a cold flat URL gets the ancestors the app names for it", async ({ page }) => {
+	// Nothing in /demo/thread/7 says where it belongs, and no prefix of it is a
+	// route — so the shell asks the app, which puts the playground underneath.
+	await page.goto("./thread/7");
+	await page.getByText("Thread 7").waitFor();
+	await expect(page.locator(livePanels)).toHaveCount(2);
+	await expect(page.locator(livePanels).first()).toContainText("Push a panel");
+
+	// Which means there is somewhere to go back to, as there would be if you had
+	// walked here — a lone column would leave Escape with nothing to do.
+	await page.keyboard.press("Escape");
+	await expect(page).toHaveURL(/\/demo\/panels$/);
+	await expect(page.locator(livePanels)).toHaveCount(1);
+
+	// The same arrangement from code, with the stack spelled out.
+	await page.getByRole("button", { name: "S.panels.open()" }).click();
+	await page.getByText("Thread 8").waitFor();
+	await expect(page).toHaveURL(/\/demo\/thread\/8$/);
+	await expect(page.locator(livePanels)).toHaveCount(2);
+});
+
+test("nav: custom rows close the nav — on navigating, and on asking", async ({ page }) => {
+	await page.goto("./panels");
+	await page.getByText("Push a panel").waitFor();
+	await page.getByRole("link", { name: "Push the sizing & lifecycle panel" }).click();
+	await panelWith(page, /Sizing & lifecycle/).waitFor();
+	// The Scratch row is a custom slot: a link and a button the shell can't see.
+	await page.getByLabel("Add a Scratch nav item").check();
+
+	// On a narrow shell the nav is a full page over the content.
+	await page.setViewportSize({ width: 480, height: 800 });
+	const navPage = page.locator(".s-nav-page");
+	await page.getByRole("button", { name: "Open navigation" }).click();
+	await expect(navPage).toBeVisible();
+
+	// Its button navigates nowhere, so it dismisses the nav itself.
+	await navPage.getByRole("button", { name: "Note" }).click();
+	await expect(navPage).toHaveCount(0);
+	await expect(page).toHaveURL(/\/demo\/panels\/live$/);
+
+	// Its link is an ordinary link that the shell knows nothing about, and a
+	// navigation sweeps the nav away whoever drew it.
+	await page.getByRole("button", { name: "Open navigation" }).click();
+	await expect(navPage).toBeVisible();
+	await navPage.getByRole("link", { name: "Scratch" }).click();
+	await expect(page).toHaveURL(/\/demo\/buttons$/);
+	await expect(navPage).toHaveCount(0);
+});
+
 // A floating menu/popover fades in via a `.hidden` → opaque transition. Playwright's
 // visibility (and ShoTest's waitFor) ignores opacity, so a panel that is technically
 // "visible" can still be mid-fade — present in some screenshots and faded/absent in
