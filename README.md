@@ -113,12 +113,12 @@ S.setDarkMode(undefined);  // follow OS
 
 ### Panel-stack navigation
 
-Give `S.main()` a `routes` table instead of a `content` slot, and it takes over navigation for you. Each route draws one screen of your app. Staffa calls those screens **panels**, and it shows as many of them at a time as comfortably fit.
+Give `S.main()` a `routes` table instead of a `content` slot, and it takes over navigation for you. Each route draws one screen of your app — Staffa calls those **panels** — and the shell shows as many of them at a time as comfortably fit, each in its own **column**.
 
 On a phone that means one panel at a time: a link opens a new panel on top of it, and closing that one brings the previous back, the way most mobile apps work. On a wider screen, panels that would have covered each other sit side by side instead. Pick a project from a list and it opens *beside* the list; pick another and it takes the first one's place. Your code doesn't know the difference.
 
 ```ts
-S.main({
+const shell = S.main({
   title: "Trackle",
   nav: { items: [{ label: "Projects", href: "/projects" }] },
   routes: {
@@ -126,18 +126,19 @@ S.main({
     "/projects/[projectId]": drawProject,
     "/projects/[projectId]/tasks/[taskId=integer]": drawProjectTask,
   },
-  notFound: ($page) => S.box({ header: "Not found", content: $page.path }),
+  notFound: ($panel) => S.box({ header: "Not found", content: $panel.path }),
 });
 
-function drawProject($page: S.Page<{ projectId: string }>) {
-  const { projectId } = $page.params;    // typed from the route key
+function drawProject($panel: S.Panel<{ projectId: string }>) {
+  const { projectId } = $panel.params;    // typed from the route key
+  $panel.title = `Project ${projectId}`;  // the shell puts it wherever it fits
   A(`a href=/projects/${projectId}/tasks/1 #Open the first task`);
 }
 
 // Etc..
 ```
 
-Each handler gets a `$page` object holding the params from its route, along with the things Staffa needs to know about the panel: its title, how much room it wants, whether it's still loading. It's an Aberdeen proxy, so you can set those later (when your data arrives, say) and the shell keeps up.
+Each handler gets a `$panel` object holding the params from its route, along with the things Staffa needs to know about the panel: what it's called, what it can do, how much room it wants, whether it's still loading. It's an Aberdeen proxy, so you can set those later (when your data arrives, say) and the shell keeps up.
 
 **Route keys.** A segment wrapped in brackets is a param:
 
@@ -145,72 +146,126 @@ Each handler gets a `$page` object holding the params from its route, along with
 - `[name=integer]` matches one segment, as a number.
 - `[...name]` matches the rest of the path, as a string. It has to be the last thing in the key, and it needs at least one segment to match.
 
-The first key that matches wins, and a segment a param refuses simply doesn't match, so it falls through to a later route, or to `notFound`. TypeScript reads each key and types that handler's `$page.params` from it, so `params.taskId` above really is a `number`.
+The first key that matches wins, and a segment a param refuses simply doesn't match, so it falls through to a later route, or to `notFound`. TypeScript reads each key and types that handler's `$panel.params` from it, so `params.taskId` above really is a `number`.
 
-`integer` only accepts spellings that survive a round trip back to the same URL: `42` and `-7` and `0`, but not `007`, `1.5`, `0x10`, `-0` or anything past `Number.MAX_SAFE_INTEGER`. Otherwise `/tasks/42` and `/tasks/0042` would be two different paths for one record, and could sit open in two panels at once. For ids that aren't safe integers, such as snowflakes, use a plain `[id]` and keep them as strings.
+`integer` only accepts spellings that survive a round trip back to the same URL: `42` and `-7` and `0`, but not `007`, `1.5`, `0x10`, `-0` or anything past `Number.MAX_SAFE_INTEGER`. Otherwise `/tasks/42` and `/tasks/0042` would be two different paths for one record, and could sit open in two columns at once. For ids that aren't safe integers, such as snowflakes, use a plain `[id]` and keep them as strings.
 
 `[...name]` hands you the remaining path exactly as it appears in the URL, still percent-encoded. Decoding it for you would be lossy: an encoded slash inside a segment would come back looking just like a separator. When you want the pieces, `name.split("/").map(decodeURIComponent)` gives them to you. (Single-segment params have no such ambiguity, so those *are* decoded.)
 
 **Navigating is just links.** Write ordinary `<a href="/...">` links; Staffa handles the clicks (so don't also call Aberdeen's `interceptLinks()`).
 
-- A link inside a panel opens its target on top of that panel, closing anything that was above it first. That's why clicking a second project replaces the open project instead of adding a third column.
-- Add `data-panel=replace` and the link replaces the panel it sits in, rather than opening on top of it. That's what you want for prev/next buttons.
-- A link to something that's already open goes back to it instead of opening it twice. The same path is never in the stack twice.
-- A link that isn't inside a panel (a nav item, or one in a dialog) has no panel to build on, so it replaces the stack as a whole: the page you asked for, with its ancestor pages opened beneath it (see [below](#ancestors)). Panels that the new stack also contains stay as they are, so clicking the nav item for the section you're already in won't reset it. Clicking a nav item and opening that same URL in a fresh tab therefore give you the same columns.
+The open panels form a **stack**, and one of them is the **current** panel: the one the URL names, and the rightmost column on screen. Usually that's the newest panel — but going back along the stack moves the cursor without closing anything (see the breadcrumbs below), so panels can sit *after* the current one too, parked just past the viewport's right edge.
 
-From code, `S.panels.push(path)` opens a panel on top of the top one, `.replace(path)` opens one in place of the top one, `.open(path, beneath?)` opens a whole arrangement at once (the way a nav item does — see [below](#ancestors)), and `.close(path?)` closes the top panel (or a named one). `S.panels.stack` is the list of open paths.
+- A link inside a panel opens its target on top of that panel, closing everything after it first. That's why clicking a second project replaces the open project instead of adding a third column — and why the panels you'd browsed past don't pile up.
+- A `data-panel` attribute on the link picks a different one of the three navigations. `push` is the default just described; `replace` puts the target in place of the link's own panel rather than on top of it, which is what prev/next buttons want; and `open` leaves that panel behind altogether and gives the target its own stack, exactly as a nav item would — for a link that points somewhere else in the app, a search hit or a mention, where the panel you clicked from isn't the context you want to keep.
+- A link to something that's already open goes back to it instead of opening it twice — a move along the stack, closing nothing. The same path is never in the stack twice.
+- A link that isn't inside a panel (a nav item, or one in a dialog) has no panel to build on, so it replaces the stack as a whole: the panel you asked for, with its ancestor panels opened beneath it (see [below](#ancestors)). Panels that the new stack also contains stay as they are, so clicking the nav item for the section you're already in won't reset it. Clicking a nav item and opening that same URL in a fresh tab therefore give you the same columns.
 
-Navigating faster than the shell can settle is fine: closing travels through the browser's history, so it takes a moment to land, and anything asked for in the meantime waits for it rather than being dropped. Two quick Escapes (or back gestures) peel two panels, each aimed at the stack the one before it was heading for. A `requestClose` that says no clears what was queued behind it, so an Escape can't sail past the panel that just refused to close.
+**The stack is an object, not a global.** In routed mode `S.main()` hands back the panel stack, and every panel gets the same object as `$panel.stack` — which is what a route handler uses, since it runs while the `S.main()` call is still going and can't see its return value yet.
 
-**How much room a panel takes** is up to `$page.layout`. The content area is the page, at most 1280px wide, minus the nav sidebar:
+```ts
+shell.pushPanel(path);                 // on top of the current panel
+shell.replacePanel(path);              // in its place
+shell.openPanelStack(path, beneath?);  // a whole arrangement, the way a nav item does
+shell.closePanel(path?);               // the current panel, or a named one
 
-| `layout` | How wide the panel gets | Good for |
+shell.panels;              // the open panels, oldest first — the Panel objects themselves
+shell.currentPanelIndex;   // which of them the URL is on
+shell.currentPanel;        // shorthand for panels[currentPanelIndex]
+```
+
+Navigations settle asynchronously (closes travel through the browser's history), so each of the four methods returns a `Promise<boolean>`: `true` once it lands, `false` when it doesn't — an unsaved panel refused to close, a route guard said no, or another navigation superseded it. Ignore it unless you care.
+
+`panels` is a live view rather than a copy, so writing through it works — `shell.panels[0].pinned = true` is the only way to pin a panel from outside its own handler. All three are reactive on the stack's shape: read one in a scope and it re-runs when panels open, close or the cursor moves. Don't hold a `Panel` across a navigation; read it fresh.
+
+Navigating faster than the shell can settle is fine: closing travels through the browser's history, so it takes a moment to land, and anything asked for in the meantime waits for it rather than being dropped. Two quick Escapes (or back gestures) peel two panels, each aimed at the stack the one before it was heading for.
+
+**Every panel must work at 360–540px**, because that is what it gets whenever two columns fit. `$panel.maxWidth` says how much *more* it can usefully take. The content area is the page, at most 1280px wide, minus the nav sidebar:
+
+| `maxWidth` | How wide the panel gets | Good for |
 | --- | --- | --- |
-| `"small"` | 360 to 540px once two fit side by side. Below that, the whole content area (so up to ~730px). | lists, detail forms, anything that reads well at phone width |
-| `"medium"` (default) | The whole content area: up to ~1100px, and the screen width on a phone. | ordinary screens; the safe default |
-| `"large"` | The whole window, with no upper limit: ~1750px on a 1920px screen. | boards, wide tables, dense dashboards |
+| `"half"` | Half the content area: 360 to 540px. | lists, detail forms — anything that reads well at phone width |
+| `"full"` (default) | The whole content area: up to ~1100px. | ordinary screens; the safe default |
+| `"screen"` | The whole window, no upper limit: ~1750px on a 1920px screen. | boards, wide tables, dense dashboards |
 
-Those numbers assume a nav sidebar of around 170px; without a sidebar, add that back (a medium then reaches the full 1280px). Nothing fits beside a medium on a standard 1280px page, but on a wide enough window a small still can, and the page grows past 1280px to hold both.
+Below the width two columns need, everything takes the whole content area whatever it asked for. Those numbers assume a nav sidebar of around 170px; without one, add that back. Nothing fits beside a `"full"` on a standard 1280px page, but on a wide enough window a `"half"` still can, and the page grows past 1280px to hold both.
 
-A panel's width depends only on the size of the window, never on what else is open. So opening or closing a panel never resizes the ones already on screen, and never reflows what someone was reading. A lone small leaves its other half empty, and that is exactly where the next small lands. When more columns fit than the standard 1280px page holds (three smalls, say), the page itself grows, staying centred, to hold them.
+A column's width depends only on the size of the window, never on what else is open. So opening or closing a panel never resizes the ones already on screen, and never reflows what someone was reading. A lone `"half"` leaves its other half empty, and that is exactly where the next one lands. When more columns fit than the standard 1280px page holds (three halves, say), the page itself grows, staying centred, to hold them.
 
-The panel is sized before your handler runs, so anything inside it that measures its own box — a chart, a virtualised list, a column count — gets a real one from the first frame rather than a zero-width one. A new panel starts at whatever `layout` says at that point, which is the default, so a handler that *assigns* `layout` is drawn at the medium width and reflowed immediately after. Assigning it later works too: the panel reflows to its new width without being redrawn, so nothing in it is rebuilt or loses its state, and the columns beside it move over.
+Columns tile that area, separated by a hairline and no gutter — a column brings its own padding, so their contents stay comfortably apart regardless.
 
-**The rest of `$page`:**
+The panel is sized before your handler runs, and `$panel.width` is the resolved figure in pixels — so a chart, a virtualised list or a column count has the real width from the first frame, with nothing to measure. Set `maxWidth` at the top of your handler and you draw at the new width; set it later and the panel reflows without being redrawn, so nothing in it is rebuilt or loses its state.
+
+<a id="chrome"></a>
+
+**A panel declares its chrome; the shell places it.** A screen says what it is called and what it can do; everything else in its column — headings, cards, boxes — is the screen's own content, drawn like any other. Where the chrome ends up depends on how many columns are showing and how wide the shell is, so the shell decides:
+
+```ts
+function drawTask($panel: S.Panel<{ taskId: number }>) {
+  $panel.title = "Task 42";
+  $panel.actions = () => S.button({ content: "Save", attrs: ".small", click: save });
+  S.box({ header: "Task 42", content: drawTaskForm });   // ordinary content
+}
+```
+
+On a wide screen the title becomes the stack's last crumb and the Save button sits in a quiet strip at the top of the column. On a phone the crumb is still there and Save moves into the top bar, where the app menu was. Nothing in your code measures the viewport, and no screen is written twice.
+
+**The breadcrumbs are the navigation.** The top bar's second line writes the open panels out as breadcrumbs — `Projects / Trackle / Task 42` — with the panels currently on screen in bold. Clicking an earlier crumb goes back to it *without closing anything*: the panels right of it stay open, parked just past the viewport's right edge, and clicking their crumbs brings them back. Browsing the stack is free — it's opening a *new* panel that closes the panels after the one it came from. The app's name and logo link to the app's home (the `home` option, `/` by default), going back to it when it's already open and opening it when it isn't. A stack too long for the bar scrolls sideways, in an `S.scrollStrip` like the tab strip's.
+
+That line is the `subtitle`'s while the stack has nothing to add: one panel open, reachable from a nav item that is already highlighted in a visible sidebar. Otherwise the stack takes it, since it is then the only thing naming the screen.
+
+Right-click (or long-press) a crumb for **Close** — which takes just that panel out, wherever it sits in the stack — and **Pin**. A pinned panel — its crumb wears a pin — never closes as a side effect of navigation elsewhere: where opening a new panel would prune it, it rides along beneath the new panel instead, one crumb click away. Pin the reference you keep coming back to, then navigate freely. An *explicit* close (Escape, `close()`, the crumb menu, `data-panel=replace`) still closes it, and it's yours from code as `$panel.pinned`. Because a crumb is a real link whose right-click the menu takes over, the menu also offers **Open in new tab** and **Copy link**.
+
+A crumb can also wear a **●**: the panel holds unsaved work, and nothing will close it (see `$panel.unsaved` below).
+
+| `$panel` | what it does |
+| --- | --- |
+| `title` | Names the screen: its breadcrumb, and `document.title` while it's the current panel. A panel that sets none borrows the first line of text in its own body — good enough for a crumb, but say it yourself. |
+| `actions` | The screen's buttons or menu. In the column's chrome while several columns fit; in the top bar (taking the app `menu`'s place) once the shell is narrow. |
+
+Two deliberate rules there. `actions` are the screen's *verbs* — Save, Delete, Share, a menu — not a second way out: going back is the crumbs' job, at every width, and there is no back button even on a phone. And **`title` names the screen; it does not draw a heading** — a screen that wants its name in its own body writes it there, where it owns the typography.
+
+A column's body keeps a comfortable `$3` of padding; a screen that wants edge-to-edge rows just writes `A("p:0")`, since the draw function's current element *is* the body.
+
+**The rest of `$panel`:**
 
 - `params` and `path`: read-only.
-- `title`: shown in `document.title` while this panel is the top one.
-- `layout`: as above, and live — set it whenever you like and the panel reflows.
+- `maxWidth`: as above, and live — set it whenever you like and the panel reflows.
 - `loading`: set it while you're fetching. A new panel waits a moment before sliding in, so it can arrive with real content instead of empty, and shows a loading indicator if the wait drags on.
-- `close()`: closes this panel, wherever it sits in the stack.
-- `requestClose`: your chance to say no. Everything that would close the panel waits for it: Escape, the panel's own ✕ or Cancel button, the browser's back button, a link that would close it, `S.panels.close()`. Return `false` to keep the panel open.
+- `width` and `visible`: read-only and reactive. `width` is this column's width in pixels, for the rare content that genuinely differs by width. `visible` says whether this panel is on screen — not crowded out, not parked, not closing — which is the right question for per-panel floating UI like a FAB, since "am I the current panel?" answers wrongly when two columns are up.
+- `pinned`: the crumb menu's Pin, from code.
+- `unsaved`: set it while the panel holds work that must not be lost — a dirty form, an upload in flight. An unsaved panel **cannot be closed, by anything**: navigation and the back button park it instead (wearing a ● in its crumb), `close()` and the crumb menu's Close refuse, Escape steps left, and closing the browser tab runs into the browser's own are-you-sure. The tab title carries a leading `•` while *any* open panel is unsaved. Only the app clears the flag, which is its explicit "this is now discardable":
 
 ```ts
-$page.requestClose = async () => !$task.dirty || await S.confirm("Discard unsaved changes?");
+A(() => { $panel.unsaved = $form.dirty || undefined; });   // the whole dirty check
+
+S.button({ content: "Discard", attrs: ".neutral", click: () => {
+  $panel.unsaved = false;   // explicitly: the reactive scope above reruns too late
+  void $panel.close();
+}});
 ```
 
-**Every panel provides its own way out.** Staffa draws no back arrows and no ✕ of its own, because a panel knows better than the shell does what leaving it should look like: Cancel and Save buttons, or a ✕ in the corner of a box. So say it yourself:
+So a panel that can *be* unsaved needs its own way out — a Save or Discard among its `actions`. There is no "discard changes?" dialog anywhere: leaving is never blocked, the work just waits, parked, one crumb away.
+
+- `close()`: closes this panel, wherever it sits in the stack (refused while it's `unsaved`). Behind a Cancel button, or a Save that closes:
 
 ```ts
-S.box({ header: "Task 42", close: true, content: drawTask });   // a ✕ in the box's corner
-S.button({ content: "Cancel", attrs: ".neutral", click: () => $page.close() });
-S.panels.close();              // the top panel
-S.panels.close("/projects/7"); // that panel, wherever it is
+S.button({ content: "Cancel", attrs: ".neutral", click: () => $panel.close() });
+$panel.stack.closePanel();              // the current panel
+$panel.stack.closePanel("/projects/7"); // that panel, wherever it is
 ```
 
-`S.box`'s `close: true` works out for itself which panel it's in, so the same code closes the right thing whether it's one column of several or a whole phone screen. (Pass a function instead if you'd rather do something else.)
-
-Closing the top panel goes back to whatever was underneath it. Closing one that *isn't* on top takes just that one away: the columns to its right stay where they are and keep their state, and the URL doesn't change, because the top panel didn't move. Either way it becomes a history entry, so the browser's back button brings the panel back.
+Closing the current panel hands the focus to the panel on its left. Closing one that *isn't* current takes just that one away: the columns around it stay where they are and keep their state, and the URL doesn't change, because the current panel didn't move. Either way it becomes a history entry, so the browser's back button brings the panel back.
 
 A closed panel is torn down at once: its `A.clean()` hooks run the moment it closes, so subscriptions, timers and requests stop there and then. Only its element hangs around, inert and frozen, for the length of the exit animation.
 
-Staffa itself contributes two things: the Escape key, which closes the top panel (and jumps to the navigation once you're at the bottom of the stack), and making the browser's back button do the right thing. Both ask `requestClose` first.
+Escape steps one panel back along the stack: at the stack's end that closes the current panel, mid-stack it just moves left and parks the panel you leave, and at the stack's start it jumps to the navigation. The browser's back button replays whole arrangements — it re-opens what a navigation closed and re-parks what a crumb click brought back.
 
 <a id="ancestors"></a>
 
-**The back button, and links from elsewhere.** The URL holds the top panel; the rest of the stack is stored beside it in the browser's history entry. So back and forward step through whole arrangements of columns, and a reload brings the same columns back.
+**The back button, and links from elsewhere.** The URL holds the current panel; the rest of the stack — the panels before it, any parked after it, and which are pinned — is stored beside it in the browser's history entry. So back and forward step through whole arrangements of columns, and a reload brings the same columns back.
 
-A URL that arrives without any of that (a shared link, a bookmark, a new tab) has nothing to restore, so Staffa builds the stack from the path: it walks the parent paths and opens each one you have a route for. With the routes above, `/projects/7/tasks/42` opens as three panels: the project list, project 7, and task 42. A parent path you have no route for is skipped, so if you don't want one screen appearing under another, just don't give it a route.
+A URL that arrives without any of that (a shared link, a bookmark, a new tab) has nothing to restore, so Staffa builds the stack from the path: it walks the parent paths and opens each one you have a route for. With the routes above, `/projects/7/tasks/42` opens as three columns: the project list, project 7, and task 42. A parent path you have no route for is skipped, so if you don't want one screen appearing under another, just don't give it a route.
 
 That only works for URLs that spell their own context out. A flat one — `/thread/[id]`, where a push notification lands — has no parent path to walk, so it would open as a lone column with nothing beneath it and nothing for Escape to do. `ancestors` is where you say what belongs under it. It's keyed by the same path templates as `routes`, so each entry gets that key's params, matched and typed:
 
@@ -228,17 +283,17 @@ S.main({
 
 Return the paths shallowest first, or nothing to leave that path to the parent-path walk — which is also what a route you don't list gets, so you only name the ones whose URL doesn't say where they belong. It's asked for every navigation that has no panel to build on, so a nav item and a fresh tab still agree.
 
-It has to answer without drawing anything, which is why it lives here rather than on `$page`: the panels being replaced are asked their `requestClose` *before* the navigation is applied, and that is before any route handler could have run.
+It has to answer without drawing anything, which is why it lives here rather than on `$panel`: it's consulted while the navigation is still being worked out, before any route handler has run.
 
-From code, `S.panels.open(path, beneath?)` opens the same kind of arrangement, either asking `ancestors` for the stack or taking the one you hand it.
+From code, `openPanelStack(path, beneath?)` opens the same kind of arrangement, either asking `ancestors` for the panels beneath or taking the ones you hand it.
 
-Search params and the `#hash` belong to the top panel only. Anything a panel deeper in the stack needs in order to redraw itself has to live in its path.
+Search params and the `#hash` belong to the current panel only. Anything another panel in the stack needs in order to redraw itself has to live in its path. (A panel you browse away from does get its search and hash back when a crumb makes it current again.)
 
 **A few more things.**
 
-- `stacking: false` shows only the top panel, however wide the screen. Everything else behaves the same: the URL, the back button, `requestClose`, and the panels' own close buttons.
-- Only one routed `S.main()` can be mounted at a time; a second one throws. That's what lets `S.panels` be a plain module-level object. Each handler still gets its own `$page` rather than there being one global "current page", since several panels are alive at once.
-- Navigating with `aberdeen/route`'s own `go()` works and still asks `requestClose`, but, like a link from outside a panel, it builds the whole stack from the path. So prefer `S.panels`. If your app registered its own navigation guard before mounting (an auth redirect, say), it keeps working: Staffa asks it first, and puts it back when the shell goes away.
+- `stacking: false` shows only the current panel, however wide the screen. Everything else behaves the same: the URL, the back button, unsaved panels, and the panels' own close buttons.
+- Only one routed `S.main()` can be mounted at a time; a second one throws — the URL is global, so two of them would fight over it. Nothing else is global: the stack belongs to its shell, and each handler gets its own `$panel`, since several panels are alive at once.
+- Navigating with `aberdeen/route`'s own `go()` works — an unsaved panel survives it too — but, like a link from outside a panel, it builds the whole stack from the path. So prefer the stack's own methods. A navigation guard your app registered with `route.setGuard` (an auth redirect, say) keeps working untouched: Staffa registers none of its own.
 - Deep links need your static server to serve the app for unknown paths (the usual SPA fallback). For `http-server` that's `-P`, as in the demo command below.
 
 ### CSS reset
@@ -293,9 +348,10 @@ Components share naming conventions for options: `attrs` (outermost element), `c
 
 ### Layout & containers
 
-- **`S.main(opts)`**: app shell, a sticky header with `icon`, `title`, `subtitle`, `menu`; scrollable content area; footer. Set `maxWidth` to center the content. Give it a `nav` for a sidebar that collapses to a hamburger below 640 px — where the nav becomes a full page sliding in from the left, handing over to the chosen screen with a matching slide in from the right. Its `items` may be a reactive array; adding or removing one redraws just the sidebar, never the content beside it. A navigation dismisses the collapsed nav by itself, links in your own custom rows included; `S.closeNav()` does it for the rows that *don't* navigate. Instead of a single `content` slot it can take a `routes` table — see [Panel-stack navigation](#panel-stack-navigation).
-- **`S.box(opts | content)`**: surface with optional `header`/`footer` and padded body. Pass a function for shorthand `{ content }`. `close: true` adds a ✕ that closes the panel the box is in (see [Panel-stack navigation](#panel-stack-navigation)); `close: fn` runs your own dismissal.
-- **`S.tabs(opts)`**: tablist with live panels and keyboard navigation. More tabs than fit make the strip scroll, with a ‹ / › button appearing at whichever end still has something to reach — so it's not just a swipe target. Selecting a tab any other way (the arrow keys, a `bind` written from elsewhere) scrolls it into view.
+- **`S.main(opts)`**: app shell, a sticky header with `logo`, `title`, `subtitle`, `menu` — plus, in routed mode, the breadcrumbs of the open panels; scrollable content area; footer. Set `maxWidth` to center the content. Give it a `nav` for a sidebar that collapses to a hamburger below 640 px — where the nav becomes a full page sliding in from the left, handing over to the chosen screen with a matching slide in from the right. Its `items` may be a reactive array; adding or removing one redraws just the sidebar, never the content beside it. An item with `items` of its own becomes a collapsible submenu: only the branch holding the current page stays unfolded, and clicking a branch selects its first leaf (expanding a branch doesn't dismiss the phone's full-page nav — only picking a leaf does). A sidebar taller than the window scrolls, and follows the highlighted item: navigating to a page whose item sits past the fold scrolls it back into view. A navigation dismisses the collapsed nav by itself, links in your own custom rows included; `S.closeNav()` does it for the rows that *don't* navigate. Instead of a single `content` slot it can take a `routes` table — see [Panel-stack navigation](#panel-stack-navigation).
+- **`S.box(opts | content)`**: surface with optional `header`/`footer` and padded body. Pass a function for shorthand `{ content }`. `close: fn` adds a ✕ that runs your dismissal — in the header row, or floating over the body when there is no header. (It is plain furniture: a routed screen gets its own way out from the shell, see [Panel-declared chrome](#chrome).)
+- **`S.tabs(opts)`**: tablist with live tab panels and keyboard navigation. More tabs than fit make the strip scroll (see `S.scrollStrip`); selecting a tab any other way (the arrow keys, a `bind` written from elsewhere) scrolls it into view.
+- **`S.scrollStrip(opts)`**: a horizontal row that scrolls once its content outgrows it, with a ‹ / › button appearing over whichever end still has something to reach — so it isn't just a swipe target. Its own scrollbar is hidden. `S.tabs` and the routed shell's breadcrumbs are built on it; reach for it for any row of chrome that can outgrow its space. `S.revealInStrip(el)` scrolls one of its children into view.
 - **`S.form(opts | content)`**: form aligning fields in a column or responsive grid, with an `actions` bar. Prevents the default page reload.
 
 ### Form fields
@@ -314,6 +370,7 @@ Components share naming conventions for options: `attrs` (outermost element), `c
 ### Actions
 
 - **`S.button(opts | text)`**: button surface; restyle via `attrs` (e.g. `.danger`, `.outlined`), plus `size`, `disabled`, `icon`, `href` (renders `<a role=button>`). Defaults to filled `.primary`.
+- **`S.iconButton(opts)`**: a bare glyph in a square hit area — no fill, no border, ink that lifts on hover. For chrome that mustn't compete with what it sits beside: the app shell's ✕ and ☰ are made of it, and it's usually what a page's `actions` want.
 - **`S.buttonGroup(opts)`**: groups buttons, `attached` (segmented) or `spaced`.
 - **`S.buttonChooser(opts)`**: single-select segmented control bound to a value.
 
@@ -336,6 +393,7 @@ Options: `size`, `color` (defaults to `currentColor`), `strokeWidth`, `cap`, `jo
 ### Other
 
 - **`S.menuButton(opts)` / `S.addContextMenu(opts)` / `S.showFloatingMenu(opts)`**: dropdown menus from a button, right-click/long-press context menus, and the underlying floating menu primitive — with keyboard navigation. A menu closes itself when the page navigates.
+- **`S.menu(opts)`**: the same menu rows drawn in place — for a nav or settings column of your own. Items with nested `items` form a collapsible tree; `onLeafSelect` fires only when a leaf is picked, never for a branch unfolding.
 - **`S.closeNav()`**: dismisses `S.main`'s navigation when it's showing as an overlay (the full page on a phone, the dropdown on a wider screen). For custom nav rows that act without navigating.
 - **`S.toast(opts)`**: transient notification at the bottom of the viewport.
 - **`S.addTooltip(el, opts)`**: tooltip on hover, attached to an existing element.

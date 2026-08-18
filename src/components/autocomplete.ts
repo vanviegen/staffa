@@ -161,7 +161,7 @@ export function autocomplete(opts: AutocompleteOptions): void {
 				});
 
 				inputEl = A("input type=text role=combobox autocomplete=off", () => {
-					A(`id=${id} aria-controls=${menuId} aria-autocomplete=list`);
+					A("id=", id, `aria-controls=${menuId} aria-autocomplete=list`);
 					if (opts.placeholder != null) A("placeholder=", opts.placeholder);
 					if (opts.disabled) A("disabled=true");
 					if (opts.required) A("aria-required=true");

@@ -40,10 +40,10 @@ export function checkbox(opts: CheckboxOptions = {}): void {
 	const id = opts.id ?? uniqueId("check");
 
 	A("div.s-check", opts.attrs, () => {
-		A(`label for=${id}`, () => {
+		A("label for=", id, () => {
 			A("input type=checkbox", opts.inputAttrs, () => {
-				A(`id=${id}`);
-				if (opts.name) A(`name=${opts.name}`);
+				A("id=", id);
+				if (opts.name) A("name=", opts.name);
 				// `checked` is a boolean attribute: only set it when actually true.
 				if (opts.checked && !opts.bind) A("checked=true");
 				if (opts.change) A("change=", opts.change);

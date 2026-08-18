@@ -58,6 +58,18 @@ import A from "aberdeen";
  * ```
  */
 
+/**
+ * The surface sheen: the subtle single-colour wash every surface (and the page)
+ * is painted with, as a `background:` declaration. A shared constant rather
+ * than a CSS custom property, deliberately: `var()`s inside a custom property
+ * resolve where the property is *defined*, so a `--s-sheen` at `:root` would
+ * paint every surface with the page's wash instead of its own `$s-bg`'s. Also
+ * used by panels.ts, where the routed columns have to visually *be* the
+ * surface around them.
+ */
+export const SURFACE_SHEEN =
+	"background: linear-gradient(170deg, color-mix(in oklab, $s-bg, white 9%), color-mix(in oklab, $s-bg, black 9%));";
+
 const STORAGE_KEY = "staffa:darkMode";
 
 /** The explicit dark-mode choice; `undefined` follows the OS via {@link A.darkMode}. */
@@ -221,8 +233,7 @@ A.insertGlobalCss({
 		"--s-faint: color-mix(in oklab, $s-text, $s-bg 80%); " +
 		"color:$s-text accent-color:$s-accent scrollbar-width:thin scrollbar-color: $s-faint transparent;",
 	// Subtle single-colour gradient sheen, painted on every surface (and the page).
-	".s-s, body":
-		"background: linear-gradient(170deg, color-mix(in oklab, $s-bg, white 9%), color-mix(in oklab, $s-bg, black 9%));",
+	".s-s, body": SURFACE_SHEEN,
 	".s-s": "r:$s-radius",
 	// Neutral surfaces own a subtle hairline border (a card reads as a card without
 	// any component help). `:where()` keeps it zero-specificity, so a bar/panel that
@@ -263,7 +274,7 @@ A.insertGlobalCss({
 	// Specificity (4 classes) beats the 2-class variant rules — no !important.
 	".s-s:not(.neutral) .s-s.tonal, .s-s:not(.neutral) .s-s.outlined":
 		"--s-text:#fff --s-accent:#fff --s-link-fg:#fff " +
-		"background: linear-gradient(170deg, color-mix(in oklab, $s-bg, white 9%), color-mix(in oklab, $s-bg, black 9%)); border-color: transparent;",
+		SURFACE_SHEEN + " border-color: transparent;",
 });
 
 // ── Suppress transitions during the initial load ─────────────────────────────

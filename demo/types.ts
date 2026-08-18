@@ -14,45 +14,60 @@ function assert<_T extends true>(): void {}
 S.main({
 	routes: {
 		// A plain `[param]` is a string...
-		"/icons/[name]": ($page) => {
-			assert<Exact<typeof $page.params.name, string>>();
-			assert<Exact<typeof $page.path, string>>();
+		"/icons/[name]": ($panel) => {
+			assert<Exact<typeof $panel.params.name, string>>();
+			assert<Exact<typeof $panel.path, string>>();
 			// @ts-expect-error — `bogus` isn't a param of this route.
-			$page.params.bogus;
+			$panel.params.bogus;
 		},
 		// ...an `=integer` one is a number, and both are inferred from the same key.
-		"/projects/[projectId]/tasks/[taskId=integer]": ($page) => {
-			assert<Exact<typeof $page.params.projectId, string>>();
-			assert<Exact<typeof $page.params.taskId, number>>();
+		"/projects/[projectId]/tasks/[taskId=integer]": ($panel) => {
+			assert<Exact<typeof $panel.params.projectId, string>>();
+			assert<Exact<typeof $panel.params.taskId, number>>();
 		},
 		// A trailing `[...rest]` collects the rest of the path as one raw string.
-		"/files/[...path]": ($page) => {
-			assert<Exact<typeof $page.params.path, string>>();
+		"/files/[...path]": ($panel) => {
+			assert<Exact<typeof $panel.params.path, string>>();
 		},
 		// Brackets only count when they are the whole segment.
-		"/v[1]beta": ($page) => {
+		"/v[1]beta": ($panel) => {
 			// @ts-expect-error — a literal segment, not a param.
-			$page.params.anything;
+			$panel.params.anything;
 		},
 		// An unknown matcher types as `never`, so using the param is an error.
 		// (The route key itself throws at mount time.)
-		"/x/[id=bogus]": ($page) => {
-			assert<Exact<typeof $page.params.id, never>>();
+		"/x/[id=bogus]": ($panel) => {
+			assert<Exact<typeof $panel.params.id, never>>();
 		},
 		// A route without params has no params at all.
-		"/settings": ($page) => {
+		"/settings": ($panel) => {
 			// @ts-expect-error — nothing to destructure here.
-			$page.params.anything;
-			$page.layout = "small";
-			$page.layout = "large";
-			// @ts-expect-error — the only three layouts there are.
-			$page.layout = "third";
+			$panel.params.anything;
+			$panel.maxWidth = "half";
+			$panel.maxWidth = "screen";
+			// @ts-expect-error — the only three bounds there are.
+			$panel.maxWidth = "third";
+		},
+		// The chrome a page declares, which the shell then places.
+		"/chrome": ($panel) => {
+			$panel.title = "Chrome";
+			$panel.actions = () => {};
+			$panel.actions = "some **rich** text";
+			// @ts-expect-error — retired: the breadcrumbs are every page's way out.
+			$panel.closeable = false;
+			// The shell's own facts about the page: readable, never assignable.
+			assert<Exact<typeof $panel.width, number>>();
+			assert<Exact<typeof $panel.visible, boolean>>();
+			// @ts-expect-error — the shell resolves the width; the page asks with maxWidth.
+			$panel.width = 400;
+			// @ts-expect-error — likewise for whether the page is on screen.
+			$panel.visible = false;
 		},
 	},
-	notFound: ($page) => {
-		assert<Exact<typeof $page.path, string>>();
+	notFound: ($panel) => {
+		assert<Exact<typeof $panel.path, string>>();
 		// @ts-expect-error — an unmatched path carries no params.
-		$page.params.anything;
+		$panel.params.anything;
 	},
 	// `ancestors` is keyed by the same templates, and types each entry's params
 	// from its own key — so it never has to take the path apart again.
@@ -70,9 +85,12 @@ S.main({
 });
 
 // A key that isn't in the route table is a typo, and typos are type errors.
+// The directive sits on the call rather than the key: with `main()` overloaded
+// on whether `routes` is present, a bad key fails overload resolution, and TS
+// reports that against the call.
+// @ts-expect-error — no such route: "/projekts/[id]".
 S.main({
 	routes: { "/projects/[id]": () => {} },
-	// @ts-expect-error — no such route.
 	ancestors: { "/projekts/[id]": () => [] },
 });
 
@@ -80,27 +98,78 @@ S.main({
 S.main({
 	title: "Plain",
 	maxWidth: "48rem",
+	logo: "✦",
+	// Outside routed mode nothing competes for the line under the app's name, so
+	// a tagline there simply always shows.
+	subtitle: "a tagline",
 	content: () => {},
 });
 
-// The programmatic helpers.
-export function useHelpers(): void {
-	S.panels.push("/projects/7");
-	S.panels.replace("/projects/8");
-	void S.panels.close();
+// The nav is a sidebar on one side or the other, collapsing to a ☰ when the shell
+// is narrow. The always-a-button mode is retired, so that "narrow" and "the nav
+// is collapsed" stay one and the same thing.
+S.main({
+	nav: { items: [] },
+	navPosition: "right",
+	content: () => {},
+});
+S.main({
+	nav: { items: [] },
+	// @ts-expect-error — no such nav position.
+	navPosition: "button",
+	content: () => {},
+});
+
+// The stack `S.main()` hands back in routed mode, and what it can do.
+export function useStack(shell: S.PanelStack): void {
+	void shell.pushPanel("/projects/7");
+	void shell.replacePanel("/projects/8");
+	void shell.openPanelStack("/thread/8", ["/mailbox/2"]);
+	void shell.closePanel();
+	// Every navigation settles asynchronously, and every method says whether
+	// it landed — closing and opening alike.
+	assert<Exact<ReturnType<typeof shell.pushPanel>, Promise<boolean>>>();
+	assert<Exact<ReturnType<typeof shell.replacePanel>, Promise<boolean>>>();
+	assert<Exact<ReturnType<typeof shell.openPanelStack>, Promise<boolean>>>();
+	assert<Exact<ReturnType<typeof shell.closePanel>, Promise<boolean>>>();
 	// With a path: that panel, spliced out when it isn't the top one.
-	assert<Exact<ReturnType<typeof S.panels.close>, Promise<boolean>>>();
-	void S.panels.close("/projects/7");
-	assert<Exact<typeof S.panels.stack, readonly string[]>>();
+	void shell.closePanel("/projects/7");
+	// The stack's type is its documented surface and nothing else: the class
+	// behind it (crumbs, columns, the commit pipeline) is not API.
+	// @ts-expect-error — not part of the PanelStack interface.
+	shell.drawCrumbs;
+	// @ts-expect-error — neither is this.
+	shell.navigate;
+	// The panels themselves, not a copy of their paths — so they can be written
+	// through, which is the only way to pin one from outside its own handler.
+	assert<Exact<typeof shell.panels, readonly S.Panel[]>>();
+	assert<Exact<typeof shell.currentPanelIndex, number>>();
+	assert<Exact<typeof shell.currentPanel, S.Panel | undefined>>();
+	if (shell.panels[0]) shell.panels[0].pinned = true;
+	// Read-only to the app, even from out here.
+	// @ts-expect-error — `path` is read-only.
+	shell.panels[0].path = "/nope";
+}
+
+// Routed mode hands the stack back; a plain shell has none to hand back.
+export function returnTypes(): void {
+	const routed = S.main({ routes: { "/projects/[id]": () => {} } });
+	assert<Exact<typeof routed, S.PanelStack>>();
+	const plain = S.main({ title: "Plain", content: () => {} });
+	assert<Exact<typeof plain, void>>();
 }
 
 // An explicitly typed handler, for apps that draw their pages in named functions.
-export function drawTask($page: S.Page<{ projectId: string; taskId: number }>): void {
-	assert<Exact<typeof $page.params.taskId, number>>();
-	$page.title = `Task ${$page.params.taskId}`;
-	$page.requestClose = async () => true;
-	// A page closes itself; the shell has no close chrome of its own.
-	assert<Exact<ReturnType<typeof $page.close>, Promise<boolean>>>();
+export function drawTask($panel: S.Panel<{ projectId: string; taskId: number }>): void {
+	assert<Exact<typeof $panel.params.taskId, number>>();
+	$panel.title = `Task ${$panel.params.taskId}`;
+	$panel.unsaved = true;
+	// @ts-expect-error — requestClose is gone; `unsaved` replaced it.
+	$panel.requestClose = async () => true;
+	// The shell draws this page's way out, but a page can still close itself.
+	assert<Exact<ReturnType<typeof $panel.close>, Promise<boolean>>>();
+	// @ts-expect-error — a box's ✕ is plain furniture now: it takes a callback,
+	// and no longer closes the page it happens to sit in.
 	S.box({ header: "Task", close: true, content: () => {} });
-	S.box({ close: () => void $page.close(), content: () => {} });
+	S.box({ close: () => void $panel.close(), content: () => {} });
 }

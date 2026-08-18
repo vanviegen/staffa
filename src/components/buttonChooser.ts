@@ -62,6 +62,6 @@ export function buttonChooser(opts: ButtonChooserOptions): void {
 
 	if (opts.name) {
 		// Hidden input carries the value into native form submission.
-		A(() => A(`input type=hidden name=${opts.name} value=`, opts.bind.value ?? ""));
+		A(() => A("input type=hidden name=", opts.name, "value=", opts.bind.value ?? ""));
 	}
 }

@@ -1,32 +1,79 @@
 import A from "aberdeen";
-import { current as currentRoute } from "aberdeen/route";
+import { current as currentRoute, matchCurrent } from "aberdeen/route";
 import { type Slot, type Attributes, drawSlot, focusFirst, NARROW_PX } from "../core.js";
-import { type MenuOptions, drawMenu, showFloatingMenu, isFloatingMenuOpen, closeFloatingMenu, menuGlyph, closeGlyph } from "./menu.js";
-import { button } from "./button.js";
+import { type MenuOptions, type MenuEntry, drawMenu, isFloatingMenuOpen, consumeBranchNav } from "./menu.js";
+// The shell's own chrome glyphs, from the same Lucide set an app draws with —
+// so a nav trigger sits beside app icons as an equal. Named imports, so a
+// bundler keeps these two and tree-shakes the other ~1950 away.
+import { menu as menuIcon, x as closeIcon } from "../icons.js";
+import { iconButton } from "./button.js";
 import { isDialogOpen } from "./dialog.js";
-import { PanelController, type AncestorsHandler, type AncestorTable, type Page, type RouteHandler, type RouteTable, type Routes } from "./panels.js";
+import { PanelStackController, type PanelStack, type AncestorTable, type Panel, type RouteHandler, type RouteTable, type Routes } from "./panels.js";
 
 /** Options for {@link main}. */
 export interface MainOptions<R = Routes> {
 	/** Aberdeen attr/style string applied to the outermost shell element. */
 	attrs?: Attributes;
-	/** App/page title shown in the top bar. */
+	/**
+	 * The app's name, shown in the top bar in the brand's own styling, with the
+	 * breadcrumb stack of open panels on the line beneath it (in routed mode).
+	 * In routed mode it is a link to the app's {@link MainOptions.home}, as the
+	 * {@link MainOptions.logo} is.
+	 */
 	title?: Slot;
-	/** Secondary line under the title. */
+	/**
+	 * A tagline for the app, on the line under its name.
+	 *
+	 * In routed mode that line is the breadcrumb stack's, and the tagline only
+	 * gets it while the stack would be saying nothing the screen doesn't
+	 * already: exactly one panel open, that panel being one a nav item leads to
+	 * (so the sidebar has it highlighted), and the sidebar actually on screen.
+	 * Open a panel on top of it, or narrow the shell until the nav is behind the
+	 * ☰, and the stack takes the line back — it is then the only thing naming
+	 * the screen. Pass no subtitle and the stack simply always has it.
+	 *
+	 * Outside routed mode nothing competes for the line, so it always shows.
+	 */
 	subtitle?: Slot;
-	/** Leading icon/logo in the top bar. */
-	icon?: Slot;
-	/** Action area on the right of the top bar (buttons, menu, ...). */
+	/**
+	 * The brand mark: the bar's leading slot while the nav is a sidebar.
+	 *
+	 * A narrow shell *displaces* it with the ☰ that opens the collapsed nav. The
+	 * app never branches on which: it hands over a logo and the shell works out
+	 * whether there is room for it. In routed mode it is a link to the app's
+	 * {@link MainOptions.home}, as the app's name is.
+	 */
+	logo?: Slot;
+	/**
+	 * The app's home: where the name and the {@link MainOptions.logo} in the
+	 * top bar link, as every logo on the web does. Defaults to `"/"`; set it
+	 * when your home screen lives elsewhere. It's an ordinary link, so the
+	 * usual rules apply: a home that is already open in the stack — its first
+	 * panel, usually — is returned to, closing nothing, and one that isn't is
+	 * opened the way a nav item would be. Routed mode only.
+	 */
+	home?: string;
+	/**
+	 * The app's own chrome, at the trailing end of the top bar: an account
+	 * button, a global search box, a settings menu. It may grow into the bar's
+	 * free space (so a search box is at home here); the title truncates before it
+	 * gives any of it back.
+	 *
+	 * In routed mode a narrow shell hands this slot to the current panel's
+	 * {@link Panel.actions} whenever it has any — on a phone the screen's own
+	 * verbs win the space — and keeps the app's menu for the screens that
+	 * declare none.
+	 */
 	menu?: Slot;
 	/**
-	 * The scrollable page content. A string is rendered as rich text.
+	 * The scrollable panel content. A string is rendered as rich text.
 	 * Mutually exclusive with {@link MainOptions.routes}.
 	 */
 	content?: Slot;
 	/**
 	 * Paths mapped to the functions that draw them, which hands navigation over
 	 * to the shell. Each route draws one screen of your app, called a panel, and
-	 * as many panels as fit are shown at a time: one at a time on a phone,
+	 * as many columns as fit are shown at a time: one at a time on a phone,
 	 * several side by side on a wider screen. Mutually exclusive with
 	 * {@link MainOptions.content}.
 	 *
@@ -36,7 +83,7 @@ export interface MainOptions<R = Routes> {
 	 * string, so it has to come last and needs at least one segment to match.
 	 * The first key that matches wins, a segment a param refuses falls through
 	 * to a later route (or to {@link MainOptions.notFound}), and each handler's
-	 * `$page.params` is typed from its own key.
+	 * `$panel.params` is typed from its own key.
 	 *
 	 * `integer` accepts only spellings that survive a round trip back to the
 	 * same URL, so `/tasks/0042` is not a second path for `/tasks/42`. Ids that
@@ -44,26 +91,38 @@ export interface MainOptions<R = Routes> {
 	 *
 	 * Navigating is just links: the shell handles the clicks itself, so do *not*
 	 * also call Aberdeen's `interceptLinks()`. A link opens its target on top of
-	 * the panel it sits in, closing anything that was above it first, unless it
-	 * carries `data-panel=replace`, which replaces its own panel instead. A link
-	 * to something already open goes back to it rather than opening it twice.
-	 * From code, use {@link panels} (`S.panels.push()` and friends): navigating
-	 * with `aberdeen/route`'s own `go()` works and still asks the panels'
-	 * {@link Page.requestClose}, but builds the whole stack from the path. A
-	 * navigation guard the app registered before mounting (an auth redirect,
-	 * say) keeps working: the shell asks it first, and puts it back when the
-	 * shell goes away.
+	 * the panel it sits in, closing everything after that panel first. The
+	 * `data-panel` attribute picks another of the three {@link PanelStack}
+	 * navigations instead: `replace` puts the target in place of the link's own
+	 * panel, and `open` leaves that panel behind and gives the target its own
+	 * stack, the way a nav item does. A link
+	 * to something already open goes back to it rather than opening it twice —
+	 * a move along the stack that closes nothing: the panels right of it stay
+	 * open, parked past the viewport's right edge, until a *new* panel prunes
+	 * them (pinned panels excepted — see {@link Panel.pinned}).
+	 * From code, use {@link pushPanel} and friends: navigating
+	 * with `aberdeen/route`'s own `go()` works too — a panel with
+	 * {@link Panel.unsaved} work still survives it — but builds the whole stack
+	 * from the path. A navigation guard the app registered with
+	 * `route.setGuard` (an auth redirect, say) keeps working: the shell
+	 * registers none of its own.
 	 *
-	 * The shell draws no back arrows and no ✕ of its own: **every panel provides
-	 * its own way out**, with `S.box`'s `close` option for a ✕, or
-	 * {@link Page.close} behind a Cancel button. Escape and the browser's back
-	 * button are the shell's contribution.
+	 * **A panel declares its chrome; the shell places it.** A panel says what it
+	 * is called ({@link Panel.title} — unset, its first line of text stands in)
+	 * and what it can do ({@link Panel.actions}); everything else in a column is
+	 * the panel's own content, boxes included. The shell writes the stack of
+	 * open panels as breadcrumbs in the top bar — click one to go back to it,
+	 * closing nothing — and places each panel's actions where the room is: on
+	 * its own column while several fit, in the bar once the shell is narrow and
+	 * the current panel *is* the screen. Nothing in an app measures the
+	 * viewport to lay its screens out twice.
 	 *
-	 * Only one routed shell can be mounted at a time (a second one throws),
-	 * which is what lets {@link panels} be a plain module-level object. Each
-	 * handler still gets its own `$page` rather than there being one global
-	 * "current page", since several panels are alive at once. It's that argument
-	 * that carries the per-route typing of `params`.
+	 * Only one routed shell can be mounted at a time (a second one throws) —
+	 * the URL is global, so two of them would fight over it. Nothing else is:
+	 * the {@link PanelStack} belongs to its shell, which hands it back, and
+	 * each handler gets its own `$panel` rather than there being one global
+	 * "current panel", since several panels are alive at once. It's that
+	 * argument that carries the per-route typing of `params`.
 	 *
 	 * @example
 	 * ```ts
@@ -71,18 +130,18 @@ export interface MainOptions<R = Routes> {
 	 *   title: "Trackle",
 	 *   nav: { items: [{ label: "Projects", href: "/projects" }] },
 	 *   routes: {
-	 *     "/projects": ($page) => { $page.title = "Projects"; drawProjects(); },
-	 *     "/projects/[id]": ($page) => drawProject($page.params.id),  // typed string
+	 *     "/projects": ($panel) => { $panel.title = "Projects"; drawProjects(); },
+	 *     "/projects/[id]": ($panel) => drawProject($panel.params.id),  // typed string
 	 *   },
-	 *   notFound: ($page) => S.box({ header: "Not found", content: $page.path }),
+	 *   notFound: ($panel) => S.box({ header: "Not found", content: $panel.path }),
 	 * });
 	 * ```
 	 */
 	routes?: R;
 	/**
 	 * Draws the panel for a path none of the routes match. There are no params
-	 * to go with it, so `$page.params` is empty; the path itself is in
-	 * `$page.path`.
+	 * to go with it, so `$panel.params` is empty; the path itself is in
+	 * `$panel.path`.
 	 */
 	notFound?: RouteHandler<{}>;
 	/**
@@ -118,34 +177,34 @@ export interface MainOptions<R = Routes> {
 	 *
 	 * This is asked for every origin-less navigation, so a nav item and a fresh
 	 * tab still land on the same columns; a link *inside* a panel builds on that
-	 * panel instead and never asks. It has to answer without drawing anything,
-	 * since the panels being replaced are asked their {@link Page.requestClose}
-	 * before the navigation is applied — before any handler could run. From code,
-	 * {@link panels}.`open()` takes the same list directly.
+	 * panel instead and never asks. It's consulted while the navigation is
+	 * still being worked out — before any route handler runs — so it has to
+	 * answer without drawing anything. From code,
+	 * {@link PanelStack.openPanelStack} takes the same list directly.
 	 */
 	// `NoInfer`, because `R` is inferred from `routes` alone: a second inference
 	// site for it would make TypeScript reconcile the two, and every handler's
-	// `$page` would quietly degrade to `any` (see the note on `main` below).
+	// `$panel` would quietly degrade to `any` (see the note on `main` below).
 	ancestors?: AncestorTable<NoInfer<R>>;
 	/**
-	 * Set `false` to show only the top panel, however wide the screen (the nav
-	 * sidebar still sits beside it). Everything else behaves the same: the URL,
-	 * the back button, `requestClose`, and the panels' own close buttons. This
-	 * only changes how many you see. Defaults to `true`.
+	 * Set `false` to show only the current panel, however wide the screen (the
+	 * nav sidebar still sits beside it). Everything else behaves the same: the
+	 * URL, the back button, unsaved panels, and the panels' own close buttons.
+	 * This only changes how many you see. Defaults to `true`.
 	 */
 	stacking?: boolean;
 	/** Footer content, pinned below the scroll area. */
 	footer?: Slot;
 	/**
-	 * Max width for the page's *content*, e.g. `"60rem"`. The header and footer
+	 * Max width for the panel's *content*, e.g. `"60rem"`. The header and footer
 	 * backgrounds still span the full shell width, but their contents — and the
 	 * sidebar + separator + content trio (or just the content when there's no
 	 * sidebar) — cap to this width and centre horizontally. When unset, everything
-	 * fills the available width. Either way the content shares the page surface —
+	 * fills the available width. Either way the content shares the panel surface —
 	 * it is not boxed.
 	 *
 	 * Ignored when you pass {@link MainOptions.routes}: there the open panels
-	 * decide the width (see {@link Page.layout}), and the header and footer line
+	 * decide the width (see {@link Panel.maxWidth}), and the header and footer line
 	 * themselves up with them.
 	 */
 	maxWidth?: string;
@@ -154,28 +213,27 @@ export interface MainOptions<R = Routes> {
 	/** Aberdeen attr/style string applied to the top bar. */
 	topbarAttrs?: Attributes;
 	/**
-	 * Navigation menu. When provided, renders a sidebar (in `"left"` / `"right"`
-	 * mode) or a button+dropdown (in `"button"` mode). The sidebar automatically
-	 * collapses to a button when the shell is too narrow — which there opens the
-	 * nav as a full page sliding in from the left, not as a dropdown.
+	 * Navigation menu, rendered as a sidebar beside the content. The sidebar
+	 * collapses to a ☰ in the top bar when the shell is narrow, and there it
+	 * opens the nav as a full panel sliding in from the left, not as a dropdown.
 	 *
 	 * `items` may be a reactive array: the shell reads it inside the sidebar's own
 	 * scope, so an item arriving or leaving redraws the sidebar and nothing else.
-	 * The content beside it — in routed mode, the whole panel stack — is left
-	 * alone.
+	 * The content beside it — in routed mode, the whole stack — is left
+	 * alone. `button` customizes the ☰; `dropdownAttrs` does nothing here, since
+	 * a collapsed nav is a panel rather than a dropdown.
 	 */
 	nav?: MenuOptions;
 	/**
-	 * Where to render the nav. Defaults to `"left"`.
-	 * - `"left"` / `"right"`: sidebar next to the content area; collapses to a
-	 *   button in the top bar when the shell width drops below 640 px.
-	 * - `"button"`: always a button, never a sidebar.
+	 * Which side the nav sidebar sits on. Defaults to `"left"`.
 	 *
-	 * The button opens a dropdown on a wide shell, and — below 640 px — a
-	 * full-page nav that slides in from the left, handing over to the chosen
-	 * screen with a matching slide in from the right.
+	 * Either way it collapses to a ☰ in the top bar once the shell width drops to
+	 * 640 px or below — the one threshold everything else keys off too, which is
+	 * why there is no "always a button" mode: it would make "narrow" and "the nav
+	 * is collapsed" two different things, and every rule about where a panel's
+	 * chrome goes assumes they are one.
 	 */
-	navPosition?: "left" | "right" | "button";
+	navPosition?: "left" | "right";
 	/** Aberdeen attr/style string applied to the sidebar nav panel. */
 	navAttrs?: Attributes;
 	/** Aberdeen attr/style string applied to the narrow-screen full-page nav. */
@@ -196,16 +254,34 @@ A.insertGlobalCss({
 		// radius down to just the bottom divider (it spans edge to edge).
 		"> header": "border:0 border-bottom: 1px solid $s-faint; r:0 position:sticky top:0 z-index:10",
 		"> footer": "border-top: 1px solid $s-faint; fg:$s-muted",
+		// The bar reads `[leading] [title] …spacer… [trailing]`. The spacer is the
+		// trailing slot's own growth: it takes the free space and right-aligns
+		// itself in it, which is what lets a search box live there. It doesn't
+		// shrink, and the title does — so the title is what truncates when the two
+		// compete, and the app's chrome stays usable.
 		"> header > .s-bar, > footer > .s-bar": "display:flex align-items:center width:100% margin-inline:auto gap:$3 padding: $2 $3;",
-		"> header .s-header-icon": "display:flex align-items:center font-size:1.4em background: $s-gradient; -webkit-background-clip:text; background-clip:text; color:transparent;",
-		"> header .s-titles": "display:flex flex-direction:column min-width:0 flex:1",
+		"> header .s-logo, > header .s-nav-trigger": "display:flex align-items:center flex-shrink:0",
+		// The ☰ is a glyph in a 2rem hit area, so it carries ~6px of its own
+		// padding: pull it back by that, and the glyph — not its hit area — lines
+		// up with the bar's edge and with the stack below.
+		"> header .s-nav-trigger": "margin-left:-0.375rem",
+		"> header .s-logo": "font-size:1.4em background: $s-gradient; -webkit-background-clip:text; background-clip:text; color:transparent;",
+		"> header .s-titles": "display:flex flex-direction:column min-width:0 flex: 0 1 auto;",
+		// Same font-size and line-height as `.s-crumb`, because in routed mode the
+		// two take turns on this line (see `drawSecondLine`): a different height
+		// would jog the whole bar as they swap.
+		"> header .s-subtitle": "fg:$s-muted font-size:0.85em line-height:1.5 overflow:hidden text-overflow:ellipsis white-space:nowrap",
 		"> header .s-title": "font-weight:800 font-size:1.1em line-height:1.2 overflow:hidden text-overflow:ellipsis white-space:nowrap letter-spacing:-0.01em background: $s-gradient; -webkit-background-clip:text; background-clip:text; color:transparent; width:fit-content max-width:100%",
-		"> header .s-subtitle": "fg:$s-muted font-size:0.85em overflow:hidden text-overflow:ellipsis white-space:nowrap",
-		"> header .s-menu": "display:flex align-items:center gap:$2",
+		// In routed mode the logo and the app's name are links to the app's home:
+		// strip the reset's link chrome down to the styling the div forms carry,
+		// which their classes then provide. (`filter:none` keeps the global
+		// `a:hover` brighten off the gradient text.)
+		"> header a.s-logo, > header a.s-title": "text-decoration:none filter:none cursor:pointer",
+		"> header .s-menu": "display:flex align-items:center justify-content:flex-end gap:$2 flex: 1 0 auto;",
 		// Body always wraps <main> (with or without a sidebar) so max-width centering
 		// and scrollbar alignment work identically in both cases.
 		// .s-body centres .s-body-inner; .s-body-inner caps the content to maxWidth.
-		// It's also the positioning + clipping context for the narrow-screen nav page,
+		// It's also the positioning + clipping context for the narrow-screen nav panel,
 		// which slides in and out across its left edge.
 		".s-body": "flex:1 overflow:hidden display:flex flex-direction:row min-height:0 justify-content:center position:relative",
 		".s-body-inner": "flex:1 min-width:0 display:flex flex-direction:row min-height:0",
@@ -219,10 +295,10 @@ A.insertGlobalCss({
 		// the whole body — and any sidebar — past the viewport edge). overflow-x:hidden
 		// clips overlong content on the right; vertically it scrolls.
 		// The transition is dormant (nothing else moves <main>); it's there for the
-		// incoming half of the nav-page hand-off — see `slideContentIn`.
+		// incoming half of the nav-panel hand-off — see `slideContentIn`.
 		".s-body main":
 			"flex:1 min-width:0 min-height:0 overflow-x:hidden overflow-y:auto display:flex flex-direction:column " +
-			"transition: transform 0.3s ease;",
+			"transition: transform var(--s-panel-ms) ease;",
 		// A one-shot starting position: parked one screen to the right, with the
 		// transition off so it snaps there. Removing the class animates it home.
 		".s-body main.s-slide-in": "transform: translateX(100%); transition:none",
@@ -236,10 +312,10 @@ A.insertGlobalCss({
 		// and the bar already comes from `.s-content`'s padding. Without a scrollbar
 		// there's no margin, so the content keeps its single $3 edge — not 2×$3.
 		".s-body main.s-scroll-y": "margin-right:$3",
-		// Routed mode takes its width from the panel stack instead of from
+		// Routed mode takes its width from the stack instead of from
 		// `maxWidth`: the layout engine publishes the ensemble width (sidebar +
 		// separator + content area) as --s-shell-w — the standard 1280px page
-		// normally, the window's edges while a "large" panel is up — and the body
+		// normally, the window's edges while a "screen" page is up — and the body
 		// row and the bars cap themselves to it. So the chrome lines up with the
 		// columns and the lot stays centred in the shell.
 		"&.s-routed > .s-body > .s-body-inner": "max-width: var(--s-shell-w, 100%);",
@@ -259,7 +335,7 @@ A.insertGlobalCss({
 	// Sidebar nav panel. Items reuse the shared `.s-menu-item` /
 	// `.s-menu-sep` styles from menu.ts, so the sidebar and the floating
 	// dropdown stay visually identical.
-	// Borderless and transparent so the page's own surface shows through — an airy,
+	// Borderless and transparent so the panel's own surface shows through — an airy,
 	// floating sidebar whose only chrome is the active item's accent colouring.
 	".s-nav-panel": {
 		// The generous horizontal padding is what keeps the rows clear of the content
@@ -267,7 +343,7 @@ A.insertGlobalCss({
 		// (overflow-y:auto, which also clips overflow-x) leaves no room to bleed past it.
 		"&": "display:flex flex-direction:column overflow-y:auto flex-shrink:0 max-width:228px padding:$3 gap:$1",
 	},
-	// The narrow-screen nav: a full "page" that slides in over the content from the
+	// The narrow-screen nav: a full "panel" that slides in over the content from the
 	// left, rather than a dropdown — on a phone a nav is a screenful of UI, not a
 	// popup. Picking an item slides it back out while the chosen screen comes in
 	// from the right (see `slideContentIn`), so the two tile across the viewport
@@ -280,7 +356,7 @@ A.insertGlobalCss({
 			// body starts below the bar), but the bar should still win if they ever do.
 			"position:absolute inset:0 z-index:5 display:flex flex-direction:column " +
 			"overflow-y:auto overscroll-behavior:contain border:0 r:0 padding:$2 gap:$1 " +
-			"transition: transform 0.3s ease;",
+			"transition: transform var(--s-panel-ms) ease;",
 		// Parked one screen to the left: the state the `create=`/`destroy=` hooks
 		// transition out of and back into.
 		"&.s-nav-page-off": "transform:translateX(-100%) pointer-events:none",
@@ -288,16 +364,14 @@ A.insertGlobalCss({
 		// is a thumb target.
 		".s-menu-item": "padding: $2 $3; min-height:3rem font-size:1.05em gap:$3",
 	},
-	// In button-only mode (or always-button navPosition), hide the sidebar and
-	// show the trigger. In sidebar mode, show the panel and hide the trigger.
-	// CSS @container queries handle the responsive collapse automatically.
-	".s-main.s-nav-left .s-nav-trigger, .s-main.s-nav-right .s-nav-trigger": "display:none",
-	".s-main.s-nav-btn-only .s-nav-panel": "display:none",
-	".s-main.s-nav-btn-only .s-nav-trigger": "display:flex",
-	// Collapse sidebar → button when shell is narrow.
+	// Collapse the sidebar when the shell is narrow. The ☰ that replaces it isn't
+	// hidden here but simply not drawn (see `main()`), because the same boolean
+	// also decides what the rest of the bar shows — one decision, in one place.
 	[`@container (max-width: ${NARROW_PX}px)`]: {
-		".s-main.s-nav-left .s-nav-panel, .s-main.s-nav-right .s-nav-panel, .s-main .s-nav-sep": "display:none",
-		".s-main.s-nav-left .s-nav-trigger, .s-main.s-nav-right .s-nav-trigger": "display:flex",
+		".s-main .s-nav-panel, .s-main .s-nav-sep": "display:none",
+		// A phone's bar holds two lines of chrome in a screen's width, so it buys
+		// the stack and the screen's actions room by spending less on air.
+		".s-main > header > .s-bar": "gap:$1 padding: $1 $2;",
 		// On phones a top-level content box becomes a full-bleed block: pull it out
 		// to negate the content padding and drop the rounded corners.
 		".s-content > .s-box": "margin-inline: calc(-1 * $3); r:0 border-inline:0",
@@ -309,23 +383,27 @@ A.insertGlobalCss({
 
 /**
  * An application shell that wires up the things almost every app needs: a sticky
- * top bar (icon, title, subtitle, action menu), a scrollable content area, and a
+ * top bar (logo, title, action menu), a scrollable content area, and a
  * footer. With {@link MainOptions.maxWidth} the content area is centred and its
- * width capped. Add a `nav` to get a responsive sidebar (auto-collapses to a
- * menu button below 640 px, or always a button with `navPosition: "button"`).
- * Below 640 px that button opens the nav as a full page sliding in from the
+ * width capped. Add a `nav` to get a sidebar that collapses to a ☰ in the top bar
+ * below 640 px, which there opens the nav as a full panel sliding in from the
  * left; picking an item slides it away as the chosen screen enters from the
  * right.
  *
  * Instead of a single `content` slot, pass {@link MainOptions.routes} and the
  * shell takes over navigation: each route draws one screen, called a panel,
- * and as many panels as fit are shown at a time, side by side on a wide screen
- * and one at a time on a phone. See {@link MainOptions.routes} and {@link Page}.
+ * and as many columns as fit are shown at a time, side by side on a wide screen
+ * and one at a time on a phone. Each panel *declares* its chrome — its
+ * {@link Panel.title} and its {@link Panel.actions} — and this shell places it:
+ * the stack of titles as breadcrumbs in the bar, the actions on the panel's
+ * column while several fit and in the bar once the shell is narrow enough
+ * that the current panel is the whole screen. See {@link MainOptions.routes} and
+ * {@link Panel}.
  *
  * @example
  * ```ts
  * S.main({
- *   icon: "✦",
+ *   logo: "✦",
  *   title: "Staffa Demo",
  *   maxWidth: "56rem",
  *   nav: {
@@ -345,16 +423,18 @@ A.insertGlobalCss({
  * }
  * ```
  */
-// The self-referential constraint is what types each handler's `$page.params`
+// The self-referential constraint is what types each handler's `$panel.params`
 // from its own route key. It deliberately has no default: giving `R` one makes
-// TypeScript fall back to it for contextual typing, and every `$page.params`
+// TypeScript fall back to it for contextual typing, and every `$panel.params`
 // silently degrades to `any`. Callers that pass no `routes` are unaffected —
 // `MainOptions`'s own default kicks in there.
-export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): void {
+export function main<R extends RouteTable<R>>(opts: MainOptions<R> & { routes: object }): PanelStack;
+export function main(opts?: MainOptions<{}> & { routes?: undefined }): void;
+export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): PanelStack | void {
 	// Whether there is a nav to show is deliberately NOT worked out here: `items`
 	// may well be a reactive array, and reading it in the shell's own scope would
 	// subscribe *the whole shell* to it — an item arriving later would redraw the
-	// lot, and in routed mode that means tearing the panel stack down and building
+	// lot, and in routed mode that means tearing the stack down and building
 	// it again from the URL. So every use below reads `nav.items` inside its own
 	// scope, and only that scope redraws.
 	const nav = opts.nav;
@@ -362,23 +442,34 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): void {
 	// Whether the narrow-screen full-page nav is showing. Per shell, so nested or
 	// sibling `main()`s can't fight over it.
 	const $nav = A.proxy({ open: false });
+	// Whether the shell is narrow: its container is at or below NARROW_PX, the
+	// very threshold the `@container` queries above switch the sidebar on. One
+	// boolean, read by everything that has to agree about which regime we are in —
+	// the bar's layout, what the ☰ does, and where a panel's chrome goes — so they
+	// cannot drift apart. Its initial value is a guess from the viewport (a shell
+	// is rarely wider than that) which `watchNarrow` corrects before the first
+	// paint; guessing well just saves a redraw of anything keyed on it.
+	const $shell = A.proxy({
+		narrow: typeof document !== "undefined" && document.documentElement.clientWidth <= NARROW_PX,
+	});
 
 	const routes = opts.routes as Routes | undefined;
 	if (routes != null && opts.content != null) {
 		throw new Error("Staffa: S.main() takes either `content` or `routes`, not both");
 	}
-	// The panel stack owns the routing, so it starts observing (and building its
+	// The stack owns the routing, so it starts observing (and building its
 	// stack from) the URL before any of the shell is drawn — the top bar's back
 	// button already needs to know how deep we are. Its options are listed one by
 	// one rather than spread from `opts`: a spread reads every key, which on a
 	// proxied options object subscribes this scope to all of them.
 	const ctl = routes
-		? new PanelController({
+		? new PanelStackController({
 			routes,
 			notFound: opts.notFound,
 			ancestors: opts.ancestors,
 			stacking: opts.stacking,
 			title: opts.title,
+			$shell,
 		})
 		: null;
 	// Routed mode caps the shell to the ensemble width the layout engine publishes,
@@ -386,21 +477,27 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): void {
 	const capWidth = ctl ? null : opts.maxWidth;
 
 	const root = A(`div.s-main${ctl ? ".s-routed" : ""}`, opts.attrs, () => {
-		// Which nav mode the shell is in — sidebar or button — as a class on the
-		// shell, for the CSS below to hang the responsive collapse off. Its own
-		// scope (see `nav` above), so a nav appearing or emptying out only retags
-		// the shell rather than redrawing it.
+		// Which side the sidebar is on, as a class on the shell for the CSS above to
+		// hang off. Its own scope (see `nav` above), so a nav appearing or emptying
+		// out only retags the shell rather than redrawing it.
 		A(() => {
 			if (nav == null || !nav.items.length) return;
-			A(navPos === "button" ? ".s-nav-btn-only" : `.s-nav-${navPos}`);
+			A(`.s-nav-${navPos}`);
 		});
 
-		// Top bar.
+		// Top bar: `[leading] [identity] …spacer… [trailing]`, where each slot's
+		// contents depend on how much room the shell has and — in routed mode — on
+		// what the current panel declared. Each is its own scope, so a resize across
+		// the threshold or a panel renaming itself moves the chrome without
+		// disturbing anything else. A routed shell always has a bar: it is where
+		// the breadcrumb stack lives, and where a panel's actions land once the
+		// shell is narrow.
 		A(() => {
 			const hasBar =
+				ctl != null ||
 				opts.title != null ||
 				opts.subtitle != null ||
-				opts.icon != null ||
+				opts.logo != null ||
 				opts.menu != null ||
 				(nav != null && nav.items.length > 0);
 			if (!hasBar) return;
@@ -410,26 +507,54 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): void {
 					A(() => {
 						if (capWidth != null) A("max-width:", capWidth);
 					});
-					// Nav trigger button — visible when sidebar is hidden (button mode or narrow viewport).
+
+					// Leading: the ☰ once the nav has collapsed, the logo otherwise.
+					// Deliberately no back button, at any width: going back is the
+					// stack's job in both regimes (plus Escape and the browser's own
+					// back). A « here would hand a narrow shell a way out that a wide
+					// one hasn't got, and it would have to displace the ☰ to fit —
+					// leaving a phone with no way to the app's navigation at all
+					// until it had closed its way back to the stack's first panel.
 					A(() => {
-						if (nav == null || !nav.items.length) return;
-						// .s-nav-trigger: CSS toggles display based on sidebar visibility.
-						A("div.s-nav-trigger", () => drawNavTrigger(nav, $nav));
+						if ($shell.narrow) {
+							if (nav != null && nav.items.length) {
+								A("div.s-nav-trigger", () => drawNavTrigger(nav, $nav));
+								return;
+							}
+						}
+						if (opts.logo == null) return;
+						// In routed mode the brand mark is a link to the app's home,
+						// twinned with the app's name beside it — a real link, so it
+						// has an address to hover, middle-click and copy, and a click
+						// runs the shell's usual link rules.
+						A(ctl ? "a.s-logo aria-label=Home" : "div.s-logo", () => {
+							if (ctl) A("href=", opts.home ?? "/");
+							drawSlot(opts.logo);
+						});
 					});
 
-					A(() => {
-						if (opts.icon != null) A("div.s-header-icon", () => drawSlot(opts.icon));
-					});
+					// The identity block: the brand on the first line — always; a
+					// routed shell never renames itself, because the breadcrumb stack
+					// on the line beneath already says where you are, in both regimes.
+					// The name links to the app's home, the counterpart of the
+					// crumbs it sits above.
 					A("div.s-titles", () => {
 						A(() => {
-							if (opts.title != null) A("div.s-title", () => drawSlot(opts.title));
+							if (opts.title == null) return;
+							A(ctl ? "a.s-title" : "div.s-title", () => {
+								if (ctl) A("href=", opts.home ?? "/");
+								drawSlot(opts.title);
+							});
 						});
-						A(() => {
-							if (opts.subtitle != null) A("div.s-subtitle", () => drawSlot(opts.subtitle));
-						});
+						drawSecondLine(opts, ctl, nav, $shell);
 					});
+
+					// Trailing: on a narrow shell the screen's own verbs win the space,
+					// and a screen with none of its own leaves the app's chrome up.
 					A(() => {
-						if (opts.menu) A("div.s-menu", () => drawSlot(opts.menu));
+						const actions = $shell.narrow ? ctl?.currentPanel?.actions : undefined;
+						const slot = actions ?? opts.menu;
+						if (slot != null) A("div.s-menu", () => drawSlot(slot));
 					});
 				});
 			});
@@ -445,7 +570,7 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): void {
 				// The sidebar, in its own scope so a changing item list redraws just
 				// it — never the content area beside it (see `nav` above).
 				A(() => {
-					if (nav == null || !nav.items.length || navPos === "button") return;
+					if (nav == null || !nav.items.length) return;
 					A(`nav.s-nav-panel.s-nav-${navPos}`, opts.navAttrs, () => {
 						drawMenu(nav.items);
 					});
@@ -453,9 +578,9 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): void {
 				});
 				drawMainContent(opts, ctl);
 			});
-			// The narrow-screen nav page, laid over the body it slides across.
+			// The narrow-screen nav panel, laid over the body it slides across.
 			A(() => {
-				if (nav != null && nav.items.length && $nav.open) drawNavPage(nav, opts.navPageAttrs, $nav);
+				if (nav != null && nav.items.length && $nav.open) drawNavPage(nav, opts.navPageAttrs, $nav, $shell);
 			});
 		});
 
@@ -474,12 +599,14 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): void {
 		});
 	}) as HTMLElement;
 
+	watchNarrow(root, $shell);
+
 	// Escape peels back a panel of UI, and finally jumps to the navigation: into
-	// the sidebar's current item when the sidebar is showing, or — when collapsed
-	// to (or always) a button — open the nav (dropdown or full page, whichever the
-	// shell width calls for), which focuses its current item. Listens on
-	// `document` so it works wherever focus is, but bows out while another overlay
-	// (a dialog, or an already-open menu) is up — those handle Escape themselves.
+	// the sidebar's current item when the sidebar is showing, or — when it has
+	// collapsed to the ☰ — open the full-page nav, which focuses its current item.
+	// Listens on `document` so it works wherever focus is, but bows out while
+	// another overlay (a dialog, or an open menu) is up — those handle Escape
+	// themselves.
 	if (nav != null || ctl) {
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key !== "Escape" || e.defaultPrevented) return;
@@ -493,23 +620,26 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): void {
 				trigger?.focus();
 				return;
 			}
-			// Above the stack root, Escape closes the top panel — the same guarded
-			// close as a page's own ✕ or the browser's back button. It is, with
-			// browser back, the only way out the shell itself provides.
-			if (ctl && ctl.$state.paths.length > 1) {
+			// With a panel to the current one's left, Escape steps back along the
+			// stack: it closes the current panel when that panel is the stack's
+			// last, and just goes one panel left when panels are parked beyond it.
+			// A panel holding unsaved work isn't closed but parked, like a
+			// mid-stack one. There is no button for this — the crumbs are the
+			// pointing device's way back.
+			if (ctl && ctl.currentPanelIndex > 0) {
 				e.preventDefault();
-				void ctl.closeTop();
+				void ctl.back();
 				return;
 			}
 			// Whether there is a nav at all is asked of the DOM, not of `nav.items`:
 			// a subscription here would be one on the shell's own scope again, and
 			// an empty nav simply has neither of the two elements below.
 			// `offsetParent` is null when the sidebar is hidden (display:none).
-			const panel = root.querySelector<HTMLElement>(".s-nav-panel");
-			if (panel?.offsetParent != null) {
+			const sidebar = root.querySelector<HTMLElement>(".s-nav-panel");
+			if (sidebar?.offsetParent != null) {
 				const item =
-					panel.querySelector<HTMLElement>("[aria-current=page]") ??
-					panel.querySelector<HTMLElement>(".s-menu-item:not([aria-disabled=true])");
+					sidebar.querySelector<HTMLElement>("[aria-current=page]") ??
+					sidebar.querySelector<HTMLElement>(".s-menu-item:not([aria-disabled=true])");
 				if (item) { e.preventDefault(); item.focus(); }
 				return;
 			}
@@ -518,19 +648,23 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): void {
 		document.addEventListener("keydown", onKey);
 		A.clean(() => document.removeEventListener("keydown", onKey));
 	}
+
+	// The stack is this shell's, not the app's: it is handed back rather than
+	// parked in a module-level global, so nothing can reach a shell it isn't in.
+	return ctl ?? undefined;
 }
 
 /**
- * Dismisses whichever collapsed nav is showing, if either is: at most one shell
- * has its nav up as an overlay at a time, so this needs nothing passed in. Set
- * by the two things that open one (see {@link closeNav}).
+ * Dismisses the collapsed nav if it's showing: at most one shell has its nav up
+ * as an overlay at a time, so this needs nothing passed in. Set by the thing
+ * that opens one (see {@link closeNav}).
  */
 let openNav: (() => void) | null = null;
 
 /**
- * Close the navigation, if it's showing as an overlay: the full page it becomes
- * on a narrow shell, or the dropdown its button opens on a wider one. A sidebar
- * isn't an overlay and has nothing to dismiss, so there it does nothing.
+ * Close the navigation, if it's showing as an overlay — the full panel it becomes
+ * on a narrow shell. A sidebar isn't an overlay and has nothing to dismiss, so
+ * on a wider shell this does nothing.
  *
  * A navigation closes the nav by itself, links in your own custom rows included,
  * so this is for the items that *don't* navigate — one that opens a dialog, or
@@ -552,53 +686,112 @@ export function closeNav(): void {
 }
 
 /**
- * The hamburger in the top bar, shown whenever the sidebar isn't. What it opens
- * depends on how much room the shell has: a dropdown when there's plenty, and —
- * below {@link NARROW_PX} — the full-page nav, which suits a phone far better
- * than a popup. Either way a second click closes again.
+ * The line under the app's name: the breadcrumb stack, or the app's own
+ * {@link MainOptions.subtitle} in its place.
+ *
+ * A routed shell hands the line to the tagline only while the crumbs would be
+ * repeating what is already on screen — one panel open, that panel being a nav
+ * item's own screen, and the sidebar there to show it highlighted. That last
+ * condition is why a narrow shell always keeps the stack: the nav is behind the
+ * ☰ there, so nothing else names the screen. An app with no subtitle to show
+ * never asks any of this, and its crumbs simply mount once.
+ *
+ * One scope for the whole decision, so a navigation, a resize across the
+ * threshold or a nav item arriving swaps the line without disturbing the bar
+ * around it — and so that reading `nav.items` subscribes this line alone,
+ * never the shell entire (see `nav` in `main()`).
  */
-function drawNavTrigger(nav: MenuOptions, $nav: { open: boolean }): void {
-	let myEl: HTMLElement | null = null;
-	A.clean(() => { if (myEl) closeFloatingMenu(myEl); });
-	// The dropdown form of the same overlay, for `closeNav()` (see `openNav`).
-	// The floating menu bows out on a navigation by itself, so this is only ever
-	// asked to dismiss one that isn't going anywhere.
-	const dismiss = () => { if (myEl) closeFloatingMenu(myEl); };
-
-	button({
-		// The glyph doubles as the state: ☰ to open the page, ✕ to dismiss it. Its
-		// own scope, so toggling doesn't rebuild (and re-focus) the button.
-		icon: () => A(() => ($nav.open ? closeGlyph : menuGlyph)({ size: "1.5em" })),
-		ariaLabel: "Open navigation",
-		// Quiet chrome, matching the `menu` slot's own buttons at the other end of the
-		// bar: the trigger is a way *in* to the app, not something to be sold on, and a
-		// filled brand button here shouts down the title it sits next to.
-		attrs: ".neutral .small",
-		...nav.button,
-		click: (e: Event) => {
-			myEl = e.currentTarget as HTMLElement;
-			const shell = myEl.closest<HTMLElement>(".s-main");
-			if (shell != null && shell.clientWidth <= NARROW_PX) { $nav.open = !$nav.open; return; }
-			// Wide shell: the classic dropdown. A click on the trigger never reaches
-			// the menu's own outside-click handler, so toggle it here.
-			if (isFloatingMenuOpen(myEl)) closeFloatingMenu(myEl);
-			else {
-				openNav = dismiss;
-				showFloatingMenu({ items: nav.items, anchor: myEl, dropdownAttrs: nav.dropdownAttrs });
-			}
-		},
+function drawSecondLine(
+	opts: MainOptions<any>,
+	ctl: PanelStackController | null,
+	nav: MenuOptions | undefined,
+	$shell: { narrow: boolean },
+): void {
+	A(() => {
+		// Short-circuit first: with no subtitle, nothing below is read, so the
+		// crumbs keep the line for good and this scope never re-runs.
+		if (opts.subtitle != null && (ctl == null || taglineFits(ctl, nav, $shell))) {
+			A("div.s-subtitle", () => drawSlot(opts.subtitle));
+			return;
+		}
+		ctl?.drawCrumbs();
 	});
 }
 
 /**
- * The narrow-screen navigation: a full page sliding in over the content from the
+ * Whether the stack would only be saying what the sidebar already says: a
+ * single panel open, the sidebar on screen, and that panel being one of the nav's
+ * own rows.
+ *
+ * The row test is {@link matchCurrent} — the very thing that marks a row
+ * `aria-current=page` — so "the crumb is redundant" and "the sidebar has it
+ * highlighted" can never come apart. It compares whole paths, so it is true
+ * only for a nav item's own screen, never for one opened beneath it.
+ */
+function taglineFits(ctl: PanelStackController, nav: MenuOptions | undefined, $shell: { narrow: boolean }): boolean {
+	if ($shell.narrow || nav == null) return false;
+	if (ctl.panels.length > 1) return false;
+	return nav.items.some((entry: MenuEntry) =>
+		typeof entry !== "string" &&
+		typeof entry !== "function" &&
+		!("separator" in entry) &&
+		entry.href != null &&
+		matchCurrent(entry.href));
+}
+
+/**
+ * Track whether the shell is narrow, for everything that has to agree about it.
+ *
+ * The *content* box is what's measured, because that is what an `inline-size`
+ * `@container` query measures: reading `clientWidth` instead would count any
+ * padding a caller put on the shell, and the JS and the CSS would then disagree
+ * about the regime at exactly the widths where it matters.
+ */
+function watchNarrow(root: HTMLElement, $shell: { narrow: boolean }): void {
+	if (typeof ResizeObserver === "undefined") return;
+	const ro = new ResizeObserver((entries) => {
+		const box = entries[0]?.contentBoxSize?.[0];
+		const width = box ? box.inlineSize : entries[0]?.contentRect.width;
+		if (width != null) $shell.narrow = width <= NARROW_PX;
+	});
+	ro.observe(root);
+	A.clean(() => ro.disconnect());
+}
+
+/**
+ * The hamburger in the top bar, which is where the sidebar goes when the shell
+ * is too narrow to hold one. It opens the nav as a full panel — on a phone a nav
+ * is a screenful of UI, not a popup — and a second click closes it again.
+ *
+ * A bare glyph, like the ✕ on a panel: the trigger
+ * is a way *in* to the app, not something to be sold on, and a bordered box
+ * around it shouts down the title it sits beside.
+ */
+function drawNavTrigger(nav: MenuOptions, $nav: { open: boolean }): void {
+	iconButton({
+		// The glyph doubles as the state: ☰ to open the panel, ✕ to dismiss it. Its
+		// own scope, so toggling doesn't rebuild (and re-focus) the button.
+		icon: nav.button?.icon ?? (() => A(() => ($nav.open ? closeIcon : menuIcon)())),
+		ariaLabel: nav.button?.ariaLabel ?? "Open navigation",
+		attrs: nav.button?.attrs,
+		click: () => { $nav.open = !$nav.open; },
+	});
+}
+
+/**
+ * The narrow-screen navigation: a full panel sliding in over the content from the
  * left. Picking an item slides it back out while the chosen screen enters from
  * the right, so the two tile across the viewport and the whole thing reads as a
  * lateral move rather than a popup blinking out.
  */
-function drawNavPage(nav: MenuOptions, attrs: Attributes | undefined, $nav: { open: boolean }): void {
+function drawNavPage(
+	nav: MenuOptions,
+	attrs: Attributes | undefined,
+	$nav: { open: boolean },
+	$shell: { narrow: boolean },
+): void {
 	// Whether this close is a *navigation* — the only kind that hands over to an
-	// incoming screen. Dismissing the page just uncovers the content again.
+	// incoming screen. Dismissing the panel just uncovers the content again.
 	let navigated = false;
 	const dismiss = () => { navigated = true; $nav.open = false; };
 
@@ -612,12 +805,14 @@ function drawNavPage(nav: MenuOptions, attrs: Attributes | undefined, $nav: { op
 	openNav = dismiss;
 	A.clean(() => { if (openNav === dismiss) openNav = null; });
 
-	// Whatever the page navigated to, it hands over to: the items do that
+	// Whatever the panel navigated to, it hands over to: the items do that
 	// themselves (`dismiss` above), but custom slot content — a link in a row the
 	// shell knows nothing about — doesn't, and neither does a navigation from
-	// anywhere else. Its own scope, so it can't redraw the page it closes.
+	// anywhere else. A branch row expanding is the exception: it navigates in
+	// order to unfold, and the nav should stay up while the user works down the
+	// tree. Its own scope, so it can't redraw the panel it closes.
 	const openedAt = A.peek(currentRoute, "path");
-	A(() => { if (currentRoute.path !== openedAt) dismiss(); });
+	A(() => { if (currentRoute.path !== openedAt && !consumeBranchNav(currentRoute.path)) dismiss(); });
 
 	const shell = pageEl.closest<HTMLElement>(".s-main");
 	const behind = pageEl.parentElement?.querySelector<HTMLElement>(":scope > .s-body-inner");
@@ -627,34 +822,32 @@ function drawNavPage(nav: MenuOptions, attrs: Attributes | undefined, $nav: { op
 	const content = behind?.querySelector<HTMLElement>(":scope > main");
 
 	// The content is fully covered, but without this it stays tabbable and visible
-	// to screen readers underneath the page.
+	// to screen readers underneath the panel.
 	behind?.setAttribute("inert", "");
 
 	// Widening the shell past the collapse point brings the sidebar back, leaving
-	// this page covering the content for no reason — so bow out.
-	if (shell != null && typeof ResizeObserver !== "undefined") {
-		const ro = new ResizeObserver(() => { if (shell.clientWidth > NARROW_PX) $nav.open = false; });
-		ro.observe(shell);
-		A.clean(() => ro.disconnect());
-	}
+	// this panel covering the content for no reason — so bow out. Read from the
+	// shell's own flag rather than measured again here, so the panel and the ☰ that
+	// opened it never disagree about whether the shell is still narrow.
+	A(() => { if (!$shell.narrow) $nav.open = false; });
 
 	A.clean(() => {
 		behind?.removeAttribute("inert");
 		if (!navigated) return;
-		// Same tick as the page's own destroy transition, so both halves of the
+		// Same tick as the panel's own destroy transition, so both halves of the
 		// hand-off move in lockstep.
 		if (content) slideContentIn(content);
 		shell?.querySelector<HTMLElement>(".s-nav-trigger button")?.focus();
 	});
 
-	// Land on the current page's entry (or the first one) once we're laid out.
+	// Land on the current panel's entry (or the first one) once we're laid out.
 	requestAnimationFrame(() => {
 		if (document.body.contains(pageEl)) focusFirst(pageEl, ".s-menu-item[aria-current=page]");
 	});
 }
 
 /**
- * Play the incoming half of the nav-page hand-off: park `el` one screen to the
+ * Play the incoming half of the nav-panel hand-off: park `el` one screen to the
  * right, then let its CSS transition carry it home. Reading `offsetWidth` in
  * between forces the browser to adopt the parked position as the "before" state,
  * which is what makes the removal animate instead of doing nothing at all.
@@ -665,11 +858,11 @@ function slideContentIn(el: HTMLElement): void {
 	el.classList.remove("s-slide-in");
 }
 
-function drawMainContent(opts: MainOptions<any>, ctl: PanelController | null): void {
-	// Routed mode replaces the single scrollable <main> with the panel viewport,
+function drawMainContent(opts: MainOptions<any>, ctl: PanelStackController | null): void {
+	// Routed mode replaces the single scrollable <main> with the column viewport,
 	// which manages its own columns (and their scrolling) from JS.
 	if (ctl) {
-		ctl.drawStack();
+		ctl.drawColumns();
 		return;
 	}
 	const mainEl = A("main", () => {

@@ -1,18 +1,8 @@
 import A from "aberdeen";
-import { matchCurrent, current as currentRoute } from "aberdeen/route";
+import { matchCurrent, current as currentRoute, go } from "aberdeen/route";
 import { type Slot, type Attributes, drawSlot, mountPortal, focusFirst } from "../core.js";
-import { mk } from "../icons-helpers.js";
+import { menu as menuIcon, chevronRight } from "../icons.js";
 import { button, type ButtonOptions } from "./button.js";
-
-// The two glyphs the shell draws for itself. As inline SVG (built with the icon
-// set's own helper, so no icon data is pulled in) rather than the `☰`/`✕`
-// characters: a text glyph is at the mercy of the system font, and next to a real
-// icon it lands thin and undersized. These match Lucide's `menu` and `x` exactly,
-// so a nav trigger sits beside app icons as an equal.
-/** `☰` — opens a menu or the nav. */
-export const menuGlyph = mk('<path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/>');
-/** `✕` — dismisses what the {@link menuGlyph} opened. */
-export const closeGlyph = mk('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>');
 
 /**
  * A clickable item in a menu or sidebar nav.
@@ -32,7 +22,7 @@ export interface MenuItem {
 	/**
 	 * Render as a link (`<a>`) pointing here. Pairs naturally with
 	 * `interceptLinks()` — the item is highlighted automatically when the URL
-	 * matches.
+	 * matches, and scrolled into view if its list had scrolled it out.
 	 */
 	href?: string;
 	/** `target` for the link (`_blank`, etc.). Only meaningful with `href`. */
@@ -41,6 +31,19 @@ export interface MenuItem {
 	disabled?: boolean;
 	/** Aberdeen attr/style string on the item element. */
 	attrs?: Attributes;
+	/**
+	 * Child entries, which turn the item into a collapsible **branch** of a
+	 * tree. Only the branch holding the current page is expanded; navigate away
+	 * and it folds back up. Clicking a branch *selects* rather than toggles: it
+	 * follows the item's own `href`, or failing that the first linked leaf
+	 * below it — which is what expands it. A branch with no link anywhere below
+	 * it falls back to plain open/close toggling.
+	 *
+	 * Expanding is not selecting: a branch click never counts as picking an
+	 * item (see `onLeafSelect` on {@link menu}), so on a phone the nav stays up
+	 * while a section unfolds.
+	 */
+	items?: MenuEntry[];
 }
 
 /** A visual divider between groups of items. */
@@ -65,12 +68,30 @@ export interface MenuOptions {
 	 * Customize the trigger button rendered by {@link menuButton}. Defaults to a
 	 * `☰` icon button. The `click` handler is managed internally.
 	 *
-	 * When used as a `nav` in `S.main()`, this also customizes the hamburger
-	 * button shown when the sidebar collapses.
+	 * When used as a `nav` in `S.main()`, this also customizes the ☰ the sidebar
+	 * collapses into — which is an {@link iconButton}, so only `icon`,
+	 * `ariaLabel` and `attrs` apply there.
 	 */
 	button?: ButtonOptions;
 	/** Aberdeen attr/style string on the floating dropdown panel. */
 	dropdownAttrs?: Attributes;
+}
+
+/** Options for {@link menu}. */
+export interface MenuListOptions {
+	/**
+	 * The entries: items, separators, custom slots — and collapsible branches,
+	 * via {@link MenuItem.items}.
+	 */
+	items: MenuEntry[];
+	/**
+	 * Run when a **leaf** item is activated. A branch expanding is not a
+	 * selection, so it doesn't run this — which is what lets a menu that
+	 * dismisses itself on selection stay up while a section unfolds.
+	 */
+	onLeafSelect?: () => void;
+	/** Aberdeen attr/style string on the list element. */
+	attrs?: Attributes;
 }
 
 /** Options for {@link showFloatingMenu}. */
@@ -113,8 +134,10 @@ A.insertGlobalCss({
 	".s-menu-list.hidden": "opacity:0 pointer-events:none transform:translateY(-6px)",
 	// One class for both the `<a>` (link) and `<button>` forms — they look
 	// identical; the element only differs where link semantics matter (see below).
+	// The scroll-margin keeps a revealed row (see the scrollIntoView in
+	// `drawMenu`) a little clear of the scrollport edge, instead of flush to it.
 	".s-menu-item":
-		"display:flex align-items:center gap:$2 w:100% outline:0 " +
+		"display:flex align-items:center gap:$2 w:100% outline:0 scroll-margin:$2 " +
 		"padding: $m2 0; line-height:1.1 r:$s-radius cursor:pointer text-align:left font-weight:450 " +
 		"font-size:0.9em border:0 background:transparent fg:$s-text text-decoration:none " +
 		"transition: color 0.12s, transform 0.12s, text-shadow 0.12s;",
@@ -126,47 +149,84 @@ A.insertGlobalCss({
 	// than as the colour itself. `filter:none` keeps the global `a:hover` brighten
 	// off it too, since the hover rule above deliberately skips the active row.
 	".s-menu-item[aria-current=page]": "color:$s-accent filter:none",
+	// Inside a floating dropdown the rows carry their own horizontal padding:
+	// the panel's thin `$1` inset alone leaves labels nearly touching its edge.
+	// (Sidebar rows stay flush — their panel brings the breathing room.)
+	".s-menu-list .s-menu-item": "padding-inline:$2",
 	".s-menu-item[aria-disabled=true]":
 		"opacity:0.45 cursor:not-allowed pointer-events:none",
 	".s-menu-icon": "flex-shrink:0",
+	// A floating menu sizes its glyphs, as `.s-btn` and `.s-icon-btn` do (see
+	// button.ts): icons come out of the set at 24px, which towers over a 0.9em
+	// dropdown row. Riding the font size keeps it in step with the label.
+	// Scoped to `.s-menu-list` deliberately: `S.main`'s nav is a roomier thing
+	// than a dropdown — its rows are built around the icon at the size it was
+	// drawn, and shrinking it there tightened the whole sidebar.
+	".s-menu-list .s-menu-icon": "display:flex",
+	".s-menu-list .s-menu-icon > svg": "width:1.25em height:1.25em",
 	// A soft hairline that fades out at both ends, rather than a hard full-width
 	// rule — quieter, and it reads as a grouping cue instead of a divider bar.
 	// `hr.` (not just `.`) so this wins over the global hr flow-margin rule.
 	"hr.s-menu-sep":
 		"border:0 height:1px margin: $1 0.6rem; " +
 		"background: linear-gradient(to right, transparent, $s-faint 18%, $s-faint 82%, transparent);",
+	// A branch row's fold indicator: a › that turns downward while the branch is
+	// open. It rides the row's font size, like the leading icons do.
+	".s-menu-chevron": "margin-left:auto flex-shrink:0 display:flex transition: transform 0.15s ease;",
+	".s-menu-chevron > svg": "width:1em height:1em",
+	// A branch is a native <details>: closed content is *hidden*, not unmounted,
+	// so folding is one attribute flip — no teardown, no sibling redraws — and
+	// the browser animates the height natively via `::details-content` (with
+	// `interpolate-size`; engines without it simply snap, which is fine).
+	".s-menu-details": {
+		"> summary": "list-style:none",
+		"> summary::-webkit-details-marker": "display:none",
+		"&::details-content":
+			"interpolate-size:allow-keywords block-size:0 overflow-y:clip " +
+			"transition: block-size 0.15s ease, content-visibility 0.15s allow-discrete;",
+		"&[open]::details-content": "block-size:auto",
+		"&[open] > summary .s-menu-chevron": "transform:rotate(90deg)",
+	},
+	// A branch's children: indented one step.
+	".s-menu-sub": "display:flex flex-direction:column gap:$1 padding-left:$3",
+	// The standalone `menu()` component's list. The rows style themselves (they
+	// are `.s-menu-item`s like everywhere else); this only stacks them.
+	".s-menu-inline": "display:flex flex-direction:column gap:$1",
 });
 
 /**
  * Draw a list of {@link MenuEntry} items into the *current* element, with
  * arrow-key / Home / End navigation between the focusable items. The single
- * shared primitive behind both the floating dropdown ({@link showFloatingMenu})
- * and the sidebar nav in `S.main()` — call it inside whatever container
- * (`<nav>`, the floating panel, …) you've opened.
+ * shared primitive behind the floating dropdown ({@link showFloatingMenu}),
+ * the sidebar nav in `S.main()`, and the standalone {@link menu} component —
+ * call it inside whatever container (`<nav>`, the floating panel, …) you've
+ * opened.
  *
  * Items are real `<a>`/`<button>` elements, so Enter/Space activate them and
- * screen readers narrate them natively.
+ * screen readers narrate them natively. An item with `items` of its own is a
+ * collapsible branch — see {@link MenuItem.items}.
  *
  * @param items The entries to render.
- * @param onActivate Optional — run when any item is activated (used by the
- *   floating menu to close itself on selection).
+ * @param onLeafSelect Optional — run when a *leaf* item is activated (used by
+ *   the floating menu to close itself on selection). A branch expanding is
+ *   not a selection, so it doesn't run this.
  */
-export function drawMenu(items: MenuEntry[], onActivate?: () => void): void {
+export function drawMenu(items: MenuEntry[], onLeafSelect?: () => void): void {
 	// Roving focus via the DOM: query the live item elements on each keypress.
 	A("keydown=", (e: KeyboardEvent) => {
 		// Link items navigate through interceptLinks' own Enter handler, which
 		// preventDefault()s the activation — so no synthetic `click` fires, and the
-		// click-bound `onActivate` (which closes a floating menu) never runs. Close it
+		// click-bound `onLeafSelect` (which closes a floating menu) never runs. Close it
 		// ourselves, deferred so this keydown finishes dispatching (and navigates) first.
 		if (e.key === "Enter" && (e.target as HTMLElement).tagName === "A") {
-			queueMicrotask(() => onActivate?.());
+			queueMicrotask(() => onLeafSelect?.());
 			return;
 		}
 		if (e.key !== "ArrowDown" && e.key !== "ArrowUp" && e.key !== "Home" && e.key !== "End") return;
 		e.preventDefault();
 		const container = e.currentTarget as HTMLElement;
 		const els = [...container.querySelectorAll<HTMLElement>(".s-menu-item")]
-			.filter((el) => el.getAttribute("aria-disabled") !== "true");
+			.filter((el) => el.getAttribute("aria-disabled") !== "true" && !foldedAway(el));
 		if (!els.length) return;
 		const cur = els.indexOf(document.activeElement as HTMLElement);
 		const dir = e.key === "ArrowUp" ? -1 : 1;
@@ -178,26 +238,167 @@ export function drawMenu(items: MenuEntry[], onActivate?: () => void): void {
 		els[next].focus();
 	});
 
+	drawEntries(items, onLeafSelect);
+}
+
+function drawEntries(items: MenuEntry[], onLeafSelect?: () => void): void {
 	for (const entry of items) {
 		if (typeof entry === "string" || typeof entry === "function") { drawSlot(entry); continue; }
 		if ("separator" in entry) { A("hr.s-menu-sep"); continue; }
+		if (entry.items) drawBranch(entry, onLeafSelect);
+		else drawLeaf(entry, onLeafSelect);
+	}
+}
 
-		A(entry.href ? "a.s-menu-item" : "button.s-menu-item type=button", entry.attrs, () => {
-			if (entry.href) {
-				A("href=", entry.href);
-				if (entry.target) A("target=", entry.target);
-				A(() => { if (matchCurrent(entry.href!)) A("aria-current=page"); });
-			}
+function drawLeaf(entry: MenuItem, onLeafSelect?: () => void): void {
+	// Whether the aria-current scope below has run before: it re-runs on
+	// every navigation, and only a *later* one should animate the reveal.
+	let drawn = false;
+	const itemEl = A(entry.href ? "a.s-menu-item" : "button.s-menu-item type=button", entry.attrs, () => {
+		if (entry.href) {
+			A("href=", entry.href);
+			if (entry.target) A("target=", entry.target);
+			A(() => {
+				const first = !drawn;
+				drawn = true;
+				if (!matchCurrent(entry.href!)) return;
+				A("aria-current=page");
+				// A list taller than its scrollport (a long sidebar nav, mostly)
+				// highlights nothing when the current row is scrolled out of it,
+				// so bring the row into view — no further than needed, and not
+				// at all when it's already visible. A row that *starts out*
+				// current arrives at the right place (a cold deep link lands
+				// with the sidebar already there); when a navigation moves the
+				// highlight later, the scroll follows it smoothly. rAF, so a
+				// fresh row is laid out before it's measured.
+				requestAnimationFrame(() =>
+					(itemEl as HTMLElement).scrollIntoView({ block: "nearest", behavior: first ? "instant" : "smooth" }));
+			});
+		}
+		if (entry.disabled) A("aria-disabled=true");
+		A("click=", (e: Event) => {
+			if (entry.disabled) { e.preventDefault(); return; }
+			onLeafSelect?.();
+			entry.click?.(e);
+		});
+		if (entry.icon) A("span.s-menu-icon", () => drawSlot(entry.icon));
+		drawSlot(entry.label);
+	});
+}
+
+/**
+ * A branch: a native `<details>` folding a sub-list of entries in and out. The
+ * children stay mounted whether folded or not — closing hides them, it doesn't
+ * tear them down — so a fold is a single `open` flip that the browser animates
+ * itself, and nothing around it redraws.
+ *
+ * Clicking the summary row *selects* rather than toggles when there is a page
+ * to select (the branch's own `href`, or the first linked leaf below it): it
+ * navigates there, and the navigation is what unfolds the branch, since a
+ * linked branch is open exactly while it holds the current page. Only a branch
+ * with no link anywhere below it keeps the native open/close toggle.
+ */
+function drawBranch(entry: MenuItem, onLeafSelect?: () => void): void {
+	const href = entry.href ?? firstLeafHref(entry.items!);
+	// The route-derived fold state, as a derived boolean so the attribute scope
+	// below re-runs only when the answer flips — not on every navigation that
+	// merely moves *between* pages inside the branch.
+	const $open = href != null ? A.derive(() => containsCurrent(entry)) : null;
+
+	A("details.s-menu-details", () => {
+		// For a no-link branch this scope has no subscriptions and never re-runs,
+		// which is exactly what leaves the native toggle alone.
+		if ($open) A(() => { if ($open.value) A("open=true"); });
+
+		A("summary.s-menu-item.s-menu-branch", entry.attrs, () => {
 			if (entry.disabled) A("aria-disabled=true");
+			A(() => {
+				// Current only on its *own* page: when a descendant is current, that
+				// row carries the highlight, and two highlights would read as two pages.
+				if (entry.href != null && matchCurrent(entry.href)) A("aria-current=page");
+			});
 			A("click=", (e: Event) => {
 				if (entry.disabled) { e.preventDefault(); return; }
-				onActivate?.();
+				if (href != null) {
+					// Selecting, not toggling — suppress the native toggle and
+					// navigate; deriving `open` from the URL does the unfolding.
+					e.preventDefault();
+					noteBranchNav(href);
+					void go(href);
+				}
 				entry.click?.(e);
 			});
 			if (entry.icon) A("span.s-menu-icon", () => drawSlot(entry.icon));
 			drawSlot(entry.label);
+			A("span.s-menu-chevron aria-hidden=true", () => chevronRight());
 		});
+
+		A("div.s-menu-sub", () => drawEntries(entry.items!, onLeafSelect));
+	});
+}
+
+/**
+ * Whether a row sits inside a closed branch. A closed `<details>` hides its
+ * content without unmounting it, so arrow-key navigation has to skip what the
+ * user can't see — while the closed branch's own summary row stays reachable.
+ */
+function foldedAway(el: HTMLElement): boolean {
+	for (
+		let details = el.closest("details");
+		details;
+		details = details.parentElement && details.parentElement.closest("details")
+	) {
+		if (!(details as HTMLDetailsElement).open && el.closest("summary")?.parentElement !== details) return true;
 	}
+	return false;
+}
+
+/** Whether `entry`'s own page, or any page linked below it, is the current one. */
+function containsCurrent(entry: MenuItem): boolean {
+	if (entry.href != null && matchCurrent(entry.href)) return true;
+	for (const child of entry.items ?? []) {
+		if (typeof child === "string" || typeof child === "function" || "separator" in child) continue;
+		if (containsCurrent(child)) return true;
+	}
+	return false;
+}
+
+/** The first `href` below `items`, depth-first — what clicking a branch selects. */
+function firstLeafHref(items: MenuEntry[]): string | undefined {
+	for (const entry of items) {
+		if (typeof entry === "string" || typeof entry === "function" || "separator" in entry) continue;
+		const href = entry.href ?? (entry.items ? firstLeafHref(entry.items) : undefined);
+		if (href != null) return href;
+	}
+	return undefined;
+}
+
+// ─── Branch navigations ──────────────────────────────────────────────────────
+// The floating menu and `S.main()`'s collapsed nav dismiss themselves when the
+// page navigates — but a branch row navigates *in order to expand*, and
+// dismissing over that would close the menu the user is in the middle of
+// opening up. So a branch click leaves a note of where it is headed, and the
+// dismiss-on-navigation checks consume it.
+
+let branchNavPath: string | null = null;
+
+function noteBranchNav(href: string): void {
+	try {
+		branchNavPath = new URL(href, location.href).pathname.replace(/\/+$/, "") || "/";
+	} catch {
+		branchNavPath = null;
+	}
+}
+
+/**
+ * Whether the navigation that just landed on `path` was a branch row expanding
+ * (consuming the note it left). Internal — used by the floating menu below and
+ * by `S.main()`'s collapsed nav.
+ */
+export function consumeBranchNav(path: string): boolean {
+	if (branchNavPath !== path) return false;
+	branchNavPath = null;
+	return true;
 }
 
 // ─── Floating menu ───────────────────────────────────────────────────────────
@@ -264,11 +465,12 @@ mountPortal(() => {
 		if (e.key === "Escape" || e.key === "Tab") { e.preventDefault(); closeFloating(); }
 	};
 	// A menu is a transient overlay: whatever navigation it started, it hands over
-	// to. Items do that themselves (`closeFloating` is `drawMenu`'s `onActivate`
+	// to. Items do that themselves (`closeFloating` is `drawMenu`'s `onLeafSelect`
 	// above), but custom slot content — a link in a row the menu knows nothing
-	// about — doesn't, and neither does a navigation from anywhere else.
+	// about — doesn't, and neither does a navigation from anywhere else. A branch
+	// row expanding is the one navigation that *isn't* a hand-over.
 	const openedAt = A.peek(currentRoute, "path");
-	A(() => { if (currentRoute.path !== openedAt) closeFloating(); });
+	A(() => { if (currentRoute.path !== openedAt && !consumeBranchNav(currentRoute.path)) closeFloating(); });
 	document.addEventListener("click", onClick, true);
 	document.addEventListener("keydown", onKey, true);
 	A.clean(() => {
@@ -291,6 +493,32 @@ mountPortal(() => {
 });
 
 // ─── Public API ──────────────────────────────────────────────────────────────
+
+/**
+ * A menu drawn in place: the same list of rows the floating dropdown and
+ * `S.main()`'s sidebar are made of, as a plain component — for a nav of your
+ * own, a settings column, a sidebar the shell doesn't draw for you. Items are
+ * real links/buttons with arrow-key navigation, `href` items highlight
+ * themselves on the current page, and an item with `items` of its own becomes
+ * a collapsible branch (see {@link MenuItem.items}): only the branch holding
+ * the current page stays unfolded.
+ *
+ * @example
+ * ```ts
+ * S.menu({
+ *   items: [
+ *     { label: "Overview", href: "/docs" },
+ *     { label: "Guides", items: [
+ *       { label: "Install", href: "/docs/install" },
+ *       { label: "Theming", href: "/docs/theming" },
+ *     ]},
+ *   ],
+ * });
+ * ```
+ */
+export function menu(opts: MenuListOptions): void {
+	A("nav.s-menu-inline", opts.attrs, () => drawMenu(opts.items, opts.onLeafSelect));
+}
 
 /**
  * Open a floating dropdown menu anchored to an element. Portals to
@@ -387,7 +615,7 @@ export function menuButton(opts: MenuOptions): void {
 	A.clean(() => { if ($floating.opts?.anchor === myEl) closeFloating(); });
 
 	button({
-		icon: () => menuGlyph({ size: "1.4em" }),
+		icon: menuIcon,
 		// Only label the trigger "Open menu" when it has no visible text of its
 		// own — an aria-label would otherwise *hide* that text from AT.
 		...(opts.button?.content == null ? { ariaLabel: "Open menu" } : null),

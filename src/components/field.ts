@@ -75,7 +75,7 @@ export function drawField(
 	A("div.s-field", opts.attrs, () => {
 		A(() => {
 			if (opts.label != null) {
-				A(`label for=${id}`, () => {
+				A("label for=", id, () => {
 					drawSlot(opts.label);
 					if (opts.required) A("span.s-req aria-hidden=true #*");
 				});
@@ -104,8 +104,8 @@ export function applyControlAttrs(
 	isInvalid: () => boolean,
 	bind?: Bindable<unknown>,
 ): void {
-	A(`id=${id}`);
-	if (opts.name) A(`name=${opts.name}`);
+	A("id=", id);
+	if (opts.name) A("name=", opts.name);
 	A(() => {
 		if (opts.disabled) A("disabled=true");
 	});

@@ -1,6 +1,7 @@
 import A from "aberdeen";
 import { type ContentOptions, type Slot, type Attributes, drawSlot } from "../core.js";
-import { closeContainingPanel } from "./panels.js";
+import { x as closeIcon } from "../icons.js";
+import { iconButton } from "./button.js";
 
 /** Options for {@link box}. */
 export interface BoxOptions extends ContentOptions {
@@ -9,21 +10,16 @@ export interface BoxOptions extends ContentOptions {
 	/** Footer content, drawn in a styled bar below the body. */
 	footer?: Slot;
 	/**
-	 * Draws a small ✕ button in the box's top-right corner: in the header row when
+	 * Draws a small ✕ button in the box's top-right corner — in the header row when
 	 * there is a {@link BoxOptions.header | header}, floating over the body when
-	 * there isn't.
+	 * there isn't — and runs this when it's clicked.
 	 *
-	 * `true` closes the panel the box is drawn in, which is how a screen of a
-	 * routed `S.main()` gives the user a way back (the shell draws no back
-	 * arrows or ✕ of its own). Which panel that is gets worked out from the DOM
-	 * when it's clicked, so the box needs no `$page` handed to it and works from
-	 * any column, top of the stack or not. A box in a column further left closes
-	 * just that column and leaves the others alone. Outside a routed shell it
-	 * does nothing but warn.
-	 *
-	 * Pass a function to run that instead, for a dismissal of your own.
+	 * It is plain furniture: a box that happens to sit in a page of a routed
+	 * `S.main()` does **not** close that page — the shell's breadcrumbs are the
+	 * way out of those. Wire it to `$panel.close()` yourself if a box really is
+	 * the whole page and wants its own ✕.
 	 */
-	close?: boolean | (() => void);
+	close?: () => void;
 	/** Aberdeen attr/style string applied to the body (content-holding) element. */
 	contentAttrs?: Attributes;
 	/** Aberdeen attr/style string applied to the header bar. */
@@ -49,16 +45,11 @@ A.insertGlobalCss({
 		"> header": "display:flex align-items:center gap:$2 padding: $2 $3; border:0 border-bottom: 1px solid $s-faint; r:0 font-weight:600",
 		"> footer": "display:flex align-items:center justify-content:flex-end gap:$2 padding: $2 $3; border:0 border-top: 1px solid $s-faint; r:0",
 		"> div": "p:$3 gap:$3",
-		// The ✕: quiet until you're near it, and drawn in the surface's own tokens
-		// so it works on whatever the box was recoloured to. `margin-left:auto`
-		// parks it at the far end of the header's flex row.
-		".s-box-close":
-			"flex-shrink:0 margin-left:auto display:flex align-items:center justify-content:center " +
-			"width:1.6rem height:1.6rem p:0 border:0 background:transparent cursor:pointer " +
-			"fg:$s-muted font-size:0.95rem line-height:1 r:$s-radius-sm " +
-			"transition: color 0.12s, background 0.12s;",
-		".s-box-close:hover": "fg:$s-text background: color-mix(in srgb, $s-text 8%, transparent);",
-		// Without a header there is no row to sit in, so it floats over the body.
+		// The ✕ is an `S.iconButton` (see `drawCloseButton`); this only places it.
+		// In a header row it parks at the far end...
+		"> header > .s-box-close": "margin-left:auto",
+		// ...and without a header there is no row to sit in, so it floats over the
+		// body's top-right corner instead.
 		"> .s-box-close": "position:absolute top:$2 right:$2 z-index:1",
 	},
 });
@@ -73,9 +64,6 @@ A.insertGlobalCss({
  *
  * Shortcut: pass a function to use it directly as the body content.
  *
- * {@link BoxOptions.close | `close: true`} adds a ✕ that closes the panel the box
- * is drawn in: the usual way back out of a screen in a routed `S.main()`.
- *
  * @example
  * ```ts
  * const $user = A.proxy({name: "Kvothe"});
@@ -83,7 +71,7 @@ A.insertGlobalCss({
  *   S.textline({ label: "Name", bind: A.ref($user, "name") });
  * }});
  * S.box(() => A("p#Just some content"));   // shorthand
- * S.box({ header: "Task 42", close: true, content: drawTask });  // ✕ closes this panel
+ * S.box({ header: "Draft", close: () => discard(), content: drawDraft });  // ✕ runs discard()
  * ```
  */
 export function box(opts: BoxOptions | Slot = {}): void {
@@ -93,12 +81,15 @@ export function box(opts: BoxOptions | Slot = {}): void {
 		// Header and footer get their own scopes so toggling them doesn't recreate
 		// the body (which may hold focused inputs / lots of content).
 		A(() => {
+			// The typeof guards against v0.9's `close: true` (removed API) reaching
+			// us from unchecked JS: a ✕ whose handler isn't a function would render
+			// but do nothing, which is worse than not rendering at all.
 			if (o.header != null) {
 				A("header.s-s.neutral", o.headerAttrs, () => {
 					drawSlot(o.header);
-					if (o.close) drawCloseButton(o.close);
+					if (typeof o.close === "function") drawCloseButton(o.close);
 				});
-			} else if (o.close) {
+			} else if (typeof o.close === "function") {
 				drawCloseButton(o.close);
 			}
 		});
@@ -114,16 +105,15 @@ export function box(opts: BoxOptions | Slot = {}): void {
 }
 
 /**
- * The box's ✕. With `close: true` the panel to close is resolved from the DOM at
- * click time — so one box can close whichever column it happens to be drawn in,
- * and a box outside a routed shell simply warns.
+ * The box's ✕: one definition, so the glyph, the label and the hit area are
+ * identical whether it sits in the header row or floats over a headerless body.
+ * The `.s-box-close` class is only a hook for the placement rules above.
  */
-function drawCloseButton(close: boolean | (() => void)): void {
-	A("button.s-box-close type=button aria-label=Close", () => {
-		A("click=", (e: Event) => {
-			if (typeof close === "function") close();
-			else void closeContainingPanel(e.currentTarget as HTMLElement);
-		});
-		A("span aria-hidden=true #✕");
+function drawCloseButton(close: () => void): void {
+	iconButton({
+		icon: closeIcon,
+		ariaLabel: "Close",
+		click: close,
+		attrs: ".s-box-close",
 	});
 }

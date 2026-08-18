@@ -41,6 +41,14 @@ const colorPickerStyle = A.insertCss({
 	"input[type=color]::-moz-color-swatch": "border:0 border-radius: calc($s-radius - 3px)",
 });
 
+// A row in the edge-to-edge list page. The hover wash reaches both edges of the
+// column, which is the whole point of that screen: with `A("p:0")` on the body
+// there is no padding for it to stop at.
+const rowStyle = A.insertCss({
+	"&": "padding: $2 $3; border-top: 1px solid $s-faint; cursor:pointer transition: background 0.12s;",
+	"&:hover": "background: color-mix(in srgb, $s-accent 10%, transparent)",
+});
+
 // A labelled row used inside the header's collapsed display-settings popover:
 // label on the left, control on the right.
 const dispRowStyle = A.insertCss({
@@ -48,7 +56,7 @@ const dispRowStyle = A.insertCss({
 });
 
 // Each icon cell is a real link into `/demo/icons/[name]`, which opens the icon's
-// detail as a panel: a column beside the gallery on a wide screen, a pushed
+// detail as a page: a column beside the gallery on a wide screen, a pushed
 // screen on a phone. It's the bare glyph — no box and no caption, so a screenful
 // reads as an icon *set* rather than as a table; the name is a hover away in the
 // tooltip and a click away in the detail. Declared up here (like the icon data
@@ -64,7 +72,7 @@ const iconCellStyle = A.insertCss({
 
 // Every export of `staffa/icons` is a draw-function, except `setDefaults`. Grab
 // them by name so we can count the full set, power the live search box, and look
-// up whichever icon a `/demo/icons/[name]` panel asks for. Declared up here (not
+// up whichever icon a `/demo/icons/[name]` page asks for. Declared up here (not
 // beside the icons page) so the initial synchronous mount — which may land
 // straight on an icons route — doesn't hit their temporal dead zone.
 const allIcons = Object.entries(icons).filter(
@@ -83,23 +91,23 @@ const showcaseIcons = [
 
 // ─── Shell ───────────────────────────────────────────────────────────────────
 
-const $navPosition = A.proxy("left") as {value: "left" | "right" | "button"};
+const $navPosition = A.proxy("left") as {value: "left" | "right"};
 // Live shell settings the demo's own pages flip. `stacking` is read by the
 // S.main() call below, inside a reactive scope, so a change redraws the shell in
-// place (the panel stack itself is rebuilt from the URL, columns and all).
+// place (the stack itself is rebuilt from the URL, columns and all).
 // `extraNavItem` is just the state of the checkbox that adds a nav item, which
 // mutates the item list below instead — deliberately *not* the whole shell.
 const $shell = A.proxy({ stacking: true, extraNavItem: false });
 
-// The panel-lifecycle demo's state. Declared up here (like the icon data below)
+// The page-lifecycle demo's state. Declared up here (like the icon data below)
 // because the S.main() call is evaluated as this module loads, and an initial
 // mount straight onto /demo/panels draws the playground there and then.
 /** What `drawLivePanel` notes about itself, shown back in the playground. */
-const $panelLog = A.proxy([] as string[]);
+const $pageLog = A.proxy([] as string[]);
 /** How often `drawLivePanel` has run, so it can show that it *hasn't* run again. */
 let liveDraws = 0;
 
-// The nav items as a *proxy* array, which the panels playground adds one to at
+// The nav items as a *proxy* array, which the pages playground adds one to at
 // runtime. The shell reads it in the sidebar's own scope, so an item arriving
 // redraws the sidebar and nothing else — the open columns keep their place and
 // their state.
@@ -120,57 +128,71 @@ const $navItems = A.proxy<S.MenuEntry[]>([
 A(() => {
 	S.main({
 		// The brand sits in a gradient-text header, which sets `color:transparent`;
-		// give the icon an explicit colour so its `currentColor` stroke stays visible.
-		icon: () => icons.sparkles({ color: "var(--s-primary)" }),
+		// give the mark an explicit colour so its `currentColor` stroke stays visible.
+		// A narrow shell displaces it with the ☰.
+		logo: () => icons.sparkles({ color: "var(--s-primary)" }),
 		title: "Staffa",
+		// The tagline only has the bar's second line while the stack has nothing
+		// to add: one page open, and that page one of the nav's own screens. Push
+		// anything on top — or narrow the shell until the nav is a ☰ — and the
+		// breadcrumbs take the line back.
 		subtitle: "components for Aberdeen",
+		// Where the name and logo above lead. The demo has no "/" route (it is
+		// served under /demo), so its home is the same screen a fresh visit lands on.
+		home: "/demo/form",
 		nav: { items: $navItems },
 		navPosition: $navPosition.value,
 		// Keep the header uncluttered by tucking the display controls behind a
 		// single configure button. The popover lays them out as labelled rows.
-		menu: () => S.menuButton({
-			button: { icon: icons.sliders, ariaLabel: "Display settings", attrs: ".neutral .small" },
-			dropdownAttrs: "min-width:15rem",
-			items: [() => {
-				const row = (label: string, draw: () => void) => {
-					A("label", dispRowStyle, () => {
-						A("span fg:$s-muted font-size:0.9em #", label);
-						draw();
-					});
-				};
-				row("Navigation", () => S.buttonChooser({
-					options: { left: icons.panelLeft, right: icons.panelRight, button: icons.menu },
-					bind: $navPosition,
-					attrs: ".small",
-				}));
-				row("Primary colour", drawColorPickers);
-				row("Theme", drawThemeChooser);
-			}],
+		menu: () => S.iconButton({
+			icon: icons.sliders,
+			ariaLabel: "Display settings",
+			click: (e) => S.showFloatingMenu({
+				anchor: e.currentTarget as HTMLElement,
+				dropdownAttrs: "min-width:15rem",
+					items: [() => {
+					const row = (label: string, draw: () => void) => {
+						A("label", dispRowStyle, () => {
+							A("span fg:$s-muted font-size:0.9em #", label);
+							draw();
+						});
+					};
+					row("Navigation", () => S.buttonChooser({
+						options: { left: icons.panelLeft, right: icons.panelRight },
+						bind: $navPosition,
+						attrs: ".small",
+					}));
+					row("Primary colour", drawColorPickers);
+					row("Theme", drawThemeChooser);
+				}],
+			}),
 		}),
 		footer: () => A("span rich='Built with **Staffa** · © 2026'"),
-		// Flipped from the Panels playground: with stacking off, only the top panel
+		// Flipped from the Panels playground: with stacking off, only the current panel
 		// is ever shown — never a second column, however wide the screen.
 		stacking: $shell.stacking,
-		// Every demo page is a panel. Most keep the default `layout: "medium"`
-		// (filling the standard content area); the icons gallery, the icon detail
-		// and the Panels playground are `"small"`, which is what lets two of them
-		// sit side by side (or stack, on a phone). `/demo/panels/large` shows the
-		// shell growing to the window's edges.
+		// Most demo pages keep the default `maxWidth: "full"` (filling the
+		// standard content area); the icons gallery, the icon detail and the
+		// Panels playground are `"half"`, which is what lets two of them sit side
+		// by side (or stack, on a phone). `/demo/panels/large` shows the shell
+		// growing to the window's edges.
 		routes: {
-			"/demo/form":                    ($page) => { $page.title = "Form";     drawForm(); },
+			"/demo/form":                    ($panel) => { $panel.title = "Form";     drawForm(); },
 			"/demo/form/guard":              drawGuardDemo,
-			"/demo/buttons":                 ($page) => { $page.title = "Buttons";  drawButtons(); },
-			"/demo/tabs":                    ($page) => { $page.title = "Tabs";     drawTabsPage(); },
-			"/demo/overlays":                ($page) => { $page.title = "Overlays"; drawOverlays(); },
-			"/demo/surfaces":                ($page) => { $page.title = "Surfaces"; drawSurfaces(); },
-			"/demo/content":                 ($page) => { $page.title = "Content";  drawContent(); },
-			"/demo/icons":                   ($page) => { $page.title = "Icons"; $page.layout = "small"; drawIcons(); },
+			"/demo/buttons":                 ($panel) => { $panel.title = "Buttons";  drawButtons(); },
+			"/demo/tabs":                    ($panel) => { $panel.title = "Tabs";     drawTabsPage(); },
+			"/demo/overlays":                ($panel) => { $panel.title = "Overlays"; drawOverlays(); },
+			"/demo/surfaces":                ($panel) => { $panel.title = "Surfaces"; drawSurfaces(); },
+			"/demo/content":                 ($panel) => { $panel.title = "Content";  drawContent(); },
+			"/demo/icons":                   ($panel) => { $panel.title = "Icons"; $panel.maxWidth = "half"; drawIcons(); },
 			"/demo/icons/[name]":            drawIconDetail,
 			"/demo/panels":                  drawPanelsPlayground,
 			"/demo/panels/live":             drawLivePanel,
 			"/demo/panels/item/[id=integer]": drawItemPanel,
-			"/demo/panels/a":                ($page) => drawSmallPanel($page, "A", "b"),
-			"/demo/panels/b":                ($page) => drawSmallPanel($page, "B", "a"),
+			"/demo/panels/a":                ($panel) => drawSmallPanel($panel, "A", "b"),
+			"/demo/panels/b":                ($panel) => drawSmallPanel($panel, "B", "a"),
+			"/demo/panels/rows":             drawRowsPanel,
+			"/demo/panels/untitled":         drawUntitledPanel,
 			"/demo/panels/medium":           drawMediumPanel,
 			"/demo/panels/large":            drawLargePanel,
 			// A deliberately *flat* URL: neither /demo nor /demo/thread is a route,
@@ -188,11 +210,11 @@ A(() => {
 		ancestors: {
 			"/demo/thread/[id=integer]": ({ id }) => [id > 100 ? "/demo/panels/a" : "/demo/panels"],
 		},
-		notFound: ($page) => {
+		notFound: ($panel) => {
 			S.box({
 				header: "Not found",
 				content: () => {
-					A("p mt:0 #", `There is no page at ${$page.path}.`);
+					A("p mt:0 #", `There is no page at ${$panel.path}.`);
 					A("a href=/demo/form #Back to the demo");
 				},
 			});
@@ -317,31 +339,51 @@ function drawForm() {
 }
 
 /**
- * A panel that refuses to go away the first time you try to close it —
- * `$page.requestClose` is what an app would hook a dirty-check up to. It sits at
- * `/demo/form/guard`, so it stacks on top of the form page (a deep link derives
- * that two-panel stack from the route table).
+ * A page with a dirty check — `$panel.unsaved` is all it takes. While the
+ * draft below is non-empty, nothing closes this page: Escape and navigation
+ * *park* it (watch the ● in its crumb and the tab title), the crumb menu's
+ * Close greys out, it survives even the browser's back button, and closing
+ * the tab runs into the browser's are-you-sure. It sits at `/demo/form/guard`,
+ * so it stacks on top of the form page (a deep link derives that two-page
+ * stack from the route table).
+ *
+ * It also shows declared chrome in full: a `title` and `actions`, placed by the
+ * shell (crumb and strip on a wide screen, top bar on a phone) — while the box
+ * around the content is the page's own `S.box`, like any other content.
  */
-function drawGuardDemo($page: S.Page) {
-	$page.title = "Close guard";
-	const $guard = A.proxy({ armed: true });
-	// Escape, this box's ✕, browser back and S.panels.close() all await this.
-	$page.requestClose = async () => {
-		if (!$guard.armed) return true;
-		$guard.armed = false;   // As if the user had cancelled the "discard?" prompt.
-		return false;
+function drawGuardDemo($panel: S.Panel) {
+	$panel.title = "Unsaved demo";
+	const $draft = A.proxy({ text: "" });
+	// The dirty check: one reactive line.
+	A(() => { $panel.unsaved = $draft.text !== "" || undefined; });
+	// Save and Discard clear the flag *explicitly* before closing: the reactive
+	// scope above reruns only after this handler, which would be too late.
+	const finish = () => {
+		$draft.text = "";
+		$panel.unsaved = false;
+		void $panel.close();
+	};
+	// What a form screen's verbs actually are. Not a second "close": the crumbs
+	// already travel back.
+	$panel.actions = () => {
+		S.iconButton({
+			icon: icons.trash2,
+			ariaLabel: "Discard",
+			attrs: "fg:$s-danger",
+			click: () => { S.toast({ message: "Discarded.", type: "warning" }); finish(); },
+		});
+		S.iconButton({
+			icon: icons.check,
+			ariaLabel: "Save",
+			click: () => { S.toast({ message: "Saved.", type: "success" }); finish(); },
+		});
 	};
 
 	S.box({
-		header: "Close guard",
-		close: true,
+		header: "Unsaved changes",
 		content: () => {
-			A("p mt:0 rich='This panel has a `requestClose`, which is where you would put a *discard unsaved changes?* prompt.'");
-			A(() => {
-				A("p mb:0 #", $guard.armed
-					? "The first close attempt (Escape, the ✕ or browser back) will be refused."
-					: "The guard has been used up — the next close attempt goes through.");
-			});
+			A("p mt:0 rich='Type something below and this panel marks itself `unsaved`: nothing closes it. Escape and navigation *park* it instead — note the ● in its crumb and in the tab’s title — and it even survives the browser’s back button. Save or Discard (up in the panel’s actions) to let it go.'");
+			S.textline({ label: "Draft", bind: A.ref($draft, "text"), placeholder: "Type to make this panel unsaved…" });
 		},
 	});
 }
@@ -349,56 +391,67 @@ function drawGuardDemo($page: S.Page) {
 // ─── Panels playground ───────────────────────────────────────────────────────
 
 /**
- * The stacking playground: a `"small"` panel whose links and buttons push
- * further panels, so you can watch columns arrive, crowd one another out, and
+ * The stacking playground: a `"half"`-width page whose links and buttons push
+ * further pages, so you can watch columns arrive, crowd one another out, and
  * come back. It sits at `/demo/panels`, and everything it pushes lives under
  * that path — so a deep link derives the same columns a click here would have
  * produced.
  */
-function drawPanelsPlayground($page: S.Page) {
-	$page.title = "Panels";
-	$page.layout = "small";
+function drawPanelsPlayground($panel: S.Panel) {
+	$panel.title = "Panels";
+	$panel.maxWidth = "half";
+	// Deliberately bare: no `box` and no `actions`, and — as the bottom of the
+	// stack — no way out either. So its column gets no strip at all, and on a
+	// phone the bar reads `☰ · Pages · <the app's own menu>`.
 
 	S.box({
 		header: "Push a panel",
 		content: () => {
-			A("p mt:0 rich='A `\"small\"` panel takes half the content area (when the screen is wide enough for two columns), the default `\"medium\"` fills it, and a `\"large\"` grows the whole page to the window’s edges. A lone small leaves its other half open — exactly where the next small lands — and when the window fits more columns than the standard page holds, the page stretches to fit them.'");
+			A("p mt:0 rich='A `maxWidth: \"half\"` page takes half the content area (when the screen is wide enough for two columns), the default `\"full\"` fills it, and `\"screen\"` grows the whole page to the window’s edges. A lone half leaves its other half open — exactly where the next one lands — and when the window fits more columns than the standard page holds, the page stretches to fit them.'");
 			A("div display:flex flex-direction:column gap:$1 align-items:flex-start", () => {
 				A("a href=/demo/panels/a #Push small A");
 				A("a href=/demo/panels/medium #Push a medium panel");
 				A("a href=/demo/panels/large #Push a large panel");
-				A("a href=/demo/form/guard #Push the close-guard panel");
+				A("a href=/demo/form/guard #Push the unsaved-changes panel");
 				A("a href=/demo/panels/live #Push the sizing & lifecycle panel");
+				A("a href=/demo/panels/rows #Push an edge-to-edge list");
+				A("a href=/demo/panels/untitled #Push an untitled panel");
 			});
 			A("div display:flex gap:$2 flex-wrap:wrap mt:$3", () => {
 				S.button({
-					content: "S.panels.push()",
+					content: "stack.pushPanel()",
 					attrs: ".neutral",
-					click: () => S.panels.push("/demo/panels/b"),
+					click: () => $panel.stack.pushPanel("/demo/panels/b"),
 				});
 				// The other way in: a whole arrangement at once, for a screen whose
 				// URL doesn't say where it belongs. Here the stack under it is spelled
-				// out; `S.panels.open("/demo/thread/8")` alone would ask the shell's
+				// out; `stack.openPanelStack("/demo/thread/8")` alone would ask the shell's
 				// `ancestors` for it, which is what a cold link to the same path gets.
 				S.button({
-					content: "S.panels.open()",
+					content: "stack.openPanelStack()",
 					attrs: ".neutral",
-					click: () => S.panels.open("/demo/thread/8", ["/demo/panels"]),
+					click: () => $panel.stack.openPanelStack("/demo/thread/8", ["/demo/panels"]),
 				});
 			});
 		},
 	});
 
-	S.box({ header: "The stack", content: drawStackList });
+	S.box({
+		header: "The stack",
+		content: () => {
+			A("p mt:0 rich='Click an earlier crumb up in the bar and the panels right of it stay open, parked past the viewport’s edge — their crumbs bring them back. Opening a new panel closes the parked ones, unless a panel is **pinned** (right-click its crumb).'");
+			drawStackList($panel.stack);
+		},
+	});
 
 	// Only once there is something to say — see `drawLivePanel`, which writes here
-	// as it is torn down, from a panel that is by then only an animation.
+	// as it is torn down, from a page that is by then only an animation.
 	A(() => {
-		if (!$panelLog.length) return;
+		if (!$pageLog.length) return;
 		S.box({
 			header: "Panel lifecycle",
 			content: () => A("ul m:0 padding-left:1.3em", () => {
-				A(() => { for (const line of $panelLog) A("li #", line); });
+				A(() => { for (const line of $pageLog) A("li #", line); });
 			}),
 		});
 	});
@@ -417,65 +470,122 @@ function drawPanelsPlayground($page: S.Page) {
 	S.box({
 		header: "Stacking",
 		content: () => {
-			A("p mt:0 rich='With `stacking: false` only the top panel is shown, however wide the screen — Escape, the browser’s back button, in-app links and the panels’ own ✕ buttons all still work the same.'");
+			A("p mt:0 rich='With `stacking: false` only the current panel is shown, however wide the screen — Escape, the browser’s back button, in-app links and the breadcrumbs all still work the same.'");
 			S.checkbox({ label: "Show as many columns as fit", bind: A.ref($shell, "stacking") });
 		},
 	});
 }
 
 /**
+ * A screen whose body is a run of full-bleed rows. Nothing special is needed for
+ * that: the draw function's current element *is* the padded body, so `A("p:0")`
+ * on it takes the padding away and the rows reach the column's edges.
+ *
+ * It has `actions` but no `box`, which is the plain-column-with-a-strip case: on
+ * a wide screen a bare strip holds the actions, and on a phone they take the
+ * top bar's trailing slot.
+ */
+function drawRowsPanel($panel: S.Panel) {
+	$panel.title = "Edge-to-edge rows";
+	$panel.maxWidth = "half";
+	// An `iconButton` opening a menu by hand, rather than `S.menuButton` — which
+	// draws a full `S.button` — so this reads as chrome, not as a call to action.
+	$panel.actions = () => S.iconButton({
+		icon: icons.plus,
+		ariaLabel: "Add",
+		click: (e) => S.showFloatingMenu({
+			anchor: e.currentTarget as HTMLElement,
+			items: [
+				{ label: "New row", click: () => S.toast({ message: "Not really." }) },
+				{ label: "Import", click: () => S.toast({ message: "Nor this." }) },
+			],
+		}),
+	});
+
+	// The body itself: no padding, so the rows below are full-bleed.
+	A("p:0");
+	A("p m:$3 fg:$s-muted font-size:0.9em rich='`title` names the screen; it does not conjure a heading. An unboxed column that wants its name in the body writes it there, where it owns the typography.'");
+	for (let i = 1; i <= 8; i++) {
+		A("div", rowStyle, () => {
+			A("span font-weight:500 #", `Row ${i}`);
+			A("small display:block #Flush to both edges of the column.");
+		});
+	}
+}
+
+/**
+ * A page that deliberately never sets `$panel.title`: the shell borrows the
+ * first line of text in its body — the heading below — which is how the
+ * breadcrumb up in the bar still manages to read "An untitled panel".
+ */
+function drawUntitledPanel($panel: S.Panel) {
+	$panel.maxWidth = "half";
+
+	A("h3 mt:0 mb:$2 #An untitled panel");
+	A("p mt:0 rich='This page never set `$panel.title`. The crumb up in the bar (and `document.title`) borrowed this heading, being the body’s first line of text — good enough for a stack, though a page that cares says it itself.'");
+	A("p mb:0", () => {
+		S.button({ content: "Done", attrs: ".neutral .small", click: () => void $panel.close() });
+	});
+}
+
+/**
  * Sizing and lifecycle in one column:
  *
- * - The panel already has its width when the handler runs, so it can measure the
- *   box it is drawing into instead of waiting a frame for one. This one keeps
- *   the default `"medium"`, which is the width it is created at; a handler that
- *   *assigns* `$page.layout` is drawn at the default and reflowed a tick later.
- * - `$page.layout` is live: picking another size reflows this column (and slides
- *   whatever is beside it over) without redrawing it — the draw count below
- *   stays where it is.
+ * - The page is already its final width when the handler runs, and says so in
+ *   `$panel.width` — no measuring, no waiting a frame. (A handler that *assigns*
+ *   `maxWidth` is drawn at the resolved new width; it is settled before the
+ *   body draws.)
+ * - `$panel.maxWidth` is live: picking another bound reflows this column (and
+ *   slides whatever is beside it over) without redrawing it — the draw count
+ *   below stays where it is, and `$panel.width` follows along.
  * - Adding a nav item mutates the shell's (proxied) item list. The sidebar
- *   redraws; the columns don't, so this panel is not rebuilt either.
+ *   redraws; the columns don't, so this page is not rebuilt either.
  * - Closing it tears it down there and then; the element only lingers to play
  *   its fade, which is exactly what the log line it leaves behind says.
  */
-function drawLivePanel($page: S.Page) {
-	$page.title = "Sizing & lifecycle";
+function drawLivePanel($panel: S.Panel) {
+	$panel.title = "Sizing & lifecycle";
 	// The default, spelled out so the size picker below has something selected.
-	$page.layout = "medium";
+	$panel.maxWidth = "full";
 
-	// `A()` with no arguments is the element we're drawing into — the panel's
-	// content area, which already has the width its column was given.
+	// `A()` with no arguments is the element we're drawing into — the page's
+	// content area, kept here only to prove below that a closed page is torn
+	// down while its element is still on screen.
 	const contentEl = A() as HTMLElement;
-	const drawnWidth = Math.round(contentEl.offsetWidth);
 	const draws = ++liveDraws;
 
 	A.clean(() => {
-		// Still connected: the panel's scope is gone the moment it closes, while
+		// Still connected: the page's scope is gone the moment it closes, while
 		// the element it drew hangs around for the length of the exit animation.
-		$panelLog.push(contentEl.isConnected
+		$pageLog.push(contentEl.isConnected
 			? `#${draws} torn down while still fading out`
 			: `#${draws} torn down after it was gone`);
-		if ($panelLog.length > 4) $panelLog.shift();
+		if ($pageLog.length > 4) $pageLog.shift();
+	});
+
+	// The size picker lives in `actions`, so the shell puts it wherever there is
+	// room for it: in this column's strip on a wide screen, in the top bar (where
+	// it takes the app's own menu's place) on a phone.
+	$panel.actions = () => S.buttonChooser({
+		options: { half: "half", full: "full", screen: "screen" },
+		bind: A.ref($panel, "maxWidth"),
+		attrs: ".small",
 	});
 
 	S.box({
 		header: "Sizing & lifecycle",
-		close: true,
 		content: () => {
-			A("p mt:0 rich='A panel is sized *before* its draw function runs, so anything that measures its own box — a chart, a virtualised list, a column count — gets a real one from the first frame.'");
-			A("p m:0 #Measured while drawing: ");
-			A("code data-testid=drawn-width #", String(drawnWidth));
-			A("p mb:0 rich='Pick another size: the column reflows, and whatever is beside it slides over. It is not redrawn, so nothing in it is rebuilt or loses its state.'");
-			S.buttonChooser({
-				options: { small: "small", medium: "medium", large: "large" },
-				bind: A.ref($page, "layout"),
-				attrs: ".small",
-			});
+			A("p mt:0 rich='A panel is sized *before* its draw function runs, so anything that needs the width — a chart, a virtualised list, a column count — has it from the first frame, without measuring.'");
+			A("p m:0 #", "$panel.width is ");
+			// Its own scope: `width` is live, so this line follows a reflow while
+			// the page around it is never redrawn (see the draw count below).
+			A(() => A("code data-testid=page-width #", String(Math.round($panel.width))));
+			A("# px.");
+			A("p mb:0 rich='Pick another bound in the chrome above: the column reflows, and whatever is beside it slides over. It is not redrawn, so nothing in it is rebuilt or loses its state.'");
 			A("p mb:0 #Drawn ");
 			A("code data-testid=live-draws #", String(draws));
 			A("# time(s) since the page loaded.");
 		},
-		footer: () => S.button({ content: "Cancel", attrs: ".neutral", click: () => void $page.close() }),
 	});
 
 	S.box({
@@ -502,19 +612,17 @@ function drawLivePanel($page: S.Page) {
  * shell's `ancestors` option is what puts the playground beneath it; without
  * that it would open alone, with nothing to close back to.
  */
-function drawThreadPanel($page: S.Page<{ id: number }>) {
-	const { id } = $page.params;
-	$page.title = `Thread ${id}`;
-	$page.layout = "small";
+function drawThreadPanel($panel: S.Panel<{ id: number }>) {
+	const { id } = $panel.params;
+	$panel.title = `Thread ${id}`;
+	$panel.maxWidth = "half";
 
-	S.box({
-		header: `Thread ${id}`,
-		close: true,
-		content: () => {
-			A("p mt:0 rich='A flat URL: there is no `/demo/thread` screen to walk up to, so the shell asked the app what belongs underneath. Escape (or the ✕) goes back to it.'");
-			A("a href=/demo/panels #Back to the playground");
-		},
-	});
+	// An unboxed screen that wants its name on show writes it in its own body: the
+	// `title` above names the screen for `document.title` and the shell's chrome,
+	// but it never conjures a heading here.
+	A("h3 mt:0 #", `Thread ${id}`);
+	A("p mt:0 rich='A flat URL: there is no `/demo/thread` screen to walk up to, so the shell asked the app what belongs underneath. Escape — or the breadcrumb up in the bar — goes back to it.'");
+	A("a href=/demo/panels #Back to the playground");
 }
 
 /**
@@ -530,103 +638,128 @@ function drawScratchNavRow() {
 			attrs: ".neutral .small",
 			click: () => {
 				S.closeNav();
-				$panelLog.push("scratch action, no navigation");
-				if ($panelLog.length > 4) $panelLog.shift();
+				$pageLog.push("scratch action, no navigation");
+				if ($pageLog.length > 4) $pageLog.shift();
 			},
 		});
 	});
 }
 
 /**
- * A panel behind an `[id=integer]` route key: `$page.params.id` is typed (and
+ * A page behind an `[id=integer]` route key: `$panel.params.id` is typed (and
  * really is) a `number`, not a string that looks like one.
  */
-function drawItemPanel($page: S.Page<{ id: number }>) {
-	const { id } = $page.params;
-	$page.title = `Item ${id}`;
-	$page.layout = "small";
+function drawItemPanel($panel: S.Panel<{ id: number }>) {
+	const { id } = $panel.params;
+	$panel.title = `Item ${id}`;
+	$panel.maxWidth = "half";
 
 	S.box({
 		header: `Item ${id}`,
-		close: true,
 		content: () => {
 			A("p mt:0 #", `params.id is ${typeof id} ${id}, so id + 1 is ${id + 1}.`);
-			A("a href=/demo/panels #Back to the playground");
+			A("p rich='A `data-panel=open` link leaves the panel it sits in behind and gives its target the stack `ancestors` asks for — the columns a cold link to it would open. For a link pointing somewhere else in the app, where this column isn’t the context to keep.'");
+			A("div display:flex flex-direction:column gap:$1 align-items:flex-start", () => {
+				// `data-panel=open`: this column drops out, and the thread arrives on
+				// the playground, which is what `ancestors` puts beneath it.
+				A("a href=/demo/thread/8 data-panel=open #Open a thread, on its own stack");
+				A("a href=/demo/panels #Back to the playground");
+			});
 		},
 	});
 }
 
-/** A live rendering of `S.panels.stack`, in its own scope so only it redraws. */
-function drawStackList() {
-	A("ol m:0 padding-left:1.3em", () => {
+/**
+ * A live rendering of `$panel.stack.panels` and `.currentPanelIndex`, in its
+ * own scope so only it redraws. Panels after the current one are the ones parked
+ * past the viewport's right edge — click their crumbs to bring them back.
+ */
+function drawStackList(stack: S.PanelStack) {
+	A("ol m:0 padding-left:1.3em data-testid=stack-list", () => {
 		A(() => {
-			for (const path of S.panels.stack) A("li", () => A("code #", path));
+			const current = stack.currentPanelIndex;
+			stack.panels.forEach((panel, i) => {
+				A("li", () => {
+					A("code #", panel.path);
+					if (i === current) A("span fg:$s-muted font-size:0.85em # ← current");
+				});
+			});
 		});
 	});
 }
 
 /**
- * One of the two interchangeable small columns, `/demo/panels/a` and `/b`.
- * Both close themselves two ways — the box's ✕ and a Cancel button on
- * `$page.close()` — and both keep working while another column sits on top of
- * them, where closing splices this one column out and leaves the rest alone.
+ * The two interchangeable small columns, `/demo/panels/a` and `/b`. Each is
+ * ordinary content — its own `S.box`es on the page ground — plus two
+ * declarations: a `title` for the stack, and `actions` for the shell to place.
+ *
+ * Going back is the breadcrumbs' job; what a screen
+ * carries itself is its own verbs. Delete here runs `$panel.close()`, which
+ * keeps working while another column sits on top — closing then splices this
+ * one column out of the stack and leaves the rest alone.
  */
-function drawSmallPanel($page: S.Page, name: string, other: string) {
-	$page.title = `Small ${name}`;
-	$page.layout = "small";
+function drawSmallPanel($panel: S.Panel, name: string, other: string) {
+	$panel.title = `Small ${name}`;
+	$panel.maxWidth = "half";
+	$panel.actions = () => {
+		S.iconButton({
+			icon: icons.share2,
+			ariaLabel: "Share",
+			click: () => S.toast({ message: `Shared Small ${name}.` }),
+		});
+		S.iconButton({
+			icon: icons.trash2,
+			ariaLabel: "Delete",
+			attrs: "fg:$s-danger",
+			click: () => { S.toast({ message: `Deleted Small ${name}.`, type: "danger" }); void $panel.close(); },
+		});
+	};
 
 	S.box({
 		header: `Small ${name}`,
-		close: true,
 		content: () => {
-			A("p mt:0 #", `A "small" panel: half the content area, leaving room for one more beside it. On a phone it fills the screen.`);
-			A("p rich='The ✕ closes *this* column — even when it isn’t the top one, in which case it is spliced out and the columns on its right stay put.'");
+			A("p mt:0 #", `Small ${name} is a "half"-width page: half the content area, leaving room for one more beside it. On a phone it fills the screen.`);
+			A("p rich='Going back is the breadcrumbs’ job — click an earlier crumb up in the bar (or press Escape). Delete closes *this* column even when it isn’t the top one: it is spliced out and the columns on its right stay put.'");
 			A("div display:flex flex-direction:column gap:$1 align-items:flex-start", () => {
 				A("a href=", `/demo/panels/${other}`, "#", `Push small ${other.toUpperCase()}`);
 				A("a href=/demo/panels/medium #Push a medium panel");
 				A("a href=/demo/panels #Back to the playground");
 			});
 		},
-		// The other half of "pages close themselves": a plain button on $page.close().
-		footer: () => S.button({ content: "Cancel", attrs: ".neutral", click: () => void $page.close() }),
 	});
 
-	S.box({ header: "The stack", content: drawStackList });
+	S.box({ header: "The stack", content: () => drawStackList($panel.stack) });
 }
 
-/** A default-size (`"medium"`) panel, which always fills the whole content area. */
-function drawMediumPanel($page: S.Page) {
-	$page.title = "Medium";
-
-	S.box({
-		header: "A medium panel",
-		close: true,
-		content: () => {
-			A("p mt:0 rich='This panel takes the default `layout: \"medium\"`: it fills the standard content area exactly, so nothing beside it is ever blank. Anything beneath it is crowded out, and comes back when this one closes.'");
-			A("a href=/demo/panels #Back to the playground");
-		},
-		footer: () => S.button({ content: "Cancel", attrs: ".neutral", click: () => void $page.close() }),
+/** A default-size (`"full"`) page, which always fills the whole content area. */
+function drawMediumPanel($panel: S.Panel) {
+	$panel.title = "Medium";
+	$panel.actions = () => S.iconButton({
+		icon: icons.share2,
+		ariaLabel: "Share",
+		click: () => S.toast({ message: "Shared." }),
 	});
 
-	S.box({ header: "The stack", content: drawStackList });
+	A("p mt:0 rich='This page takes the default `maxWidth: \"full\"`: it fills the standard content area exactly, so nothing beside it is ever blank. Anything beneath it is crowded out, and comes back when this one closes.'");
+	A("a href=/demo/panels #Back to the playground");
+
+	S.box({ header: "The stack", content: () => drawStackList($panel.stack) });
 }
 
-/** A `"large"` panel: the whole page grows to the window's edges while it's up. */
-function drawLargePanel($page: S.Page) {
-	$page.title = "Large";
-	$page.layout = "large";
-
-	S.box({
-		header: "A large panel",
-		close: true,
-		content: () => {
-			A("p mt:0 rich='A `\"large\"` panel takes as much room as the window has: while it is up, the whole page — top bar, content and footer — stretches to the screen edges instead of the standard 1280px, and settles back when it closes. For dense screens like boards and wide tables.'");
-			A("a href=/demo/panels #Back to the playground");
-		},
-		footer: () => S.button({ content: "Cancel", attrs: ".neutral", click: () => void $page.close() }),
+/** A `"screen"` page: the whole page grows to the window's edges while it's up. */
+function drawLargePanel($panel: S.Panel) {
+	$panel.title = "Large";
+	$panel.maxWidth = "screen";
+	$panel.actions = () => S.iconButton({
+		icon: icons.share2,
+		ariaLabel: "Share",
+		click: () => S.toast({ message: "Shared." }),
 	});
 
-	S.box({ header: "The stack", content: drawStackList });
+	A("p mt:0 rich='A `maxWidth: \"screen\"` page takes as much room as the window has: while it is up, the whole page — top bar, content and footer — stretches to the screen edges instead of the standard 1280px, and settles back when it closes. For dense screens like boards and wide tables.'");
+	A("a href=/demo/panels #Back to the playground");
+
+	S.box({ header: "The stack", content: () => drawStackList($panel.stack) });
 }
 
 function drawButtons() {
@@ -664,6 +797,15 @@ function drawButtons() {
 					S.button({ content: "Small", attrs: ".small" });
 					S.button({ content: "Medium" });
 					S.button({ content: "Large", attrs: ".large" });
+				});
+			});
+
+			A("div display:grid gap:$2 align-items:center grid-template-columns: 5rem 1fr;", () => {
+				A("div text-align:right fg: $s-muted; #href");
+				A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
+					// `href` renders an `<a role=button>` instead of a `<button>` — same
+					// look, but a real link (open in new tab, copy link, ...).
+					S.button({ content: "Open the Panels demo", href: "/demo/panels", attrs: ".neutral" });
 				});
 			});
 		},
@@ -730,6 +872,27 @@ function drawTabsPage() {
 					label: `Tab ${i + 1}`,
 					content: () => A("p mt:0 #", `Content for tab ${i + 1}.`),
 				})),
+			});
+		},
+	});
+
+	// The row the tab strip above is made of, on its own. The breadcrumb stack in
+	// the top bar is the same component — which is the point: one behaviour for
+	// every row of chrome that can outgrow its space.
+	S.box({
+		header: "S.scrollStrip — the row behind both",
+		content: () => {
+			A("p mt:0 rich='`S.tabs` puts its tab strip in one of these, and the breadcrumb stack up in the bar is another. It scrolls once its content outgrows it, hides its own scrollbar, and grows a ‹ / › over whichever end still has something to reach — so a mouse has something to click, not just a swipe target.'");
+			S.scrollStrip({
+				stripAttrs: "gap:$1 padding: 0.15em 0;",
+				content: () => {
+					for (const topic of [
+						"All", "Design", "Engineering", "Marketing", "Research", "Support",
+						"Operations", "Finance", "Legal", "People", "Security", "Archive",
+					]) {
+						S.button({ content: topic, attrs: ".neutral .small" });
+					}
+				},
 			});
 		},
 	});
@@ -908,6 +1071,38 @@ function drawOverlays() {
 						S.dialog({ header: "Title", content: () => A("#Content..."), attrs: ".warning" });
 					},
 				});
+			});
+		},
+	});
+
+	// ── Inline menu with a submenu tree ─────────────────────────────────────
+	S.box({
+		header: "Inline menu with submenus",
+		content: () => {
+			A("p m:0 fg:$s-muted font-size:0.9em rich='`S.menu` draws the same rows a dropdown or the nav sidebar uses, in place. An item with `items` of its own is a collapsible branch: clicking it selects its first leaf, and only the branch holding the current selection stays unfolded.'");
+			// The leaves are ordinary links; here they pick a search param on this
+			// very page, so the tree drives itself without leaving the screen.
+			A("div max-width:16rem mt:$2", () => {
+				S.menu({
+					items: [
+						{ label: "Nothing", href: "/demo/overlays" },
+						{ label: "Fruit", items: [
+							{ label: "Apple",  href: "/demo/overlays?pick=apple" },
+							{ label: "Banana", href: "/demo/overlays?pick=banana" },
+							{ label: "Citrus", items: [
+								{ label: "Lemon", href: "/demo/overlays?pick=lemon" },
+								{ label: "Lime",  href: "/demo/overlays?pick=lime" },
+							]},
+						]},
+						{ label: "Vegetables", items: [
+							{ label: "Carrot", href: "/demo/overlays?pick=carrot" },
+							{ label: "Potato", href: "/demo/overlays?pick=potato" },
+						]},
+					],
+				});
+			});
+			A("p.s-menu-picked mt:$2 mb:0 fg:$s-muted font-size:0.9em", () => {
+				A(() => A("#", route.current.search.pick ? `Picked: ${route.current.search.pick}` : "Nothing picked."));
 			});
 		},
 	});
@@ -1167,45 +1362,41 @@ function drawIconCell(name: string, fn: (opts?: icons.IconOptions) => void) {
 }
 
 /**
- * The detail panel for a single icon. Its way out is the box's own ✕ (`close:
- * true`), and its pager buttons carry `data-panel=replace`, so stepping through
- * icons swaps this panel in place instead of stacking a third one.
+ * The detail page for a single icon: the icon's name as the `title`, the
+ * pager as `actions`. The shell places both — crumb and strip beside the
+ * gallery on a wide screen, crumb and bar-slot on a phone. Nothing here knows
+ * which of the two it got.
+ *
+ * The pager buttons carry `data-panel=replace`, so stepping through icons swaps
+ * this page in place instead of stacking a third one.
  */
-function drawIconDetail($page: S.Page<{ name: string }>) {
-	const name = $page.params.name;
+function drawIconDetail($panel: S.Panel<{ name: string }>) {
+	const name = $panel.params.name;
 	const fn = iconByName[name];
-	$page.title = name;
+	$panel.title = name;
 	// A small column: on a wide enough screen it sits beside the (small) gallery.
-	$page.layout = "small";
-
-	S.box({
-		header: name,
-		// The shell draws no back chrome, so the page provides its own: this ✕ is the
-		// way out of the detail on every screen size — a pop on a phone, and one
-		// column less on a wide one.
-		close: true,
-		content: () => {
-			if (!fn) {
-				A("p m:0 fg:$s-muted #", `There is no icon called "${name}".`);
-				return;
-			}
-			A("div display:flex justify-content:center padding:$3", () => fn({ size: 96, strokeWidth: 1.25 }));
-			A("p mt:0 mb:$2 fg:$s-muted font-size:0.9em #Import just this one — a bundler tree-shakes the rest away:");
-			A("pre m:0", () => A("#", `import { ${name} } from "staffa/icons";`));
-		},
-	});
+	$panel.maxWidth = "half";
 
 	const list = showcaseIcons.includes(name) ? showcaseIcons : allIcons.map(([n]) => n);
 	const at = list.indexOf(name);
-	A("nav display:flex align-items:center justify-content:space-between gap:$2 mt:$3", () => {
-		// `data-panel=replace`: paging swaps this panel instead of stacking a third.
-		drawIconPager(list[(at - 1 + list.length) % list.length], "← Previous");
-		drawIconPager(list[(at + 1) % list.length], "Next →");
-	});
+	$panel.actions = () => {
+		drawIconPager(list[(at - 1 + list.length) % list.length], "Previous", icons.chevronLeft);
+		drawIconPager(list[(at + 1) % list.length], "Next", icons.chevronRight);
+	};
+
+	if (!fn) {
+		A("p m:0 fg:$s-muted #", `There is no icon called "${name}".`);
+		return;
+	}
+	A("div display:flex justify-content:center padding:$3", () => fn({ size: 96, strokeWidth: 1.25 }));
+	A("p mt:0 mb:$2 fg:$s-muted font-size:0.9em #Import just this one — a bundler tree-shakes the rest away:");
+	A("pre m:0", () => A("#", `import { ${name} } from "staffa/icons";`));
 }
 
-function drawIconPager(name: string, label: string) {
-	S.button({ href: `/demo/icons/${name}`, content: label, attrs: ".neutral data-panel=replace" });
+function drawIconPager(name: string, label: string, icon: () => void) {
+	// `data-panel=replace`: paging swaps this page instead of stacking a third.
+	// An `iconButton` — chrome should look like chrome.
+	S.iconButton({ href: `/demo/icons/${name}`, icon, ariaLabel: label, attrs: "data-panel=replace" });
 }
 
 function drawIconSample(label: string, draw: () => void) {
@@ -1219,7 +1410,7 @@ function drawIcons() {
 	S.box({
 		header: "Gallery",
 		content: () => {
-			A("p m:0 mb:$2 fg:$s-muted font-size:0.9em rich='Each icon is a tree-shakable named export — `import { house } from \"staffa/icons\"` — that draws an inline `<svg>` into the current scope. Click one for its detail panel.'");
+			A("p m:0 mb:$2 fg:$s-muted font-size:0.9em rich='Each icon is a tree-shakable named export — `import { house } from \"staffa/icons\"` — that draws an inline `<svg>` into the current scope. Click one for its detail page.'");
 			A("div display:grid gap:$1 grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));", () => {
 				for (const name of showcaseIcons) drawIconCell(name, iconByName[name]);
 			});

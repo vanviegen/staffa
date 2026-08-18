@@ -56,7 +56,7 @@ export interface ContentOptions {
 
 /**
  * Shell width — not viewport width — at or below which the app shell goes
- * "narrow": the nav sidebar collapses to a hamburger, and a routed panel stack
+ * "narrow": the nav sidebar collapses to a hamburger, and a routed shell
  * has room for exactly one full-bleed column. Shared by the `@container` queries
  * that do the switching and by the JS that has to agree with them.
  */
