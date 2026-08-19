@@ -23,6 +23,11 @@ export interface MenuItem {
 	 * Render as a link (`<a>`) pointing here. Pairs naturally with
 	 * `interceptLinks()` — the item is highlighted automatically when the URL
 	 * matches, and scrolled into view if its list had scrolled it out.
+	 *
+	 * Under routed `S.main()` the link carries `data-panel=open`: a menu row
+	 * leads elsewhere in the app, so its target arrives with its own stack of
+	 * columns rather than on top of whatever panel the menu was drawn in. Pass
+	 * `attrs: "data-panel=push"` for a row that should stack instead.
 	 */
 	href?: string;
 	/** `target` for the link (`_blank`, etc.). Only meaningful with `href`. */
@@ -254,7 +259,15 @@ function drawLeaf(entry: MenuItem, onLeafSelect?: () => void): void {
 	// Whether the aria-current scope below has run before: it re-runs on
 	// every navigation, and only a *later* one should animate the reveal.
 	let drawn = false;
-	const itemEl = A(entry.href ? "a.s-menu-item" : "button.s-menu-item type=button", entry.attrs, () => {
+	// `data-panel=open` because a menu row is navigation, not a link in the
+	// content: it leads somewhere else in the app, and the panel it was clicked
+	// from isn't the context to keep. A floating dropdown (portalled to the
+	// body) and `S.main()`'s sidebar are outside every panel and behave this way
+	// already; saying it outright makes an inline `menu()` — which may well sit
+	// *inside* a panel — behave the same wherever it's drawn. `attrs` comes
+	// after, so an item that really does want to stack can say
+	// `attrs: "data-panel=push"`.
+	const itemEl = A(entry.href ? "a.s-menu-item data-panel=open" : "button.s-menu-item type=button", entry.attrs, () => {
 		if (entry.href) {
 			A("href=", entry.href);
 			if (entry.target) A("target=", entry.target);

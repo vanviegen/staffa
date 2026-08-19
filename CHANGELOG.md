@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.1
+
+Fixed: menu links (in `S.menu()`, `S.menuButton()` dropdowns, context menus and the `S.main()` nav sidebar) now open their target as its own panel stack, the way a nav item does, instead of pushing it on top of the panel the menu happens to sit in. Floating menus and the sidebar already behaved this way; an inline `S.menu()` drawn inside a panel didn't. Add `attrs: "data-panel=push"` to an item that should stack instead.
+
 ## 0.10.0
 
 **Breaking.** The routed half of `S.main()` — panels, their navigation, the top bar — was reworked from the ground up: breadcrumbs instead of back buttons, panels declaring `title`/`actions` chrome the shell places, pinnable panels, and `$panel.unsaved` (replacing `requestClose`) parking unsaved panels instead of vetoing navigation. Any app built on `routes` needs reworking to match; the README describes the new model.
