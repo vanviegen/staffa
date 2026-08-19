@@ -50,9 +50,11 @@ export interface MainOptions<R = Routes> {
 	 * when your home screen lives elsewhere. It's an ordinary link, so the
 	 * usual rules apply: a home that is already open in the stack — its first
 	 * panel, usually — is returned to, closing nothing, and one that isn't is
-	 * opened the way a nav item would be. Routed mode only.
+	 * opened the way a nav item would be. Pass `null` to link neither — for a
+	 * `title` or `logo` slot holding interactive content of its own, which
+	 * can't sit inside a link. Routed mode only.
 	 */
-	home?: string;
+	home?: string | null;
 	/**
 	 * The app's own chrome, at the trailing end of the top bar: an account
 	 * button, a global search box, a settings menu. It may grow into the bar's
@@ -187,12 +189,24 @@ export interface MainOptions<R = Routes> {
 	// `$panel` would quietly degrade to `any` (see the note on `main` below).
 	ancestors?: AncestorTable<NoInfer<R>>;
 	/**
-	 * Set `false` to show only the current panel, however wide the screen (the
-	 * nav sidebar still sits beside it). Everything else behaves the same: the
-	 * URL, the back button, unsaved panels, and the panels' own close buttons.
-	 * This only changes how many you see. Defaults to `true`.
+	 * How many panels are *shown* at a time. `"auto"` (the default) shows as
+	 * many columns, side by side, as comfortably fit, ending at the current
+	 * panel; `"single"` shows only the current panel, however wide the screen
+	 * — the phone experience at every size (the nav sidebar still sits beside
+	 * it). Only the display differs: the stack, the breadcrumbs, the URL,
+	 * Escape and the back button behave identically in both. Routed mode only.
 	 */
-	stacking?: boolean;
+	columns?: "auto" | "single";
+	/**
+	 * What a link *without* a `data-panel` attribute does — the per-link
+	 * attribute always wins. `"push"` (the default) opens the target on top of
+	 * the panel the link sits in; `"replace"` opens it in that panel's place;
+	 * `"open"` gives it its own stack, the way a nav item does. With `"open"`
+	 * every click replaces the content as a whole — which, with flat routes,
+	 * is the conventional sidebar-and-content app: one pane, swapped on every
+	 * click, the crumb line simply naming it. Routed mode only.
+	 */
+	linkNavigation?: "push" | "replace" | "open";
 	/** Footer content, pinned below the scroll area. */
 	footer?: Slot;
 	/**
@@ -256,9 +270,11 @@ A.insertGlobalCss({
 		"> footer": "border-top: 1px solid $s-faint; fg:$s-muted",
 		// The bar reads `[leading] [title] …spacer… [trailing]`. The spacer is the
 		// trailing slot's own growth: it takes the free space and right-aligns
-		// itself in it, which is what lets a search box live there. It doesn't
-		// shrink, and the title does — so the title is what truncates when the two
-		// compete, and the app's chrome stays usable.
+		// itself in it, which is what lets a search box live there. When the two
+		// compete, the title truncates first — but only down to a floor, past
+		// which the trailing slot shrinks instead: a wide search box must not
+		// starve the titles to nothing (the crumb strip's overlay buttons would
+		// escape their zero-width strip, over the ☰ beside it).
 		"> header > .s-bar, > footer > .s-bar": "display:flex align-items:center width:100% margin-inline:auto gap:$3 padding: $2 $3;",
 		"> header .s-logo, > header .s-nav-trigger": "display:flex align-items:center flex-shrink:0",
 		// The ☰ is a glyph in a 2rem hit area, so it carries ~6px of its own
@@ -266,7 +282,7 @@ A.insertGlobalCss({
 		// up with the bar's edge and with the stack below.
 		"> header .s-nav-trigger": "margin-left:-0.375rem",
 		"> header .s-logo": "font-size:1.4em background: $s-gradient; -webkit-background-clip:text; background-clip:text; color:transparent;",
-		"> header .s-titles": "display:flex flex-direction:column min-width:0 flex: 0 1 auto;",
+		"> header .s-titles": "display:flex flex-direction:column min-width:5rem flex: 0 1 auto;",
 		// Same font-size and line-height as `.s-crumb`, because in routed mode the
 		// two take turns on this line (see `drawSecondLine`): a different height
 		// would jog the whole bar as they swap.
@@ -277,7 +293,7 @@ A.insertGlobalCss({
 		// which their classes then provide. (`filter:none` keeps the global
 		// `a:hover` brighten off the gradient text.)
 		"> header a.s-logo, > header a.s-title": "text-decoration:none filter:none cursor:pointer",
-		"> header .s-menu": "display:flex align-items:center justify-content:flex-end gap:$2 flex: 1 0 auto;",
+		"> header .s-menu": "display:flex align-items:center justify-content:flex-end gap:$2 flex: 1 1 auto; min-width:0",
 		// Body always wraps <main> (with or without a sidebar) so max-width centering
 		// and scrollbar alignment work identically in both cases.
 		// .s-body centres .s-body-inner; .s-body-inner caps the content to maxWidth.
@@ -467,11 +483,15 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): PanelS
 			routes,
 			notFound: opts.notFound,
 			ancestors: opts.ancestors,
-			stacking: opts.stacking,
+			columns: opts.columns,
+			linkNavigation: opts.linkNavigation,
 			title: opts.title,
 			$shell,
 		})
 		: null;
+	// Where the brand mark and the app's name link — or nowhere, when the app
+	// said `home: null` (a title slot holding a control of its own, say).
+	const homeHref = ctl && opts.home !== null ? opts.home ?? "/" : null;
 	// Routed mode caps the shell to the ensemble width the layout engine publishes,
 	// rather than to `maxWidth`.
 	const capWidth = ctl ? null : opts.maxWidth;
@@ -527,8 +547,8 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): PanelS
 						// twinned with the app's name beside it — a real link, so it
 						// has an address to hover, middle-click and copy, and a click
 						// runs the shell's usual link rules.
-						A(ctl ? "a.s-logo aria-label=Home" : "div.s-logo", () => {
-							if (ctl) A("href=", opts.home ?? "/");
+						A(homeHref != null ? "a.s-logo aria-label=Home" : "div.s-logo", () => {
+							if (homeHref != null) A("href=", homeHref);
 							drawSlot(opts.logo);
 						});
 					});
@@ -541,8 +561,8 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): PanelS
 					A("div.s-titles", () => {
 						A(() => {
 							if (opts.title == null) return;
-							A(ctl ? "a.s-title" : "div.s-title", () => {
-								if (ctl) A("href=", opts.home ?? "/");
+							A(homeHref != null ? "a.s-title" : "div.s-title", () => {
+								if (homeHref != null) A("href=", homeHref);
 								drawSlot(opts.title);
 							});
 						});
@@ -551,10 +571,13 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): PanelS
 
 					// Trailing: on a narrow shell the screen's own verbs win the space,
 					// and a screen with none of its own leaves the app's chrome up.
+					// Promoted actions are marked as the current panel's own chrome
+					// (`.s-panel-origin`), so a link among them still builds on that
+					// panel — see `interceptLinks` in panels.ts.
 					A(() => {
 						const actions = $shell.narrow ? ctl?.currentPanel?.actions : undefined;
 						const slot = actions ?? opts.menu;
-						if (slot != null) A("div.s-menu", () => drawSlot(slot));
+						if (slot != null) A(`div.s-menu${actions != null ? ".s-panel-origin" : ""}`, () => drawSlot(slot));
 					});
 				});
 			});

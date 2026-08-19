@@ -668,8 +668,10 @@ export interface PanelStackOptions {
 	notFound?: RouteHandler<{}>;
 	/** What to open beneath a path that arrives cold. See {@link MainOptions.ancestors}. */
 	ancestors?: Record<string, AncestorsHandler | undefined>;
-	/** Set `false` to show only the current panel, however much room there is. */
-	stacking?: boolean;
+	/** How many panels are shown at a time. See {@link MainOptions.columns}. */
+	columns?: "auto" | "single";
+	/** What a bare link does. See {@link MainOptions.linkNavigation}. */
+	linkNavigation?: "push" | "replace" | "open";
 	/** The shell's own title, used as the suffix of `document.title`. */
 	title?: unknown;
 	/**
@@ -1443,16 +1445,29 @@ export class PanelStackController implements PanelStack {
 	 * close guards run in `checkChange` when our navigation reaches the router.
 	 *
 	 * `data-panel` names which of the three {@link PanelStack} navigations the
-	 * click is: `push` (the default), `replace`, or `open`, which drops the
+	 * click is: `push`, `replace`, or `open`, which drops the
 	 * originating panel so the target arrives with its own stack beneath it,
-	 * exactly as a nav item's link does. An unrecognised value is a `push`.
+	 * exactly as a nav item's link does. A link that doesn't say gets the
+	 * shell's {@link PanelStackOptions.linkNavigation} (`push` by default);
+	 * an unrecognised value is a `push`.
 	 */
 	private interceptLinks(): void {
 		route.interceptLinks((url, anchor) => {
-			const mode = anchor.getAttribute("data-panel");
-			const panel = mode === "open" ? null : anchor.closest<HTMLElement>(".s-panel");
-			const origin = panel ? this.$state.live.find((entry) => entry.el === panel) : undefined;
-			void this.navigate(url.href, origin?.path ?? null, mode === "replace");
+			const mode = anchor.getAttribute("data-panel") ?? this.opts.linkNavigation;
+			let origin: string | null = null;
+			if (mode !== "open") {
+				const panel = anchor.closest<HTMLElement>(".s-panel");
+				if (panel) {
+					origin = this.$state.live.find((entry) => entry.el === panel)?.path ?? null;
+				} else if (anchor.closest(".s-panel-origin")) {
+					// The current panel's actions, promoted into the top bar on a
+					// narrow shell (see main.ts), sit outside every `.s-panel` — but
+					// they are still the current panel's own chrome, so a link among
+					// them builds on that panel, exactly as it does at full width.
+					origin = this.$state.live[this.$state.focus]?.path ?? null;
+				}
+			}
+			void this.navigate(url.href, origin, mode === "replace");
 			return true;
 		});
 	}
@@ -1883,7 +1898,7 @@ export class PanelStackController implements PanelStack {
 		const geom = this.geometry();
 		if (!geom) return;
 
-		const stacking = this.opts.stacking !== false;
+		const stacking = this.opts.columns !== "single";
 
 		// A window resize (or the very first pass) must be adopted instantly —
 		// geometry tracking the window through a 450ms transition reads as lag,

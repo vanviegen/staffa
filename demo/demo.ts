@@ -92,12 +92,16 @@ const showcaseIcons = [
 // ─── Shell ───────────────────────────────────────────────────────────────────
 
 const $navPosition = A.proxy("left") as {value: "left" | "right"};
-// Live shell settings the demo's own pages flip. `stacking` is read by the
+// Live shell settings the demo's own pages flip. `manyColumns` is read by the
 // S.main() call below, inside a reactive scope, so a change redraws the shell in
 // place (the stack itself is rebuilt from the URL, columns and all).
 // `extraNavItem` is just the state of the checkbox that adds a nav item, which
 // mutates the item list below instead — deliberately *not* the whole shell.
-const $shell = A.proxy({ stacking: true, extraNavItem: false });
+const $shell = A.proxy({
+	manyColumns: true,
+	linkNavigation: "push" as "push" | "replace" | "open" | undefined,
+	extraNavItem: false,
+});
 
 // The page-lifecycle demo's state. Declared up here (like the icon data below)
 // because the S.main() call is evaluated as this module loads, and an initial
@@ -168,9 +172,11 @@ A(() => {
 			}),
 		}),
 		footer: () => A("span rich='Built with **Staffa** · © 2026'"),
-		// Flipped from the Panels playground: with stacking off, only the current panel
-		// is ever shown — never a second column, however wide the screen.
-		stacking: $shell.stacking,
+		// Flipped from the Panels playground: with a single column, only the current
+		// panel is ever shown — never a second one beside it, however wide the screen.
+		columns: $shell.manyColumns ? "auto" : "single",
+		// Also the playground's: what a link without `data-panel` does.
+		linkNavigation: $shell.linkNavigation,
 		// Most demo pages keep the default `maxWidth: "full"` (filling the
 		// standard content area); the icons gallery, the icon detail and the
 		// Panels playground are `"half"`, which is what lets two of them sit side
@@ -391,7 +397,7 @@ function drawGuardDemo($panel: S.Panel) {
 // ─── Panels playground ───────────────────────────────────────────────────────
 
 /**
- * The stacking playground: a `"half"`-width page whose links and buttons push
+ * The panels playground: a `"half"`-width page whose links and buttons push
  * further pages, so you can watch columns arrive, crowd one another out, and
  * come back. It sits at `/demo/panels`, and everything it pushes lives under
  * that path — so a deep link derives the same columns a click here would have
@@ -468,10 +474,16 @@ function drawPanelsPlayground($panel: S.Panel) {
 	});
 
 	S.box({
-		header: "Stacking",
+		header: "Shell options",
 		content: () => {
-			A("p mt:0 rich='With `stacking: false` only the current panel is shown, however wide the screen — Escape, the browser’s back button, in-app links and the breadcrumbs all still work the same.'");
-			S.checkbox({ label: "Show as many columns as fit", bind: A.ref($shell, "stacking") });
+			A("p mt:0 rich='With `columns: \"single\"` only the current panel is shown, however wide the screen — Escape, the browser’s back button, in-app links and the breadcrumbs all still work the same.'");
+			S.checkbox({ label: "Show as many columns as fit", bind: A.ref($shell, "manyColumns") });
+			A("p rich='`linkNavigation` sets what a link *without* a `data-panel` attribute does — try the links above with `replace` or `open`.'");
+			S.buttonChooser({
+				options: { push: "push", replace: "replace", open: "open" },
+				bind: A.ref($shell, "linkNavigation"),
+				attrs: ".small",
+			});
 		},
 	});
 }
@@ -616,6 +628,14 @@ function drawThreadPanel($panel: S.Panel<{ id: number }>) {
 	const { id } = $panel.params;
 	$panel.title = `Thread ${id}`;
 	$panel.maxWidth = "half";
+	// A *link* among the actions. On a narrow shell these are promoted into the
+	// top bar, outside the panel's own column — but the link still builds on
+	// this panel, exactly as it does at full width (see the chrome tests).
+	$panel.actions = () => S.iconButton({
+		href: `/demo/thread/${id + 1}`,
+		icon: icons.chevronRight,
+		ariaLabel: "Next thread",
+	});
 
 	// An unboxed screen that wants its name on show writes it in its own body: the
 	// `title` above names the screen for `document.title` and the shell's chrome,

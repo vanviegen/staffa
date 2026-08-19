@@ -238,6 +238,33 @@ test("menu: a submenu tree unfolds along the current selection", async ({ page }
 	await expect(tree.getByRole("link", { name: "Carrot" })).toHaveAttribute("aria-current", "page");
 });
 
+test("menu: a page the menu doesn't hold leaves its folds alone", async ({ page }) => {
+	await page.goto("./overlays");
+	await page.getByText("Inline menu with submenus").waitFor();
+	// Narrow, so the lone open panel still writes a crumb (to right-click below).
+	await page.setViewportSize({ width: 480, height: 800 });
+
+	// Unfold two levels deep.
+	const tree = page.locator(".s-menu-inline");
+	await tree.locator("summary", { hasText: "Fruit" }).click();
+	await tree.locator("summary", { hasText: "Citrus" }).click();
+	await expect(page.locator(".s-menu-picked")).toHaveText("Picked: lemon");
+
+	// Pin the panel, so navigating elsewhere parks it — alive — instead of
+	// closing it, and the tree survives to be asked about its folds.
+	await page.locator(".s-crumb", { hasText: "Overlays" }).click({ button: "right" });
+	await page.locator(".s-menu-list").getByRole("button", { name: "Pin" }).click();
+	await page.locator(".s-nav-trigger button").click();
+	await page.locator(".s-nav-page").getByRole("link", { name: "Surfaces" }).click();
+	await expect(page).toHaveURL(/\/demo\/surfaces$/);
+
+	// No page in the tree is current now. That is no reason to fold anything:
+	// Fruit and Citrus stay exactly as they were, and Vegetables stays shut.
+	await expect(tree.locator("details").first()).toHaveAttribute("open", /./);
+	await expect(tree.locator("details details")).toHaveAttribute("open", /./);
+	await expect(tree.locator("details").last()).not.toHaveAttribute("open", /./);
+});
+
 test("dark mode: surfaces and buttons", async ({ page }) => {
 	await page.goto("./surfaces");
 	await page.getByText("Surfaces & Variants").waitFor();
@@ -863,10 +890,34 @@ test("panels: closing the top column reveals the one crowded out beneath it", as
 	await expect(page.locator(visiblePanels)).toHaveCount(2);
 });
 
-test("panels: stacking off keeps a single column at any width", async ({ page }) => {
+test("panels: linkNavigation sets what a link without data-panel does", async ({ page }) => {
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
-	// The playground's own checkbox flips the shell's `stacking` option.
+	const options = page.locator(".s-box", { hasText: "Shell options" });
+
+	// `replace`: a bare link swaps the panel it sits in for its target.
+	await options.getByRole("button", { name: "replace" }).click();
+	await page.getByRole("link", { name: "Push small A" }).click();
+	await panelWith(page, /Small A is a/).waitFor();
+	await expect(page).toHaveURL(/\/demo\/panels\/a$/);
+	await expect(page.locator(".s-crumb")).toHaveText(["Small A"]);
+	await topPanel(page).getByRole("link", { name: "Back to the playground" }).click();
+	await page.getByText("Push a panel").waitFor();
+
+	// `open`: a bare link now behaves like a nav item — its target arrives on
+	// its own derived stack, and the panel the link sat in drops out.
+	await options.getByRole("button", { name: "open" }).click();
+	await page.getByRole("link", { name: "Push small A" }).click();
+	await panelWith(page, /Small A is a/).waitFor();
+	await topPanel(page).getByRole("link", { name: "Push small B" }).click();
+	await panelWith(page, /Small B is a/).waitFor();
+	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small B"]);
+});
+
+test("panels: columns single keeps a single column at any width", async ({ page }) => {
+	await page.goto("./panels");
+	await page.getByText("Push a panel").waitFor();
+	// The playground's own checkbox flips the shell's `columns` option.
 	await page.getByLabel("Show as many columns as fit").uncheck();
 
 	// Only the current page shows now, however much room there is.
@@ -1093,6 +1144,18 @@ test("chrome: a narrow shell puts the current panel's chrome in the bar", async 
 		return { radius: cs.borderTopLeftRadius, flush: Math.round(r.left) === 0 };
 	});
 	expect(box).toEqual({ radius: "0px", flush: true });
+});
+
+test("chrome: an action link promoted into the bar still builds on its panel", async ({ page }) => {
+	await page.goto("./thread/8");
+	await panelWith(page, /A flat URL/).waitFor();
+	// Narrow: the panel's actions move into the top bar, outside its own column
+	// — but a link among them is still that panel's chrome, so it opens its
+	// target on top of the panel, not as a fresh origin-less stack without it.
+	await page.setViewportSize({ width: 480, height: 800 });
+	await page.locator("header .s-menu").getByRole("button", { name: "Next thread" }).click();
+	await expect(page).toHaveURL(/\/demo\/thread\/9$/);
+	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Thread 8", "Thread 9"]);
 });
 
 test("chrome: a panel that sets no title lends its first line to the crumb", async ({ page }) => {

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.11.0
+
+- **Breaking:** `S.main`'s `stacking` option is renamed **`columns`**: pass `columns: "single"` where you had `stacking: false`, and nothing where you had `stacking: true` (the default, `"auto"`, shows as many columns as fit). Same behaviour, clearer name — it only ever controlled how many columns you *see*.
+- **`linkNavigation`** on `S.main` sets what a link without a `data-panel` attribute does: `"push"` (the default), `"replace"`, or `"open"`. Set `"open"` for a conventional app where every click replaces the content rather than stacking on it.
+- **`home: null`** leaves the app's name and logo unlinked, for a `title` or `logo` slot holding interactive content of its own.
+- Fixed: a link among a panel's `actions` behaved differently by shell width — on a narrow shell (actions promoted into the top bar) it replaced the whole stack instead of opening on top of its panel. It now builds on the panel that declared it at every width.
+- Fixed: a wide top-bar `menu` (a search box, say) could squeeze the title and breadcrumbs down to nothing, letting the crumb strip's scroll buttons escape over the ☰. The titles now keep a minimum width, and the menu shrinks past that point instead.
+- Fixed: navigating to a page a nav/menu tree doesn't contain folded all of its branches up. The fold state is now left as it was.
+
 ## 0.10.1
 
 Fixed: menu links (in `S.menu()`, `S.menuButton()` dropdowns, context menus and the `S.main()` nav sidebar) now open their target as its own panel stack, the way a nav item does, instead of pushing it on top of the panel the menu happens to sit in. Floating menus and the sidebar already behaved this way; an inline `S.menu()` drawn inside a panel didn't. Add `attrs: "data-panel=push"` to an item that should stack instead.

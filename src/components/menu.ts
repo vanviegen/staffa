@@ -38,11 +38,13 @@ export interface MenuItem {
 	attrs?: Attributes;
 	/**
 	 * Child entries, which turn the item into a collapsible **branch** of a
-	 * tree. Only the branch holding the current page is expanded; navigate away
-	 * and it folds back up. Clicking a branch *selects* rather than toggles: it
-	 * follows the item's own `href`, or failing that the first linked leaf
-	 * below it — which is what expands it. A branch with no link anywhere below
-	 * it falls back to plain open/close toggling.
+	 * tree. Only the branch holding the current page is expanded; navigate to
+	 * another page in the menu and it folds back up. (Navigating to a page the
+	 * menu doesn't hold *anywhere* leaves every fold as it was: there is no
+	 * better answer to fold up to.) Clicking a branch *selects* rather than
+	 * toggles: it follows the item's own `href`, or failing that the first
+	 * linked leaf below it — which is what expands it. A branch with no link
+	 * anywhere below it falls back to plain open/close toggling.
 	 *
 	 * Expanding is not selecting: a branch click never counts as picking an
 	 * item (see `onLeafSelect` on {@link menu}), so on a phone the nav stays up
@@ -243,14 +245,20 @@ export function drawMenu(items: MenuEntry[], onLeafSelect?: () => void): void {
 		els[next].focus();
 	});
 
-	drawEntries(items, onLeafSelect);
+	// Whether the current page is in this menu *at all*, shared by every branch
+	// below: a navigation to a page the menu doesn't hold must leave the folds
+	// alone (see `drawBranch`), and that is a fact about the whole menu, which
+	// no branch can tell on its own. Derived, so the branches re-run only when
+	// the answer flips — not on every navigation between two held pages.
+	const $menuHasCurrent = A.derive(() => anyCurrent(items));
+	drawEntries(items, onLeafSelect, $menuHasCurrent);
 }
 
-function drawEntries(items: MenuEntry[], onLeafSelect?: () => void): void {
+function drawEntries(items: MenuEntry[], onLeafSelect?: () => void, $menuHasCurrent?: { value: boolean }): void {
 	for (const entry of items) {
 		if (typeof entry === "string" || typeof entry === "function") { drawSlot(entry); continue; }
 		if ("separator" in entry) { A("hr.s-menu-sep"); continue; }
-		if (entry.items) drawBranch(entry, onLeafSelect);
+		if (entry.items) drawBranch(entry, onLeafSelect, $menuHasCurrent);
 		else drawLeaf(entry, onLeafSelect);
 	}
 }
@@ -311,12 +319,22 @@ function drawLeaf(entry: MenuItem, onLeafSelect?: () => void): void {
  * linked branch is open exactly while it holds the current page. Only a branch
  * with no link anywhere below it keeps the native open/close toggle.
  */
-function drawBranch(entry: MenuItem, onLeafSelect?: () => void): void {
+function drawBranch(entry: MenuItem, onLeafSelect?: () => void, $menuHasCurrent?: { value: boolean }): void {
 	const href = entry.href ?? firstLeafHref(entry.items!);
 	// The route-derived fold state, as a derived boolean so the attribute scope
 	// below re-runs only when the answer flips — not on every navigation that
-	// merely moves *between* pages inside the branch.
-	const $open = href != null ? A.derive(() => containsCurrent(entry)) : null;
+	// merely moves *between* pages inside the branch. When the current page is
+	// nowhere in the menu, nothing has an opinion, and the fold simply keeps
+	// its last state — folding everything up would answer a question nobody
+	// asked with a menu that forgot where the user was.
+	let last = false;
+	const $open = href != null
+		? A.derive(() => {
+			if (containsCurrent(entry)) return (last = true);
+			if ($menuHasCurrent == null || $menuHasCurrent.value) return (last = false);
+			return last;
+		})
+		: null;
 
 	A("details.s-menu-details", () => {
 		// For a no-link branch this scope has no subscriptions and never re-runs,
@@ -346,7 +364,7 @@ function drawBranch(entry: MenuItem, onLeafSelect?: () => void): void {
 			A("span.s-menu-chevron aria-hidden=true", () => chevronRight());
 		});
 
-		A("div.s-menu-sub", () => drawEntries(entry.items!, onLeafSelect));
+		A("div.s-menu-sub", () => drawEntries(entry.items!, onLeafSelect, $menuHasCurrent));
 	});
 }
 
@@ -364,6 +382,12 @@ function foldedAway(el: HTMLElement): boolean {
 		if (!(details as HTMLDetailsElement).open && el.closest("summary")?.parentElement !== details) return true;
 	}
 	return false;
+}
+
+/** Whether any page linked anywhere in `items` is the current one. */
+function anyCurrent(items: MenuEntry[]): boolean {
+	return items.some((entry) =>
+		typeof entry !== "string" && typeof entry !== "function" && !("separator" in entry) && containsCurrent(entry));
 }
 
 /** Whether `entry`'s own page, or any page linked below it, is the current one. */

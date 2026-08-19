@@ -210,7 +210,7 @@ function drawTask($panel: S.Panel<{ taskId: number }>) {
 
 On a wide screen the title becomes the stack's last crumb and the Save button sits in a quiet strip at the top of the column. On a phone the crumb is still there and Save moves into the top bar, where the app menu was. Nothing in your code measures the viewport, and no screen is written twice.
 
-**The breadcrumbs are the navigation.** The top bar's second line writes the open panels out as breadcrumbs — `Projects / Trackle / Task 42` — with the panels currently on screen in bold. Clicking an earlier crumb goes back to it *without closing anything*: the panels right of it stay open, parked just past the viewport's right edge, and clicking their crumbs brings them back. Browsing the stack is free — it's opening a *new* panel that closes the panels after the one it came from. The app's name and logo link to the app's home (the `home` option, `/` by default), going back to it when it's already open and opening it when it isn't. A stack too long for the bar scrolls sideways, in an `S.scrollStrip` like the tab strip's.
+**The breadcrumbs are the navigation.** The top bar's second line writes the open panels out as breadcrumbs — `Projects / Trackle / Task 42` — with the panels currently on screen in bold. Clicking an earlier crumb goes back to it *without closing anything*: the panels right of it stay open, parked just past the viewport's right edge, and clicking their crumbs brings them back. Browsing the stack is free — it's opening a *new* panel that closes the panels after the one it came from. The app's name and logo link to the app's home (the `home` option, `/` by default; `null` links neither), going back to it when it's already open and opening it when it isn't. A stack too long for the bar scrolls sideways, in an `S.scrollStrip` like the tab strip's.
 
 That line is the `subtitle`'s while the stack has nothing to add: one panel open, reachable from a nav item that is already highlighted in a visible sidebar. Otherwise the stack takes it, since it is then the only thing naming the screen.
 
@@ -221,7 +221,7 @@ A crumb can also wear a **●**: the panel holds unsaved work, and nothing will 
 | `$panel` | what it does |
 | --- | --- |
 | `title` | Names the screen: its breadcrumb, and `document.title` while it's the current panel. A panel that sets none borrows the first line of text in its own body — good enough for a crumb, but say it yourself. |
-| `actions` | The screen's buttons or menu. In the column's chrome while several columns fit; in the top bar (taking the app `menu`'s place) once the shell is narrow. |
+| `actions` | The screen's buttons or menu. In the column's chrome while several columns fit; in the top bar (taking the app `menu`'s place) once the shell is narrow. A link among them builds on this panel at both widths. |
 
 Two deliberate rules there. `actions` are the screen's *verbs* — Save, Delete, Share, a menu — not a second way out: going back is the crumbs' job, at every width, and there is no back button even on a phone. And **`title` names the screen; it does not draw a heading** — a screen that wants its name in its own body writes it there, where it owns the typography.
 
@@ -291,7 +291,8 @@ Search params and the `#hash` belong to the current panel only. Anything another
 
 **A few more things.**
 
-- `stacking: false` shows only the current panel, however wide the screen. Everything else behaves the same: the URL, the back button, unsaved panels, and the panels' own close buttons.
+- `columns: "single"` shows only the current panel, however wide the screen — the phone experience at every size. Only the display changes: the URL, the back button, unsaved panels and the panels' own close buttons all behave the same.
+- `linkNavigation` sets what a link *without* a `data-panel` attribute does: `"push"` (the default), `"replace"`, or `"open"`. With `"open"` every click replaces the content as a whole — which, with flat routes, is the conventional sidebar-and-content app: one pane, swapped on every click, the crumb line simply naming it.
 - Only one routed `S.main()` can be mounted at a time; a second one throws — the URL is global, so two of them would fight over it. Nothing else is global: the stack belongs to its shell, and each handler gets its own `$panel`, since several panels are alive at once.
 - Navigating with `aberdeen/route`'s own `go()` works — an unsaved panel survives it too — but, like a link from outside a panel, it builds the whole stack from the path. So prefer the stack's own methods. A navigation guard your app registered with `route.setGuard` (an auth redirect, say) keeps working untouched: Staffa registers none of its own.
 - Deep links need your static server to serve the app for unknown paths (the usual SPA fallback). For `http-server` that's `-P`, as in the demo command below.

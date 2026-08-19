@@ -81,7 +81,8 @@ S.main({
 		// Saying nothing leaves the path to the parent-path derivation.
 		"/icons/[name]": () => undefined,
 	},
-	stacking: false,
+	columns: "single",
+	linkNavigation: "open",
 });
 
 // A key that isn't in the route table is a typo, and typos are type errors.
