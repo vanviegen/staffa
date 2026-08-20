@@ -30,6 +30,17 @@ export interface MenuItem {
 	 * `attrs: "data-panel=push"` for a row that should stack instead.
 	 */
 	href?: string;
+	/**
+	 * Pages this item claims *beyond* its own `href`: a string claims that path
+	 * and everything under it (`"/mail"` claims `/mail/…`, not `/mailbox`), a
+	 * function is asked with the current path. While a claimed page is current,
+	 * the item is highlighted and the branches above it stay unfolded — for the
+	 * detail screens a menu has no row of their own: the `/thread/[id]` a
+	 * notification lands on, an icon's page under the gallery's row. Claims
+	 * work from the very first paint, so they also cover cold deep links,
+	 * which no amount of fold-state keeping can.
+	 */
+	match?: string | ((path: string) => boolean);
 	/** `target` for the link (`_blank`, etc.). Only meaningful with `href`. */
 	target?: string;
 	/** Disables the item. */
@@ -133,12 +144,17 @@ export type ContextMenuOptions = Omit<FloatingMenuOptions, "anchor" | "at" | "cl
 A.insertGlobalCss({
 	// Border comes from the `.s-s.neutral` surface; the panel only overrides the radius
 	// (lg) and opts into elevation via `.shadow` (added on the element below).
+	// `visibility` rides the same transition as the fade (flipping only at its
+	// end, per CSS visibility interpolation): a dismissed menu lingers in the
+	// DOM for a while — Aberdeen's `destroy=` removes it on a timer, not at
+	// the transition's end — and without this it would spend that time
+	// invisible yet still hittable by tests and read by assistive tech.
 	".s-menu-list":
 		"position:fixed z-index:350 min-width:10rem display:flex flex-direction:column p:$1 " +
 		"r:$s-radius-lg " +
 		"overflow-y:auto max-height:min(80vh,28rem) " +
-		"transition: opacity 0.15s, transform 0.15s;",
-	".s-menu-list.hidden": "opacity:0 pointer-events:none transform:translateY(-6px)",
+		"transition: opacity 0.15s, transform 0.15s, visibility 0.15s;",
+	".s-menu-list.hidden": "opacity:0 pointer-events:none transform:translateY(-6px) visibility:hidden",
 	// One class for both the `<a>` (link) and `<button>` forms — they look
 	// identical; the element only differs where link semantics matter (see below).
 	// The scroll-margin keeps a revealed row (see the scrollIntoView in
@@ -282,7 +298,7 @@ function drawLeaf(entry: MenuItem, onLeafSelect?: () => void): void {
 			A(() => {
 				const first = !drawn;
 				drawn = true;
-				if (!matchCurrent(entry.href!)) return;
+				if (!isCurrent(entry)) return;
 				A("aria-current=page");
 				// A list taller than its scrollport (a long sidebar nav, mostly)
 				// highlights nothing when the current row is scrolled out of it,
@@ -308,6 +324,20 @@ function drawLeaf(entry: MenuItem, onLeafSelect?: () => void): void {
 }
 
 /**
+ * The last route-derived fold state of every linked branch, keyed by the
+ * branch's selection href. Module-level on purpose: the phone's full-page nav
+ * (and any dropdown) mounts a fresh menu every time it opens, and per-mount
+ * state would hand it three folded sections in the middle of the user's work.
+ * Bounded by the number of distinct branch hrefs an app ever shows.
+ */
+const foldMemory = new Map<string, boolean>();
+
+function setFold(href: string, open: boolean): boolean {
+	foldMemory.set(href, open);
+	return open;
+}
+
+/**
  * A branch: a native `<details>` folding a sub-list of entries in and out. The
  * children stay mounted whether folded or not — closing hides them, it doesn't
  * tear them down — so a fold is a single `open` flip that the browser animates
@@ -327,12 +357,17 @@ function drawBranch(entry: MenuItem, onLeafSelect?: () => void, $menuHasCurrent?
 	// nowhere in the menu, nothing has an opinion, and the fold simply keeps
 	// its last state — folding everything up would answer a question nobody
 	// asked with a menu that forgot where the user was.
-	let last = false;
+	//
+	// "Last state" lives in `foldMemory`, not in this closure: menus remount —
+	// the phone's full-page nav exists only while it is open — and a remount
+	// must find the state where the previous mount left it. It is keyed on the
+	// branch's selection href, so the sidebar and the phone nav (two renderings
+	// of the same items) share one truth, however often either is rebuilt.
 	const $open = href != null
 		? A.derive(() => {
-			if (containsCurrent(entry)) return (last = true);
-			if ($menuHasCurrent == null || $menuHasCurrent.value) return (last = false);
-			return last;
+			if (containsCurrent(entry)) return setFold(href, true);
+			if ($menuHasCurrent == null || $menuHasCurrent.value) return setFold(href, false);
+			return foldMemory.get(href) ?? false;
 		})
 		: null;
 
@@ -344,9 +379,10 @@ function drawBranch(entry: MenuItem, onLeafSelect?: () => void, $menuHasCurrent?
 		A("summary.s-menu-item.s-menu-branch", entry.attrs, () => {
 			if (entry.disabled) A("aria-disabled=true");
 			A(() => {
-				// Current only on its *own* page: when a descendant is current, that
+				// Current only on its *own* page (its `href`, or a `match` claim —
+				// pages with no row of their own): when a descendant is current, that
 				// row carries the highlight, and two highlights would read as two pages.
-				if (entry.href != null && matchCurrent(entry.href)) A("aria-current=page");
+				if (isCurrent(entry)) A("aria-current=page");
 			});
 			A("click=", (e: Event) => {
 				if (entry.disabled) { e.preventDefault(); return; }
@@ -384,15 +420,35 @@ function foldedAway(el: HTMLElement): boolean {
 	return false;
 }
 
-/** Whether any page linked anywhere in `items` is the current one. */
-function anyCurrent(items: MenuEntry[]): boolean {
+/**
+ * Whether any item anywhere in `items` — branches, their leaves, `match`
+ * claims — is the current page. The one question both the fold logic and the
+ * shell's tagline rule (see `taglineFits` in main.ts) ask of a menu, exported
+ * so the two can never disagree with the highlighting.
+ */
+export function anyCurrent(items: MenuEntry[]): boolean {
 	return items.some((entry) =>
 		typeof entry !== "string" && typeof entry !== "function" && !("separator" in entry) && containsCurrent(entry));
 }
 
-/** Whether `entry`'s own page, or any page linked below it, is the current one. */
-function containsCurrent(entry: MenuItem): boolean {
+/**
+ * Whether this item is the current page: its own `href` matches, or its
+ * `match` claims the current path. The single test behind `aria-current`,
+ * branch unfolding, and {@link anyCurrent} — one truth, three consumers.
+ */
+function isCurrent(entry: MenuItem): boolean {
 	if (entry.href != null && matchCurrent(entry.href)) return true;
+	const m = entry.match;
+	if (m == null) return false;
+	const path = currentRoute.path;
+	if (typeof m === "function") return m(path);
+	const claim = m.replace(/\/+$/, "") || "/";
+	return path === claim || path.startsWith(claim === "/" ? "/" : claim + "/");
+}
+
+/** Whether `entry` is the current page itself, or holds it anywhere below. */
+function containsCurrent(entry: MenuItem): boolean {
+	if (isCurrent(entry)) return true;
 	for (const child of entry.items ?? []) {
 		if (typeof child === "string" || typeof child === "function" || "separator" in child) continue;
 		if (containsCurrent(child)) return true;

@@ -98,7 +98,7 @@ const $navPosition = A.proxy("left") as {value: "left" | "right"};
 // `extraNavItem` is just the state of the checkbox that adds a nav item, which
 // mutates the item list below instead — deliberately *not* the whole shell.
 const $shell = A.proxy({
-	manyColumns: true,
+	columns: "auto" as "auto" | "single" | undefined,
 	linkNavigation: "push" as "push" | "replace" | "open" | undefined,
 	extraNavItem: false,
 });
@@ -120,9 +120,15 @@ const $navItems = A.proxy<S.MenuEntry[]>([
 	{ label: "Buttons",  icon: icons.mousePointerClick,  href: "/demo/buttons"  },
 	{ label: "Tabs",     icon: icons.folders,            href: "/demo/tabs"     },
 	{ label: "Overlays", icon: icons.bell,               href: "/demo/overlays" },
-	{ label: "Surfaces", icon: icons.palette,            href: "/demo/surfaces" },
-	{ label: "Content",  icon: icons.fileText,           href: "/demo/content"  },
-	{ label: "Icons",    icon: icons.shapes,             href: "/demo/icons"    },
+	// A collapsing submenu: only the branch holding the current page stays
+	// unfolded, and clicking the branch row selects its first leaf.
+	{ label: "Styling",  icon: icons.palette, items: [
+		{ label: "Surfaces", href: "/demo/surfaces" },
+		{ label: "Content",  href: "/demo/content"  },
+	]},
+	// `match`: the gallery's row also claims the icon detail pages, which have
+	// no row of their own — so the sidebar still says where you are.
+	{ label: "Icons",    icon: icons.shapes,             href: "/demo/icons", match: "/demo/icons" },
 	{ label: "Panels",   icon: icons.layers,             href: "/demo/panels"   },
 	{ separator: true },
 	{ label: "Staffa docs", icon: icons.arrowUpRight, href: "https://wildloop.dev/projects/staffa/", target: "_blank" },
@@ -166,17 +172,30 @@ A(() => {
 						bind: $navPosition,
 						attrs: ".small",
 					}));
+					// The routed shell's own knobs, reachable from every page — so
+					// their interplay with submenus, threads etc. can be tried live.
+					row("Columns", () => S.buttonChooser({
+						options: { auto: "auto", single: "single" },
+						bind: A.ref($shell, "columns"),
+						attrs: ".small",
+					}));
+					row("Links", () => S.buttonChooser({
+						options: { push: "push", replace: "replace", open: "open" },
+						bind: A.ref($shell, "linkNavigation"),
+						attrs: ".small",
+					}));
 					row("Primary colour", drawColorPickers);
 					row("Theme", drawThemeChooser);
 				}],
 			}),
 		}),
 		footer: () => A("span rich='Built with **Staffa** · © 2026'"),
-		// Flipped from the Panels playground: with a single column, only the current
-		// panel is ever shown — never a second one beside it, however wide the screen.
-		columns: $shell.manyColumns ? "auto" : "single",
-		// Also the playground's: what a link without `data-panel` does.
-		linkNavigation: $shell.linkNavigation,
+		// Flipped from the display-settings popover. Getters, so the shell's own
+		// small scopes are all that re-run on a change: the columns relayout in
+		// place and the next click picks up the link default — the stack is not
+		// rebuilt, and the open panels keep their state.
+		get columns() { return $shell.columns; },
+		get linkNavigation() { return $shell.linkNavigation; },
 		// Most demo pages keep the default `maxWidth: "full"` (filling the
 		// standard content area); the icons gallery, the icon detail and the
 		// Panels playground are `"half"`, which is what lets two of them sit side
@@ -476,14 +495,7 @@ function drawPanelsPlayground($panel: S.Panel) {
 	S.box({
 		header: "Shell options",
 		content: () => {
-			A("p mt:0 rich='With `columns: \"single\"` only the current panel is shown, however wide the screen — Escape, the browser’s back button, in-app links and the breadcrumbs all still work the same.'");
-			S.checkbox({ label: "Show as many columns as fit", bind: A.ref($shell, "manyColumns") });
-			A("p rich='`linkNavigation` sets what a link *without* a `data-panel` attribute does — try the links above with `replace` or `open`.'");
-			S.buttonChooser({
-				options: { push: "push", replace: "replace", open: "open" },
-				bind: A.ref($shell, "linkNavigation"),
-				attrs: ".small",
-			});
+			A("p m:0 rich='The shell-wide knobs live in the display-settings popover, up in the top bar: `columns: \"single\"` shows only the current panel however wide the screen, and `linkNavigation` sets what a link without a `data-panel` attribute does — try the links above with `replace` or `open`.'");
 		},
 	});
 }
@@ -610,7 +622,8 @@ function drawLivePanel($panel: S.Panel) {
 				change: () => {
 					// A slot, not a `MenuItem`: custom content the shell can't reason
 					// about, which is exactly what `S.closeNav()` is there for.
-					if ($shell.extraNavItem) $navItems.splice(8, 0, drawScratchNavRow);
+					// Just before the separator, wherever the list puts it.
+					if ($shell.extraNavItem) $navItems.splice($navItems.findIndex((i) => typeof i === "object" && i != null && "separator" in i), 0, drawScratchNavRow);
 					else $navItems.splice($navItems.findIndex((i) => typeof i === "function"), 1);
 				},
 			});
@@ -1137,7 +1150,7 @@ function drawContent() {
 	S.box({
 		header: "Prose & flow content",
 		content: () => {
-			A("p rich=", "These are plain `<h2>`, `<p>`, `<ul>`, `<table>` and friends — styled by default. Spacing only ever appears *between* siblings, so the first line sits flush with the top of its container.'");
+			A("p rich=", "These are plain `<h2>`, `<p>`, `<ul>`, `<table>` and friends — styled by default. Spacing only ever appears *between* siblings, so the first line sits flush with the top of its container. Links — like this [edge-to-edge list](/demo/panels/rows) — are ordinary `<a>`s, so the shell's navigation rules apply to prose too.");
 
 			A("h2 #Vertical rhythm");
 			A("p #Every block has its top margin stripped and re-added only when it isn't the first child. That keeps content flush against its container while still separating consecutive blocks.");

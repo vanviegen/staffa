@@ -1,7 +1,7 @@
 import A from "aberdeen";
-import { current as currentRoute, matchCurrent } from "aberdeen/route";
+import { current as currentRoute } from "aberdeen/route";
 import { type Slot, type Attributes, drawSlot, focusFirst, NARROW_PX } from "../core.js";
-import { type MenuOptions, type MenuEntry, drawMenu, isFloatingMenuOpen, consumeBranchNav } from "./menu.js";
+import { type MenuOptions, drawMenu, isFloatingMenuOpen, consumeBranchNav, anyCurrent } from "./menu.js";
 // The shell's own chrome glyphs, from the same Lucide set an app draws with —
 // so a nav trigger sits beside app icons as an equal. Named imports, so a
 // bundler keeps these two and tree-shakes the other ~1950 away.
@@ -195,6 +195,10 @@ export interface MainOptions<R = Routes> {
 	 * — the phone experience at every size (the nav sidebar still sits beside
 	 * it). Only the display differs: the stack, the breadcrumbs, the URL,
 	 * Escape and the back button behave identically in both. Routed mode only.
+	 *
+	 * Live: pass a proxied options object (or make this field a getter) and a
+	 * change is adopted in place — one layout pass, every panel keeping its
+	 * state.
 	 */
 	columns?: "auto" | "single";
 	/**
@@ -205,6 +209,9 @@ export interface MainOptions<R = Routes> {
 	 * every click replaces the content as a whole — which, with flat routes,
 	 * is the conventional sidebar-and-content app: one pane, swapped on every
 	 * click, the crumb line simply naming it. Routed mode only.
+	 *
+	 * Live, like {@link MainOptions.columns}: change it and the next click
+	 * uses the new default.
 	 */
 	linkNavigation?: "push" | "replace" | "open";
 	/** Footer content, pinned below the scroll area. */
@@ -372,10 +379,12 @@ A.insertGlobalCss({
 			// body starts below the bar), but the bar should still win if they ever do.
 			"position:absolute inset:0 z-index:5 display:flex flex-direction:column " +
 			"overflow-y:auto overscroll-behavior:contain border:0 r:0 padding:$2 gap:$1 " +
-			"transition: transform var(--s-panel-ms) ease;",
+			"transition: transform var(--s-panel-ms) ease, visibility var(--s-panel-ms);",
 		// Parked one screen to the left: the state the `create=`/`destroy=` hooks
-		// transition out of and back into.
-		"&.s-nav-page-off": "transform:translateX(-100%) pointer-events:none",
+		// transition out of and back into. `visibility` flips at the slide's end
+		// (see `.s-menu-list` in menu.ts): the dismissed page lingers off screen
+		// until Aberdeen's removal timer, and mustn't stay reachable meanwhile.
+		"&.s-nav-page-off": "transform:translateX(-100%) pointer-events:none visibility:hidden",
 		// Roomier rows than the dropdown's: this is the whole screen, and every row
 		// is a thumb target.
 		".s-menu-item": "padding: $2 $3; min-height:3rem font-size:1.05em gap:$3",
@@ -483,12 +492,19 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): PanelS
 			routes,
 			notFound: opts.notFound,
 			ancestors: opts.ancestors,
-			columns: opts.columns,
-			linkNavigation: opts.linkNavigation,
 			title: opts.title,
 			$shell,
 		})
 		: null;
+	if (ctl) {
+		// `columns` and `linkNavigation` are live: each is read in a scope of
+		// its own, so when the options object is a proxy (or the field a
+		// getter), a change re-runs just that scope — the columns relayout in
+		// place with every panel's state intact, and the next click picks up
+		// the new link default. Nothing else of the shell is touched.
+		A(() => ctl.setColumns(opts.columns));
+		A(() => ctl.setLinkNavigation(opts.linkNavigation));
+	}
 	// Where the brand mark and the app's name link — or nowhere, when the app
 	// said `home: null` (a title slot holding a control of its own, say).
 	const homeHref = ctl && opts.home !== null ? opts.home ?? "/" : null;
@@ -743,23 +759,18 @@ function drawSecondLine(
 
 /**
  * Whether the stack would only be saying what the sidebar already says: a
- * single panel open, the sidebar on screen, and that panel being one of the nav's
- * own rows.
+ * single panel open, the sidebar on screen, and that panel being one of the
+ * nav's own rows — a leaf inside a submenu counts, since the sidebar shows it
+ * highlighted (inside its unfolded branch) all the same.
  *
- * The row test is {@link matchCurrent} — the very thing that marks a row
- * `aria-current=page` — so "the crumb is redundant" and "the sidebar has it
- * highlighted" can never come apart. It compares whole paths, so it is true
- * only for a nav item's own screen, never for one opened beneath it.
+ * The row test is the menu's own {@link anyCurrent} — the very thing that
+ * marks a row `aria-current=page` — so "the crumb is redundant" and "the
+ * sidebar has it highlighted" can never come apart.
  */
 function taglineFits(ctl: PanelStackController, nav: MenuOptions | undefined, $shell: { narrow: boolean }): boolean {
 	if ($shell.narrow || nav == null) return false;
 	if (ctl.panels.length > 1) return false;
-	return nav.items.some((entry: MenuEntry) =>
-		typeof entry !== "string" &&
-		typeof entry !== "function" &&
-		!("separator" in entry) &&
-		entry.href != null &&
-		matchCurrent(entry.href));
+	return anyCurrent(nav.items);
 }
 
 /**

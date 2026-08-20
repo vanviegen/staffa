@@ -1509,6 +1509,25 @@ export class PanelStackController implements PanelStack {
 		});
 	}
 
+	// ── Live settings ──────────────────────────────────────────────────────
+	// `main()` keeps these fed from small reactive scopes of their own, so an
+	// app that reads them off a proxy (or through a getter) can change them at
+	// runtime and the shell adapts in place — nothing is redrawn, no panel
+	// loses its state. Not {@link PanelStack} API: the app talks to `main()`'s
+	// options; these are how `main()` talks to the stack.
+
+	/** Adopt a changed `columns` setting: one layout pass, nothing redrawn. */
+	setColumns(columns: "auto" | "single" | undefined): void {
+		if (this.opts.columns === columns) return;
+		this.opts.columns = columns;
+		this.scheduleLayout();
+	}
+
+	/** Adopt a changed `linkNavigation` default; the next click reads it. */
+	setLinkNavigation(mode: "push" | "replace" | "open" | undefined): void {
+		this.opts.linkNavigation = mode;
+	}
+
 	/**
 	 * The breadcrumb stack, drawn by `main()` into the top bar: every open
 	 * panel, oldest first, the ones on screen right now in bold, pinned ones

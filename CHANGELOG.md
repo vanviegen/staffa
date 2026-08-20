@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.12.0
+
+- **`match` on menu and nav items** claims pages beyond the item's own `href` — a path prefix, or a `(path) => boolean`. While a claimed page is open, the item is highlighted and its branches stay unfolded, cold deep links included.
+- **`columns` and `linkNavigation` are live**: change them on a proxied options object (or via a getter) and the shell adapts in place, panels keeping their state.
+- Fixed: menu fold state is now kept across remounts, so the phone nav no longer opens with every branch collapsed after visiting a page the menu doesn't hold.
+- Fixed: a screen inside a submenu now yields the top bar's second line to the `subtitle`, like top-level nav screens do.
+- Fixed: dismissed menus and the phone nav turn `visibility: hidden` once their exit animation ends, so assistive technology no longer sees them while they linger. (Aberdeen ≥ 1.22.0 also removes them from the DOM at that moment.)
+
 ## 0.11.0
 
 - **Breaking:** `S.main`'s `stacking` option is renamed **`columns`**: pass `columns: "single"` where you had `stacking: false`, and nothing where you had `stacking: true` (the default, `"auto"`, shows as many columns as fit). Same behaviour, clearer name — it only ever controlled how many columns you *see*.

@@ -6,28 +6,30 @@ import { test, expect, type Page } from "shotest";
 test("form: fill out, submit, switch layout", async ({ page }) => {
 	await page.goto("./");
 
+	page.describe("Fill out the account form");
 	// Not exact: the required marker makes the label text "Name*".
 	await page.getByLabel("Name").fill("Ada Lovelace");
 	await page.getByLabel("Email").fill("ada@example.com");
 	await page.getByLabel("Country").selectOption("Netherlands");
 
-	// Autocomplete: type-ahead, pick from the dropdown.
+	page.describe("Autocomplete: type ahead, pick from the dropdown");
 	await page.getByLabel("Language").fill("Type");
 	await page.getByRole("option", { name: "TypeScript" }).click();
 
-	// Multi-autocomplete: add a known tag from the dropdown.
+	page.describe("Multi-autocomplete: add a tag as a chip");
 	await page.getByLabel("Tags").fill("css");
 	await page.getByRole("option", { name: "css", exact: true }).click();
 
 	await page.getByLabel("Bio").fill("Wrote the first program.");
 	await page.getByLabel("Subscribe to the newsletter").check();
 
+	page.describe("Submit, and check the echoed data");
 	await page.getByRole("button", { name: "Save" }).click();
 	await page.getByText("Submitted data").waitFor();
 	await expect(page.locator("pre")).toContainText("ada@example.com");
 	await page.getByRole("button", { name: "Close" }).click();
 
-	// Switch the form to the stacked layout.
+	page.describe("Switch the form to the stacked layout");
 	await page.getByLabel("Form layout").selectOption("stacked");
 });
 
@@ -45,15 +47,15 @@ test("tabs: URL-linked and scrollable strip", async ({ page }) => {
 	await page.goto("./tabs");
 	await page.getByText("URL-linked tabs").waitFor();
 
+	page.describe("Click through the URL-linked tabs");
 	await page.getByRole("tab", { name: "Details" }).click();
 	await expect(page).toHaveURL(/tab=details/);
 	await page.getByRole("tab", { name: "History" }).click();
 	await expect(page.getByText("The History tab.")).toBeVisible();
 	await expect(page.getByRole("tab", { name: "Disabled" })).toBeDisabled();
 
-	// The second strip has more tabs than fit, so it scrolls. Narrow the window
-	// until it does even at demo width, and step through it with the ✕/› buttons
-	// the strip grows for exactly this — the affordance a bare scroll area lacks.
+	page.describe("Narrow the window until the second strip overflows, and scroll it by button");
+	// The ‹/› buttons are the affordance a bare scroll area lacks.
 	await page.setViewportSize({ width: 640, height: 900 });
 	const strip = page.locator(".s-tabbar").last();
 	// Only the "scroll right" button is up at rest: there's nothing to the left yet.
@@ -67,9 +69,8 @@ test("tabs: URL-linked and scrollable strip", async ({ page }) => {
 	await page.getByRole("tab", { name: "Tab 9", exact: true }).click();
 	await expect(page.getByText("Content for tab 9.")).toBeVisible();
 
-	// The same strip on its own, holding something that isn't tabs at all — the
-	// row `S.tabs` and the breadcrumb stack are both made of. (Scoped to a box:
-	// the stack up in the bar is a `.s-strip` too.)
+	page.describe("The same scroll strip on its own, holding plain chips");
+	// (Scoped to a box: the stack up in the bar is a `.s-strip` too.)
 	const chips = page.locator(".s-box .s-strip:not(.s-tabbar)");
 	await expect(chips).toHaveClass(/s-can-right/);
 	await expect(chips).not.toHaveClass(/s-can-left/);
@@ -82,13 +83,13 @@ test("overlays: toasts, tooltips, menus and dialogs", async ({ page }) => {
 	await page.goto("./overlays");
 	await page.getByText("Toast notifications").waitFor();
 
-	// Toasts: fire two; they stack at the bottom.
+	page.describe("Fire two toasts; they stack at the bottom");
 	await page.getByRole("button", { name: "Success" }).click();
 	await page.getByText("Your changes have been saved.").waitFor();
 	await page.getByRole("button", { name: "Danger" }).click();
 	await page.getByText("Something went wrong.").waitFor();
 
-	// Tooltip on hover.
+	page.describe("Show a tooltip on hover");
 	await page.getByRole("button", { name: "Rich tip" }).hover();
 	await page.getByText("in tips").waitFor();
 	// Move off and let the tooltip fully disappear before moving on: its hide is a
@@ -97,12 +98,12 @@ test("overlays: toasts, tooltips, menus and dialogs", async ({ page }) => {
 	await page.mouse.move(0, 0);
 	await page.waitForSelector(".s-tt-tip", { state: "detached" });
 
-	// Action menu: open, pick an item, see the confirming toast.
+	page.describe("Open the Actions menu, pick an item");
 	await page.getByRole("button", { name: "Actions" }).click();
 	await page.getByRole("button", { name: "Edit" }).click();
 	await page.getByText("Edit clicked").waitFor();
 
-	// Context menu: right-click the box, pick an item.
+	page.describe("Right-click the box for its context menu");
 	await page.getByText("Right-click (or long-press)").click({ button: "right" });
 	await page.getByRole("button", { name: "Copy", exact: true }).click();
 	await page.getByText("Copied!").waitFor();
@@ -114,7 +115,7 @@ test("overlays: toasts, tooltips, menus and dialogs", async ({ page }) => {
 	await page.reload();
 	await page.getByText("Toast notifications").waitFor();
 
-	// alert() / confirm() / prompt()
+	page.describe("Run the alert(), confirm() and prompt() shortcuts");
 	await page.getByRole("button", { name: "alert()" }).click();
 	await page.getByText("File saved successfully.").waitFor();
 	await page.getByRole("button", { name: "OK" }).click();
@@ -134,7 +135,7 @@ test("overlays: toasts, tooltips, menus and dialogs", async ({ page }) => {
 	await page.getByRole("button", { name: "OK" }).click();
 	await expect(page.getByText('prompt → "Grace"')).toBeVisible();
 
-	// Nested dialogs stack correctly.
+	page.describe("Stack a dialog inside a dialog, closing them inside-out");
 	await page.getByRole("button", { name: "dialog in dialog" }).click();
 	await page.getByRole("button", { name: "Open secondary" }).click();
 	await page.getByText("Smaller than primary.").waitFor();
@@ -217,21 +218,20 @@ test("menu: a submenu tree unfolds along the current selection", async ({ page }
 	// folded, so no branch content shows before anything under it is current.
 	await expect(tree.getByRole("link", { name: "Apple" })).toBeHidden();
 
-	// Clicking a branch selects its first leaf — the navigation is what unfolds it.
+	page.describe("Click the Fruit branch: it selects its first leaf, which unfolds it");
 	await tree.locator("summary", { hasText: "Fruit" }).click();
 	await expect(page).toHaveURL(/pick=apple/);
 	await expect(page.locator(".s-menu-picked")).toHaveText("Picked: apple");
 	await expect(tree.getByRole("link", { name: "Apple" })).toBeVisible();
 	await expect(tree.getByRole("link", { name: "Apple" })).toHaveAttribute("aria-current", "page");
 
-	// A branch nested inside it: selecting lands on *its* first leaf, and both
-	// levels stay unfolded (the current page is under both).
+	page.describe("Click nested Citrus: both levels stay unfolded");
 	await tree.locator("summary", { hasText: "Citrus" }).click();
 	await expect(page.locator(".s-menu-picked")).toHaveText("Picked: lemon");
 	await expect(tree.getByRole("link", { name: "Lime" })).toBeVisible();
 	await expect(tree.getByRole("link", { name: "Banana" })).toBeVisible();
 
-	// Picking under another branch folds the first one back up.
+	page.describe("Pick under Vegetables: the Fruit branch folds back up");
 	await tree.locator("summary", { hasText: "Vegetables" }).click();
 	await expect(page.locator(".s-menu-picked")).toHaveText("Picked: carrot");
 	await expect(tree.getByRole("link", { name: "Apple" })).toBeHidden();
@@ -244,25 +244,62 @@ test("menu: a page the menu doesn't hold leaves its folds alone", async ({ page 
 	// Narrow, so the lone open panel still writes a crumb (to right-click below).
 	await page.setViewportSize({ width: 480, height: 800 });
 
-	// Unfold two levels deep.
+	page.describe("Unfold the tree two levels deep");
 	const tree = page.locator(".s-menu-inline");
 	await tree.locator("summary", { hasText: "Fruit" }).click();
 	await tree.locator("summary", { hasText: "Citrus" }).click();
 	await expect(page.locator(".s-menu-picked")).toHaveText("Picked: lemon");
 
-	// Pin the panel, so navigating elsewhere parks it — alive — instead of
-	// closing it, and the tree survives to be asked about its folds.
+	page.describe("Pin the Overlays panel, so navigating elsewhere parks it — alive");
 	await page.locator(".s-crumb", { hasText: "Overlays" }).click({ button: "right" });
 	await page.locator(".s-menu-list").getByRole("button", { name: "Pin" }).click();
+	page.describe("Navigate to Surfaces through the phone nav");
 	await page.locator(".s-nav-trigger button").click();
+	// Surfaces sits inside the nav's folded Styling branch: the branch click
+	// unfolds it (selecting its first leaf, without dismissing the nav), and
+	// picking the leaf is what hands over.
+	await page.locator(".s-nav-page summary", { hasText: "Styling" }).click();
 	await page.locator(".s-nav-page").getByRole("link", { name: "Surfaces" }).click();
 	await expect(page).toHaveURL(/\/demo\/surfaces$/);
 
-	// No page in the tree is current now. That is no reason to fold anything:
-	// Fruit and Citrus stay exactly as they were, and Vegetables stays shut.
+	page.describe("No page in the tree is current now — the folds must stay as they were");
 	await expect(tree.locator("details").first()).toHaveAttribute("open", /./);
 	await expect(tree.locator("details details")).toHaveAttribute("open", /./);
 	await expect(tree.locator("details").last()).not.toHaveAttribute("open", /./);
+});
+
+test("nav: the phone nav remembers its folds while you're off the map", async ({ page }) => {
+	await page.setViewportSize({ width: 480, height: 800 });
+	await page.goto("./content");
+	await page.getByText("Prose & flow content").waitFor();
+
+	page.describe("Open the nav: the Styling branch holds the current page, so it arrives unfolded");
+	await page.getByRole("button", { name: "Open navigation" }).click();
+	// `:not(...-off)`: a dismissed nav page lingers in the DOM (hidden) for a
+	// couple of seconds before Aberdeen removes it — target the live one.
+	const navPage = page.locator(".s-nav-page:not(.s-nav-page-off)");
+	await expect(navPage.getByRole("link", { name: "Content" })).toHaveAttribute("aria-current", "page");
+	await page.getByRole("button", { name: "Open navigation" }).click();
+	await expect(navPage).toHaveCount(0);
+
+	page.describe("Wander off the menu's map: this page has no row (and no match) anywhere");
+	await page.getByRole("link", { name: "edge-to-edge list" }).click();
+	await expect(page).toHaveURL(/\/demo\/panels\/rows$/);
+
+	page.describe("Reopen the nav: the menu mounts afresh, but the folds are remembered");
+	await page.getByRole("button", { name: "Open navigation" }).click();
+	await expect(navPage.getByRole("link", { name: "Content" })).toBeVisible();
+	await expect(navPage.getByRole("link", { name: "Surfaces" })).toBeVisible();
+});
+
+test("nav: match lets an item claim pages beyond its own href", async ({ page }) => {
+	await page.goto("./icons/heart");
+	await expect(page.locator(".s-crumb")).toHaveText(["Icons", "heart"]);
+	// The icon detail page has no nav row of its own; the gallery's row claims
+	// it via `match`, so the sidebar still says where you are — on a cold deep
+	// link, which no amount of fold-state keeping could cover.
+	await expect(page.locator(".s-nav-panel").getByRole("link", { name: "Icons" }))
+		.toHaveAttribute("aria-current", "page");
 });
 
 test("dark mode: surfaces and buttons", async ({ page }) => {
@@ -293,15 +330,15 @@ test("nav: narrow screens get a full-page nav instead of a dropdown", async ({ p
 	await page.goto("./form");
 	await page.getByText("Account").waitFor();
 
-	// The nav takes over the whole content area, and the hamburger becomes an ✕.
+	page.describe("Open the nav: a full page over the content, the ☰ becoming an ✕");
 	await page.getByRole("button", { name: "Open navigation" }).click();
 	await expect(page.locator(".s-nav-page:not(.s-nav-page-off)")).toHaveCount(1);
 
-	// Picking an item hands over to that screen.
+	page.describe("Pick an item: the nav hands over to that screen");
 	await page.getByRole("link", { name: "Overlays" }).click();
 	await page.getByText("Toast notifications").waitFor();
 
-	// Reopening and dismissing with the ✕ leaves the content as it was.
+	page.describe("Reopen, and dismiss with the ✕: the content stays as it was");
 	await page.getByRole("button", { name: "Open navigation" }).click();
 	await page.getByRole("button", { name: "Open navigation" }).click();
 	await page.getByText("Toast notifications").waitFor();
@@ -365,7 +402,7 @@ test("nav: navigating scrolls an off-screen sidebar item into view", async ({ pa
 	const nav = page.locator(".s-nav-panel");
 	const panelsItem = nav.getByRole("link", { name: "Panels" });
 
-	// Sanity: the Panels row starts out below the sidebar's fold.
+	page.describe("The Panels row starts out below the sidebar's fold");
 	const navBox = (await nav.boundingBox())!;
 	const itemBox = (await panelsItem.boundingBox())!;
 	expect(itemBox.y + itemBox.height).toBeGreaterThan(navBox.y + navBox.height);
@@ -375,6 +412,7 @@ test("nav: navigating scrolls an off-screen sidebar item into view", async ({ pa
 	// scroll into view itself, muddying whether the reveal was ours. The
 	// explicit `role=button` overrides the implicit link role, so it's an
 	// accessible "button", not a "link".
+	page.describe("Navigate there from the page's own content");
 	await page.getByRole("button", { name: "Open the Panels demo" }).click();
 	await page.getByText("Push a panel").waitFor();
 
@@ -383,13 +421,12 @@ test("nav: navigating scrolls an off-screen sidebar item into view", async ({ pa
 	await navRevealsCurrent(page);
 	expect(await nav.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
 
-	// The app's name leads home (/demo/form): the highlight moves back to the
-	// top row, and the sidebar follows it up again.
+	page.describe("The app's name leads home: the highlight and the scroll follow back up");
 	await page.locator("header .s-title").click();
 	await expect(page).toHaveURL(/\/demo\/form$/);
 	await navRevealsCurrent(page);
 
-	// A cold deep link arrives with the sidebar already scrolled to its row.
+	page.describe("A cold deep link arrives with the sidebar already scrolled to its row");
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
 	await navRevealsCurrent(page);
@@ -447,22 +484,18 @@ test("panels: a phone pushes and pops one screen at a time", async ({ page }) =>
 	await page.goto("./icons");
 	await page.getByText("Gallery").waitFor();
 
-	// Tapping an icon pushes its detail; the gallery stays mounted, off-canvas.
+	page.describe("Tap an icon: its detail pushes over the gallery, which stays mounted off-canvas");
 	await page.getByRole("link", { name: "heart", exact: true }).click();
 	await expect(page).toHaveURL(/\/demo\/icons\/heart$/);
 	await page.getByText('import { heart }').waitFor();
 	await expect(page.locator(visiblePanels)).toHaveCount(1);
 
-	// The detail declared a title and actions; on a phone the shell put both in
-	// the top bar — the title as the stack's last, bold crumb — and drew no
-	// chrome in the column at all.
+	page.describe("The screen's declared title and actions both sit in the bar — no column chrome");
 	await expect(page.locator(".s-panel-actions")).toHaveCount(0);
 	await expect(page.locator(".s-crumb").last()).toHaveText("heart");
 	await expect(page.locator("header").getByRole("button", { name: "Next" })).toBeVisible();
 
-	// Going back is the stack's job at every width — there is no back button, so
-	// the ☰ keeps the leading slot however deep you are, and the app's own
-	// navigation is always one tap away.
+	page.describe("Going back is the crumbs' job: no back button, and the ☰ keeps its corner");
 	await expect(page.getByRole("button", { name: "Back" })).toHaveCount(0);
 	await expect(page.getByRole("button", { name: "Open navigation" })).toBeVisible();
 	await page.locator(".s-crumb", { hasText: "Icons" }).click();
@@ -470,7 +503,7 @@ test("panels: a phone pushes and pops one screen at a time", async ({ page }) =>
 	await page.getByText("Gallery").waitFor();
 	await expect(page.getByRole("button", { name: "Open navigation" })).toBeVisible();
 
-	// The browser's back button does exactly the same thing.
+	page.describe("The browser's back button does exactly the same");
 	await page.getByRole("link", { name: "star", exact: true }).click();
 	await page.getByText("import { star }").waitFor();
 	await page.goBack();
@@ -512,8 +545,7 @@ test("panels: a deep link derives its columns, and links replace the top one", a
 	// The current page's `$panel.title` prefixes the shell's own title.
 	await expect(page).toHaveTitle("heart · Staffa");
 
-	// A click inside the gallery page truncates everything above *that* page
-	// before pushing, so the detail is replaced rather than stacked.
+	page.describe("A click in the gallery replaces the detail rather than stacking a third");
 	await page.getByRole("link", { name: "star", exact: true }).click();
 	await expect(page).toHaveURL(/\/demo\/icons\/star$/);
 	await page.getByText("import { star }").waitFor();
@@ -523,11 +555,12 @@ test("panels: a deep link derives its columns, and links replace the top one", a
 	// The pager is the detail's `actions`, which on a wide shell the shell draws in
 	// that column's own chrome. (Scoped to the current page: the one being replaced
 	// lingers while it fades. The pagers are `S.button({ href })`s → `<a role=button>`.)
+	page.describe("The Next pager (data-panel=replace) swaps the detail in place");
 	await topPanel(page).getByRole("button", { name: "Next" }).click();
 	await page.getByText("import { bookmark }").waitFor();
 	await expect(page.locator(livePanels)).toHaveCount(2);
 
-	// The stack lives in the history entry, so a reload reproduces both columns.
+	page.describe("A reload reproduces both columns from the history entry");
 	await page.reload();
 	await page.getByText("Gallery").waitFor();
 	await page.getByText("import { bookmark }").waitFor();
@@ -541,9 +574,7 @@ test("panels: a link to an already-open panel returns to it, closing nothing", a
 	await page.getByText("it fills the standard content area").waitFor();
 	await expect(page.locator(livePanels)).toHaveCount(2);
 
-	// /demo/panels is already the page beneath, so this goes back to it instead
-	// of opening a duplicate — a focus move: the medium page stays open, parked
-	// past the viewport's right edge.
+	page.describe("A link to the already-open playground returns to it; the medium panel parks");
 	await panelWith(page, /it fills the standard content area/)
 		.getByRole("link", { name: "Back to the playground" }).click();
 	await expect(page).toHaveURL(/\/demo\/panels$/);
@@ -554,7 +585,7 @@ test("panels: a link to an already-open panel returns to it, closing nothing", a
 	// The playground is the current page again, so its title takes over.
 	await expect(page).toHaveTitle("Panels · Staffa");
 
-	// The parked page's crumb brings it back — still nothing closed.
+	page.describe("The parked page's crumb brings it back — still nothing closed");
 	await page.locator(".s-crumb", { hasText: "Medium" }).click();
 	await expect(page).toHaveURL(/\/demo\/panels\/medium$/);
 	await expect(page.locator(livePanels)).toHaveCount(2);
@@ -578,8 +609,7 @@ test("panels: crumbs browse the stack, and a new panel prunes the parked ones", 
 		"/demo/panels", "/demo/panels/a", "/demo/panels/b ← current",
 	]);
 
-	// The first crumb takes us back to the playground without closing anything:
-	// A and B stay open, parked past the viewport's right edge.
+	page.describe("The first crumb goes back; A and B stay open, parked");
 	await page.locator(".s-crumb", { hasText: "Panels" }).click();
 	await expect(page).toHaveURL(/\/demo\/panels$/);
 	await page.getByText("Push a panel").waitFor();
@@ -589,8 +619,7 @@ test("panels: crumbs browse the stack, and a new panel prunes the parked ones", 
 		"/demo/panels ← current", "/demo/panels/a", "/demo/panels/b",
 	]);
 
-	// It went through history as a plain entry, so back returns the focus to B —
-	// and forward parks the two again. Still nothing closed on the way.
+	page.describe("Browser back and forward replay the arrangements, closing nothing");
 	await page.goBack();
 	await expect(page).toHaveURL(/\/demo\/panels\/b$/);
 	await expect(page.locator(".s-panel-parked")).toHaveCount(0);
@@ -599,15 +628,13 @@ test("panels: crumbs browse the stack, and a new panel prunes the parked ones", 
 	await expect(page.locator(".s-panel-parked")).toHaveCount(2);
 	await expect(page.locator(livePanels)).toHaveCount(3);
 
-	// The whole arrangement — parked panels included — lives in the history
-	// entry, so a reload reproduces it.
+	page.describe("A reload restores the arrangement, parked panels included");
 	await page.reload();
 	await page.getByText("Push a panel").waitFor();
 	await expect(page.locator(livePanels)).toHaveCount(3);
 	await expect(page.locator(".s-panel-parked")).toHaveCount(2);
 
-	// Opening a *new* page from here is a navigation, not a browse: the parked
-	// panels close (they're unpinned), and the new panel lands on top.
+	page.describe("Opening a *new* page prunes the parked (unpinned) panels");
 	await page.getByRole("link", { name: "Push a medium panel" }).click();
 	await expect(page).toHaveURL(/\/demo\/panels\/medium$/);
 	await page.getByText("it fills the standard content area").waitFor();
@@ -621,14 +648,12 @@ test("panels: a pinned panel survives navigation elsewhere, but not its own clos
 	await page.getByRole("link", { name: "Push small A" }).click();
 	await panelWith(page, /Small A/).waitFor();
 
-	// Pin Small A from its crumb's context menu; the crumb wears the pin.
+	page.describe("Pin Small A from its crumb's context menu");
 	await page.locator(".s-crumb", { hasText: "Small A" }).click({ button: "right" });
 	await page.getByRole("button", { name: "Pin", exact: true }).click();
 	await expect(page.locator(".s-crumb-pin")).toHaveCount(1);
 
-	// Back to the playground (A parks), then open a new page from it. Unpinned
-	// panels after the origin would close; the pinned one rides along instead,
-	// slotted in beneath the new page.
+	page.describe("Open a new page elsewhere: the pinned panel rides along beneath it");
 	await page.locator(".s-crumb", { hasText: "Panels" }).click();
 	await page.getByText("Push a panel").waitFor();
 	await page.getByRole("link", { name: "Push a medium panel" }).click();
@@ -638,15 +663,12 @@ test("panels: a pinned panel survives navigation elsewhere, but not its own clos
 	await expect(page.locator(".s-crumb")).toHaveCount(3);
 	await expect(page.locator(".s-crumb-pin")).toHaveCount(1);
 
-	// The pin is part of the arrangement the history entry stores, so a reload
-	// keeps it.
+	page.describe("A reload keeps the pin");
 	await page.reload();
 	await page.getByText("it fills the standard content area").waitFor();
 	await expect(page.locator(".s-crumb-pin")).toHaveCount(1);
 
-	// A pin only guards against *other* panels' navigation; an explicit close
-	// from the crumb's menu still takes the page out — and the current page
-	// doesn't move, so the URL stays put.
+	page.describe("An explicit Close from the crumb menu still takes the pinned page out");
 	await page.locator(".s-crumb", { hasText: "Small A" }).click({ button: "right" });
 	await page.getByRole("button", { name: "Close", exact: true }).click();
 	await expect(page.locator(".s-crumb")).toHaveCount(2);
@@ -659,27 +681,25 @@ test("panels: an unsaved panel parks instead of closing", async ({ page }) => {
 	await page.getByText("Type something below").waitFor();
 	await expect(page.locator(livePanels)).toHaveCount(2);
 
-	// A dirty draft marks the page: a ● in its crumb, and — because the risk of
-	// losing work is tab-wide — on the tab's title too.
+	page.describe("Dirty the draft: a ● appears on the crumb and the tab title");
 	await page.getByLabel("Draft").fill("precious");
 	await expect(page.locator(".s-crumb-unsaved")).toHaveCount(1);
 	await expect(page).toHaveTitle("• Unsaved demo · Staffa");
 
-	// Escape can't close it: it steps left instead, parking the page — work,
-	// mark and all.
+	page.describe("Escape can't close it: it parks the page instead, work and all");
 	await page.keyboard.press("Escape");
 	await expect(page).toHaveURL(/\/demo\/form$/);
 	await expect(page.locator(livePanels)).toHaveCount(2);
 	await expect(page.locator(".s-panel-parked")).toHaveCount(1);
 	await expect(page).toHaveTitle(/^• /);
 
-	// The crumb menu can't close it either: Close is greyed out.
+	page.describe("The crumb menu can't close it either: Close is greyed out");
 	await page.locator(".s-crumb", { hasText: "Unsaved demo" }).click({ button: "right" });
 	await expect(page.getByRole("button", { name: "Close", exact: true }))
 		.toHaveAttribute("aria-disabled", "true");
 	await page.keyboard.press("Escape"); // dismiss the menu
 
-	// Return via the crumb and Save: the flag clears, and the close goes through.
+	page.describe("Return via the crumb and Save: the flag clears, the close goes through");
 	await page.locator(".s-crumb", { hasText: "Unsaved demo" }).click();
 	await expect(page).toHaveURL(/\/demo\/form\/guard$/);
 	await page.getByRole("button", { name: "Save" }).click();
@@ -694,13 +714,13 @@ test("panels: closing the tab with unsaved work asks, and staying shows the pane
 	await page.keyboard.press("Escape"); // park it out of sight
 	await expect(page).toHaveURL(/\/demo\/form$/);
 
-	// Closing the tab runs into the browser's own are-you-sure...
+	page.describe("Closing the tab runs into the browser's are-you-sure");
 	const dialog = page.waitForEvent("dialog");
 	void page.close({ runBeforeUnload: true });
 	expect((await dialog).type()).toBe("beforeunload");
 	await (await dialog).dismiss();
 
-	// ...and staying brings the page that held the tab back on screen.
+	page.describe("Staying brings the page that held the tab back on screen");
 	await expect(page).toHaveURL(/\/demo\/form\/guard$/);
 	await expect(page.getByLabel("Draft")).toHaveValue("precious");
 });
@@ -728,8 +748,7 @@ test("panels: browser back keeps an unsaved panel, parked", async ({ page }) => 
 	await page.getByRole("link", { name: "Push the unsaved-changes panel" }).click();
 	await page.getByLabel("Draft").fill("precious");
 
-	// Back lands on that entry — and the commit keeps the unsaved page anyway,
-	// parked: no navigation, wherever it came from, destroys unsaved work.
+	page.describe("Browser back keeps the unsaved page anyway, parked with its ●");
 	await page.goBack();
 	await expect(page).toHaveURL(/\/demo\/panels$/);
 	await page.getByText("Push a panel").waitFor();
@@ -737,7 +756,7 @@ test("panels: browser back keeps an unsaved panel, parked", async ({ page }) => 
 	await expect(page.locator(".s-panel-parked")).toHaveCount(1);
 	await expect(page.locator(".s-crumb-unsaved")).toHaveCount(1);
 
-	// The draft is still there when its crumb brings it back.
+	page.describe("Its crumb brings it back, draft intact");
 	await page.locator(".s-crumb", { hasText: "Unsaved demo" }).click();
 	await expect(page).toHaveURL(/\/demo\/form\/guard$/);
 	await expect(page.getByLabel("Draft")).toHaveValue("precious");
@@ -749,11 +768,10 @@ test("panels: a whole-stack replacement still keeps the unsaved panel", async ({
 	await page.getByLabel("Draft").fill("precious");
 	await expect(page.locator(livePanels)).toHaveCount(2);
 
-	// A link outside any page (a nav item, a link in a dialog) derives its
-	// target's whole stack. Here the derived one — /demo/panels, /demo/panels/a
-	// and the unrouted path on top — shares nothing with the open stack: the
-	// (saved) form page closes with the rest, while the unsaved page can't be
-	// closed by anything, and rides along parked.
+	page.describe("An origin-less link replaces the whole stack — only the unsaved page rides along");
+	// A link outside any page derives its target's whole stack. The derived one
+	// shares nothing with the open stack: the (saved) form page closes with the
+	// rest, while the unsaved page can't be closed by anything, and parks.
 	await page.evaluate(() => {
 		const a = document.createElement("a");
 		a.href = "/demo/panels/a/nowhere";
@@ -774,15 +792,14 @@ test("panels: maxWidth=half starts at half width, and the next lands in its open
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
 
-	// A lone "small" is half the content area, left-aligned, its other half open.
+	page.describe("A lone half-width panel leaves its other half open");
 	const playground = page.locator(livePanels).first();
 	const before = (await playground.boundingBox())!;
 	const region = (await page.locator(".s-panels").boundingBox())!;
 	expect(before.width).toBeLessThan(region.width * 0.6);
 	expect(before.x).toBeCloseTo(region.x, 1);
 
-	// The next small lands in exactly that open room: nothing on screen moves or
-	// resizes — widths depend only on the window, never on what else is open.
+	page.describe("The next half lands exactly there: nothing on screen moves or resizes");
 	await page.getByRole("link", { name: "Push small A" }).click();
 	await panelWith(page, /Small A/).waitFor();
 	await expect(page.locator(visiblePanels)).toHaveCount(2);
@@ -799,8 +816,7 @@ test("panels: the page stretches past 1280 when a third column fits", async ({ p
 	const inner = page.locator(".s-body-inner");
 	expect((await inner.boundingBox())!.width).toBeLessThanOrEqual(1280);
 
-	// A third column genuinely fits, so the page stretches — centred — to hold
-	// all three, bars included; each column keeps its window-given width.
+	page.describe("Push two more columns: a third fits, so the page stretches to hold all three");
 	await page.getByRole("link", { name: "Push small A" }).click();
 	await panelWith(page, /Small A/).waitFor();
 	await topPanel(page).getByRole("link", { name: "Push small B" }).click();
@@ -808,8 +824,7 @@ test("panels: the page stretches past 1280 when a third column fits", async ({ p
 	await expect(page.locator(visiblePanels)).toHaveCount(3);
 	expect((await inner.boundingBox())!.width).toBeGreaterThan(1600);
 
-	// Closing the third — by clicking the crumb of the page beneath it —
-	// settles the page back to the standard width.
+	page.describe("Parking the third column settles the page back to the standard width");
 	await page.locator(".s-crumb", { hasText: "Small A" }).click();
 	await page.waitForFunction(() =>
 		document.querySelector(".s-body-inner")!.getBoundingClientRect().width <= 1280);
@@ -826,13 +841,12 @@ test("panels: a large panel grows the page to the window's edges", async ({ page
 	const inner = page.locator(".s-body-inner");
 	expect((await inner.boundingBox())!.width).toBeLessThanOrEqual(1280);
 
-	// While a "large" is up, the whole page stretches to the screen edges...
+	page.describe("Push a large panel: the whole page stretches to the screen edges");
 	await page.getByRole("link", { name: "Push a large panel" }).click();
 	await panelWith(page, /takes as much room as the window has/).waitFor();
 	expect((await inner.boundingBox())!.width).toBeGreaterThan(1700);
 
-	// ...and settles back to the standard width when it closes — here via the
-	// crumb of the playground beneath it.
+	page.describe("Leave it: the page settles back to the standard width");
 	await page.locator(".s-crumb", { hasText: "Panels" }).click();
 	await page.getByText("Push a panel").waitFor();
 	await page.waitForFunction(() =>
@@ -843,8 +857,7 @@ test("panels: a panel closes itself while another column sits on top of it", asy
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
 
-	// Stack up playground → A → B. Only two halves fit, so the playground is
-	// crowded out from underneath and A and B sit two-up.
+	page.describe("Stack playground → A → B; only two halves fit at a time");
 	await page.getByRole("link", { name: "Push small A" }).click();
 	await panelWith(page, /Small A/).waitFor();
 	await topPanel(page).getByRole("link", { name: "Push small B" }).click();
@@ -852,10 +865,9 @@ test("panels: a panel closes itself while another column sits on top of it", asy
 	await expect(page.locator(livePanels)).toHaveCount(3);
 	await expect(page.locator(visiblePanels)).toHaveCount(2);
 
-	// A's own Delete action runs `$panel.close()` on A — which is *not* the top
-	// page, so it is spliced out of the stack: B keeps its state and the URL
-	// (the current page never moved), and the playground is revealed in the room A
-	// gave up.
+	page.describe("Delete A — not the top page — and it is spliced out from under B");
+	// `$panel.close()` on a mid-stack page: B keeps its state and the URL, and
+	// the playground is revealed in the room A gave up.
 	const smallA = page.locator(livePanels, { hasText: /Small A/ });
 	await smallA.getByRole("button", { name: "Delete" }).click();
 	await expect(page).toHaveURL(/\/demo\/panels\/b$/);
@@ -864,7 +876,7 @@ test("panels: a panel closes itself while another column sits on top of it", asy
 	// (A plain count: ShoTest's wrapped expect can't assert on absent elements.)
 	expect(await page.locator(livePanels, { hasText: /Small A/ }).count()).toBe(0);
 
-	// The splice is a history entry like any other, so back undoes it.
+	page.describe("The splice is a history entry, so browser back undoes it");
 	await page.goBack();
 	await panelWith(page, /Small A/).waitFor();
 	await expect(page.locator(livePanels)).toHaveCount(3);
@@ -893,10 +905,17 @@ test("panels: closing the top column reveals the one crowded out beneath it", as
 test("panels: linkNavigation sets what a link without data-panel does", async ({ page }) => {
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
-	const options = page.locator(".s-box", { hasText: "Shell options" });
+	// The chooser lives in the header's display-settings popover, so it can be
+	// reached from any page — the panel a bare link then swaps out included.
+	const chooseLinks = async (mode: string) => {
+		await page.getByRole("button", { name: "Display settings" }).click();
+		await settleMenu(page);
+		await page.locator(".s-menu-list:not(.hidden) label", { hasText: "Links" }).getByRole("button", { name: mode, exact: true }).click();
+		await page.keyboard.press("Escape");
+	};
 
-	// `replace`: a bare link swaps the panel it sits in for its target.
-	await options.getByRole("button", { name: "replace" }).click();
+	page.describe("linkNavigation=replace: a bare link swaps the panel it sits in for its target");
+	await chooseLinks("replace");
 	await page.getByRole("link", { name: "Push small A" }).click();
 	await panelWith(page, /Small A is a/).waitFor();
 	await expect(page).toHaveURL(/\/demo\/panels\/a$/);
@@ -904,9 +923,8 @@ test("panels: linkNavigation sets what a link without data-panel does", async ({
 	await topPanel(page).getByRole("link", { name: "Back to the playground" }).click();
 	await page.getByText("Push a panel").waitFor();
 
-	// `open`: a bare link now behaves like a nav item — its target arrives on
-	// its own derived stack, and the panel the link sat in drops out.
-	await options.getByRole("button", { name: "open" }).click();
+	page.describe("linkNavigation=open: a bare link behaves like a nav item, deriving a fresh stack");
+	await chooseLinks("open");
 	await page.getByRole("link", { name: "Push small A" }).click();
 	await panelWith(page, /Small A is a/).waitFor();
 	await topPanel(page).getByRole("link", { name: "Push small B" }).click();
@@ -917,16 +935,18 @@ test("panels: linkNavigation sets what a link without data-panel does", async ({
 test("panels: columns single keeps a single column at any width", async ({ page }) => {
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
-	// The playground's own checkbox flips the shell's `columns` option.
-	await page.getByLabel("Show as many columns as fit").uncheck();
+	page.describe("Choose a single column, up in the display-settings popover");
+	await page.getByRole("button", { name: "Display settings" }).click();
+	await settleMenu(page);
+	await page.locator(".s-menu-list:not(.hidden) label", { hasText: "Columns" }).getByRole("button", { name: "single", exact: true }).click();
+	await page.keyboard.press("Escape");
 
-	// Only the current page shows now, however much room there is.
+	page.describe("Only the current page shows now, however much room there is");
 	await page.getByRole("link", { name: "Push small A" }).click();
 	await panelWith(page, /Small A/).waitFor();
 	await expect(page.locator(visiblePanels)).toHaveCount(1);
 
-	// Escape still pops the stack, at any width — with the page's own ✕ and the
-	// browser's back button, that's the whole way back.
+	page.describe("Escape still pops the stack, at any width");
 	await page.setViewportSize({ width: 480, height: 800 });
 	await page.keyboard.press("Escape");
 	await expect(page).toHaveURL(/\/demo\/panels$/);
@@ -939,17 +959,14 @@ test("panels: a panel is sized before it draws, and resizes without redrawing", 
 	await page.getByRole("link", { name: "Push the sizing & lifecycle panel" }).click();
 	await panelWith(page, /Sizing & lifecycle/).waitFor();
 
-	// `$panel.width`, read while the handler drew, is the width the column really
-	// has — not the zero-width box of a page that hasn't been laid out.
+	page.describe("The panel already knew its real width while it drew");
 	const column = topPanel(page);
 	const full = (await column.boundingBox())!;
 	const drawnWidth = Number(await page.getByTestId("page-width").textContent());
 	expect(Math.abs(drawnWidth - full.width)).toBeLessThan(1.5);
 	await expect(page.getByTestId("live-draws")).toHaveText("1");
 
-	// Asking for a tighter bound reflows the column in place: it narrows to half
-	// the content area, which frees the room the playground beneath needs — and
-	// the page itself is never redrawn, though `$panel.width` follows along.
+	page.describe("Asking for half reflows the column in place — never redrawn");
 	await column.getByRole("button", { name: "half" }).click();
 	await expect(page.locator(visiblePanels)).toHaveCount(2);
 	const halved = (await column.boundingBox())!.width;
@@ -1017,13 +1034,12 @@ test("panels: a cold flat URL gets the ancestors the app names for it", async ({
 	await expect(page.locator(livePanels)).toHaveCount(2);
 	await expect(page.locator(livePanels).first()).toContainText("Push a panel");
 
-	// Which means there is somewhere to go back to, as there would be if you had
-	// walked here — a lone column would leave Escape with nothing to do.
+	page.describe("So Escape has somewhere to go, as if you had walked here");
 	await page.keyboard.press("Escape");
 	await expect(page).toHaveURL(/\/demo\/panels$/);
 	await expect(page.locator(livePanels)).toHaveCount(1);
 
-	// The same arrangement from code, with the stack spelled out.
+	page.describe("openPanelStack() builds the same arrangement from code");
 	await page.getByRole("button", { name: "stack.openPanelStack()" }).click();
 	await page.getByRole("heading", { name: "Thread 8" }).waitFor();
 	await expect(page).toHaveURL(/\/demo\/thread\/8$/);
@@ -1052,7 +1068,7 @@ test("nav: custom rows close the nav — on navigating, and on asking", async ({
 	await page.getByText("Push a panel").waitFor();
 	await page.getByRole("link", { name: "Push the sizing & lifecycle panel" }).click();
 	await panelWith(page, /Sizing & lifecycle/).waitFor();
-	// The Scratch row is a custom slot: a link and a button the shell can't see.
+	page.describe("Add the Scratch nav row: a custom slot the shell can't see into");
 	await page.getByLabel("Add a Scratch nav item").check();
 
 	// Back to the bottom of the stack: a narrow shell gives the leading slot to the
@@ -1066,13 +1082,12 @@ test("nav: custom rows close the nav — on navigating, and on asking", async ({
 	await page.getByRole("button", { name: "Open navigation" }).click();
 	await expect(navPage).toBeVisible();
 
-	// Its button navigates nowhere, so it dismisses the nav itself.
+	page.describe("Its button navigates nowhere, so it dismisses the nav itself (S.closeNav)");
 	await navPage.getByRole("button", { name: "Note" }).click();
 	await expect(navPage).toHaveCount(0);
 	await expect(page).toHaveURL(/\/demo\/panels$/);
 
-	// Its link is an ordinary link that the shell knows nothing about, and a
-	// navigation sweeps the nav away whoever drew it.
+	page.describe("Its link is an ordinary link — a navigation sweeps the nav away by itself");
 	await page.getByRole("button", { name: "Open navigation" }).click();
 	await expect(navPage).toBeVisible();
 	await navPage.getByRole("link", { name: "Scratch" }).click();
@@ -1086,7 +1101,7 @@ test("chrome: a wide shell dresses each column, a narrow one promotes the top on
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
 
-	// The root list declared no actions, so its column gets no strip at all.
+	page.describe("A lone actions-less page: the bar is all the app's, and no strip is drawn");
 	await expect(page.locator(".s-panel-actions")).toHaveCount(0);
 	// The bar is the app's — logo, brand-styled name, its own menu. The line
 	// under the name is the tagline's here: the one open page is the Pages nav
@@ -1097,8 +1112,8 @@ test("chrome: a wide shell dresses each column, a narrow one promotes the top on
 	await expect(page.locator("header .s-subtitle")).toBeVisible();
 	await expect(page.locator(".s-crumb")).toHaveCount(0);
 
-	// A detail column with actions gets a quiet strip holding them — and nothing
-	// else: no title (that's the crumb's job) and no close (the crumbs again).
+	page.describe("Push a page with actions: its column gets a quiet strip — nothing more");
+	// No title in the strip (that's the crumb's job) and no close (the crumbs again).
 	await page.getByRole("link", { name: "Push small A" }).click();
 	await panelWith(page, /Small A is a/).waitFor();
 	const stripA = topPanel(page).locator(".s-panel-actions");
@@ -1109,8 +1124,7 @@ test("chrome: a wide shell dresses each column, a narrow one promotes the top on
 	await expect(page.locator("header .s-title")).toHaveText("Staffa");
 	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small A"]);
 
-	// Everything else in a column is the page's own content — B's card here is
-	// an ordinary `S.box` it drew itself, not shell chrome.
+	page.describe("Push B: everything in a column is the page's own content; bold crumbs = visible columns");
 	await topPanel(page).getByRole("link", { name: "Push small B" }).click();
 	await panelWith(page, /Small B is a/).waitFor();
 	await expect(page.locator(visiblePanels)).toHaveCount(2);
@@ -1126,8 +1140,7 @@ test("chrome: a narrow shell puts the current panel's chrome in the bar", async 
 	await page.goto("./panels/b");
 	await panelWith(page, /Small B is a/).waitFor();
 
-	// One bar, no column chrome: the ☰, the stack with the screen's name as its
-	// bold last crumb, and the screen's actions in the app menu's place.
+	page.describe("One bar holds it all: ☰, the stack, and the screen's actions");
 	await expect(page.locator(".s-panel-actions")).toHaveCount(0);
 	await expect(page.getByRole("button", { name: "Open navigation" })).toBeVisible();
 	await expect(page.locator(".s-crumb.s-crumb-on")).toHaveText(["Small B"]);
@@ -1137,7 +1150,7 @@ test("chrome: a narrow shell puts the current panel's chrome in the bar", async 
 	await expect(page.locator("header .s-title")).toHaveText("Staffa");
 	await expect(page.locator("header .s-logo")).toHaveCount(0);
 
-	// And the page's own top-level box goes full-bleed, as boxes do on a phone.
+	page.describe("The page's top-level box goes full-bleed, as boxes do on a phone");
 	const box = await topPanel(page).locator(".s-box").first().evaluate((el) => {
 		const cs = getComputedStyle(el);
 		const r = el.getBoundingClientRect();
@@ -1181,14 +1194,12 @@ test("chrome: crossing the threshold moves the chrome, not the body", async ({ p
 	await expect(page.locator("header .s-title")).toHaveText("Staffa");
 	await expect(page.locator("header .s-subtitle")).toBeVisible();
 
-	// Half-fill the form and mark its body element, so a moved bit of chrome can
-	// be told apart from a remounted body.
+	page.describe("Half-fill the form, and mark its body node");
 	const body = panelBody(page);
 	await page.getByLabel("Bio").fill("half typed");
 	await body.evaluate((el) => { el.dataset.probe = "same-node"; el.scrollTop = 120; });
 
-	// Narrow: same bar, but the nav has gone behind the ☰, so nothing else names
-	// the screen and the stack takes the line back. The body is untouched by it.
+	page.describe("Narrow the shell: the crumbs take the tagline's line, the body untouched");
 	await page.setViewportSize({ width: 480, height: 800 });
 	await expect(page.locator("header .s-title")).toHaveText("Staffa");
 	await expect(page.locator(".s-crumb")).toHaveText(["Form"]);
@@ -1197,7 +1208,7 @@ test("chrome: crossing the threshold moves the chrome, not the body", async ({ p
 	expect(await body.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
 	await expect(page.getByLabel("Bio")).toHaveValue("half typed");
 
-	// And back again: the tagline returns, and the body never moved.
+	page.describe("Widen it again: the tagline returns, and the body never moved");
 	await page.setViewportSize({ width: 1100, height: 800 });
 	await expect(page.locator("header .s-subtitle")).toBeVisible();
 	expect(await body.evaluate((el) => el.dataset.probe)).toBe("same-node");
@@ -1208,21 +1219,18 @@ test("chrome: the tagline holds the second line only while the stack adds nothin
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
 
-	// One page open, and it is a nav item's own screen — which the sidebar is
-	// showing highlighted right there. The crumb would only say the same word,
-	// so the app's tagline has the line instead.
+	page.describe("A lone nav-item screen: a crumb would repeat the sidebar, so the tagline has the line");
 	await expect(page.locator(".s-nav-panel [aria-current=page]")).toHaveText("Panels");
 	await expect(page.locator("header .s-subtitle")).toHaveText("components for Aberdeen");
 	await expect(page.locator(".s-crumb")).toHaveCount(0);
 
-	// Push a page and the stack has something of its own to say, so it takes the
-	// line back.
+	page.describe("Push a page: the stack has something to say, and takes the line");
 	await page.getByRole("link", { name: "Push small A" }).click();
 	await panelWith(page, /Small A/).waitFor();
 	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small A"]);
 	await expect(page.locator("header .s-subtitle")).toHaveCount(0);
 
-	// Back to a lone page and the tagline returns...
+	page.describe("Go back: Small A is merely parked, so the stack keeps the line");
 	await page.locator(".s-crumb", { hasText: "Panels" }).click();
 	await expect(page).toHaveURL(/\/demo\/panels$/);
 	// ...but not while Small A is merely parked: it is still open, and its crumb
@@ -1230,15 +1238,25 @@ test("chrome: the tagline holds the second line only while the stack adds nothin
 	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small A"]);
 	await expect(page.locator("header .s-subtitle")).toHaveCount(0);
 
-	// A narrow shell keeps the stack even in the case that just yielded it: one
-	// page open, and a nav item's own screen at that. The nav is behind the ☰
-	// there, so the crumb is the only thing naming the screen. (A fresh path,
-	// because reloading this one would restore the parked page with it.)
+	page.describe("A narrow shell keeps the stack even for a lone nav-item screen");
+	// The nav is behind the ☰ there, so the crumb is the only thing naming the
+	// screen. (A fresh path: reloading would restore the parked page with it.)
 	await page.setViewportSize({ width: 480, height: 800 });
 	await page.goto("./form");
 	await page.getByText("Account").waitFor();
 	await expect(page.locator(".s-crumb")).toHaveText(["Form"]);
 	await expect(page.locator("header .s-subtitle")).toHaveCount(0);
+});
+
+test("chrome: a submenu leaf's screen still yields the line to the tagline", async ({ page }) => {
+	await page.goto("./surfaces");
+	await page.getByText("Surfaces & Variants").waitFor();
+	// One panel open and the sidebar highlighting it — inside its unfolded
+	// branch — so a crumb would only repeat it: the tagline keeps the line,
+	// exactly as it does for a top-level nav item's screen.
+	await expect(page.locator(".s-nav-panel [aria-current=page]")).toHaveText("Surfaces");
+	await expect(page.locator("header .s-subtitle")).toHaveText("components for Aberdeen");
+	await expect(page.locator(".s-crumb")).toHaveCount(0);
 });
 
 // A floating menu/popover fades in via a `.hidden` → opaque transition. Playwright's
@@ -1248,8 +1266,10 @@ test("chrome: the tagline holds the second line only while the stack adds nothin
 // isn't wrapped by ShoTest, so this adds no screenshot of its own.)
 function settleMenu(page: Page) {
 	return page.waitForFunction(() => {
-		const m = document.querySelector(".s-menu-list");
-		return !!m && !m.classList.contains("hidden") && getComputedStyle(m).opacity === "1";
+		// A closed popover lingers in the DOM (`.hidden`, inert) for ~2s before
+		// Aberdeen removes it, so look for the one that is actually showing.
+		const menus = [...document.querySelectorAll(".s-menu-list")];
+		return menus.some((m) => !m.classList.contains("hidden") && getComputedStyle(m).opacity === "1");
 	});
 }
 
@@ -1264,15 +1284,13 @@ test("crumbs: browsing moves the focus in both directions, closing nothing", asy
 	await panelWith(page, /Small B is a/).waitFor();
 	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small A", "Small B"]);
 
-	// A crumb click goes back to that panel; the panels right of it stay in the
-	// stack, parked past the viewport's right edge.
+	page.describe("Click an earlier crumb: the panels right of it park, closing nothing");
 	await page.locator(".s-crumb", { hasText: "Panels" }).click();
 	await expect(page).toHaveURL(/\/demo\/panels$/);
 	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small A", "Small B"]);
 	await expect(page.locator(".s-panel-parked")).toHaveCount(2);
 
-	// A parked page's crumb brings it (and the run beneath it) back — the stack
-	// browses forward as well as back.
+	page.describe("A parked crumb browses forward again");
 	await page.locator(".s-crumb", { hasText: "Small A" }).click();
 	await expect(page).toHaveURL(/\/demo\/panels\/a$/);
 	await expect(page.locator(".s-panel-parked")).toHaveCount(1);
@@ -1288,8 +1306,7 @@ test("crumbs: right-click offers Close, which splices one panel out", async ({ p
 	await topPanel(page).getByRole("link", { name: "Push small B" }).click();
 	await panelWith(page, /Small B is a/).waitFor();
 
-	// Close on a middle crumb takes just that page out: the URL doesn't move
-	// (the current page didn't), and the playground is revealed in A's place.
+	page.describe("Close the middle panel from its crumb's menu: a splice, the URL unmoved");
 	await page.locator(".s-crumb", { hasText: "Small A" }).click({ button: "right" });
 	await page.locator(".s-menu-list").getByRole("button", { name: "Close" }).click();
 	await expect(page).toHaveURL(/\/demo\/panels\/b$/);
@@ -1303,13 +1320,13 @@ test("crumbs: the app's name and logo lead home", async ({ page }) => {
 	// moves to it, and the page on top parks rather than closing.
 	await page.goto("./form/guard");
 	await page.getByText("Type something below").waitFor();
+	page.describe("Home is already in the stack, so the logo is a return; the top page parks");
 	await page.getByRole("link", { name: "Home" }).click();
 	await expect(page).toHaveURL(/\/demo\/form$/);
 	await expect(page.locator(".s-crumb")).toHaveText(["Form", "Unsaved demo"]);
 	await expect(page.locator(".s-panel-parked")).toHaveCount(1);
 
-	// From a stack that doesn't hold home at all, the app's name opens it the
-	// way a nav item would: a fresh arrangement, the old columns closing.
+	page.describe("From a stack without home, the app's name opens it like a nav item would");
 	await page.goto("./icons/heart");
 	await page.getByText("import { heart }").waitFor();
 	await expect(page.locator(".s-crumb")).toHaveText(["Icons", "heart"]);
