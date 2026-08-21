@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.0
+
+- **Breadcrumbs no longer truncate at a fixed width.** A crumb now shows its full title whenever the bar has room, and is only ellipsised under real pressure — the *longest* crumbs give way first, equalising, while short ones keep every character. Once every long crumb is down to a small floor the strip scrolls sideways, as before.
+- The top bar's trailing slot (the app `menu`, or a panel's promoted `actions` on a narrow shell) now holds its natural width while the breadcrumbs shrink, instead of being squeezed along with them. A genuinely wide slot (a search box) still shrinks once the titles hit their floor.
+- The top bar and footer no longer stretch along when the columns grow past the standard 1280px page (a `maxWidth: "screen"` panel, or extra columns fitting a wide window): the chrome now holds the standard width while only the columns grow.
+
 ## 0.12.0
 
 - **`match` on menu and nav items** claims pages beyond the item's own `href` — a path prefix, or a `(path) => boolean`. While a claimed page is open, the item is highlighted and its branches stay unfolded, cold deep links included.

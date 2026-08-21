@@ -179,8 +179,9 @@ export interface Panel<P = Record<string, string | number | string[]>> {
 	 *   column fits beside it. For lists and detail forms.
 	 * - `"full"` (the default) — the whole content area, up to ~1100px.
 	 * - `"screen"` — the whole window, unbounded: boards, wide tables, dense
-	 *   dashboards. While one is open the shell itself stretches to the screen
-	 *   edges instead of stopping at the standard 1280px page.
+	 *   dashboards. While one is open the columns stretch to the screen edges
+	 *   instead of stopping at the standard 1280px page; the top bar and
+	 *   footer hold the standard width throughout.
 	 *
 	 * Below the width two columns need, everything takes the content area
 	 * whatever it asked for. Widths depend only on the window, never on what
@@ -374,7 +375,7 @@ function matchRoute(r: { segs: Seg[] }, segments: string[]): Record<string, any>
 /**
  * The one duration every bit of shell motion shares: the enter/exit fades, the
  * `left` moves of columns shifting sideways, the ensemble-width transition the
- * chrome follows (see `--s-shell-w` in main.ts), and the narrow-screen nav
+ * body row follows (see `--s-shell-w` in main.ts), and the narrow-screen nav
  * panel's slide. Published as the `--s-panel-ms` custom property below, so CSS
  * and JS can't drift apart.
  *
@@ -388,9 +389,11 @@ const LOADING_HOLD_MS = 300;
 /**
  * The standard page width: sidebar plus content area, capped by the window.
  * `"full"` fills the content-area part of this exactly; only a `"screen"`
- * page makes the shell grow past it.
+ * page makes the shell grow past it. The top bar and footer keep to this
+ * width even then (see main.ts), so the chrome holds still while the
+ * columns stretch.
  */
-const SHELL_PX = 1280;
+export const SHELL_PX = 1280;
 /** Don't pair smalls when half the content area would be narrower than this. */
 const PAIR_MIN_PX = 360;
 /**
@@ -513,14 +516,19 @@ A.insertGlobalCss({
 		// the weight change alone is ambiguous in a short crumb, the colour alone
 		// too subtle. No padding of its own — the first crumb has to start on the
 		// same pixel as the app's name above it, and the gap below spaces the row.
-		// `flex-shrink:0` because the crumbs are the strip's flex items and carry
-		// `overflow:hidden`, which resolves their automatic minimum size to zero:
-		// left to shrink they would ellipsise themselves down to stubs rather than
-		// overflow, and the stack would never scroll. One long title still caps at
-		// 14rem — that is this crumb's own business, not the row running out.
+		// The flex is how a tight row is shared out. Every crumb grows from the
+		// same 4rem basis in equal shares, freezing at its own text
+		// (`max-width:max-content`) — so with room to spare every title shows in
+		// full, and under pressure it is the *longest* crumbs that give way
+		// first, equalising downward while short ones keep every character. No
+		// crumb drops below min(its text, 4rem) though: `flex-shrink:0`, so past
+		// that point the row overflows and the strip scrolls — which is what
+		// keeps a deep stack on a phone readable. (Crumbs allowed to shrink
+		// would ellipsise to a row of stubs instead, and the stack would never
+		// scroll.)
 		"&":
-			"flex-shrink:0 font-size:0.85em line-height:1.5 fg:$s-muted text-decoration:none " +
-			"white-space:nowrap max-width:14rem overflow:hidden text-overflow:ellipsis " +
+			"flex: 1 0 4rem; font-size:0.85em line-height:1.5 fg:$s-muted text-decoration:none " +
+			"white-space:nowrap max-width:max-content overflow:hidden text-overflow:ellipsis " +
 			"transition: color 0.12s;",
 		"&.s-crumb-on": "font-weight:600 fg:$s-text",
 		// The same hover treatment as a menu item. The panel you are on is a plain
@@ -1961,11 +1969,11 @@ export class PanelStackController implements PanelStack {
 			if (!entry.width) entry.width = width(entry);
 		}
 
-		// The chrome above and below the body caps itself to the ensemble width,
-		// keeping everything centred and aligned however far the area stretches.
-		// The consumers transition their max-width (see main.ts), so the
-		// recentring plays along with the panel that caused it instead of
-		// snapping.
+		// The body row caps itself to the ensemble width, keeping the columns
+		// centred however far the area stretches, and transitions its max-width
+		// (see main.ts) so the recentring plays along with the panel that caused
+		// it. The bars above and below don't follow — they hold at the standard
+		// page width (also main.ts).
 		shell.style.setProperty("--s-shell-w", `${geom.chrome + area}px`);
 
 		// Phase 1 — every panel's *start* state for this frame. Panels already on

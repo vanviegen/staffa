@@ -8,7 +8,7 @@ import { type MenuOptions, drawMenu, isFloatingMenuOpen, consumeBranchNav, anyCu
 import { menu as menuIcon, x as closeIcon } from "../icons.js";
 import { iconButton } from "./button.js";
 import { isDialogOpen } from "./dialog.js";
-import { PanelStackController, type PanelStack, type AncestorTable, type Panel, type RouteHandler, type RouteTable, type Routes } from "./panels.js";
+import { PanelStackController, SHELL_PX, type PanelStack, type AncestorTable, type Panel, type RouteHandler, type RouteTable, type Routes } from "./panels.js";
 
 /** Options for {@link main}. */
 export interface MainOptions<R = Routes> {
@@ -278,8 +278,10 @@ A.insertGlobalCss({
 		// The bar reads `[leading] [title] …spacer… [trailing]`. The spacer is the
 		// trailing slot's own growth: it takes the free space and right-aligns
 		// itself in it, which is what lets a search box live there. When the two
-		// compete, the title truncates first — but only down to a floor, past
-		// which the trailing slot shrinks instead: a wide search box must not
+		// compete, the titles give way first: the trailing slot's near-zero
+		// shrink factor keeps a row of actions at its natural width while the
+		// crumbs absorb the squeeze — but only down to the titles' floor, past
+		// which the trailing slot shrinks after all: a wide search box must not
 		// starve the titles to nothing (the crumb strip's overlay buttons would
 		// escape their zero-width strip, over the ☰ beside it).
 		"> header > .s-bar, > footer > .s-bar": "display:flex align-items:center width:100% margin-inline:auto gap:$3 padding: $2 $3;",
@@ -300,7 +302,7 @@ A.insertGlobalCss({
 		// which their classes then provide. (`filter:none` keeps the global
 		// `a:hover` brighten off the gradient text.)
 		"> header a.s-logo, > header a.s-title": "text-decoration:none filter:none cursor:pointer",
-		"> header .s-menu": "display:flex align-items:center justify-content:flex-end gap:$2 flex: 1 1 auto; min-width:0",
+		"> header .s-menu": "display:flex align-items:center justify-content:flex-end gap:$2 flex: 1 0.1 auto; min-width:0",
 		// Body always wraps <main> (with or without a sidebar) so max-width centering
 		// and scrollbar alignment work identically in both cases.
 		// .s-body centres .s-body-inner; .s-body-inner caps the content to maxWidth.
@@ -338,22 +340,25 @@ A.insertGlobalCss({
 		// Routed mode takes its width from the stack instead of from
 		// `maxWidth`: the layout engine publishes the ensemble width (sidebar +
 		// separator + content area) as --s-shell-w — the standard 1280px page
-		// normally, the window's edges while a "screen" page is up — and the body
-		// row and the bars cap themselves to it. So the chrome lines up with the
-		// columns and the lot stays centred in the shell.
-		"&.s-routed > .s-body > .s-body-inner": "max-width: var(--s-shell-w, 100%);",
-		"&.s-routed > header > .s-bar": "max-width: var(--s-shell-w, 100%);",
-		"&.s-routed > footer > .s-bar": "max-width: var(--s-shell-w, 100%);",
-		// Changing the custom property animates the max-widths consuming it, with no
-		// JS in the loop: the chrome recentres in step with the panel whose arrival
-		// or departure moved it, over the same --s-panel-ms (see panels.ts). During
-		// a window resize (and the very first pass) the layout engine raises
-		// `.s-shell-snap` so the new width is adopted instantly instead of chasing
-		// the window through a transition.
-		"&.s-routed > .s-body > .s-body-inner, &.s-routed > header > .s-bar, &.s-routed > footer > .s-bar":
-			"transition: max-width var(--s-panel-ms) ease;",
-		"&.s-routed.s-shell-snap > .s-body > .s-body-inner, &.s-routed.s-shell-snap > header > .s-bar, &.s-routed.s-shell-snap > footer > .s-bar":
-			"transition:none",
+		// normally, wider while the columns outgrow it (a "screen" page, or
+		// extra columns fitting a wide window) — and the body row caps itself
+		// to it, staying centred around the columns. Changing the custom
+		// property animates the max-width consuming it, with no JS in the loop:
+		// the body recentres in step with the panel whose arrival or departure
+		// moved it, over the same --s-panel-ms (see panels.ts). During a window
+		// resize (and the very first pass) the layout engine raises
+		// `.s-shell-snap` so the new width is adopted instantly instead of
+		// chasing the window through a transition.
+		"&.s-routed > .s-body > .s-body-inner":
+			"max-width: var(--s-shell-w, 100%); transition: max-width var(--s-panel-ms) ease;",
+		"&.s-routed.s-shell-snap > .s-body > .s-body-inner": "transition:none",
+		// The bars don't follow the ensemble past the standard page: a header
+		// stretching to the window's edges and back with every "screen" panel
+		// reads as the whole app flexing, so the chrome holds still and only
+		// the columns grow. (Below the standard width the ensemble is simply
+		// the window, which only a resize changes — so the bars never animate,
+		// and take no part in the transition above.)
+		[`&.s-routed > header > .s-bar, &.s-routed > footer > .s-bar`]: `max-width:${SHELL_PX}px`,
 	},
 	// Sidebar nav panel. Items reuse the shared `.s-menu-item` /
 	// `.s-menu-sep` styles from menu.ts, so the sidebar and the floating

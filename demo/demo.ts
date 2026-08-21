@@ -220,6 +220,11 @@ A(() => {
 			"/demo/panels/untitled":         drawUntitledPanel,
 			"/demo/panels/medium":           drawMediumPanel,
 			"/demo/panels/large":            drawLargePanel,
+			// Reached by URL (tests, mostly): a chain of long-titled pages showing
+			// how the crumbs share a bar that is too tight for all of them.
+			"/demo/panels/long":             ($panel) => drawLongTitledPanel($panel, "Quarterly financial projections for the northern region", "/demo/panels/long/detail"),
+			"/demo/panels/long/detail":      ($panel) => drawLongTitledPanel($panel, "Task 42: fix the flux capacitor before the demo", "/demo/panels/long/detail/deeper"),
+			"/demo/panels/long/detail/deeper": ($panel) => drawLongTitledPanel($panel, "Appendix C: methodology, data sources and the small print"),
 			// A deliberately *flat* URL: neither /demo nor /demo/thread is a route,
 			// so there is no prefix to walk and nothing would open beneath it. What
 			// belongs there is `ancestors`' job, below.
@@ -789,10 +794,25 @@ function drawLargePanel($panel: S.Panel) {
 		click: () => S.toast({ message: "Shared." }),
 	});
 
-	A("p mt:0 rich='A `maxWidth: \"screen\"` page takes as much room as the window has: while it is up, the whole page — top bar, content and footer — stretches to the screen edges instead of the standard 1280px, and settles back when it closes. For dense screens like boards and wide tables.'");
+	A("p mt:0 rich='A `maxWidth: \"screen\"` page takes as much room as the window has: while it is up, the columns stretch to the screen edges instead of the standard 1280px, and settle back when it closes — the top bar and footer hold the standard width throughout. For dense screens like boards and wide tables.'");
 	A("a href=/demo/panels #Back to the playground");
 
 	S.box({ header: "The stack", content: () => drawStackList($panel.stack) });
+}
+
+/**
+ * Three chained pages with deliberately long titles, for trying (and visually
+ * testing) how the breadcrumbs share a tight bar: with room to spare every
+ * title shows in full, under pressure the longest crumbs are the first to
+ * ellipsise — equalising, while short crumbs keep every character — and once
+ * every long crumb is down to its 4rem floor the strip scrolls sideways.
+ */
+function drawLongTitledPanel($panel: S.Panel, title: string, deeper?: string) {
+	$panel.title = title;
+	$panel.maxWidth = "half";
+	A("p mt:0 rich='This page declares a long `title`. Its crumb shows it in full while the bar has room, and is among the first to be shortened when it hasn’t: the longest crumbs always give way first.'");
+	if (deeper) A("a href=", deeper, "#Push another long-titled panel");
+	else A("a href=/demo/panels #Back to the playground");
 }
 
 function drawButtons() {

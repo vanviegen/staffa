@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "shotest";
+import { test, expect, screenshot, type Page } from "shotest";
 
 // Click-through of every page of the Staffa demo. ShoTest screenshots each
 // wrapped action, so these double as a visual baseline for the whole library.
@@ -642,6 +642,57 @@ test("panels: crumbs browse the stack, and a new panel prunes the parked ones", 
 	await expect(page.locator(".s-panel-parked")).toHaveCount(0);
 });
 
+test("panels: crumbs only shorten under pressure, longest first", async ({ page }) => {
+	// Three long-titled pages; the cold link derives all four columns (the
+	// playground beneath them) from the path.
+	await page.goto("./panels/long/detail/deeper");
+	await page.getByText("Back to the playground").waitFor();
+
+	const crumbs = page.locator(".s-crumb");
+	const widths = () => crumbs.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().width));
+	const clipped = () =>
+		crumbs.evaluateAll((els) => els.map((el) => el.scrollWidth > Math.ceil(el.getBoundingClientRect().width)));
+
+	page.describe("Room to spare: every title shows in full, however long");
+	await expect(crumbs).toHaveCount(4);
+	await expect(crumbs.last()).toHaveText("Appendix C: methodology, data sources and the small print");
+	expect(await clipped()).toEqual([false, false, false, false]);
+	await screenshot(page, "crumbs-roomy");
+
+	page.describe("A narrower window: the long crumbs equalise; 'Panels' keeps every character");
+	await page.setViewportSize({ width: 800, height: 900 });
+	await expect.poll(clipped).toEqual([false, true, true, true]);
+	const w = await widths();
+	// Water-filling: the crumbs that gave way all end at the same width.
+	expect(Math.max(w[1], w[2], w[3]) - Math.min(w[1], w[2], w[3])).toBeLessThan(2);
+	await screenshot(page, "crumbs-equalised");
+
+	page.describe("Narrower still: long crumbs bottom out at 4rem, and the strip scrolls");
+	await page.setViewportSize({ width: 360, height: 800 });
+	await expect(page.locator(".s-crumbs.s-can-left, .s-crumbs.s-can-right")).toHaveCount(1);
+	await expect.poll(widths).toEqual([
+		expect.closeTo(w[0], 0), // untouched
+		expect.closeTo(64, 0), expect.closeTo(64, 0), expect.closeTo(64, 0), // the 4rem floor
+	]);
+	await screenshot(page, "crumbs-floored-scrolling");
+});
+
+test("panels: a screen page grows only the columns; the bars hold the standard width", async ({ page }) => {
+	await page.setViewportSize({ width: 1600, height: 900 });
+	await page.goto("./panels/large");
+	await page.getByText("boards and wide tables").waitFor();
+
+	page.describe("The column reaches the window's edges; header and footer keep to the 1280px page, centred");
+	const panelW = (await topPanel(page).boundingBox())!.width;
+	const headerBar = (await page.locator("header .s-bar").boundingBox())!;
+	const footerBar = (await page.locator("footer .s-bar").boundingBox())!;
+	expect(panelW).toBeGreaterThan(headerBar.width + 100); // the column outgrew the chrome
+	expect(headerBar.width).toBeLessThanOrEqual(1280);
+	expect(footerBar.width).toBeLessThanOrEqual(1280);
+	expect(headerBar.x).toBeGreaterThan(100); // centred, not hugging the left edge
+	await screenshot(page, "screen-panel-bars-hold");
+});
+
 test("panels: a pinned panel survives navigation elsewhere, but not its own close", async ({ page }) => {
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
@@ -816,7 +867,7 @@ test("panels: the page stretches past 1280 when a third column fits", async ({ p
 	const inner = page.locator(".s-body-inner");
 	expect((await inner.boundingBox())!.width).toBeLessThanOrEqual(1280);
 
-	page.describe("Push two more columns: a third fits, so the page stretches to hold all three");
+	page.describe("Push two more columns: a third fits, so the columns stretch to hold all three — the bars hold at 1280");
 	await page.getByRole("link", { name: "Push small A" }).click();
 	await panelWith(page, /Small A/).waitFor();
 	await topPanel(page).getByRole("link", { name: "Push small B" }).click();
@@ -841,7 +892,7 @@ test("panels: a large panel grows the page to the window's edges", async ({ page
 	const inner = page.locator(".s-body-inner");
 	expect((await inner.boundingBox())!.width).toBeLessThanOrEqual(1280);
 
-	page.describe("Push a large panel: the whole page stretches to the screen edges");
+	page.describe("Push a large panel: the columns stretch to the screen edges — the bars hold at 1280");
 	await page.getByRole("link", { name: "Push a large panel" }).click();
 	await panelWith(page, /takes as much room as the window has/).waitFor();
 	expect((await inner.boundingBox())!.width).toBeGreaterThan(1700);

@@ -190,7 +190,7 @@ Navigating faster than the shell can settle is fine: closing travels through the
 
 Below the width two columns need, everything takes the whole content area whatever it asked for. Those numbers assume a nav sidebar of around 170px; without one, add that back. Nothing fits beside a `"full"` on a standard 1280px page, but on a wide enough window a `"half"` still can, and the page grows past 1280px to hold both.
 
-A column's width depends only on the size of the window, never on what else is open. So opening or closing a panel never resizes the ones already on screen, and never reflows what someone was reading. A lone `"half"` leaves its other half empty, and that is exactly where the next one lands. When more columns fit than the standard 1280px page holds (three halves, say), the page itself grows, staying centred, to hold them.
+A column's width depends only on the size of the window, never on what else is open. So opening or closing a panel never resizes the ones already on screen, and never reflows what someone was reading. A lone `"half"` leaves its other half empty, and that is exactly where the next one lands. When more columns fit than the standard 1280px page holds (three halves, say), the page itself grows, staying centred, to hold them — though the top bar and footer keep to the standard width, so the chrome holds still while the columns come and go.
 
 Columns tile that area, separated by a hairline and no gutter — a column brings its own padding, so their contents stay comfortably apart regardless.
 

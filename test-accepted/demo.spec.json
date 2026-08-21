@@ -5154,12 +5154,12 @@
             {
               "type": "page",
               "message": "setViewportSize 1800×900",
-              "source": "tests/demo.spec.ts:836"
+              "source": "tests/demo.spec.ts:887"
             },
             {
               "type": "page",
               "message": "goto ./panels",
-              "source": "tests/demo.spec.ts:837"
+              "source": "tests/demo.spec.ts:888"
             },
             {
               "type": "check",
@@ -5170,13 +5170,13 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:838",
-              "duration": 194
+              "source": "tests/demo.spec.ts:889",
+              "duration": 207
             },
             {
               "type": "describe",
-              "message": "Push a large panel: the whole page stretches to the screen edges",
-              "source": "tests/demo.spec.ts:844"
+              "message": "Push a large panel: the columns stretch to the screen edges — the bars hold at 1280",
+              "source": "tests/demo.spec.ts:895"
             },
             {
               "type": "action",
@@ -5187,13 +5187,13 @@
                 "width": 130,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:845",
-              "duration": 175
+              "source": "tests/demo.spec.ts:896",
+              "duration": 173
             }
           ]
         },
         {
-          "image": "e2393bfd054a8e96",
+          "image": "d1d2366b3ed38259",
           "viewport": {
             "width": 1800,
             "height": 900
@@ -5208,25 +5208,25 @@
                 "width": 1638,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:846",
-              "duration": 158
+              "source": "tests/demo.spec.ts:897",
+              "duration": 152
             },
             {
               "type": "describe",
               "message": "Leave it: the page settles back to the standard width",
-              "source": "tests/demo.spec.ts:849"
+              "source": "tests/demo.spec.ts:900"
             },
             {
               "type": "action",
               "message": "click",
               "box": {
-                "x": 59,
+                "x": 319,
                 "y": 30,
                 "width": 40,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:850",
-              "duration": 143
+              "source": "tests/demo.spec.ts:901",
+              "duration": 152
             }
           ]
         },
@@ -5246,8 +5246,8 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:851",
-              "duration": 205
+              "source": "tests/demo.spec.ts:902",
+              "duration": 198
             }
           ]
         }
@@ -6495,6 +6495,60 @@
               "message": "expect count 0 (locator('.s-crumb-pin'))",
               "source": "tests/demo.spec.ts:675",
               "duration": 2113
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "tests/demo.spec.ts",
+      "title": "panels: a screen page grows only the columns; the bars hold the standard width",
+      "steps": [
+        {
+          "image": "5bd8dbe7aecc0314",
+          "viewport": {
+            "width": 1600,
+            "height": 900
+          },
+          "events": [
+            {
+              "type": "page",
+              "message": "setViewportSize 1600×900",
+              "source": "tests/demo.spec.ts:681"
+            },
+            {
+              "type": "console",
+              "consoleType": "debug",
+              "message": "Aberdeen queue took 11ms",
+              "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
+            },
+            {
+              "type": "page",
+              "message": "goto ./panels/large",
+              "source": "tests/demo.spec.ts:682"
+            },
+            {
+              "type": "check",
+              "message": "waitFor",
+              "box": {
+                "x": 180,
+                "y": 127,
+                "width": 1402,
+                "height": 48
+              },
+              "source": "tests/demo.spec.ts:683",
+              "duration": 209
+            },
+            {
+              "type": "describe",
+              "message": "The column reaches the window's edges; header and footer keep to the 1280px page, centred",
+              "source": "tests/demo.spec.ts:685"
+            },
+            {
+              "type": "screenshot",
+              "message": "screen-panel-bars-hold",
+              "source": "tests/demo.spec.ts:693",
+              "duration": 110
             }
           ]
         }
@@ -7840,6 +7894,135 @@
     },
     {
       "file": "tests/demo.spec.ts",
+      "title": "panels: crumbs only shorten under pressure, longest first",
+      "steps": [
+        {
+          "image": "48ab80ec8b9e06f9",
+          "viewport": {
+            "width": 1280,
+            "height": 900
+          },
+          "events": [
+            {
+              "type": "console",
+              "consoleType": "debug",
+              "message": "Aberdeen queue took 10ms",
+              "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
+            },
+            {
+              "type": "page",
+              "message": "goto ./panels/long/detail/deeper",
+              "source": "tests/demo.spec.ts:648"
+            },
+            {
+              "type": "check",
+              "message": "waitFor",
+              "box": {
+                "x": 739,
+                "y": 152,
+                "width": 160,
+                "height": 20
+              },
+              "source": "tests/demo.spec.ts:649",
+              "duration": 199
+            },
+            {
+              "type": "describe",
+              "message": "Room to spare: every title shows in full, however long",
+              "source": "tests/demo.spec.ts:656"
+            },
+            {
+              "type": "assert",
+              "message": "expect count 4 (locator('.s-crumb'))",
+              "source": "tests/demo.spec.ts:657",
+              "duration": 155
+            },
+            {
+              "type": "assert",
+              "message": "expect text \"Appendix C: methodology, data sources and the small print\"",
+              "box": {
+                "x": 757,
+                "y": 30,
+                "width": 351,
+                "height": 20
+              },
+              "source": "tests/demo.spec.ts:658",
+              "duration": 150
+            },
+            {
+              "type": "screenshot",
+              "message": "crumbs-roomy",
+              "source": "tests/demo.spec.ts:660",
+              "duration": 112
+            }
+          ]
+        },
+        {
+          "image": "746a4b25ee02fc02",
+          "viewport": {
+            "width": 800,
+            "height": 900
+          },
+          "events": [
+            {
+              "type": "describe",
+              "message": "A narrower window: the long crumbs equalise; 'Panels' keeps every character",
+              "source": "tests/demo.spec.ts:662"
+            },
+            {
+              "type": "page",
+              "message": "setViewportSize 800×900",
+              "source": "tests/demo.spec.ts:663"
+            },
+            {
+              "type": "screenshot",
+              "message": "crumbs-equalised",
+              "source": "tests/demo.spec.ts:668",
+              "duration": 119
+            }
+          ]
+        },
+        {
+          "image": "8c224374063845fc",
+          "viewport": {
+            "width": 360,
+            "height": 800
+          },
+          "events": [
+            {
+              "type": "describe",
+              "message": "Narrower still: long crumbs bottom out at 4rem, and the strip scrolls",
+              "source": "tests/demo.spec.ts:670"
+            },
+            {
+              "type": "page",
+              "message": "setViewportSize 360×800",
+              "source": "tests/demo.spec.ts:671"
+            },
+            {
+              "type": "assert",
+              "message": "expect count 1",
+              "box": {
+                "x": 39,
+                "y": 26,
+                "width": 278,
+                "height": 20
+              },
+              "source": "tests/demo.spec.ts:672",
+              "duration": 148
+            },
+            {
+              "type": "screenshot",
+              "message": "crumbs-floored-scrolling",
+              "source": "tests/demo.spec.ts:677",
+              "duration": 69
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "tests/demo.spec.ts",
       "title": "panels: Escape pops a panel, and only then opens the nav",
       "steps": [
         {
@@ -8303,12 +8486,12 @@
             {
               "type": "page",
               "message": "setViewportSize 1920×900",
-              "source": "tests/demo.spec.ts:811"
+              "source": "tests/demo.spec.ts:862"
             },
             {
               "type": "page",
               "message": "goto ./panels",
-              "source": "tests/demo.spec.ts:812"
+              "source": "tests/demo.spec.ts:863"
             },
             {
               "type": "check",
@@ -8319,13 +8502,13 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:813",
-              "duration": 198
+              "source": "tests/demo.spec.ts:864",
+              "duration": 195
             },
             {
               "type": "describe",
-              "message": "Push two more columns: a third fits, so the page stretches to hold all three",
-              "source": "tests/demo.spec.ts:819"
+              "message": "Push two more columns: a third fits, so the columns stretch to hold all three — the bars hold at 1280",
+              "source": "tests/demo.spec.ts:870"
             },
             {
               "type": "action",
@@ -8336,8 +8519,8 @@
                 "width": 91,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:820",
-              "duration": 176
+              "source": "tests/demo.spec.ts:871",
+              "duration": 178
             }
           ]
         },
@@ -8357,8 +8540,8 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:821",
-              "duration": 198
+              "source": "tests/demo.spec.ts:872",
+              "duration": 192
             },
             {
               "type": "action",
@@ -8369,13 +8552,13 @@
                 "width": 92,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:822",
-              "duration": 163
+              "source": "tests/demo.spec.ts:873",
+              "duration": 170
             }
           ]
         },
         {
-          "image": "47f0809713e93bdc",
+          "image": "68f7ed25889a0bf4",
           "viewport": {
             "width": 1920,
             "height": 900
@@ -8390,30 +8573,30 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:823",
-              "duration": 188
+              "source": "tests/demo.spec.ts:874",
+              "duration": 187
             },
             {
               "type": "assert",
               "message": "expect count 3 (locator('.s-panel:not(.s-panel-closing):not([inert])'))",
-              "source": "tests/demo.spec.ts:824",
-              "duration": 162
+              "source": "tests/demo.spec.ts:875",
+              "duration": 161
             },
             {
               "type": "describe",
               "message": "Parking the third column settles the page back to the standard width",
-              "source": "tests/demo.spec.ts:827"
+              "source": "tests/demo.spec.ts:878"
             },
             {
               "type": "action",
               "message": "click",
               "box": {
-                "x": 162,
+                "x": 441,
                 "y": 30,
                 "width": 45,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:828",
+              "source": "tests/demo.spec.ts:879",
               "duration": 165
             }
           ]
@@ -8428,8 +8611,8 @@
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing):not([inert])'))",
-              "source": "tests/demo.spec.ts:831",
-              "duration": 153
+              "source": "tests/demo.spec.ts:882",
+              "duration": 155
             }
           ]
         }
