@@ -187,6 +187,11 @@ export interface Panel<P = Record<string, string | number | string[]>> {
 	 * whatever it asked for. Widths depend only on the window, never on what
 	 * else is open, so opening or closing a panel never resizes another.
 	 *
+	 * This is a *layout regime*, not a width guarantee: handle whatever width
+	 * the bucket yields, and ask only for what your content can actually use —
+	 * a screen that would cap its own content narrower than its ask is holding
+	 * room that would have let another column fit beside it.
+	 *
 	 * Set it at the top of your handler and the panel is already that wide when
 	 * you draw (see {@link Panel.width}); set it later — when your data tells you
 	 * — and the panel reflows without being redrawn, keeping its state, while
@@ -262,6 +267,31 @@ export interface Panel<P = Record<string, string | number | string[]>> {
 	 * ```
 	 */
 	close(): Promise<boolean>;
+	/**
+	 * Opens `href` exactly as a click on a link inside this panel does — the
+	 * shell's own link handling runs through this very call, so the two can't
+	 * drift apart. By default that is a push: the target opens on top of this
+	 * panel, closing the panels after it first (pinned ones ride along
+	 * beneath the new panel, unsaved ones park), and a path that is already
+	 * open is returned to rather than opened twice. `how` plays the part of a
+	 * link's `data-panel` attribute: `"replace"` puts the target in this
+	 * panel's place, `"open"` leaves the panel behind and gives the target
+	 * its own stack, and omitting it follows the shell's
+	 * {@link MainOptions.linkNavigation}, like a link without the attribute.
+	 *
+	 * This is the one for navigation that can't be a link: a row's click
+	 * handler, a keyboard shortcut acting on this screen. The stack's
+	 * {@link PanelStack.pushPanel} builds on the *current* panel instead — a
+	 * different panel exactly when the interaction happened in a column
+	 * beside it, where it would pile the new panel on top of the open detail
+	 * rather than pruning back to this one.
+	 *
+	 * @example
+	 * ```ts
+	 * A("div.row click=", () => void $panel.open(`/contacts/${id}`), ...);
+	 * ```
+	 */
+	open(href: string, how?: "push" | "replace" | "open"): Promise<boolean>;
 }
 
 // ─── Path matching ───────────────────────────────────────────────────────────
@@ -418,8 +448,13 @@ A.insertGlobalCss({
 	// The region paints the panel's sheen over its own box, and every panel shows
 	// a slice of that same gradient (see `.s-panel` below), so the columns and
 	// the ground beside them are one continuous surface.
+	// `overflow:clip`, not `hidden`: a hidden box is still a scroll container,
+	// and anything that ever scrolls it — find-in-page reaching for text in a
+	// parked column, an in-page anchor, an extension — shifts every column
+	// sideways, permanently, because nothing here would ever scroll it back.
+	// `clip` clips without being scrollable at all, closing the whole class.
 	".s-panels":
-		"flex:1 min-width:0 min-height:0 position:relative overflow:hidden isolation:isolate " +
+		"flex:1 min-width:0 min-height:0 position:relative overflow:clip isolation:isolate " +
 		SURFACE_SHEEN,
 	".s-panel": {
 		// A panel rests at a plain `left` offset and carries no transform: a
@@ -747,6 +782,11 @@ export interface PanelStack {
 	 * than opening it twice, and a panel holding {@link Panel.unsaved} work is
 	 * never closed, only parked. That's what a plain link does, and what
 	 * `data-panel=push` says outright.
+	 *
+	 * Note that a link builds on the panel it is *drawn in*, which is the
+	 * current panel only while no column beside it has the focus. Code
+	 * navigating on behalf of a particular screen — a row's click handler —
+	 * wants that panel's own {@link Panel.open} instead.
 	 */
 	pushPanel(path: string): Promise<boolean>;
 	/**
@@ -1125,9 +1165,12 @@ export class PanelStackController implements PanelStack {
 			maxWidth: "full" as const,
 			width: 0,
 		} as PanelEntry;
-		// `close` closes *this* panel, current or not. It resolves the panel's
-		// place in the stack at call time, so it keeps working after a splice has
-		// moved it — and quietly resolves false once the panel is gone.
+		// `close` closes *this* panel, current or not, and `open` navigates
+		// *from* it, through the very implementation a link click uses (see
+		// `navigate`). Both resolve the panel's place in the stack at call
+		// time, so they keep working after a splice has moved it; an `open`
+		// from a panel that has since closed falls back to a derived stack,
+		// like a link from nowhere.
 		//
 		// `visible` starts at what the panel's place implies: shown when it sits
 		// at or before the current panel (a pushed panel always does), hidden when
@@ -1141,6 +1184,7 @@ export class PanelStackController implements PanelStack {
 			visible,
 			pinned: pinned || undefined,
 			close: () => this.closePath(entry.path),
+			open: (href: string, how?: "push" | "replace" | "open") => this.navigate(href, { from: entry.path, how }),
 		}) as PanelState;
 		return entry;
 	}
@@ -1373,17 +1417,31 @@ export class PanelStackController implements PanelStack {
 	}
 
 	/**
-	 * Navigate to `href`. `origin` is the path of the panel the link lives in, or
-	 * `null` when it has none — a nav item, or a programmatic call, which builds
-	 * the whole stack instead (see {@link deriveStack}). `replace` swaps the
-	 * originating panel rather than stacking on top of it, and `beneath` says what
-	 * the stack under the target is outright, for callers that know.
+	 * Navigate to `href` — the one implementation behind a link click,
+	 * {@link Panel.open} and the stack's own methods, so none of them can
+	 * behave differently.
+	 *
+	 * `from` is the path of the panel the navigation starts from — the one
+	 * the link lives in — or absent when it has none: a nav item, or a call
+	 * that means the whole stack, which is then built instead (see
+	 * {@link deriveStack}), or taken outright from `beneath`, for callers
+	 * that know it.
+	 *
+	 * `how` is the link's `data-panel` attribute (or the caller's word for
+	 * it): absent — like a link without the attribute — it is the shell's
+	 * `linkNavigation` default, an unrecognised value is a push on top of
+	 * `from`, `"replace"` swaps `from` out rather than stacking on it, and
+	 * `"open"` drops `from` altogether so the target arrives with its own
+	 * stack, the way a nav item's link does.
 	 *
 	 * Resolves the way every {@link PanelStack} method does: `true` once the
 	 * navigation lands, `false` when it doesn't (already there counts as
 	 * landed).
 	 */
-	private navigate(href: string, origin: string | null, replace = false, beneath?: readonly string[]): Promise<boolean> {
+	private navigate(href: string, { from, how, beneath }: { from?: string; how?: string; beneath?: readonly string[] } = {}): Promise<boolean> {
+		const mode = how ?? this.opts.linkNavigation;
+		const origin = mode === "open" ? null : from ?? null;
+		const replace = mode === "replace";
 		return A.peek(() => {
 			let url: URL;
 			try { url = new URL(href, location.href); } catch { return Promise.resolve(false); }
@@ -1438,7 +1496,7 @@ export class PanelStackController implements PanelStack {
 	private pushPath(path: string, replace: boolean): Promise<boolean> {
 		return A.peek(() => {
 			const arr = this.intended();
-			return this.navigate(path, arr.stack[arr.focus] ?? null, replace);
+			return this.navigate(path, { from: arr.stack[arr.focus], how: replace ? "replace" : "push" });
 		});
 	}
 
@@ -1446,36 +1504,30 @@ export class PanelStackController implements PanelStack {
 
 	/**
 	 * Link handling through `route.interceptLinks()`, whose handler hook hands us
-	 * the anchor so we can decide what the click *means*: the originating
-	 * `.s-panel` (which decides what the click truncates), the `data-panel`
-	 * attribute, and return-to-an-open-panel semantics. The exclusion rules
+	 * the anchor so we can decide what the click *means*. The exclusion rules
 	 * (targets, downloads, modified clicks, external URLs) live in Aberdeen; the
 	 * close guards run in `checkChange` when our navigation reaches the router.
 	 *
-	 * `data-panel` names which of the three {@link PanelStack} navigations the
-	 * click is: `push`, `replace`, or `open`, which drops the
-	 * originating panel so the target arrives with its own stack beneath it,
-	 * exactly as a nav item's link does. A link that doesn't say gets the
-	 * shell's {@link PanelStackOptions.linkNavigation} (`push` by default);
-	 * an unrecognised value is a `push`.
+	 * A link inside a panel is that panel's {@link Panel.open}, the `data-panel`
+	 * attribute as its `how` (see {@link navigate}, the shared implementation).
+	 * A link that isn't inside any panel — a nav item, one in a dialog — has no
+	 * panel to build on, so it replaces the stack as a whole, exactly as a cold
+	 * link to the same URL would open it.
 	 */
 	private interceptLinks(): void {
 		route.interceptLinks((url, anchor) => {
-			const mode = anchor.getAttribute("data-panel") ?? this.opts.linkNavigation;
-			let origin: string | null = null;
-			if (mode !== "open") {
-				const panel = anchor.closest<HTMLElement>(".s-panel");
-				if (panel) {
-					origin = this.$state.live.find((entry) => entry.el === panel)?.path ?? null;
-				} else if (anchor.closest(".s-panel-origin")) {
-					// The current panel's actions, promoted into the top bar on a
-					// narrow shell (see main.ts), sit outside every `.s-panel` — but
-					// they are still the current panel's own chrome, so a link among
-					// them builds on that panel, exactly as it does at full width.
-					origin = this.$state.live[this.$state.focus]?.path ?? null;
-				}
-			}
-			void this.navigate(url.href, origin, mode === "replace");
+			const how = anchor.getAttribute("data-panel") ?? undefined;
+			// The panel the link lives in: the enclosing `.s-panel`, or — for the
+			// current panel's actions, promoted into the top bar on a narrow shell
+			// (see main.ts), outside every `.s-panel` — the current panel, whose
+			// own chrome they remain at every width.
+			const panelEl = anchor.closest<HTMLElement>(".s-panel");
+			const entry = panelEl
+				? this.$state.live.find((e) => e.el === panelEl)
+				: anchor.closest(".s-panel-origin")
+					? this.$state.live[this.$state.focus]
+					: undefined;
+			void this.navigate(url.href, { from: entry?.path, how });
 			return true;
 		});
 	}
@@ -1507,7 +1559,7 @@ export class PanelStackController implements PanelStack {
 	}
 
 	openPanelStack(path: string, beneath?: readonly string[]): Promise<boolean> {
-		return this.navigate(path, null, false, beneath);
+		return this.navigate(path, { how: "open", beneath });
 	}
 
 	closePanel(path?: string): Promise<boolean> {

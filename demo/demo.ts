@@ -453,6 +453,15 @@ function drawPanelsPlayground($panel: S.Panel) {
 					attrs: ".neutral",
 					click: () => $panel.stack.pushPanel("/demo/panels/b"),
 				});
+				// The panel's own `open` navigates from *this* panel — exactly like
+				// a link drawn here, whose handling is the same call — even while
+				// another column beside it is the current one. The stack's push
+				// above builds on the current panel instead.
+				S.button({
+					content: "$panel.open()",
+					attrs: ".neutral",
+					click: () => void $panel.open("/demo/panels/b"),
+				});
 				// The other way in: a whole arrangement at once, for a screen whose
 				// URL doesn't say where it belongs. Here the stack under it is spelled
 				// out; `stack.openPanelStack("/demo/thread/8")` alone would ask the shell's

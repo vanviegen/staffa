@@ -857,6 +857,34 @@ test("panels: maxWidth=half starts at half width, and the next lands in its open
 	expect(await playground.boundingBox()).toEqual(before);
 });
 
+test("panels: $panel.open builds on its own panel, not the current one", async ({ page }) => {
+	await page.goto("./panels");
+	await page.getByText("Push a panel").waitFor();
+	await page.getByRole("link", { name: "Push small A" }).click();
+	await panelWith(page, /Small A/).waitFor();
+	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small A"]);
+
+	page.describe("An open() from the playground panel replaces Small A instead of stacking on it");
+	// Small A is the current panel; the button lives in the playground column
+	// beside it, and opens from *that* panel — so Small A closes first,
+	// exactly as it would for a link clicked in the playground.
+	await page.getByRole("button", { name: "$panel.open()" }).click();
+	await panelWith(page, /Small B/).waitFor();
+	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small B"]);
+
+	page.describe("stack.pushPanel() builds on the current panel instead");
+	// Back to [Panels, Small A] first, via the *playground's* link (Small B
+	// carries a link of the same name), which likewise builds on the playground.
+	await page.locator(livePanels).first().getByRole("link", { name: "Push small A" }).click();
+	await panelWith(page, /Small A/).waitFor();
+	// The stack's own push builds on the *current* panel — Small A — so Small B
+	// lands on top of it: three crumbs, nothing closed. That difference is why
+	// a list's click handler wants the panel's own push.
+	await page.getByRole("button", { name: "stack.pushPanel()" }).click();
+	await panelWith(page, /Small B/).waitFor();
+	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small A", "Small B"]);
+});
+
 test("panels: the page stretches past 1280 when a third column fits", async ({ page }) => {
 	// Wide enough for three small columns (~3×540 plus the sidebar).
 	await page.setViewportSize({ width: 1920, height: 900 });

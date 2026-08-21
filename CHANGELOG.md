@@ -1,10 +1,11 @@
 # Changelog
 
-## 0.13.0
+## 0.12.1
 
-- **Breadcrumbs no longer truncate at a fixed width.** A crumb now shows its full title whenever the bar has room, and is only ellipsised under real pressure — the *longest* crumbs give way first, equalising, while short ones keep every character. Once every long crumb is down to a small floor the strip scrolls sideways, as before.
-- The top bar's trailing slot (the app `menu`, or a panel's promoted `actions` on a narrow shell) now holds its natural width while the breadcrumbs shrink, instead of being squeezed along with them. A genuinely wide slot (a search box) still shrinks once the titles hit their floor.
-- The top bar and footer no longer stretch along when the columns grow past the standard 1280px page (a `maxWidth: "screen"` panel, or extra columns fitting a wide window): the chrome now holds the standard width while only the columns grow.
+- **`$panel.open(path, how?)`** navigates from that panel, exactly as a link inside it would — for the places where navigation can't be a link, like a row's click handler or a keyboard shortcut.
+- **Breadcrumbs make better use of the bar.** A crumb keeps its full title whenever there's room; under pressure the longest ones shorten first, and the app menu is no longer squeezed along with them.
+- The top bar and footer now keep to the standard page width when the columns grow wider than it.
+- Fixed: the columns could end up shifted sideways — by find-in-page, an in-page anchor, a browser extension — with no way back.
 
 ## 0.12.0
 

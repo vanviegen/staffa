@@ -6,7 +6,7 @@
       "title": "autocomplete: Escape dismisses only the open list, not the panel beneath",
       "steps": [
         {
-          "image": "b8955a6afa60424f",
+          "image": "1c36890b89fc79dc",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -33,7 +33,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:438",
-              "duration": 191
+              "duration": 189
             },
             {
               "type": "action",
@@ -45,12 +45,12 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:441",
-              "duration": 151
+              "duration": 144
             }
           ]
         },
         {
-          "image": "b056eb8662a6c239",
+          "image": "2cc742e85473a279",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -66,12 +66,12 @@
                 "height": 38
               },
               "source": "tests/demo.spec.ts:442",
-              "duration": 162
+              "duration": 152
             }
           ]
         },
         {
-          "image": "5cdac01324c683da",
+          "image": "72d381bfcdafd4b0",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -87,12 +87,12 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:449",
-              "duration": 156
+              "duration": 165
             }
           ]
         },
         {
-          "image": "b8955a6afa60424f",
+          "image": "1c36890b89fc79dc",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -108,7 +108,7 @@
                 "height": 45
               },
               "source": "tests/demo.spec.ts:453",
-              "duration": 140
+              "duration": 149
             }
           ]
         }
@@ -119,7 +119,7 @@
       "title": "buttons: variants, sizes and groups",
       "steps": [
         {
-          "image": "b8955a6afa60424f",
+          "image": "1c36890b89fc79dc",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -140,7 +140,7 @@
                 "height": 45
               },
               "source": "tests/demo.spec.ts:38",
-              "duration": 184
+              "duration": 176
             }
           ]
         },
@@ -173,7 +173,7 @@
                 "height": 35
               },
               "source": "tests/demo.spec.ts:42",
-              "duration": 140
+              "duration": 131
             }
           ]
         },
@@ -194,7 +194,7 @@
                 "height": 37
               },
               "source": "tests/demo.spec.ts:43",
-              "duration": 156
+              "duration": 159
             }
           ]
         }
@@ -312,7 +312,7 @@
       "title": "chrome: a panel that sets no title lends its first line to the crumb",
       "steps": [
         {
-          "image": "b4f89c3fc5a6ff68",
+          "image": "d9b67586bfd44ffb",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -321,13 +321,13 @@
             {
               "type": "console",
               "consoleType": "debug",
-              "message": "Aberdeen queue took 10ms",
+              "message": "Aberdeen queue took 13ms",
               "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
             },
             {
               "type": "page",
               "message": "goto ./panels/untitled",
-              "source": "tests/demo.spec.ts:1175"
+              "source": "tests/demo.spec.ts:1254"
             },
             {
               "type": "check",
@@ -338,8 +338,8 @@
                 "width": 524,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1176",
-              "duration": 232
+              "source": "tests/demo.spec.ts:1255",
+              "duration": 222
             },
             {
               "type": "assert",
@@ -350,8 +350,8 @@
                 "width": 100,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:1180",
-              "duration": 169
+              "source": "tests/demo.spec.ts:1259",
+              "duration": 171
             },
             {
               "type": "action",
@@ -362,8 +362,8 @@
                 "width": 51,
                 "height": 26
               },
-              "source": "tests/demo.spec.ts:1184",
-              "duration": 177
+              "source": "tests/demo.spec.ts:1263",
+              "duration": 167
             }
           ]
         }
@@ -442,7 +442,7 @@
       "title": "chrome: a wide shell dresses each column, a narrow one promotes the top one",
       "steps": [
         {
-          "image": "2411cd2789a61fdd",
+          "image": "be1def033f106db6",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -457,7 +457,7 @@
             {
               "type": "page",
               "message": "goto ./panels",
-              "source": "tests/demo.spec.ts:1101"
+              "source": "tests/demo.spec.ts:1180"
             },
             {
               "type": "check",
@@ -468,19 +468,19 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:1102",
-              "duration": 211
+              "source": "tests/demo.spec.ts:1181",
+              "duration": 214
             },
             {
               "type": "describe",
               "message": "A lone actions-less page: the bar is all the app's, and no strip is drawn",
-              "source": "tests/demo.spec.ts:1104"
+              "source": "tests/demo.spec.ts:1183"
             },
             {
               "type": "assert",
               "message": "expect count 0 (locator('.s-panel-actions'))",
-              "source": "tests/demo.spec.ts:1105",
-              "duration": 2134
+              "source": "tests/demo.spec.ts:1184",
+              "duration": 2131
             },
             {
               "type": "assert",
@@ -491,8 +491,8 @@
                 "width": 24,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1110",
-              "duration": 165
+              "source": "tests/demo.spec.ts:1189",
+              "duration": 166
             },
             {
               "type": "assert",
@@ -503,8 +503,8 @@
                 "width": 45,
                 "height": 21
               },
-              "source": "tests/demo.spec.ts:1111",
-              "duration": 177
+              "source": "tests/demo.spec.ts:1190",
+              "duration": 167
             },
             {
               "type": "assert",
@@ -515,19 +515,19 @@
                 "width": 153,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:1112",
-              "duration": 177
+              "source": "tests/demo.spec.ts:1191",
+              "duration": 163
             },
             {
               "type": "assert",
               "message": "expect count 0 (locator('.s-crumb'))",
-              "source": "tests/demo.spec.ts:1113",
-              "duration": 2125
+              "source": "tests/demo.spec.ts:1192",
+              "duration": 2135
             },
             {
               "type": "describe",
               "message": "Push a page with actions: its column gets a quiet strip — nothing more",
-              "source": "tests/demo.spec.ts:1115"
+              "source": "tests/demo.spec.ts:1194"
             },
             {
               "type": "action",
@@ -538,13 +538,13 @@
                 "width": 91,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1117",
-              "duration": 182
+              "source": "tests/demo.spec.ts:1196",
+              "duration": 180
             }
           ]
         },
         {
-          "image": "7197ab5c4611ce88",
+          "image": "d494f806acba383d",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -559,8 +559,8 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1118",
-              "duration": 195
+              "source": "tests/demo.spec.ts:1197",
+              "duration": 187
             },
             {
               "type": "assert",
@@ -571,8 +571,8 @@
                 "width": 559,
                 "height": 50
               },
-              "source": "tests/demo.spec.ts:1120",
-              "duration": 180
+              "source": "tests/demo.spec.ts:1199",
+              "duration": 181
             },
             {
               "type": "assert",
@@ -583,8 +583,8 @@
                 "width": 32,
                 "height": 32
               },
-              "source": "tests/demo.spec.ts:1121",
-              "duration": 167
+              "source": "tests/demo.spec.ts:1200",
+              "duration": 182
             },
             {
               "type": "assert",
@@ -595,8 +595,8 @@
                 "width": 559,
                 "height": 50
               },
-              "source": "tests/demo.spec.ts:1122",
-              "duration": 200
+              "source": "tests/demo.spec.ts:1201",
+              "duration": 182
             },
             {
               "type": "assert",
@@ -607,19 +607,19 @@
                 "width": 45,
                 "height": 21
               },
-              "source": "tests/demo.spec.ts:1124",
-              "duration": 178
+              "source": "tests/demo.spec.ts:1203",
+              "duration": 182
             },
             {
               "type": "assert",
               "message": "expect text \"Panels\", \"Small A\" (locator('.s-crumb'))",
-              "source": "tests/demo.spec.ts:1125",
-              "duration": 156
+              "source": "tests/demo.spec.ts:1204",
+              "duration": 146
             },
             {
               "type": "describe",
               "message": "Push B: everything in a column is the page's own content; bold crumbs = visible columns",
-              "source": "tests/demo.spec.ts:1127"
+              "source": "tests/demo.spec.ts:1206"
             },
             {
               "type": "action",
@@ -630,8 +630,8 @@
                 "width": 92,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1128",
-              "duration": 153
+              "source": "tests/demo.spec.ts:1207",
+              "duration": 142
             }
           ]
         },
@@ -651,14 +651,14 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1129",
-              "duration": 147
+              "source": "tests/demo.spec.ts:1208",
+              "duration": 151
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing):not([inert])'))",
-              "source": "tests/demo.spec.ts:1130",
-              "duration": 119
+              "source": "tests/demo.spec.ts:1209",
+              "duration": 112
             },
             {
               "type": "assert",
@@ -669,20 +669,20 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:1131",
-              "duration": 147
+              "source": "tests/demo.spec.ts:1210",
+              "duration": 129
             },
             {
               "type": "assert",
               "message": "expect text \"Panels\", \"Small A\", \"Small B\" (locator('.s-crumb'))",
-              "source": "tests/demo.spec.ts:1134",
-              "duration": 120
+              "source": "tests/demo.spec.ts:1213",
+              "duration": 100
             },
             {
               "type": "assert",
               "message": "expect text \"Small A\", \"Small B\" (locator('.s-crumb.s-crumb-on'))",
-              "source": "tests/demo.spec.ts:1135",
-              "duration": 107
+              "source": "tests/demo.spec.ts:1214",
+              "duration": 106
             }
           ]
         }
@@ -693,7 +693,7 @@
       "title": "chrome: an action link promoted into the bar still builds on its panel",
       "steps": [
         {
-          "image": "2f0d7c55cce39fc4",
+          "image": "d9a56926ecc6f279",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -702,13 +702,13 @@
             {
               "type": "console",
               "consoleType": "debug",
-              "message": "Aberdeen queue took 11ms",
+              "message": "Aberdeen queue took 10ms",
               "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
             },
             {
               "type": "page",
               "message": "goto ./thread/8",
-              "source": "tests/demo.spec.ts:1163"
+              "source": "tests/demo.spec.ts:1242"
             },
             {
               "type": "check",
@@ -719,8 +719,8 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1164",
-              "duration": 212
+              "source": "tests/demo.spec.ts:1243",
+              "duration": 217
             }
           ]
         },
@@ -734,7 +734,7 @@
             {
               "type": "page",
               "message": "setViewportSize 480×800",
-              "source": "tests/demo.spec.ts:1168"
+              "source": "tests/demo.spec.ts:1247"
             },
             {
               "type": "action",
@@ -745,8 +745,8 @@
                 "width": 32,
                 "height": 32
               },
-              "source": "tests/demo.spec.ts:1169",
-              "duration": 122
+              "source": "tests/demo.spec.ts:1248",
+              "duration": 130
             }
           ]
         },
@@ -760,8 +760,8 @@
             {
               "type": "assert",
               "message": "expect text \"Panels\", \"Thread 8\", \"Thread 9\" (locator('.s-crumb'))",
-              "source": "tests/demo.spec.ts:1171",
-              "duration": 91
+              "source": "tests/demo.spec.ts:1250",
+              "duration": 100
             }
           ]
         }
@@ -772,7 +772,7 @@
       "title": "chrome: crossing the threshold moves the chrome, not the body",
       "steps": [
         {
-          "image": "71c504c84c6ffe3d",
+          "image": "c6ff7a963cb5cff8",
           "viewport": {
             "width": 1100,
             "height": 800
@@ -781,18 +781,18 @@
             {
               "type": "page",
               "message": "setViewportSize 1100×800",
-              "source": "tests/demo.spec.ts:1189"
+              "source": "tests/demo.spec.ts:1268"
             },
             {
               "type": "console",
               "consoleType": "debug",
-              "message": "Aberdeen queue took 10ms",
+              "message": "Aberdeen queue took 12ms",
               "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
             },
             {
               "type": "page",
               "message": "goto ./form",
-              "source": "tests/demo.spec.ts:1190"
+              "source": "tests/demo.spec.ts:1269"
             },
             {
               "type": "check",
@@ -803,8 +803,8 @@
                 "width": 900,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:1191",
-              "duration": 191
+              "source": "tests/demo.spec.ts:1270",
+              "duration": 211
             },
             {
               "type": "assert",
@@ -815,8 +815,8 @@
                 "width": 45,
                 "height": 21
               },
-              "source": "tests/demo.spec.ts:1194",
-              "duration": 144
+              "source": "tests/demo.spec.ts:1273",
+              "duration": 136
             },
             {
               "type": "assert",
@@ -827,13 +827,13 @@
                 "width": 153,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:1195",
-              "duration": 154
+              "source": "tests/demo.spec.ts:1274",
+              "duration": 147
             },
             {
               "type": "describe",
               "message": "Half-fill the form, and mark its body node",
-              "source": "tests/demo.spec.ts:1197"
+              "source": "tests/demo.spec.ts:1276"
             },
             {
               "type": "action",
@@ -844,13 +844,13 @@
                 "width": 865,
                 "height": 64
               },
-              "source": "tests/demo.spec.ts:1199",
-              "duration": 142
+              "source": "tests/demo.spec.ts:1278",
+              "duration": 143
             }
           ]
         },
         {
-          "image": "a692ababe45f1099",
+          "image": "8750e087d11bfbd5",
           "viewport": {
             "width": 480,
             "height": 800
@@ -859,12 +859,12 @@
             {
               "type": "describe",
               "message": "Narrow the shell: the crumbs take the tagline's line, the body untouched",
-              "source": "tests/demo.spec.ts:1202"
+              "source": "tests/demo.spec.ts:1281"
             },
             {
               "type": "page",
               "message": "setViewportSize 480×800",
-              "source": "tests/demo.spec.ts:1203"
+              "source": "tests/demo.spec.ts:1282"
             },
             {
               "type": "assert",
@@ -875,8 +875,8 @@
                 "width": 45,
                 "height": 21
               },
-              "source": "tests/demo.spec.ts:1204",
-              "duration": 118
+              "source": "tests/demo.spec.ts:1283",
+              "duration": 136
             },
             {
               "type": "assert",
@@ -887,14 +887,14 @@
                 "width": 29,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:1205",
-              "duration": 112
+              "source": "tests/demo.spec.ts:1284",
+              "duration": 96
             },
             {
               "type": "assert",
               "message": "expect count 0 (locator('header .s-subtitle'))",
-              "source": "tests/demo.spec.ts:1206",
-              "duration": 2067
+              "source": "tests/demo.spec.ts:1285",
+              "duration": 2058
             },
             {
               "type": "assert",
@@ -905,13 +905,13 @@
                 "width": 445,
                 "height": 64
               },
-              "source": "tests/demo.spec.ts:1209",
-              "duration": 109
+              "source": "tests/demo.spec.ts:1288",
+              "duration": 103
             }
           ]
         },
         {
-          "image": "8c7d0c5833a15b34",
+          "image": "0f93c228ee1b0410",
           "viewport": {
             "width": 1100,
             "height": 800
@@ -920,12 +920,12 @@
             {
               "type": "describe",
               "message": "Widen it again: the tagline returns, and the body never moved",
-              "source": "tests/demo.spec.ts:1211"
+              "source": "tests/demo.spec.ts:1290"
             },
             {
               "type": "page",
               "message": "setViewportSize 1100×800",
-              "source": "tests/demo.spec.ts:1212"
+              "source": "tests/demo.spec.ts:1291"
             },
             {
               "type": "assert",
@@ -936,8 +936,8 @@
                 "width": 153,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:1213",
-              "duration": 154
+              "source": "tests/demo.spec.ts:1292",
+              "duration": 155
             },
             {
               "type": "assert",
@@ -948,8 +948,8 @@
                 "width": 865,
                 "height": 64
               },
-              "source": "tests/demo.spec.ts:1215",
-              "duration": 141
+              "source": "tests/demo.spec.ts:1294",
+              "duration": 144
             }
           ]
         }
@@ -960,7 +960,7 @@
       "title": "chrome: the tagline holds the second line only while the stack adds nothing",
       "steps": [
         {
-          "image": "2411cd2789a61fdd",
+          "image": "be1def033f106db6",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -969,13 +969,13 @@
             {
               "type": "console",
               "consoleType": "debug",
-              "message": "Aberdeen queue took 11ms",
+              "message": "Aberdeen queue took 10ms",
               "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
             },
             {
               "type": "page",
               "message": "goto ./panels",
-              "source": "tests/demo.spec.ts:1219"
+              "source": "tests/demo.spec.ts:1298"
             },
             {
               "type": "check",
@@ -986,13 +986,13 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:1220",
-              "duration": 212
+              "source": "tests/demo.spec.ts:1299",
+              "duration": 217
             },
             {
               "type": "describe",
               "message": "A lone nav-item screen: a crumb would repeat the sidebar, so the tagline has the line",
-              "source": "tests/demo.spec.ts:1222"
+              "source": "tests/demo.spec.ts:1301"
             },
             {
               "type": "assert",
@@ -1003,8 +1003,8 @@
                 "width": 126,
                 "height": 45
               },
-              "source": "tests/demo.spec.ts:1223",
-              "duration": 166
+              "source": "tests/demo.spec.ts:1302",
+              "duration": 161
             },
             {
               "type": "assert",
@@ -1015,19 +1015,19 @@
                 "width": 153,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:1224",
-              "duration": 164
+              "source": "tests/demo.spec.ts:1303",
+              "duration": 163
             },
             {
               "type": "assert",
               "message": "expect count 0 (locator('.s-crumb'))",
-              "source": "tests/demo.spec.ts:1225",
-              "duration": 2131
+              "source": "tests/demo.spec.ts:1304",
+              "duration": 2146
             },
             {
               "type": "describe",
               "message": "Push a page: the stack has something to say, and takes the line",
-              "source": "tests/demo.spec.ts:1227"
+              "source": "tests/demo.spec.ts:1306"
             },
             {
               "type": "action",
@@ -1038,13 +1038,13 @@
                 "width": 91,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1228",
-              "duration": 186
+              "source": "tests/demo.spec.ts:1307",
+              "duration": 196
             }
           ]
         },
         {
-          "image": "7197ab5c4611ce88",
+          "image": "d494f806acba383d",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -1059,25 +1059,25 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1229",
-              "duration": 186
+              "source": "tests/demo.spec.ts:1308",
+              "duration": 204
             },
             {
               "type": "assert",
               "message": "expect text \"Panels\", \"Small A\" (locator('.s-crumb'))",
-              "source": "tests/demo.spec.ts:1230",
-              "duration": 183
+              "source": "tests/demo.spec.ts:1309",
+              "duration": 164
             },
             {
               "type": "assert",
               "message": "expect count 0 (locator('header .s-subtitle'))",
-              "source": "tests/demo.spec.ts:1231",
-              "duration": 2153
+              "source": "tests/demo.spec.ts:1310",
+              "duration": 2148
             },
             {
               "type": "describe",
               "message": "Go back: Small A is merely parked, so the stack keeps the line",
-              "source": "tests/demo.spec.ts:1233"
+              "source": "tests/demo.spec.ts:1312"
             },
             {
               "type": "action",
@@ -1088,13 +1088,13 @@
                 "width": 40,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:1234",
-              "duration": 177
+              "source": "tests/demo.spec.ts:1313",
+              "duration": 184
             }
           ]
         },
         {
-          "image": "affbb3eb6c3714ab",
+          "image": "c8ec1c54002446e2",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -1103,19 +1103,19 @@
             {
               "type": "assert",
               "message": "expect text \"Panels\", \"Small A\" (locator('.s-crumb'))",
-              "source": "tests/demo.spec.ts:1238",
-              "duration": 161
+              "source": "tests/demo.spec.ts:1317",
+              "duration": 167
             },
             {
               "type": "assert",
               "message": "expect count 0 (locator('header .s-subtitle'))",
-              "source": "tests/demo.spec.ts:1239",
-              "duration": 2124
+              "source": "tests/demo.spec.ts:1318",
+              "duration": 2123
             }
           ]
         },
         {
-          "image": "b211984f0c4f6fea",
+          "image": "3acb823bf8927640",
           "viewport": {
             "width": 480,
             "height": 800
@@ -1124,12 +1124,12 @@
             {
               "type": "describe",
               "message": "A narrow shell keeps the stack even for a lone nav-item screen",
-              "source": "tests/demo.spec.ts:1241"
+              "source": "tests/demo.spec.ts:1320"
             },
             {
               "type": "page",
               "message": "setViewportSize 480×800",
-              "source": "tests/demo.spec.ts:1244"
+              "source": "tests/demo.spec.ts:1323"
             },
             {
               "type": "console",
@@ -1140,7 +1140,7 @@
             {
               "type": "page",
               "message": "goto ./form",
-              "source": "tests/demo.spec.ts:1245"
+              "source": "tests/demo.spec.ts:1324"
             },
             {
               "type": "check",
@@ -1151,8 +1151,8 @@
                 "width": 480,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:1246",
-              "duration": 117
+              "source": "tests/demo.spec.ts:1325",
+              "duration": 144
             },
             {
               "type": "assert",
@@ -1163,14 +1163,14 @@
                 "width": 29,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:1247",
-              "duration": 115
+              "source": "tests/demo.spec.ts:1326",
+              "duration": 109
             },
             {
               "type": "assert",
               "message": "expect count 0 (locator('header .s-subtitle'))",
-              "source": "tests/demo.spec.ts:1248",
-              "duration": 2064
+              "source": "tests/demo.spec.ts:1327",
+              "duration": 2066
             }
           ]
         }
@@ -1213,7 +1213,7 @@
       "title": "crumbs: browsing moves the focus in both directions, closing nothing",
       "steps": [
         {
-          "image": "2411cd2789a61fdd",
+          "image": "be1def033f106db6",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -1228,7 +1228,7 @@
             {
               "type": "page",
               "message": "goto ./panels",
-              "source": "tests/demo.spec.ts:1279"
+              "source": "tests/demo.spec.ts:1358"
             },
             {
               "type": "check",
@@ -1239,8 +1239,8 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:1280",
-              "duration": 195
+              "source": "tests/demo.spec.ts:1359",
+              "duration": 214
             },
             {
               "type": "action",
@@ -1251,13 +1251,13 @@
                 "width": 91,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1281",
-              "duration": 182
+              "source": "tests/demo.spec.ts:1360",
+              "duration": 179
             }
           ]
         },
         {
-          "image": "7197ab5c4611ce88",
+          "image": "d494f806acba383d",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -1272,8 +1272,8 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1282",
-              "duration": 183
+              "source": "tests/demo.spec.ts:1361",
+              "duration": 199
             },
             {
               "type": "action",
@@ -1284,8 +1284,8 @@
                 "width": 92,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1283",
-              "duration": 183
+              "source": "tests/demo.spec.ts:1362",
+              "duration": 167
             }
           ]
         },
@@ -1305,19 +1305,19 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1284",
-              "duration": 156
+              "source": "tests/demo.spec.ts:1363",
+              "duration": 175
             },
             {
               "type": "assert",
               "message": "expect text \"Panels\", \"Small A\", \"Small B\" (locator('.s-crumb'))",
-              "source": "tests/demo.spec.ts:1285",
-              "duration": 105
+              "source": "tests/demo.spec.ts:1364",
+              "duration": 140
             },
             {
               "type": "describe",
               "message": "Click an earlier crumb: the panels right of it park, closing nothing",
-              "source": "tests/demo.spec.ts:1287"
+              "source": "tests/demo.spec.ts:1366"
             },
             {
               "type": "action",
@@ -1328,13 +1328,13 @@
                 "width": 40,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:1288",
-              "duration": 149
+              "source": "tests/demo.spec.ts:1367",
+              "duration": 148
             }
           ]
         },
         {
-          "image": "c722dc3646fed925",
+          "image": "7c39ee1d2270dc3d",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -1343,19 +1343,19 @@
             {
               "type": "assert",
               "message": "expect text \"Panels\", \"Small A\", \"Small B\" (locator('.s-crumb'))",
-              "source": "tests/demo.spec.ts:1290",
-              "duration": 128
+              "source": "tests/demo.spec.ts:1369",
+              "duration": 136
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel-parked'))",
-              "source": "tests/demo.spec.ts:1291",
-              "duration": 120
+              "source": "tests/demo.spec.ts:1370",
+              "duration": 110
             },
             {
               "type": "describe",
               "message": "A parked crumb browses forward again",
-              "source": "tests/demo.spec.ts:1293"
+              "source": "tests/demo.spec.ts:1372"
             },
             {
               "type": "action",
@@ -1366,13 +1366,13 @@
                 "width": 45,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:1294",
-              "duration": 145
+              "source": "tests/demo.spec.ts:1373",
+              "duration": 134
             }
           ]
         },
         {
-          "image": "5fce75d272bf5239",
+          "image": "8e6f4d015ec7f0ff",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -1382,40 +1382,31 @@
               "type": "assert",
               "message": "expect count 1",
               "box": {
+                "x": 1382,
+                "y": 60,
+                "width": 559,
+                "height": 797
+              },
+              "source": "tests/demo.spec.ts:1375",
+              "duration": 179
+            },
+            {
+              "type": "check",
+              "message": "waitFor",
+              "box": {
                 "x": 721,
                 "y": 60,
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1296",
-              "duration": 153
-            }
-          ]
-        },
-        {
-          "image": "1af956627b02839b",
-          "viewport": {
-            "width": 1280,
-            "height": 900
-          },
-          "events": [
-            {
-              "type": "check",
-              "message": "waitFor",
-              "box": {
-                "x": 162,
-                "y": 60,
-                "width": 559,
-                "height": 797
-              },
-              "source": "tests/demo.spec.ts:1297",
-              "duration": 152
+              "source": "tests/demo.spec.ts:1376",
+              "duration": 150
             },
             {
               "type": "assert",
               "message": "expect text \"Panels\", \"Small A\", \"Small B\" (locator('.s-crumb'))",
-              "source": "tests/demo.spec.ts:1298",
-              "duration": 111
+              "source": "tests/demo.spec.ts:1377",
+              "duration": 112
             }
           ]
         }
@@ -1426,7 +1417,7 @@
       "title": "crumbs: right-click offers Close, which splices one panel out",
       "steps": [
         {
-          "image": "2411cd2789a61fdd",
+          "image": "be1def033f106db6",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -1435,7 +1426,7 @@
             {
               "type": "page",
               "message": "goto ./panels",
-              "source": "tests/demo.spec.ts:1302"
+              "source": "tests/demo.spec.ts:1381"
             },
             {
               "type": "check",
@@ -1446,8 +1437,8 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:1303",
-              "duration": 188
+              "source": "tests/demo.spec.ts:1382",
+              "duration": 181
             },
             {
               "type": "action",
@@ -1458,13 +1449,13 @@
                 "width": 91,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1304",
-              "duration": 162
+              "source": "tests/demo.spec.ts:1383",
+              "duration": 160
             }
           ]
         },
         {
-          "image": "7197ab5c4611ce88",
+          "image": "d494f806acba383d",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -1479,8 +1470,8 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1305",
-              "duration": 155
+              "source": "tests/demo.spec.ts:1384",
+              "duration": 152
             },
             {
               "type": "action",
@@ -1491,7 +1482,7 @@
                 "width": 92,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1306",
+              "source": "tests/demo.spec.ts:1385",
               "duration": 150
             }
           ]
@@ -1512,13 +1503,13 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1307",
+              "source": "tests/demo.spec.ts:1386",
               "duration": 143
             },
             {
               "type": "describe",
               "message": "Close the middle panel from its crumb's menu: a splice, the URL unmoved",
-              "source": "tests/demo.spec.ts:1309"
+              "source": "tests/demo.spec.ts:1388"
             },
             {
               "type": "action",
@@ -1529,8 +1520,8 @@
                 "width": 45,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:1310",
-              "duration": 137
+              "source": "tests/demo.spec.ts:1389",
+              "duration": 142
             }
           ]
         },
@@ -1550,13 +1541,13 @@
                 "width": 149,
                 "height": 36
               },
-              "source": "tests/demo.spec.ts:1311",
-              "duration": 157
+              "source": "tests/demo.spec.ts:1390",
+              "duration": 151
             }
           ]
         },
         {
-          "image": "c346f8dcee7d0940",
+          "image": "2f60d6e38fff2e85",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -1565,14 +1556,14 @@
             {
               "type": "assert",
               "message": "expect text \"Panels\", \"Small B\" (locator('.s-crumb'))",
-              "source": "tests/demo.spec.ts:1313",
-              "duration": 139
+              "source": "tests/demo.spec.ts:1392",
+              "duration": 145
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing):not([inert])'))",
-              "source": "tests/demo.spec.ts:1314",
-              "duration": 110
+              "source": "tests/demo.spec.ts:1393",
+              "duration": 111
             }
           ]
         }
@@ -1592,7 +1583,7 @@
             {
               "type": "page",
               "message": "goto ./form/guard",
-              "source": "tests/demo.spec.ts:1321"
+              "source": "tests/demo.spec.ts:1400"
             },
             {
               "type": "check",
@@ -1603,13 +1594,13 @@
                 "width": 1045,
                 "height": 48
               },
-              "source": "tests/demo.spec.ts:1322",
-              "duration": 158
+              "source": "tests/demo.spec.ts:1401",
+              "duration": 166
             },
             {
               "type": "describe",
               "message": "Home is already in the stack, so the logo is a return; the top page parks",
-              "source": "tests/demo.spec.ts:1323"
+              "source": "tests/demo.spec.ts:1402"
             },
             {
               "type": "action",
@@ -1620,13 +1611,13 @@
                 "width": 24,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1324",
-              "duration": 148
+              "source": "tests/demo.spec.ts:1403",
+              "duration": 147
             }
           ]
         },
         {
-          "image": "8924a3ea789d9073",
+          "image": "1c6ac44c421ee560",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -1635,29 +1626,20 @@
             {
               "type": "assert",
               "message": "expect text \"Form\", \"Unsaved demo\" (locator('.s-crumb'))",
-              "source": "tests/demo.spec.ts:1326",
-              "duration": 118
-            }
-          ]
-        },
-        {
-          "image": "14bbba8d7fd67d01",
-          "viewport": {
-            "width": 1280,
-            "height": 900
-          },
-          "events": [
+              "source": "tests/demo.spec.ts:1405",
+              "duration": 122
+            },
             {
               "type": "assert",
               "message": "expect count 1",
               "box": {
-                "x": 162,
+                "x": 1382,
                 "y": 60,
                 "width": 1118,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1327",
-              "duration": 145
+              "source": "tests/demo.spec.ts:1406",
+              "duration": 146
             }
           ]
         },
@@ -1671,12 +1653,12 @@
             {
               "type": "describe",
               "message": "From a stack without home, the app's name opens it like a nav item would",
-              "source": "tests/demo.spec.ts:1329"
+              "source": "tests/demo.spec.ts:1408"
             },
             {
               "type": "page",
               "message": "goto ./icons/heart",
-              "source": "tests/demo.spec.ts:1330"
+              "source": "tests/demo.spec.ts:1409"
             },
             {
               "type": "check",
@@ -1687,14 +1669,14 @@
                 "width": 524,
                 "height": 59
               },
-              "source": "tests/demo.spec.ts:1331",
-              "duration": 176
+              "source": "tests/demo.spec.ts:1410",
+              "duration": 171
             },
             {
               "type": "assert",
               "message": "expect text \"Icons\", \"heart\" (locator('.s-crumb'))",
-              "source": "tests/demo.spec.ts:1332",
-              "duration": 131
+              "source": "tests/demo.spec.ts:1411",
+              "duration": 140
             },
             {
               "type": "action",
@@ -1705,13 +1687,13 @@
                 "width": 45,
                 "height": 21
               },
-              "source": "tests/demo.spec.ts:1333",
-              "duration": 148
+              "source": "tests/demo.spec.ts:1412",
+              "duration": 153
             }
           ]
         },
         {
-          "image": "b8955a6afa60424f",
+          "image": "1c36890b89fc79dc",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -1726,14 +1708,14 @@
                 "width": 1118,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1335",
-              "duration": 137
+              "source": "tests/demo.spec.ts:1414",
+              "duration": 151
             },
             {
               "type": "assert",
               "message": "expect count 0 (locator('.s-crumb'))",
-              "source": "tests/demo.spec.ts:1337",
-              "duration": 2122
+              "source": "tests/demo.spec.ts:1416",
+              "duration": 2115
             },
             {
               "type": "assert",
@@ -1744,8 +1726,8 @@
                 "width": 153,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:1338",
-              "duration": 163
+              "source": "tests/demo.spec.ts:1417",
+              "duration": 148
             }
           ]
         }
@@ -1783,7 +1765,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:307",
-              "duration": 201
+              "duration": 221
             },
             {
               "type": "action",
@@ -1837,7 +1819,7 @@
                 "height": 45
               },
               "source": "tests/demo.spec.ts:312",
-              "duration": 184
+              "duration": 186
             }
           ]
         },
@@ -1858,7 +1840,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:313",
-              "duration": 168
+              "duration": 176
             },
             {
               "type": "action",
@@ -1870,12 +1852,12 @@
                 "height": 45
               },
               "source": "tests/demo.spec.ts:314",
-              "duration": 164
+              "duration": 183
             }
           ]
         },
         {
-          "image": "5900fd668ad91a75",
+          "image": "e2c42a34f8b2fd9b",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -1891,7 +1873,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:315",
-              "duration": 159
+              "duration": 172
             }
           ]
         }
@@ -2003,7 +1985,7 @@
       "title": "form: fill out, submit, switch layout",
       "steps": [
         {
-          "image": "b8955a6afa60424f",
+          "image": "1c36890b89fc79dc",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -2029,12 +2011,12 @@
                 "height": 44
               },
               "source": "tests/demo.spec.ts:11",
-              "duration": 187
+              "duration": 198
             }
           ]
         },
         {
-          "image": "2522d4cd319ade18",
+          "image": "29b5525b54034e02",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -2055,7 +2037,7 @@
           ]
         },
         {
-          "image": "9a394a70132cba7a",
+          "image": "54e2bb2cc32b9860",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -2071,12 +2053,12 @@
                 "height": 44
               },
               "source": "tests/demo.spec.ts:13",
-              "duration": 140
+              "duration": 144
             }
           ]
         },
         {
-          "image": "9113cf45e146ab33",
+          "image": "13456af3df735456",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -2102,7 +2084,7 @@
           ]
         },
         {
-          "image": "1a3ae319c254fa30",
+          "image": "ce9cc3a5404c7fcf",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -2118,12 +2100,12 @@
                 "height": 38
               },
               "source": "tests/demo.spec.ts:17",
-              "duration": 151
+              "duration": 153
             }
           ]
         },
         {
-          "image": "160c0dab3e8f7dfc",
+          "image": "d7bdc493e158afca",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -2144,12 +2126,12 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:20",
-              "duration": 142
+              "duration": 145
             }
           ]
         },
         {
-          "image": "af75ae3f360ba32c",
+          "image": "5685d11b31be5f6a",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -2165,12 +2147,12 @@
                 "height": 38
               },
               "source": "tests/demo.spec.ts:21",
-              "duration": 154
+              "duration": 143
             }
           ]
         },
         {
-          "image": "a84edbda9226b5c4",
+          "image": "1d594be49324ec92",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -2191,7 +2173,7 @@
           ]
         },
         {
-          "image": "bae8227c71761278",
+          "image": "276e7a64b63123d2",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -2207,12 +2189,12 @@
                 "height": 18
               },
               "source": "tests/demo.spec.ts:24",
-              "duration": 155
+              "duration": 160
             }
           ]
         },
         {
-          "image": "1871570d5dbc30ef",
+          "image": "43dce5692112cb15",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -2233,12 +2215,12 @@
                 "height": 35
               },
               "source": "tests/demo.spec.ts:27",
-              "duration": 156
+              "duration": 162
             }
           ]
         },
         {
-          "image": "23733385d089fdbd",
+          "image": "c95eea74986f6faa",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -2254,7 +2236,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:28",
-              "duration": 155
+              "duration": 165
             },
             {
               "type": "assert",
@@ -2266,7 +2248,7 @@
                 "height": 371
               },
               "source": "tests/demo.spec.ts:29",
-              "duration": 137
+              "duration": 126
             },
             {
               "type": "action",
@@ -2278,12 +2260,12 @@
                 "height": 35
               },
               "source": "tests/demo.spec.ts:30",
-              "duration": 133
+              "duration": 148
             }
           ]
         },
         {
-          "image": "3662c5aa354ac79b",
+          "image": "8b5a6f0df5365a91",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -2304,7 +2286,7 @@
                 "height": 44
               },
               "source": "tests/demo.spec.ts:33",
-              "duration": 142
+              "duration": 157
             }
           ]
         }
@@ -2315,7 +2297,7 @@
       "title": "header: display settings live in a configure popover",
       "steps": [
         {
-          "image": "b8955a6afa60424f",
+          "image": "1c36890b89fc79dc",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -2336,7 +2318,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:187",
-              "duration": 171
+              "duration": 193
             },
             {
               "type": "action",
@@ -2348,12 +2330,12 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:190",
-              "duration": 152
+              "duration": 145
             }
           ]
         },
         {
-          "image": "fde931ce38828aa8",
+          "image": "cf12842aff2810dd",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -2369,7 +2351,7 @@
                 "height": 22
               },
               "source": "tests/demo.spec.ts:191",
-              "duration": 154
+              "duration": 147
             },
             {
               "type": "check",
@@ -2381,7 +2363,7 @@
                 "height": 22
               },
               "source": "tests/demo.spec.ts:192",
-              "duration": 140
+              "duration": 145
             },
             {
               "type": "check",
@@ -2393,7 +2375,7 @@
                 "height": 22
               },
               "source": "tests/demo.spec.ts:193",
-              "duration": 151
+              "duration": 157
             },
             {
               "type": "action",
@@ -2405,7 +2387,7 @@
                 "height": 28
               },
               "source": "tests/demo.spec.ts:197",
-              "duration": 145
+              "duration": 143
             }
           ]
         }
@@ -2517,7 +2499,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:243",
-              "duration": 196
+              "duration": 204
             }
           ]
         },
@@ -2548,7 +2530,7 @@
                 "height": 33
               },
               "source": "tests/demo.spec.ts:249",
-              "duration": 128
+              "duration": 129
             }
           ]
         },
@@ -2607,7 +2589,7 @@
                 "height": 20
               },
               "source": "tests/demo.spec.ts:254",
-              "duration": 112
+              "duration": 94
             }
           ]
         },
@@ -2628,12 +2610,12 @@
                 "height": 36
               },
               "source": "tests/demo.spec.ts:255",
-              "duration": 120
+              "duration": 117
             }
           ]
         },
         {
-          "image": "9eb82e8803bce7b3",
+          "image": "ef2530980b38be39",
           "viewport": {
             "width": 480,
             "height": 800
@@ -2654,12 +2636,12 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:257",
-              "duration": 114
+              "duration": 113
             }
           ]
         },
         {
-          "image": "3b10fb322f994f36",
+          "image": "a41bdd2cb75d2eed",
           "viewport": {
             "width": 480,
             "height": 800
@@ -2675,12 +2657,12 @@
                 "height": 48
               },
               "source": "tests/demo.spec.ts:261",
-              "duration": 107
+              "duration": 105
             }
           ]
         },
         {
-          "image": "9b39c2758828dca8",
+          "image": "3f7fceb69738765f",
           "viewport": {
             "width": 480,
             "height": 800
@@ -2696,12 +2678,12 @@
                 "height": 48
               },
               "source": "tests/demo.spec.ts:262",
-              "duration": 117
+              "duration": 118
             }
           ]
         },
         {
-          "image": "2d0b5e6a9a74e367",
+          "image": "bc1d46a6488a05f7",
           "viewport": {
             "width": 480,
             "height": 800
@@ -2722,7 +2704,7 @@
                 "height": 214
               },
               "source": "tests/demo.spec.ts:266",
-              "duration": 135
+              "duration": 139
             },
             {
               "type": "assert",
@@ -2734,7 +2716,7 @@
                 "height": 105
               },
               "source": "tests/demo.spec.ts:267",
-              "duration": 111
+              "duration": 127
             },
             {
               "type": "assert",
@@ -2746,7 +2728,7 @@
                 "height": 33
               },
               "source": "tests/demo.spec.ts:268",
-              "duration": 115
+              "duration": 134
             }
           ]
         }
@@ -2984,7 +2966,7 @@
       "title": "menu: dropdown autofocuses its first focusable control",
       "steps": [
         {
-          "image": "b8955a6afa60424f",
+          "image": "1c36890b89fc79dc",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -3017,12 +2999,12 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:205",
-              "duration": 146
+              "duration": 145
             }
           ]
         },
         {
-          "image": "fde931ce38828aa8",
+          "image": "cf12842aff2810dd",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -3038,7 +3020,7 @@
                 "height": 22
               },
               "source": "tests/demo.spec.ts:206",
-              "duration": 146
+              "duration": 141
             },
             {
               "type": "assert",
@@ -3050,7 +3032,7 @@
                 "height": 28
               },
               "source": "tests/demo.spec.ts:209",
-              "duration": 144
+              "duration": 153
             }
           ]
         }
@@ -3061,7 +3043,7 @@
       "title": "nav: custom rows close the nav — on navigating, and on asking",
       "steps": [
         {
-          "image": "2411cd2789a61fdd",
+          "image": "be1def033f106db6",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -3070,7 +3052,7 @@
             {
               "type": "page",
               "message": "goto ./panels",
-              "source": "tests/demo.spec.ts:1067"
+              "source": "tests/demo.spec.ts:1146"
             },
             {
               "type": "check",
@@ -3081,8 +3063,8 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:1068",
-              "duration": 183
+              "source": "tests/demo.spec.ts:1147",
+              "duration": 169
             },
             {
               "type": "action",
@@ -3093,8 +3075,8 @@
                 "width": 225,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1069",
-              "duration": 166
+              "source": "tests/demo.spec.ts:1148",
+              "duration": 149
             }
           ]
         },
@@ -3114,13 +3096,13 @@
                 "width": 1118,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1070",
-              "duration": 150
+              "source": "tests/demo.spec.ts:1149",
+              "duration": 140
             },
             {
               "type": "describe",
               "message": "Add the Scratch nav row: a custom slot the shell can't see into",
-              "source": "tests/demo.spec.ts:1071"
+              "source": "tests/demo.spec.ts:1150"
             },
             {
               "type": "action",
@@ -3131,13 +3113,13 @@
                 "width": 18,
                 "height": 18
               },
-              "source": "tests/demo.spec.ts:1072",
-              "duration": 146
+              "source": "tests/demo.spec.ts:1151",
+              "duration": 148
             }
           ]
         },
         {
-          "image": "ec454a0d94a2cf5f",
+          "image": "2182967c67db495f",
           "viewport": {
             "width": 480,
             "height": 800
@@ -3146,7 +3128,7 @@
             {
               "type": "page",
               "message": "setViewportSize 480×800",
-              "source": "tests/demo.spec.ts:1080"
+              "source": "tests/demo.spec.ts:1159"
             },
             {
               "type": "action",
@@ -3157,8 +3139,8 @@
                 "width": 32,
                 "height": 32
               },
-              "source": "tests/demo.spec.ts:1082",
-              "duration": 135
+              "source": "tests/demo.spec.ts:1161",
+              "duration": 126
             }
           ]
         },
@@ -3178,13 +3160,13 @@
                 "width": 480,
                 "height": 706
               },
-              "source": "tests/demo.spec.ts:1083",
-              "duration": 103
+              "source": "tests/demo.spec.ts:1162",
+              "duration": 100
             },
             {
               "type": "describe",
               "message": "Its button navigates nowhere, so it dismisses the nav itself (S.closeNav)",
-              "source": "tests/demo.spec.ts:1085"
+              "source": "tests/demo.spec.ts:1164"
             },
             {
               "type": "action",
@@ -3195,13 +3177,13 @@
                 "width": 48,
                 "height": 26
               },
-              "source": "tests/demo.spec.ts:1086",
-              "duration": 92
+              "source": "tests/demo.spec.ts:1165",
+              "duration": 97
             }
           ]
         },
         {
-          "image": "ec454a0d94a2cf5f",
+          "image": "923dd10c35e79be8",
           "viewport": {
             "width": 480,
             "height": 800
@@ -3210,13 +3192,13 @@
             {
               "type": "assert",
               "message": "expect count 0 (locator('.s-nav-page'))",
-              "source": "tests/demo.spec.ts:1087",
-              "duration": 2068
+              "source": "tests/demo.spec.ts:1166",
+              "duration": 2061
             },
             {
               "type": "describe",
               "message": "Its link is an ordinary link — a navigation sweeps the nav away by itself",
-              "source": "tests/demo.spec.ts:1090"
+              "source": "tests/demo.spec.ts:1169"
             },
             {
               "type": "action",
@@ -3227,8 +3209,8 @@
                 "width": 32,
                 "height": 32
               },
-              "source": "tests/demo.spec.ts:1091",
-              "duration": 111
+              "source": "tests/demo.spec.ts:1170",
+              "duration": 98
             }
           ]
         },
@@ -3248,8 +3230,8 @@
                 "width": 480,
                 "height": 706
               },
-              "source": "tests/demo.spec.ts:1092",
-              "duration": 101
+              "source": "tests/demo.spec.ts:1171",
+              "duration": 103
             },
             {
               "type": "action",
@@ -3260,8 +3242,8 @@
                 "width": 406,
                 "height": 48
               },
-              "source": "tests/demo.spec.ts:1093",
-              "duration": 100
+              "source": "tests/demo.spec.ts:1172",
+              "duration": 101
             }
           ]
         },
@@ -3275,8 +3257,8 @@
             {
               "type": "assert",
               "message": "expect count 0 (locator('.s-nav-page'))",
-              "source": "tests/demo.spec.ts:1095",
-              "duration": 2075
+              "source": "tests/demo.spec.ts:1174",
+              "duration": 2069
             }
           ]
         }
@@ -3287,7 +3269,7 @@
       "title": "nav: Escape from the content moves focus to the current sidebar item",
       "steps": [
         {
-          "image": "b8955a6afa60424f",
+          "image": "1c36890b89fc79dc",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -3308,7 +3290,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:320",
-              "duration": 182
+              "duration": 188
             },
             {
               "type": "assert",
@@ -3320,7 +3302,7 @@
                 "height": 45
               },
               "source": "tests/demo.spec.ts:324",
-              "duration": 162
+              "duration": 144
             }
           ]
         }
@@ -3331,7 +3313,7 @@
       "title": "nav: Escape opens the full-page nav and Enter on an item closes it",
       "steps": [
         {
-          "image": "b211984f0c4f6fea",
+          "image": "3acb823bf8927640",
           "viewport": {
             "width": 480,
             "height": 800
@@ -3357,7 +3339,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:350",
-              "duration": 128
+              "duration": 121
             }
           ]
         },
@@ -3378,7 +3360,7 @@
                 "height": 48
               },
               "source": "tests/demo.spec.ts:354",
-              "duration": 118
+              "duration": 113
             }
           ]
         },
@@ -3399,7 +3381,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:360",
-              "duration": 129
+              "duration": 116
             },
             {
               "type": "assert",
@@ -3411,7 +3393,7 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:361",
-              "duration": 110
+              "duration": 117
             }
           ]
         }
@@ -3466,7 +3448,7 @@
       "title": "nav: narrow screens get a full-page nav instead of a dropdown",
       "steps": [
         {
-          "image": "b211984f0c4f6fea",
+          "image": "3acb823bf8927640",
           "viewport": {
             "width": 480,
             "height": 800
@@ -3492,7 +3474,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:331",
-              "duration": 138
+              "duration": 137
             },
             {
               "type": "describe",
@@ -3509,7 +3491,7 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:334",
-              "duration": 103
+              "duration": 113
             }
           ]
         },
@@ -3530,7 +3512,7 @@
                 "height": 706
               },
               "source": "tests/demo.spec.ts:335",
-              "duration": 101
+              "duration": 106
             },
             {
               "type": "describe",
@@ -3547,7 +3529,7 @@
                 "height": 48
               },
               "source": "tests/demo.spec.ts:338",
-              "duration": 116
+              "duration": 115
             }
           ]
         },
@@ -3568,7 +3550,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:339",
-              "duration": 118
+              "duration": 128
             },
             {
               "type": "describe",
@@ -3585,7 +3567,7 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:342",
-              "duration": 123
+              "duration": 104
             }
           ]
         },
@@ -3606,7 +3588,7 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:343",
-              "duration": 102
+              "duration": 107
             }
           ]
         },
@@ -3627,7 +3609,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:344",
-              "duration": 108
+              "duration": 110
             }
           ]
         }
@@ -3664,7 +3646,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:400",
-              "duration": 124
+              "duration": 137
             }
           ]
         },
@@ -3695,12 +3677,12 @@
                 "height": 37
               },
               "source": "tests/demo.spec.ts:416",
-              "duration": 107
+              "duration": 108
             }
           ]
         },
         {
-          "image": "a632293d9349ed80",
+          "image": "566bf9840ae68384",
           "viewport": {
             "width": 900,
             "height": 320
@@ -3716,7 +3698,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:417",
-              "duration": 121
+              "duration": 120
             },
             {
               "type": "assert",
@@ -3728,7 +3710,7 @@
                 "height": 45
               },
               "source": "tests/demo.spec.ts:420",
-              "duration": 113
+              "duration": 114
             },
             {
               "type": "describe",
@@ -3745,12 +3727,12 @@
                 "height": 21
               },
               "source": "tests/demo.spec.ts:425",
-              "duration": 117
+              "duration": 94
             }
           ]
         },
         {
-          "image": "aad5460dca106861",
+          "image": "8951310609cf3840",
           "viewport": {
             "width": 900,
             "height": 320
@@ -3782,7 +3764,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:431",
-              "duration": 132
+              "duration": 145
             }
           ]
         }
@@ -3793,7 +3775,7 @@
       "title": "nav: the full-page nav reopens right after closing",
       "steps": [
         {
-          "image": "b211984f0c4f6fea",
+          "image": "3acb823bf8927640",
           "viewport": {
             "width": 480,
             "height": 800
@@ -3819,7 +3801,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:367",
-              "duration": 124
+              "duration": 129
             }
           ]
         },
@@ -3840,12 +3822,12 @@
                 "height": 706
               },
               "source": "tests/demo.spec.ts:373",
-              "duration": 98
+              "duration": 109
             }
           ]
         },
         {
-          "image": "efddfe538df7695b",
+          "image": "e9808d25ab78a421",
           "viewport": {
             "width": 480,
             "height": 800
@@ -3861,7 +3843,7 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:375",
-              "duration": 120
+              "duration": 106
             }
           ]
         },
@@ -3882,7 +3864,7 @@
                 "height": 706
               },
               "source": "tests/demo.spec.ts:377",
-              "duration": 107
+              "duration": 118
             }
           ]
         }
@@ -4660,10 +4642,10 @@
     },
     {
       "file": "tests/demo.spec.ts",
-      "title": "panels: a closing panel is torn down at once, and only its element lingers",
+      "title": "panels: $panel.open builds on its own panel, not the current one",
       "steps": [
         {
-          "image": "2411cd2789a61fdd",
+          "image": "be1def033f106db6",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -4672,7 +4654,7 @@
             {
               "type": "page",
               "message": "goto ./panels",
-              "source": "tests/demo.spec.ts:979"
+              "source": "tests/demo.spec.ts:861"
             },
             {
               "type": "check",
@@ -4683,8 +4665,200 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:980",
-              "duration": 183
+              "source": "tests/demo.spec.ts:862",
+              "duration": 169
+            },
+            {
+              "type": "action",
+              "message": "click",
+              "box": {
+                "x": 199,
+                "y": 283,
+                "width": 91,
+                "height": 24
+              },
+              "source": "tests/demo.spec.ts:863",
+              "duration": 150
+            }
+          ]
+        },
+        {
+          "image": "d494f806acba383d",
+          "viewport": {
+            "width": 1280,
+            "height": 900
+          },
+          "events": [
+            {
+              "type": "check",
+              "message": "waitFor",
+              "box": {
+                "x": 721,
+                "y": 60,
+                "width": 559,
+                "height": 797
+              },
+              "source": "tests/demo.spec.ts:864",
+              "duration": 156
+            },
+            {
+              "type": "assert",
+              "message": "expect text \"Panels\", \"Small A\" (locator('.s-crumb'))",
+              "source": "tests/demo.spec.ts:865",
+              "duration": 117
+            },
+            {
+              "type": "describe",
+              "message": "An open() from the playground panel replaces Small A instead of stacking on it",
+              "source": "tests/demo.spec.ts:867"
+            },
+            {
+              "type": "action",
+              "message": "click",
+              "box": {
+                "x": 370,
+                "y": 495,
+                "width": 134,
+                "height": 37
+              },
+              "source": "tests/demo.spec.ts:871",
+              "duration": 165
+            }
+          ]
+        },
+        {
+          "image": "6eaeccb47ee6f743",
+          "viewport": {
+            "width": 1280,
+            "height": 900
+          },
+          "events": [
+            {
+              "type": "check",
+              "message": "waitFor",
+              "box": {
+                "x": 721,
+                "y": 60,
+                "width": 559,
+                "height": 797
+              },
+              "source": "tests/demo.spec.ts:872",
+              "duration": 162
+            },
+            {
+              "type": "assert",
+              "message": "expect text \"Panels\", \"Small B\" (locator('.s-crumb'))",
+              "source": "tests/demo.spec.ts:873",
+              "duration": 115
+            },
+            {
+              "type": "describe",
+              "message": "stack.pushPanel() builds on the current panel instead",
+              "source": "tests/demo.spec.ts:875"
+            },
+            {
+              "type": "action",
+              "message": "click",
+              "box": {
+                "x": 199,
+                "y": 283,
+                "width": 91,
+                "height": 24
+              },
+              "source": "tests/demo.spec.ts:878",
+              "duration": 149
+            }
+          ]
+        },
+        {
+          "image": "d494f806acba383d",
+          "viewport": {
+            "width": 1280,
+            "height": 900
+          },
+          "events": [
+            {
+              "type": "check",
+              "message": "waitFor",
+              "box": {
+                "x": 721,
+                "y": 60,
+                "width": 559,
+                "height": 797
+              },
+              "source": "tests/demo.spec.ts:879",
+              "duration": 155
+            },
+            {
+              "type": "action",
+              "message": "click",
+              "box": {
+                "x": 199,
+                "y": 495,
+                "width": 162,
+                "height": 37
+              },
+              "source": "tests/demo.spec.ts:883",
+              "duration": 158
+            }
+          ]
+        },
+        {
+          "image": "522c7e5bbc4f85e4",
+          "viewport": {
+            "width": 1280,
+            "height": 900
+          },
+          "events": [
+            {
+              "type": "check",
+              "message": "waitFor",
+              "box": {
+                "x": 721,
+                "y": 60,
+                "width": 559,
+                "height": 797
+              },
+              "source": "tests/demo.spec.ts:884",
+              "duration": 156
+            },
+            {
+              "type": "assert",
+              "message": "expect text \"Panels\", \"Small A\", \"Small B\" (locator('.s-crumb'))",
+              "source": "tests/demo.spec.ts:885",
+              "duration": 106
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "tests/demo.spec.ts",
+      "title": "panels: a closing panel is torn down at once, and only its element lingers",
+      "steps": [
+        {
+          "image": "be1def033f106db6",
+          "viewport": {
+            "width": 1280,
+            "height": 900
+          },
+          "events": [
+            {
+              "type": "page",
+              "message": "goto ./panels",
+              "source": "tests/demo.spec.ts:1058"
+            },
+            {
+              "type": "check",
+              "message": "waitFor",
+              "box": {
+                "x": 181,
+                "y": 79,
+                "width": 522,
+                "height": 43
+              },
+              "source": "tests/demo.spec.ts:1059",
+              "duration": 171
             },
             {
               "type": "action",
@@ -4695,8 +4869,8 @@
                 "width": 225,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:981",
-              "duration": 150
+              "source": "tests/demo.spec.ts:1060",
+              "duration": 148
             }
           ]
         },
@@ -4716,13 +4890,13 @@
                 "width": 1118,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:982",
-              "duration": 133
+              "source": "tests/demo.spec.ts:1061",
+              "duration": 137
             }
           ]
         },
         {
-          "image": "a3adc8292f416687",
+          "image": "89eebb8fb836a738",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -4733,12 +4907,12 @@
               "message": "expect visible",
               "box": {
                 "x": 219,
-                "y": 834,
+                "y": 447,
                 "width": 466,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:987",
-              "duration": 192
+              "source": "tests/demo.spec.ts:1066",
+              "duration": 186
             }
           ]
         }
@@ -4749,7 +4923,7 @@
       "title": "panels: a cold flat URL gets the ancestors the app names for it",
       "steps": [
         {
-          "image": "67f56d5e213c0c5e",
+          "image": "1684da1c58df8e7a",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -4758,7 +4932,7 @@
             {
               "type": "page",
               "message": "goto ./thread/7",
-              "source": "tests/demo.spec.ts:1032"
+              "source": "tests/demo.spec.ts:1111"
             },
             {
               "type": "check",
@@ -4769,14 +4943,14 @@
                 "width": 524,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1033",
-              "duration": 192
+              "source": "tests/demo.spec.ts:1112",
+              "duration": 189
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:1034",
-              "duration": 143
+              "source": "tests/demo.spec.ts:1113",
+              "duration": 111
             },
             {
               "type": "assert",
@@ -4787,13 +4961,13 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1035",
-              "duration": 149
+              "source": "tests/demo.spec.ts:1114",
+              "duration": 147
             }
           ]
         },
         {
-          "image": "2411cd2789a61fdd",
+          "image": "be1def033f106db6",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -4802,7 +4976,7 @@
             {
               "type": "describe",
               "message": "So Escape has somewhere to go, as if you had walked here",
-              "source": "tests/demo.spec.ts:1037"
+              "source": "tests/demo.spec.ts:1116"
             },
             {
               "type": "assert",
@@ -4813,30 +4987,30 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1040",
-              "duration": 149
+              "source": "tests/demo.spec.ts:1119",
+              "duration": 138
             },
             {
               "type": "describe",
               "message": "openPanelStack() builds the same arrangement from code",
-              "source": "tests/demo.spec.ts:1042"
+              "source": "tests/demo.spec.ts:1121"
             },
             {
               "type": "action",
               "message": "click",
               "box": {
-                "x": 370,
-                "y": 495,
+                "x": 199,
+                "y": 541,
                 "width": 202,
                 "height": 37
               },
-              "source": "tests/demo.spec.ts:1043",
-              "duration": 149
+              "source": "tests/demo.spec.ts:1122",
+              "duration": 129
             }
           ]
         },
         {
-          "image": "5d56c60d8eaea390",
+          "image": "92efdacda4e8e551",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -4851,14 +5025,14 @@
                 "width": 524,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1044",
-              "duration": 157
+              "source": "tests/demo.spec.ts:1123",
+              "duration": 163
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:1046",
-              "duration": 106
+              "source": "tests/demo.spec.ts:1125",
+              "duration": 104
             }
           ]
         }
@@ -4869,7 +5043,7 @@
       "title": "panels: a data-panel=open link gives its target its own stack",
       "steps": [
         {
-          "image": "d51b40d4ec35ecd0",
+          "image": "4d8736e12b8d250c",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -4878,7 +5052,7 @@
             {
               "type": "page",
               "message": "goto ./panels/item/42",
-              "source": "tests/demo.spec.ts:1050"
+              "source": "tests/demo.spec.ts:1129"
             },
             {
               "type": "check",
@@ -4889,14 +5063,14 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1051",
+              "source": "tests/demo.spec.ts:1130",
               "duration": 191
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:1052",
-              "duration": 143
+              "source": "tests/demo.spec.ts:1131",
+              "duration": 112
             },
             {
               "type": "action",
@@ -4907,13 +5081,13 @@
                 "width": 223,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1059",
-              "duration": 151
+              "source": "tests/demo.spec.ts:1138",
+              "duration": 133
             }
           ]
         },
         {
-          "image": "2f0d7c55cce39fc4",
+          "image": "d9a56926ecc6f279",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -4928,20 +5102,20 @@
                 "width": 524,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1061",
-              "duration": 172
+              "source": "tests/demo.spec.ts:1140",
+              "duration": 165
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:1062",
-              "duration": 114
+              "source": "tests/demo.spec.ts:1141",
+              "duration": 107
             },
             {
               "type": "assert",
               "message": "expect text \"Panels\", \"Thread 8\" (locator('.s-crumb'))",
-              "source": "tests/demo.spec.ts:1063",
-              "duration": 109
+              "source": "tests/demo.spec.ts:1142",
+              "duration": 130
             }
           ]
         }
@@ -4961,7 +5135,7 @@
             {
               "type": "console",
               "consoleType": "debug",
-              "message": "Aberdeen queue took 11ms",
+              "message": "Aberdeen queue took 10ms",
               "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
             },
             {
@@ -4979,7 +5153,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:542",
-              "duration": 206
+              "duration": 210
             },
             {
               "type": "check",
@@ -4991,13 +5165,13 @@
                 "height": 59
               },
               "source": "tests/demo.spec.ts:543",
-              "duration": 168
+              "duration": 182
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
               "source": "tests/demo.spec.ts:544",
-              "duration": 163
+              "duration": 133
             },
             {
               "type": "describe",
@@ -5014,7 +5188,7 @@
                 "height": 50
               },
               "source": "tests/demo.spec.ts:549",
-              "duration": 161
+              "duration": 176
             }
           ]
         },
@@ -5035,13 +5209,13 @@
                 "height": 59
               },
               "source": "tests/demo.spec.ts:551",
-              "duration": 172
+              "duration": 197
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
               "source": "tests/demo.spec.ts:552",
-              "duration": 131
+              "duration": 149
             },
             {
               "type": "describe",
@@ -5058,7 +5232,7 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:559",
-              "duration": 152
+              "duration": 173
             }
           ]
         },
@@ -5079,7 +5253,7 @@
                 "height": 59
               },
               "source": "tests/demo.spec.ts:560",
-              "duration": 158
+              "duration": 159
             }
           ]
         },
@@ -5094,8 +5268,17 @@
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
               "source": "tests/demo.spec.ts:561",
-              "duration": 113
-            },
+              "duration": 117
+            }
+          ]
+        },
+        {
+          "image": "9585d22ea1f6ab6c",
+          "viewport": {
+            "width": 1280,
+            "height": 900
+          },
+          "events": [
             {
               "type": "describe",
               "message": "A reload reproduces both columns from the history entry",
@@ -5116,7 +5299,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:565",
-              "duration": 176
+              "duration": 186
             },
             {
               "type": "check",
@@ -5128,13 +5311,13 @@
                 "height": 59
               },
               "source": "tests/demo.spec.ts:566",
-              "duration": 148
+              "duration": 143
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
               "source": "tests/demo.spec.ts:567",
-              "duration": 133
+              "duration": 122
             }
           ]
         }
@@ -5145,7 +5328,7 @@
       "title": "panels: a large panel grows the page to the window's edges",
       "steps": [
         {
-          "image": "470f51d651996e2d",
+          "image": "00c959199f349a97",
           "viewport": {
             "width": 1800,
             "height": 900
@@ -5154,12 +5337,12 @@
             {
               "type": "page",
               "message": "setViewportSize 1800×900",
-              "source": "tests/demo.spec.ts:887"
+              "source": "tests/demo.spec.ts:915"
             },
             {
               "type": "page",
               "message": "goto ./panels",
-              "source": "tests/demo.spec.ts:888"
+              "source": "tests/demo.spec.ts:916"
             },
             {
               "type": "check",
@@ -5170,13 +5353,13 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:889",
-              "duration": 207
+              "source": "tests/demo.spec.ts:917",
+              "duration": 208
             },
             {
               "type": "describe",
               "message": "Push a large panel: the columns stretch to the screen edges — the bars hold at 1280",
-              "source": "tests/demo.spec.ts:895"
+              "source": "tests/demo.spec.ts:923"
             },
             {
               "type": "action",
@@ -5187,8 +5370,8 @@
                 "width": 130,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:896",
-              "duration": 173
+              "source": "tests/demo.spec.ts:924",
+              "duration": 167
             }
           ]
         },
@@ -5208,13 +5391,13 @@
                 "width": 1638,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:897",
-              "duration": 152
+              "source": "tests/demo.spec.ts:925",
+              "duration": 155
             },
             {
               "type": "describe",
               "message": "Leave it: the page settles back to the standard width",
-              "source": "tests/demo.spec.ts:900"
+              "source": "tests/demo.spec.ts:928"
             },
             {
               "type": "action",
@@ -5225,13 +5408,13 @@
                 "width": 40,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:901",
-              "duration": 152
+              "source": "tests/demo.spec.ts:929",
+              "duration": 144
             }
           ]
         },
         {
-          "image": "60ad348c22ff745e",
+          "image": "cc856bb5041b6d8f",
           "viewport": {
             "width": 1800,
             "height": 900
@@ -5246,8 +5429,8 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:902",
-              "duration": 198
+              "source": "tests/demo.spec.ts:930",
+              "duration": 192
             }
           ]
         }
@@ -5279,13 +5462,13 @@
                 "height": 48
               },
               "source": "tests/demo.spec.ts:574",
-              "duration": 170
+              "duration": 167
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
               "source": "tests/demo.spec.ts:575",
-              "duration": 108
+              "duration": 106
             },
             {
               "type": "describe",
@@ -5307,7 +5490,7 @@
           ]
         },
         {
-          "image": "0fcc2b1cde9b3a27",
+          "image": "fdff259473abd02f",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -5323,13 +5506,13 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:581",
-              "duration": 179
+              "duration": 187
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
               "source": "tests/demo.spec.ts:582",
-              "duration": 113
+              "duration": 109
             },
             {
               "type": "assert",
@@ -5341,28 +5524,19 @@
                 "height": 797
               },
               "source": "tests/demo.spec.ts:583",
-              "duration": 147
-            }
-          ]
-        },
-        {
-          "image": "8740392c3d8fb135",
-          "viewport": {
-            "width": 1280,
-            "height": 900
-          },
-          "events": [
+              "duration": 136
+            },
             {
               "type": "assert",
               "message": "expect count 1",
               "box": {
-                "x": 162,
+                "x": 1382,
                 "y": 60,
                 "width": 1118,
                 "height": 797
               },
               "source": "tests/demo.spec.ts:584",
-              "duration": 135
+              "duration": 148
             },
             {
               "type": "describe",
@@ -5379,7 +5553,7 @@
                 "height": 20
               },
               "source": "tests/demo.spec.ts:589",
-              "duration": 109
+              "duration": 129
             }
           ]
         },
@@ -5394,13 +5568,13 @@
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
               "source": "tests/demo.spec.ts:591",
-              "duration": 115
+              "duration": 105
             },
             {
               "type": "assert",
               "message": "expect count 0 (locator('.s-panel-parked'))",
               "source": "tests/demo.spec.ts:592",
-              "duration": 2101
+              "duration": 2115
             }
           ]
         }
@@ -5411,7 +5585,7 @@
       "title": "panels: a nav item arriving redraws the sidebar, not the columns",
       "steps": [
         {
-          "image": "2411cd2789a61fdd",
+          "image": "be1def033f106db6",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -5420,7 +5594,7 @@
             {
               "type": "page",
               "message": "goto ./panels",
-              "source": "tests/demo.spec.ts:991"
+              "source": "tests/demo.spec.ts:1070"
             },
             {
               "type": "check",
@@ -5431,8 +5605,8 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:992",
-              "duration": 175
+              "source": "tests/demo.spec.ts:1071",
+              "duration": 172
             },
             {
               "type": "action",
@@ -5443,8 +5617,8 @@
                 "width": 225,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:993",
-              "duration": 167
+              "source": "tests/demo.spec.ts:1072",
+              "duration": 149
             }
           ]
         },
@@ -5464,8 +5638,8 @@
                 "width": 1118,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:994",
-              "duration": 139
+              "source": "tests/demo.spec.ts:1073",
+              "duration": 151
             },
             {
               "type": "action",
@@ -5476,8 +5650,8 @@
                 "width": 18,
                 "height": 18
               },
-              "source": "tests/demo.spec.ts:998",
-              "duration": 142
+              "source": "tests/demo.spec.ts:1077",
+              "duration": 133
             }
           ]
         },
@@ -5497,13 +5671,13 @@
                 "width": 70,
                 "height": 33
               },
-              "source": "tests/demo.spec.ts:999",
+              "source": "tests/demo.spec.ts:1078",
               "duration": 142
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:1000",
+              "source": "tests/demo.spec.ts:1079",
               "duration": 111
             },
             {
@@ -5515,8 +5689,8 @@
                 "width": 17,
                 "height": 21
               },
-              "source": "tests/demo.spec.ts:1001",
-              "duration": 150
+              "source": "tests/demo.spec.ts:1080",
+              "duration": 148
             },
             {
               "type": "action",
@@ -5527,8 +5701,8 @@
                 "width": 18,
                 "height": 18
               },
-              "source": "tests/demo.spec.ts:1003",
-              "duration": 134
+              "source": "tests/demo.spec.ts:1082",
+              "duration": 135
             }
           ]
         },
@@ -5542,8 +5716,8 @@
             {
               "type": "assert",
               "message": "expect count 0 (locator('.s-nav-panel').getByRole('link', { name: 'Scratch' }))",
-              "source": "tests/demo.spec.ts:1004",
-              "duration": 2112
+              "source": "tests/demo.spec.ts:1083",
+              "duration": 2115
             },
             {
               "type": "assert",
@@ -5554,8 +5728,8 @@
                 "width": 17,
                 "height": 21
               },
-              "source": "tests/demo.spec.ts:1005",
-              "duration": 163
+              "source": "tests/demo.spec.ts:1084",
+              "duration": 145
             }
           ]
         }
@@ -5566,7 +5740,7 @@
       "title": "panels: a panel closes itself while another column sits on top of it",
       "steps": [
         {
-          "image": "2411cd2789a61fdd",
+          "image": "be1def033f106db6",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -5575,7 +5749,7 @@
             {
               "type": "page",
               "message": "goto ./panels",
-              "source": "tests/demo.spec.ts:857"
+              "source": "tests/demo.spec.ts:936"
             },
             {
               "type": "check",
@@ -5586,13 +5760,13 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:858",
-              "duration": 179
+              "source": "tests/demo.spec.ts:937",
+              "duration": 177
             },
             {
               "type": "describe",
               "message": "Stack playground → A → B; only two halves fit at a time",
-              "source": "tests/demo.spec.ts:860"
+              "source": "tests/demo.spec.ts:939"
             },
             {
               "type": "action",
@@ -5603,13 +5777,13 @@
                 "width": 91,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:861",
-              "duration": 163
+              "source": "tests/demo.spec.ts:940",
+              "duration": 154
             }
           ]
         },
         {
-          "image": "7197ab5c4611ce88",
+          "image": "d494f806acba383d",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -5624,8 +5798,8 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:862",
-              "duration": 157
+              "source": "tests/demo.spec.ts:941",
+              "duration": 162
             },
             {
               "type": "action",
@@ -5636,8 +5810,8 @@
                 "width": 92,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:863",
-              "duration": 147
+              "source": "tests/demo.spec.ts:942",
+              "duration": 151
             }
           ]
         },
@@ -5657,25 +5831,25 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:864",
-              "duration": 146
+              "source": "tests/demo.spec.ts:943",
+              "duration": 145
             },
             {
               "type": "assert",
               "message": "expect count 3 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:865",
-              "duration": 114
+              "source": "tests/demo.spec.ts:944",
+              "duration": 130
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing):not([inert])'))",
-              "source": "tests/demo.spec.ts:866",
-              "duration": 119
+              "source": "tests/demo.spec.ts:945",
+              "duration": 102
             },
             {
               "type": "describe",
               "message": "Delete A — not the top page — and it is spliced out from under B",
-              "source": "tests/demo.spec.ts:868"
+              "source": "tests/demo.spec.ts:947"
             },
             {
               "type": "action",
@@ -5686,13 +5860,13 @@
                 "width": 32,
                 "height": 32
               },
-              "source": "tests/demo.spec.ts:872",
-              "duration": 146
+              "source": "tests/demo.spec.ts:951",
+              "duration": 136
             }
           ]
         },
         {
-          "image": "331624af847130a4",
+          "image": "4eb9a126d5aa7659",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -5707,14 +5881,14 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:874",
-              "duration": 193
+              "source": "tests/demo.spec.ts:953",
+              "duration": 202
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing):not([inert])'))",
-              "source": "tests/demo.spec.ts:875",
-              "duration": 110
+              "source": "tests/demo.spec.ts:954",
+              "duration": 128
             }
           ]
         },
@@ -5728,12 +5902,12 @@
             {
               "type": "describe",
               "message": "The splice is a history entry, so browser back undoes it",
-              "source": "tests/demo.spec.ts:879"
+              "source": "tests/demo.spec.ts:958"
             },
             {
               "type": "page",
               "message": "goBack",
-              "source": "tests/demo.spec.ts:880"
+              "source": "tests/demo.spec.ts:959"
             },
             {
               "type": "check",
@@ -5744,13 +5918,13 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:881",
-              "duration": 176
+              "source": "tests/demo.spec.ts:960",
+              "duration": 166
             },
             {
               "type": "assert",
               "message": "expect count 3 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:882",
+              "source": "tests/demo.spec.ts:961",
               "duration": 111
             }
           ]
@@ -5762,7 +5936,7 @@
       "title": "panels: a panel is sized before it draws, and resizes without redrawing",
       "steps": [
         {
-          "image": "2411cd2789a61fdd",
+          "image": "be1def033f106db6",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -5771,7 +5945,7 @@
             {
               "type": "page",
               "message": "goto ./panels",
-              "source": "tests/demo.spec.ts:957"
+              "source": "tests/demo.spec.ts:1036"
             },
             {
               "type": "check",
@@ -5782,8 +5956,8 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:958",
-              "duration": 180
+              "source": "tests/demo.spec.ts:1037",
+              "duration": 183
             },
             {
               "type": "action",
@@ -5794,8 +5968,8 @@
                 "width": 225,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:959",
-              "duration": 159
+              "source": "tests/demo.spec.ts:1038",
+              "duration": 148
             }
           ]
         },
@@ -5815,13 +5989,13 @@
                 "width": 1118,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:960",
-              "duration": 144
+              "source": "tests/demo.spec.ts:1039",
+              "duration": 142
             },
             {
               "type": "describe",
               "message": "The panel already knew its real width while it drew",
-              "source": "tests/demo.spec.ts:962"
+              "source": "tests/demo.spec.ts:1041"
             },
             {
               "type": "check",
@@ -5832,8 +6006,8 @@
                 "width": 39,
                 "height": 21
               },
-              "source": "tests/demo.spec.ts:965",
-              "duration": 133
+              "source": "tests/demo.spec.ts:1044",
+              "duration": 140
             },
             {
               "type": "assert",
@@ -5844,13 +6018,13 @@
                 "width": 17,
                 "height": 21
               },
-              "source": "tests/demo.spec.ts:967",
+              "source": "tests/demo.spec.ts:1046",
               "duration": 148
             },
             {
               "type": "describe",
               "message": "Asking for half reflows the column in place — never redrawn",
-              "source": "tests/demo.spec.ts:969"
+              "source": "tests/demo.spec.ts:1048"
             },
             {
               "type": "action",
@@ -5861,13 +6035,13 @@
                 "width": 42,
                 "height": 26
               },
-              "source": "tests/demo.spec.ts:970",
-              "duration": 135
+              "source": "tests/demo.spec.ts:1049",
+              "duration": 132
             }
           ]
         },
         {
-          "image": "34cb2dc3769d699e",
+          "image": "1c00db27b19180e2",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -5876,8 +6050,8 @@
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing):not([inert])'))",
-              "source": "tests/demo.spec.ts:971",
-              "duration": 169
+              "source": "tests/demo.spec.ts:1050",
+              "duration": 154
             },
             {
               "type": "assert",
@@ -5888,8 +6062,8 @@
                 "width": 17,
                 "height": 21
               },
-              "source": "tests/demo.spec.ts:974",
-              "duration": 161
+              "source": "tests/demo.spec.ts:1053",
+              "duration": 138
             },
             {
               "type": "check",
@@ -5900,8 +6074,8 @@
                 "width": 31,
                 "height": 21
               },
-              "source": "tests/demo.spec.ts:975",
-              "duration": 162
+              "source": "tests/demo.spec.ts:1054",
+              "duration": 151
             }
           ]
         }
@@ -6187,22 +6361,16 @@
       "title": "panels: a pinned panel survives navigation elsewhere, but not its own close",
       "steps": [
         {
-          "image": "2411cd2789a61fdd",
+          "image": "be1def033f106db6",
           "viewport": {
             "width": 1280,
             "height": 900
           },
           "events": [
             {
-              "type": "console",
-              "consoleType": "debug",
-              "message": "Aberdeen queue took 11ms",
-              "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
-            },
-            {
               "type": "page",
               "message": "goto ./panels",
-              "source": "tests/demo.spec.ts:646"
+              "source": "tests/demo.spec.ts:697"
             },
             {
               "type": "check",
@@ -6213,8 +6381,8 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:647",
-              "duration": 214
+              "source": "tests/demo.spec.ts:698",
+              "duration": 178
             },
             {
               "type": "action",
@@ -6225,13 +6393,13 @@
                 "width": 91,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:648",
-              "duration": 181
+              "source": "tests/demo.spec.ts:699",
+              "duration": 164
             }
           ]
         },
         {
-          "image": "7197ab5c4611ce88",
+          "image": "d494f806acba383d",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -6246,13 +6414,13 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:649",
-              "duration": 187
+              "source": "tests/demo.spec.ts:700",
+              "duration": 156
             },
             {
               "type": "describe",
               "message": "Pin Small A from its crumb's context menu",
-              "source": "tests/demo.spec.ts:651"
+              "source": "tests/demo.spec.ts:702"
             },
             {
               "type": "action",
@@ -6263,13 +6431,13 @@
                 "width": 45,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:652",
-              "duration": 177
+              "source": "tests/demo.spec.ts:703",
+              "duration": 151
             }
           ]
         },
         {
-          "image": "c90e9efa20914a0e",
+          "image": "55c179d2f2e6817d",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -6284,13 +6452,13 @@
                 "width": 149,
                 "height": 36
               },
-              "source": "tests/demo.spec.ts:653",
-              "duration": 193
+              "source": "tests/demo.spec.ts:704",
+              "duration": 166
             }
           ]
         },
         {
-          "image": "120bb038cf526a89",
+          "image": "24bad2dcc8ea12b3",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -6305,13 +6473,13 @@
                 "width": 12,
                 "height": 12
               },
-              "source": "tests/demo.spec.ts:654",
-              "duration": 190
+              "source": "tests/demo.spec.ts:705",
+              "duration": 168
             },
             {
               "type": "describe",
               "message": "Open a new page elsewhere: the pinned panel rides along beneath it",
-              "source": "tests/demo.spec.ts:656"
+              "source": "tests/demo.spec.ts:707"
             },
             {
               "type": "action",
@@ -6322,13 +6490,13 @@
                 "width": 40,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:657",
-              "duration": 189
+              "source": "tests/demo.spec.ts:708",
+              "duration": 140
             }
           ]
         },
         {
-          "image": "fd642c6866d23de8",
+          "image": "442b390065dee9e6",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -6343,8 +6511,8 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:658",
-              "duration": 170
+              "source": "tests/demo.spec.ts:709",
+              "duration": 158
             },
             {
               "type": "action",
@@ -6355,13 +6523,13 @@
                 "width": 152,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:659",
-              "duration": 132
+              "source": "tests/demo.spec.ts:710",
+              "duration": 140
             }
           ]
         },
         {
-          "image": "f09fa3be179796e6",
+          "image": "4a1ae1c65c045b04",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -6376,20 +6544,20 @@
                 "width": 1082,
                 "height": 48
               },
-              "source": "tests/demo.spec.ts:661",
-              "duration": 134
+              "source": "tests/demo.spec.ts:712",
+              "duration": 139
             },
             {
               "type": "assert",
               "message": "expect count 3 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:662",
-              "duration": 112
+              "source": "tests/demo.spec.ts:713",
+              "duration": 108
             },
             {
               "type": "assert",
               "message": "expect count 3 (locator('.s-crumb'))",
-              "source": "tests/demo.spec.ts:663",
-              "duration": 116
+              "source": "tests/demo.spec.ts:714",
+              "duration": 101
             },
             {
               "type": "assert",
@@ -6400,18 +6568,18 @@
                 "width": 12,
                 "height": 12
               },
-              "source": "tests/demo.spec.ts:664",
-              "duration": 143
+              "source": "tests/demo.spec.ts:715",
+              "duration": 132
             },
             {
               "type": "describe",
               "message": "A reload keeps the pin",
-              "source": "tests/demo.spec.ts:666"
+              "source": "tests/demo.spec.ts:717"
             },
             {
               "type": "page",
               "message": "reload",
-              "source": "tests/demo.spec.ts:667"
+              "source": "tests/demo.spec.ts:718"
             },
             {
               "type": "check",
@@ -6422,8 +6590,8 @@
                 "width": 1082,
                 "height": 48
               },
-              "source": "tests/demo.spec.ts:668",
-              "duration": 155
+              "source": "tests/demo.spec.ts:719",
+              "duration": 165
             },
             {
               "type": "assert",
@@ -6434,13 +6602,13 @@
                 "width": 12,
                 "height": 12
               },
-              "source": "tests/demo.spec.ts:669",
-              "duration": 144
+              "source": "tests/demo.spec.ts:720",
+              "duration": 127
             },
             {
               "type": "describe",
               "message": "An explicit Close from the crumb menu still takes the pinned page out",
-              "source": "tests/demo.spec.ts:671"
+              "source": "tests/demo.spec.ts:722"
             },
             {
               "type": "action",
@@ -6451,13 +6619,13 @@
                 "width": 61,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:672",
+              "source": "tests/demo.spec.ts:723",
               "duration": 133
             }
           ]
         },
         {
-          "image": "cd5bdc82a8e91176",
+          "image": "7738bb95feefa013",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -6472,7 +6640,7 @@
                 "width": 149,
                 "height": 36
               },
-              "source": "tests/demo.spec.ts:673",
+              "source": "tests/demo.spec.ts:724",
               "duration": 145
             }
           ]
@@ -6487,14 +6655,14 @@
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-crumb'))",
-              "source": "tests/demo.spec.ts:674",
-              "duration": 119
+              "source": "tests/demo.spec.ts:725",
+              "duration": 123
             },
             {
               "type": "assert",
               "message": "expect count 0 (locator('.s-crumb-pin'))",
-              "source": "tests/demo.spec.ts:675",
-              "duration": 2113
+              "source": "tests/demo.spec.ts:726",
+              "duration": 2112
             }
           ]
         }
@@ -6568,7 +6736,7 @@
             {
               "type": "page",
               "message": "goto ./form/guard",
-              "source": "tests/demo.spec.ts:766"
+              "source": "tests/demo.spec.ts:817"
             },
             {
               "type": "check",
@@ -6579,8 +6747,8 @@
                 "width": 1045,
                 "height": 48
               },
-              "source": "tests/demo.spec.ts:767",
-              "duration": 174
+              "source": "tests/demo.spec.ts:818",
+              "duration": 175
             },
             {
               "type": "action",
@@ -6591,13 +6759,13 @@
                 "width": 1045,
                 "height": 44
               },
-              "source": "tests/demo.spec.ts:768",
-              "duration": 138
+              "source": "tests/demo.spec.ts:819",
+              "duration": 132
             }
           ]
         },
         {
-          "image": "1ec849f6cd1c48fa",
+          "image": "57ea73bb3ed4a346",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -6606,13 +6774,13 @@
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:769",
-              "duration": 110
+              "source": "tests/demo.spec.ts:820",
+              "duration": 109
             }
           ]
         },
         {
-          "image": "c3e2389d3d2c47fb",
+          "image": "a894df94eb714a07",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -6621,7 +6789,7 @@
             {
               "type": "describe",
               "message": "An origin-less link replaces the whole stack — only the unsaved page rides along",
-              "source": "tests/demo.spec.ts:771"
+              "source": "tests/demo.spec.ts:822"
             },
             {
               "type": "action",
@@ -6632,13 +6800,13 @@
                 "width": 116,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:782",
-              "duration": 150
+              "source": "tests/demo.spec.ts:833",
+              "duration": 153
             }
           ]
         },
         {
-          "image": "dc45c8032bdea7d9",
+          "image": "ec48b9fd8512dd48",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -6653,35 +6821,26 @@
                 "width": 1045,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:784",
-              "duration": 140
+              "source": "tests/demo.spec.ts:835",
+              "duration": 148
             },
             {
               "type": "assert",
               "message": "expect count 4 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:785",
-              "duration": 96
-            }
-          ]
-        },
-        {
-          "image": "73decfcb45bf3976",
-          "viewport": {
-            "width": 1280,
-            "height": 900
-          },
-          "events": [
+              "source": "tests/demo.spec.ts:836",
+              "duration": 111
+            },
             {
               "type": "assert",
               "message": "expect count 1",
               "box": {
-                "x": 162,
+                "x": 1382,
                 "y": 60,
                 "width": 1118,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:786",
-              "duration": 136
+              "source": "tests/demo.spec.ts:837",
+              "duration": 115
             },
             {
               "type": "assert",
@@ -6692,8 +6851,8 @@
                 "width": 6,
                 "height": 6
               },
-              "source": "tests/demo.spec.ts:787",
-              "duration": 128
+              "source": "tests/demo.spec.ts:838",
+              "duration": 116
             }
           ]
         }
@@ -6704,7 +6863,7 @@
       "title": "panels: an [id=integer] route only matches spellings that round-trip",
       "steps": [
         {
-          "image": "2411cd2789a61fdd",
+          "image": "c53b68a5df17c11a",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -6713,24 +6872,24 @@
             {
               "type": "page",
               "message": "goto ./panels",
-              "source": "tests/demo.spec.ts:729"
+              "source": "tests/demo.spec.ts:780"
             },
             {
               "type": "check",
               "message": "waitFor",
               "box": {
                 "x": 181,
-                "y": 787,
+                "y": 815,
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:730",
-              "duration": 170
+              "source": "tests/demo.spec.ts:781",
+              "duration": 185
             }
           ]
         },
         {
-          "image": "42f61c3576767d89",
+          "image": "3f29d13ad95281ad",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -6745,13 +6904,13 @@
                 "width": 96,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:733",
-              "duration": 156
+              "source": "tests/demo.spec.ts:784",
+              "duration": 151
             }
           ]
         },
         {
-          "image": "89853ad3cc3e8605",
+          "image": "34b60e37c30db254",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -6766,8 +6925,8 @@
                 "width": 486,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:735",
-              "duration": 174
+              "source": "tests/demo.spec.ts:786",
+              "duration": 176
             }
           ]
         },
@@ -6781,7 +6940,7 @@
             {
               "type": "page",
               "message": "goto ./panels/item/007",
-              "source": "tests/demo.spec.ts:739"
+              "source": "tests/demo.spec.ts:790"
             },
             {
               "type": "check",
@@ -6792,8 +6951,8 @@
                 "width": 1045,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:740",
-              "duration": 172
+              "source": "tests/demo.spec.ts:791",
+              "duration": 150
             }
           ]
         }
@@ -6813,13 +6972,13 @@
             {
               "type": "console",
               "consoleType": "debug",
-              "message": "Aberdeen queue took 11ms",
+              "message": "Aberdeen queue took 13ms",
               "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
             },
             {
               "type": "page",
               "message": "goto ./form/guard",
-              "source": "tests/demo.spec.ts:680"
+              "source": "tests/demo.spec.ts:731"
             },
             {
               "type": "check",
@@ -6830,19 +6989,19 @@
                 "width": 1045,
                 "height": 48
               },
-              "source": "tests/demo.spec.ts:681",
-              "duration": 196
+              "source": "tests/demo.spec.ts:732",
+              "duration": 195
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:682",
-              "duration": 121
+              "source": "tests/demo.spec.ts:733",
+              "duration": 110
             },
             {
               "type": "describe",
               "message": "Dirty the draft: a ● appears on the crumb and the tab title",
-              "source": "tests/demo.spec.ts:684"
+              "source": "tests/demo.spec.ts:735"
             },
             {
               "type": "action",
@@ -6853,13 +7012,13 @@
                 "width": 1045,
                 "height": 44
               },
-              "source": "tests/demo.spec.ts:685",
-              "duration": 172
+              "source": "tests/demo.spec.ts:736",
+              "duration": 152
             }
           ]
         },
         {
-          "image": "1ec849f6cd1c48fa",
+          "image": "57ea73bb3ed4a346",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -6874,13 +7033,13 @@
                 "width": 6,
                 "height": 6
               },
-              "source": "tests/demo.spec.ts:686",
+              "source": "tests/demo.spec.ts:737",
               "duration": 162
             }
           ]
         },
         {
-          "image": "ef5758645967068a",
+          "image": "456489098f31b799",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -6889,39 +7048,30 @@
             {
               "type": "describe",
               "message": "Escape can't close it: it parks the page instead, work and all",
-              "source": "tests/demo.spec.ts:689"
+              "source": "tests/demo.spec.ts:740"
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:692",
-              "duration": 136
-            }
-          ]
-        },
-        {
-          "image": "84c397d25bd8f130",
-          "viewport": {
-            "width": 1280,
-            "height": 900
-          },
-          "events": [
+              "source": "tests/demo.spec.ts:743",
+              "duration": 130
+            },
             {
               "type": "assert",
               "message": "expect count 1",
               "box": {
-                "x": 162,
+                "x": 1382,
                 "y": 60,
                 "width": 1118,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:693",
-              "duration": 146
+              "source": "tests/demo.spec.ts:744",
+              "duration": 142
             },
             {
               "type": "describe",
               "message": "The crumb menu can't close it either: Close is greyed out",
-              "source": "tests/demo.spec.ts:696"
+              "source": "tests/demo.spec.ts:747"
             },
             {
               "type": "action",
@@ -6932,13 +7082,13 @@
                 "width": 98,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:697",
-              "duration": 144
+              "source": "tests/demo.spec.ts:748",
+              "duration": 146
             }
           ]
         },
         {
-          "image": "9f0d750b28787a9d",
+          "image": "096b38dac2a237e6",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -6953,13 +7103,13 @@
                 "width": 149,
                 "height": 36
               },
-              "source": "tests/demo.spec.ts:699",
-              "duration": 150
+              "source": "tests/demo.spec.ts:750",
+              "duration": 142
             }
           ]
         },
         {
-          "image": "f7245dcef5536d1f",
+          "image": "3d02b418ecca1a10",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -6968,7 +7118,7 @@
             {
               "type": "describe",
               "message": "Return via the crumb and Save: the flag clears, the close goes through",
-              "source": "tests/demo.spec.ts:702"
+              "source": "tests/demo.spec.ts:753"
             },
             {
               "type": "action",
@@ -6979,13 +7129,13 @@
                 "width": 98,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:703",
-              "duration": 138
+              "source": "tests/demo.spec.ts:754",
+              "duration": 149
             }
           ]
         },
         {
-          "image": "39c536fc3bdffe7f",
+          "image": "dbcdc63b4c937b96",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -7000,13 +7150,13 @@
                 "width": 32,
                 "height": 32
               },
-              "source": "tests/demo.spec.ts:705",
-              "duration": 137
+              "source": "tests/demo.spec.ts:756",
+              "duration": 145
             }
           ]
         },
         {
-          "image": "460de35dade66d17",
+          "image": "e8f03ad25b4f09d6",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -7021,8 +7171,8 @@
                 "width": 1118,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:707",
-              "duration": 150
+              "source": "tests/demo.spec.ts:758",
+              "duration": 147
             }
           ]
         }
@@ -7033,7 +7183,7 @@
       "title": "panels: browser back keeps an unsaved panel, parked",
       "steps": [
         {
-          "image": "2411cd2789a61fdd",
+          "image": "be1def033f106db6",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -7042,7 +7192,7 @@
             {
               "type": "page",
               "message": "goto ./panels",
-              "source": "tests/demo.spec.ts:746"
+              "source": "tests/demo.spec.ts:797"
             },
             {
               "type": "check",
@@ -7053,8 +7203,8 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:747",
-              "duration": 176
+              "source": "tests/demo.spec.ts:798",
+              "duration": 183
             },
             {
               "type": "action",
@@ -7065,8 +7215,8 @@
                 "width": 231,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:748",
-              "duration": 157
+              "source": "tests/demo.spec.ts:799",
+              "duration": 150
             }
           ]
         },
@@ -7086,13 +7236,13 @@
                 "width": 1045,
                 "height": 44
               },
-              "source": "tests/demo.spec.ts:749",
-              "duration": 138
+              "source": "tests/demo.spec.ts:800",
+              "duration": 139
             }
           ]
         },
         {
-          "image": "51589d87b51c4e90",
+          "image": "d59d9728c62327a2",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -7101,12 +7251,12 @@
             {
               "type": "describe",
               "message": "Browser back keeps the unsaved page anyway, parked with its ●",
-              "source": "tests/demo.spec.ts:751"
+              "source": "tests/demo.spec.ts:802"
             },
             {
               "type": "page",
               "message": "goBack",
-              "source": "tests/demo.spec.ts:752"
+              "source": "tests/demo.spec.ts:803"
             },
             {
               "type": "check",
@@ -7117,35 +7267,26 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:754",
-              "duration": 187
+              "source": "tests/demo.spec.ts:805",
+              "duration": 192
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:755",
-              "duration": 126
-            }
-          ]
-        },
-        {
-          "image": "7255769ec3e7384b",
-          "viewport": {
-            "width": 1280,
-            "height": 900
-          },
-          "events": [
+              "source": "tests/demo.spec.ts:806",
+              "duration": 114
+            },
             {
               "type": "assert",
               "message": "expect count 1",
               "box": {
-                "x": 162,
+                "x": 1382,
                 "y": 60,
                 "width": 1118,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:756",
-              "duration": 131
+              "source": "tests/demo.spec.ts:807",
+              "duration": 144
             },
             {
               "type": "assert",
@@ -7156,13 +7297,13 @@
                 "width": 6,
                 "height": 6
               },
-              "source": "tests/demo.spec.ts:757",
-              "duration": 135
+              "source": "tests/demo.spec.ts:808",
+              "duration": 152
             },
             {
               "type": "describe",
               "message": "Its crumb brings it back, draft intact",
-              "source": "tests/demo.spec.ts:759"
+              "source": "tests/demo.spec.ts:810"
             },
             {
               "type": "action",
@@ -7173,13 +7314,13 @@
                 "width": 98,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:760",
-              "duration": 127
+              "source": "tests/demo.spec.ts:811",
+              "duration": 147
             }
           ]
         },
         {
-          "image": "b76133ae91e7f06d",
+          "image": "8991bea1d1a8e36e",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -7194,8 +7335,8 @@
                 "width": 1045,
                 "height": 44
               },
-              "source": "tests/demo.spec.ts:762",
-              "duration": 156
+              "source": "tests/demo.spec.ts:813",
+              "duration": 142
             }
           ]
         }
@@ -7215,7 +7356,7 @@
             {
               "type": "page",
               "message": "goto ./form/guard",
-              "source": "tests/demo.spec.ts:711"
+              "source": "tests/demo.spec.ts:762"
             },
             {
               "type": "check",
@@ -7226,8 +7367,8 @@
                 "width": 1045,
                 "height": 48
               },
-              "source": "tests/demo.spec.ts:712",
-              "duration": 174
+              "source": "tests/demo.spec.ts:763",
+              "duration": 164
             },
             {
               "type": "action",
@@ -7238,13 +7379,13 @@
                 "width": 1045,
                 "height": 44
               },
-              "source": "tests/demo.spec.ts:713",
-              "duration": 148
+              "source": "tests/demo.spec.ts:764",
+              "duration": 152
             }
           ]
         },
         {
-          "image": "39c536fc3bdffe7f",
+          "image": "dbcdc63b4c937b96",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -7253,12 +7394,12 @@
             {
               "type": "describe",
               "message": "Closing the tab runs into the browser's are-you-sure",
-              "source": "tests/demo.spec.ts:717"
+              "source": "tests/demo.spec.ts:768"
             },
             {
               "type": "describe",
               "message": "Staying brings the page that held the tab back on screen",
-              "source": "tests/demo.spec.ts:723"
+              "source": "tests/demo.spec.ts:774"
             },
             {
               "type": "assert",
@@ -7269,8 +7410,8 @@
                 "width": 1045,
                 "height": 44
               },
-              "source": "tests/demo.spec.ts:725",
-              "duration": 138
+              "source": "tests/demo.spec.ts:776",
+              "duration": 135
             }
           ]
         }
@@ -7281,7 +7422,7 @@
       "title": "panels: closing the top column reveals the one crowded out beneath it",
       "steps": [
         {
-          "image": "2411cd2789a61fdd",
+          "image": "be1def033f106db6",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -7290,7 +7431,7 @@
             {
               "type": "page",
               "message": "goto ./panels",
-              "source": "tests/demo.spec.ts:886"
+              "source": "tests/demo.spec.ts:965"
             },
             {
               "type": "check",
@@ -7301,8 +7442,8 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:887",
-              "duration": 166
+              "source": "tests/demo.spec.ts:966",
+              "duration": 171
             },
             {
               "type": "action",
@@ -7313,13 +7454,13 @@
                 "width": 91,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:889",
-              "duration": 149
+              "source": "tests/demo.spec.ts:968",
+              "duration": 151
             }
           ]
         },
         {
-          "image": "7197ab5c4611ce88",
+          "image": "d494f806acba383d",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -7334,8 +7475,8 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:890",
-              "duration": 168
+              "source": "tests/demo.spec.ts:969",
+              "duration": 161
             },
             {
               "type": "action",
@@ -7346,8 +7487,8 @@
                 "width": 92,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:891",
-              "duration": 151
+              "source": "tests/demo.spec.ts:970",
+              "duration": 144
             }
           ]
         },
@@ -7367,20 +7508,20 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:892",
-              "duration": 147
+              "source": "tests/demo.spec.ts:971",
+              "duration": 146
             },
             {
               "type": "assert",
               "message": "expect count 3 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:894",
-              "duration": 116
+              "source": "tests/demo.spec.ts:973",
+              "duration": 99
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing):not([inert])'))",
-              "source": "tests/demo.spec.ts:895",
-              "duration": 122
+              "source": "tests/demo.spec.ts:974",
+              "duration": 116
             },
             {
               "type": "action",
@@ -7391,13 +7532,13 @@
                 "width": 32,
                 "height": 32
               },
-              "source": "tests/demo.spec.ts:899",
-              "duration": 149
+              "source": "tests/demo.spec.ts:978",
+              "duration": 134
             }
           ]
         },
         {
-          "image": "424aaa12523c1d9d",
+          "image": "f0e7044cabf555f9",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -7412,14 +7553,14 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:901",
-              "duration": 169
+              "source": "tests/demo.spec.ts:980",
+              "duration": 175
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing):not([inert])'))",
-              "source": "tests/demo.spec.ts:902",
-              "duration": 144
+              "source": "tests/demo.spec.ts:981",
+              "duration": 120
             }
           ]
         }
@@ -7430,7 +7571,7 @@
       "title": "panels: columns single keeps a single column at any width",
       "steps": [
         {
-          "image": "2411cd2789a61fdd",
+          "image": "be1def033f106db6",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -7439,7 +7580,7 @@
             {
               "type": "page",
               "message": "goto ./panels",
-              "source": "tests/demo.spec.ts:936"
+              "source": "tests/demo.spec.ts:1015"
             },
             {
               "type": "check",
@@ -7450,13 +7591,13 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:937",
-              "duration": 164
+              "source": "tests/demo.spec.ts:1016",
+              "duration": 172
             },
             {
               "type": "describe",
               "message": "Choose a single column, up in the display-settings popover",
-              "source": "tests/demo.spec.ts:938"
+              "source": "tests/demo.spec.ts:1017"
             },
             {
               "type": "action",
@@ -7467,13 +7608,13 @@
                 "width": 32,
                 "height": 32
               },
-              "source": "tests/demo.spec.ts:939",
-              "duration": 151
+              "source": "tests/demo.spec.ts:1018",
+              "duration": 133
             }
           ]
         },
         {
-          "image": "28bd65e0b60863ee",
+          "image": "19fc56c4f4d939ce",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -7488,13 +7629,13 @@
                 "width": 55,
                 "height": 26
               },
-              "source": "tests/demo.spec.ts:941",
-              "duration": 154
+              "source": "tests/demo.spec.ts:1020",
+              "duration": 156
             }
           ]
         },
         {
-          "image": "182987f486c61714",
+          "image": "6c112abc6355fc86",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -7503,7 +7644,7 @@
             {
               "type": "describe",
               "message": "Only the current page shows now, however much room there is",
-              "source": "tests/demo.spec.ts:944"
+              "source": "tests/demo.spec.ts:1023"
             },
             {
               "type": "action",
@@ -7514,8 +7655,8 @@
                 "width": 91,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:945",
-              "duration": 156
+              "source": "tests/demo.spec.ts:1024",
+              "duration": 152
             }
           ]
         },
@@ -7535,8 +7676,8 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:946",
-              "duration": 142
+              "source": "tests/demo.spec.ts:1025",
+              "duration": 149
             },
             {
               "type": "assert",
@@ -7547,13 +7688,13 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:947",
-              "duration": 147
+              "source": "tests/demo.spec.ts:1026",
+              "duration": 143
             }
           ]
         },
         {
-          "image": "ec454a0d94a2cf5f",
+          "image": "923dd10c35e79be8",
           "viewport": {
             "width": 480,
             "height": 800
@@ -7562,12 +7703,12 @@
             {
               "type": "describe",
               "message": "Escape still pops the stack, at any width",
-              "source": "tests/demo.spec.ts:949"
+              "source": "tests/demo.spec.ts:1028"
             },
             {
               "type": "page",
               "message": "setViewportSize 480×800",
-              "source": "tests/demo.spec.ts:950"
+              "source": "tests/demo.spec.ts:1029"
             },
             {
               "type": "check",
@@ -7578,8 +7719,8 @@
                 "width": 480,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:953",
-              "duration": 120
+              "source": "tests/demo.spec.ts:1032",
+              "duration": 110
             }
           ]
         }
@@ -7590,7 +7731,7 @@
       "title": "panels: crumbs browse the stack, and a new panel prunes the parked ones",
       "steps": [
         {
-          "image": "2411cd2789a61fdd",
+          "image": "be1def033f106db6",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -7617,7 +7758,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:598",
-              "duration": 218
+              "duration": 225
             },
             {
               "type": "action",
@@ -7629,12 +7770,12 @@
                 "height": 24
               },
               "source": "tests/demo.spec.ts:599",
-              "duration": 176
+              "duration": 173
             }
           ]
         },
         {
-          "image": "7197ab5c4611ce88",
+          "image": "d494f806acba383d",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -7650,7 +7791,7 @@
                 "height": 797
               },
               "source": "tests/demo.spec.ts:600",
-              "duration": 203
+              "duration": 192
             },
             {
               "type": "action",
@@ -7662,7 +7803,7 @@
                 "height": 24
               },
               "source": "tests/demo.spec.ts:601",
-              "duration": 195
+              "duration": 173
             }
           ]
         },
@@ -7683,19 +7824,19 @@
                 "height": 797
               },
               "source": "tests/demo.spec.ts:602",
-              "duration": 172
+              "duration": 176
             },
             {
               "type": "assert",
               "message": "expect count 3 (locator('.s-panel:not(.s-panel-closing)'))",
               "source": "tests/demo.spec.ts:603",
-              "duration": 130
+              "duration": 140
             },
             {
               "type": "assert",
               "message": "expect text \"/demo/panels\", \"/demo/panels/a\", \"/demo/panels/b ← current\" (getByTestId('stack-list').first().locator('li'))",
               "source": "tests/demo.spec.ts:608",
-              "duration": 143
+              "duration": 119
             },
             {
               "type": "describe",
@@ -7712,12 +7853,12 @@
                 "height": 20
               },
               "source": "tests/demo.spec.ts:613",
-              "duration": 161
+              "duration": 141
             }
           ]
         },
         {
-          "image": "c722dc3646fed925",
+          "image": "7c39ee1d2270dc3d",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -7733,25 +7874,25 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:615",
-              "duration": 163
+              "duration": 175
             },
             {
               "type": "assert",
               "message": "expect count 3 (locator('.s-panel:not(.s-panel-closing)'))",
               "source": "tests/demo.spec.ts:616",
-              "duration": 112
+              "duration": 126
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel-parked'))",
               "source": "tests/demo.spec.ts:617",
-              "duration": 115
+              "duration": 114
             },
             {
               "type": "assert",
               "message": "expect text \"/demo/panels ← current\", \"/demo/panels/a\", \"/demo/panels/b\" (getByTestId('stack-list').first().locator('li'))",
               "source": "tests/demo.spec.ts:618",
-              "duration": 117
+              "duration": 114
             }
           ]
         },
@@ -7776,12 +7917,12 @@
               "type": "assert",
               "message": "expect count 0 (locator('.s-panel-parked'))",
               "source": "tests/demo.spec.ts:625",
-              "duration": 2132
+              "duration": 2130
             }
           ]
         },
         {
-          "image": "c722dc3646fed925",
+          "image": "7c39ee1d2270dc3d",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -7796,7 +7937,7 @@
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel-parked'))",
               "source": "tests/demo.spec.ts:628",
-              "duration": 124
+              "duration": 129
             },
             {
               "type": "assert",
@@ -7808,6 +7949,12 @@
               "type": "describe",
               "message": "A reload restores the arrangement, parked panels included",
               "source": "tests/demo.spec.ts:631"
+            },
+            {
+              "type": "console",
+              "consoleType": "debug",
+              "message": "Aberdeen queue took 10ms",
+              "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
             },
             {
               "type": "page",
@@ -7824,19 +7971,19 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:633",
-              "duration": 188
+              "duration": 207
             },
             {
               "type": "assert",
               "message": "expect count 3 (locator('.s-panel:not(.s-panel-closing)'))",
               "source": "tests/demo.spec.ts:634",
-              "duration": 131
+              "duration": 145
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel-parked'))",
               "source": "tests/demo.spec.ts:635",
-              "duration": 132
+              "duration": 134
             },
             {
               "type": "describe",
@@ -7874,19 +8021,19 @@
                 "height": 48
               },
               "source": "tests/demo.spec.ts:640",
-              "duration": 154
+              "duration": 157
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
               "source": "tests/demo.spec.ts:641",
-              "duration": 105
+              "duration": 103
             },
             {
               "type": "assert",
               "message": "expect count 0 (locator('.s-panel-parked'))",
               "source": "tests/demo.spec.ts:642",
-              "duration": 2185
+              "duration": 2190
             }
           ]
         }
@@ -8111,7 +8258,7 @@
       "title": "panels: linkNavigation sets what a link without data-panel does",
       "steps": [
         {
-          "image": "2411cd2789a61fdd",
+          "image": "be1def033f106db6",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -8120,7 +8267,7 @@
             {
               "type": "page",
               "message": "goto ./panels",
-              "source": "tests/demo.spec.ts:906"
+              "source": "tests/demo.spec.ts:985"
             },
             {
               "type": "check",
@@ -8131,13 +8278,13 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:907",
-              "duration": 172
+              "source": "tests/demo.spec.ts:986",
+              "duration": 182
             },
             {
               "type": "describe",
               "message": "linkNavigation=replace: a bare link swaps the panel it sits in for its target",
-              "source": "tests/demo.spec.ts:917"
+              "source": "tests/demo.spec.ts:996"
             },
             {
               "type": "action",
@@ -8148,13 +8295,13 @@
                 "width": 32,
                 "height": 32
               },
-              "source": "tests/demo.spec.ts:911",
-              "duration": 156
+              "source": "tests/demo.spec.ts:990",
+              "duration": 130
             }
           ]
         },
         {
-          "image": "28bd65e0b60863ee",
+          "image": "19fc56c4f4d939ce",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -8169,13 +8316,13 @@
                 "width": 63,
                 "height": 26
               },
-              "source": "tests/demo.spec.ts:913",
-              "duration": 161
+              "source": "tests/demo.spec.ts:992",
+              "duration": 160
             }
           ]
         },
         {
-          "image": "182987f486c61714",
+          "image": "6c112abc6355fc86",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -8190,8 +8337,8 @@
                 "width": 91,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:919",
-              "duration": 161
+              "source": "tests/demo.spec.ts:998",
+              "duration": 163
             }
           ]
         },
@@ -8211,8 +8358,8 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:920",
-              "duration": 148
+              "source": "tests/demo.spec.ts:999",
+              "duration": 150
             },
             {
               "type": "assert",
@@ -8223,8 +8370,8 @@
                 "width": 45,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:922",
-              "duration": 140
+              "source": "tests/demo.spec.ts:1001",
+              "duration": 124
             }
           ]
         },
@@ -8244,13 +8391,13 @@
                 "width": 160,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:923",
-              "duration": 148
+              "source": "tests/demo.spec.ts:1002",
+              "duration": 144
             }
           ]
         },
         {
-          "image": "0c2a6659b8b50e21",
+          "image": "0a759f92d5ddf44e",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -8265,13 +8412,13 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:924",
-              "duration": 150
+              "source": "tests/demo.spec.ts:1003",
+              "duration": 157
             },
             {
               "type": "describe",
               "message": "linkNavigation=open: a bare link behaves like a nav item, deriving a fresh stack",
-              "source": "tests/demo.spec.ts:926"
+              "source": "tests/demo.spec.ts:1005"
             },
             {
               "type": "action",
@@ -8282,13 +8429,13 @@
                 "width": 32,
                 "height": 32
               },
-              "source": "tests/demo.spec.ts:911",
-              "duration": 154
+              "source": "tests/demo.spec.ts:990",
+              "duration": 129
             }
           ]
         },
         {
-          "image": "1686c4b08456e60d",
+          "image": "c835961841b1e15c",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -8303,13 +8450,13 @@
                 "width": 49,
                 "height": 26
               },
-              "source": "tests/demo.spec.ts:913",
-              "duration": 162
+              "source": "tests/demo.spec.ts:992",
+              "duration": 164
             }
           ]
         },
         {
-          "image": "182987f486c61714",
+          "image": "6c112abc6355fc86",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -8324,13 +8471,13 @@
                 "width": 91,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:928",
-              "duration": 150
+              "source": "tests/demo.spec.ts:1007",
+              "duration": 155
             }
           ]
         },
         {
-          "image": "7197ab5c4611ce88",
+          "image": "d494f806acba383d",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -8345,8 +8492,8 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:929",
-              "duration": 157
+              "source": "tests/demo.spec.ts:1008",
+              "duration": 159
             },
             {
               "type": "action",
@@ -8357,13 +8504,13 @@
                 "width": 92,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:930",
-              "duration": 151
+              "source": "tests/demo.spec.ts:1009",
+              "duration": 159
             }
           ]
         },
         {
-          "image": "d9cf2f5327219533",
+          "image": "ad93057feb8c7c37",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -8378,13 +8525,13 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:931",
-              "duration": 165
+              "source": "tests/demo.spec.ts:1010",
+              "duration": 163
             },
             {
               "type": "assert",
               "message": "expect text \"Panels\", \"Small B\" (locator('.s-crumb'))",
-              "source": "tests/demo.spec.ts:932",
+              "source": "tests/demo.spec.ts:1011",
               "duration": 127
             }
           ]
@@ -8396,7 +8543,7 @@
       "title": "panels: maxWidth=half starts at half width, and the next lands in its open room",
       "steps": [
         {
-          "image": "2411cd2789a61fdd",
+          "image": "be1def033f106db6",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -8405,7 +8552,7 @@
             {
               "type": "page",
               "message": "goto ./panels",
-              "source": "tests/demo.spec.ts:792"
+              "source": "tests/demo.spec.ts:843"
             },
             {
               "type": "check",
@@ -8416,18 +8563,18 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:793",
-              "duration": 186
+              "source": "tests/demo.spec.ts:844",
+              "duration": 180
             },
             {
               "type": "describe",
               "message": "A lone half-width panel leaves its other half open",
-              "source": "tests/demo.spec.ts:795"
+              "source": "tests/demo.spec.ts:846"
             },
             {
               "type": "describe",
               "message": "The next half lands exactly there: nothing on screen moves or resizes",
-              "source": "tests/demo.spec.ts:802"
+              "source": "tests/demo.spec.ts:853"
             },
             {
               "type": "action",
@@ -8438,13 +8585,13 @@
                 "width": 91,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:803",
+              "source": "tests/demo.spec.ts:854",
               "duration": 147
             }
           ]
         },
         {
-          "image": "7197ab5c4611ce88",
+          "image": "d494f806acba383d",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -8459,14 +8606,14 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:804",
-              "duration": 157
+              "source": "tests/demo.spec.ts:855",
+              "duration": 158
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing):not([inert])'))",
-              "source": "tests/demo.spec.ts:805",
-              "duration": 116
+              "source": "tests/demo.spec.ts:856",
+              "duration": 114
             }
           ]
         }
@@ -8477,7 +8624,7 @@
       "title": "panels: the page stretches past 1280 when a third column fits",
       "steps": [
         {
-          "image": "500cfdc9b3d40866",
+          "image": "ebdacad6a3f0feb9",
           "viewport": {
             "width": 1920,
             "height": 900
@@ -8486,12 +8633,12 @@
             {
               "type": "page",
               "message": "setViewportSize 1920×900",
-              "source": "tests/demo.spec.ts:862"
+              "source": "tests/demo.spec.ts:890"
             },
             {
               "type": "page",
               "message": "goto ./panels",
-              "source": "tests/demo.spec.ts:863"
+              "source": "tests/demo.spec.ts:891"
             },
             {
               "type": "check",
@@ -8502,13 +8649,13 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:864",
-              "duration": 195
+              "source": "tests/demo.spec.ts:892",
+              "duration": 206
             },
             {
               "type": "describe",
               "message": "Push two more columns: a third fits, so the columns stretch to hold all three — the bars hold at 1280",
-              "source": "tests/demo.spec.ts:870"
+              "source": "tests/demo.spec.ts:898"
             },
             {
               "type": "action",
@@ -8519,13 +8666,13 @@
                 "width": 91,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:871",
-              "duration": 178
+              "source": "tests/demo.spec.ts:899",
+              "duration": 181
             }
           ]
         },
         {
-          "image": "3d8719bc538c2a12",
+          "image": "36bdbf84f4fc26a8",
           "viewport": {
             "width": 1920,
             "height": 900
@@ -8540,8 +8687,8 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:872",
-              "duration": 192
+              "source": "tests/demo.spec.ts:900",
+              "duration": 187
             },
             {
               "type": "action",
@@ -8552,13 +8699,13 @@
                 "width": 92,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:873",
-              "duration": 170
+              "source": "tests/demo.spec.ts:901",
+              "duration": 157
             }
           ]
         },
         {
-          "image": "68f7ed25889a0bf4",
+          "image": "1a7ab8341e9a9a6a",
           "viewport": {
             "width": 1920,
             "height": 900
@@ -8573,19 +8720,19 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:874",
-              "duration": 187
+              "source": "tests/demo.spec.ts:902",
+              "duration": 206
             },
             {
               "type": "assert",
               "message": "expect count 3 (locator('.s-panel:not(.s-panel-closing):not([inert])'))",
-              "source": "tests/demo.spec.ts:875",
-              "duration": 161
+              "source": "tests/demo.spec.ts:903",
+              "duration": 138
             },
             {
               "type": "describe",
               "message": "Parking the third column settles the page back to the standard width",
-              "source": "tests/demo.spec.ts:878"
+              "source": "tests/demo.spec.ts:906"
             },
             {
               "type": "action",
@@ -8596,13 +8743,13 @@
                 "width": 45,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:879",
+              "source": "tests/demo.spec.ts:907",
               "duration": 165
             }
           ]
         },
         {
-          "image": "bb5c4b60d96cb83d",
+          "image": "d526f0fd7c5551c9",
           "viewport": {
             "width": 1920,
             "height": 900
@@ -8611,8 +8758,8 @@
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing):not([inert])'))",
-              "source": "tests/demo.spec.ts:882",
-              "duration": 155
+              "source": "tests/demo.spec.ts:910",
+              "duration": 159
             }
           ]
         }
@@ -8623,7 +8770,7 @@
       "title": "panels: two quick Escapes peel two columns",
       "steps": [
         {
-          "image": "2411cd2789a61fdd",
+          "image": "be1def033f106db6",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -8632,13 +8779,13 @@
             {
               "type": "console",
               "consoleType": "debug",
-              "message": "Aberdeen queue took 10ms",
+              "message": "Aberdeen queue took 11ms",
               "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
             },
             {
               "type": "page",
               "message": "goto ./panels",
-              "source": "tests/demo.spec.ts:1009"
+              "source": "tests/demo.spec.ts:1088"
             },
             {
               "type": "check",
@@ -8649,8 +8796,8 @@
                 "width": 522,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:1010",
-              "duration": 217
+              "source": "tests/demo.spec.ts:1089",
+              "duration": 195
             },
             {
               "type": "action",
@@ -8661,13 +8808,13 @@
                 "width": 91,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1011",
-              "duration": 184
+              "source": "tests/demo.spec.ts:1090",
+              "duration": 182
             }
           ]
         },
         {
-          "image": "7197ab5c4611ce88",
+          "image": "d494f806acba383d",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -8682,7 +8829,7 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1012",
+              "source": "tests/demo.spec.ts:1091",
               "duration": 201
             },
             {
@@ -8694,8 +8841,8 @@
                 "width": 92,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1013",
-              "duration": 182
+              "source": "tests/demo.spec.ts:1092",
+              "duration": 183
             }
           ]
         },
@@ -8715,19 +8862,19 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1014",
-              "duration": 166
+              "source": "tests/demo.spec.ts:1093",
+              "duration": 170
             },
             {
               "type": "assert",
               "message": "expect count 3 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:1015",
-              "duration": 148
+              "source": "tests/demo.spec.ts:1094",
+              "duration": 122
             }
           ]
         },
         {
-          "image": "2411cd2789a61fdd",
+          "image": "be1def033f106db6",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -8742,8 +8889,8 @@
                 "width": 559,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1026",
-              "duration": 152
+              "source": "tests/demo.spec.ts:1105",
+              "duration": 164
             }
           ]
         }

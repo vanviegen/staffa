@@ -307,8 +307,11 @@ A.insertGlobalCss({
 		// and scrollbar alignment work identically in both cases.
 		// .s-body centres .s-body-inner; .s-body-inner caps the content to maxWidth.
 		// It's also the positioning + clipping context for the narrow-screen nav panel,
-		// which slides in and out across its left edge.
-		".s-body": "flex:1 overflow:hidden display:flex flex-direction:row min-height:0 justify-content:center position:relative",
+		// which slides in and out across its left edge. `overflow:clip` rather than
+		// `hidden` for the same reason as `.s-panels`: a hidden box can still be
+		// scrolled (find-in-page, an anchor, an extension), and a stray scroll here
+		// would shove the whole row — sidebar and columns — out of place for good.
+		".s-body": "flex:1 overflow:clip display:flex flex-direction:row min-height:0 justify-content:center position:relative",
 		".s-body-inner": "flex:1 min-width:0 display:flex flex-direction:row min-height:0",
 		// Put the sidebar on the right (content fills the left) for right-hand navs.
 		"&.s-nav-right .s-body-inner": "flex-direction:row-reverse",
