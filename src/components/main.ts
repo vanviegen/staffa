@@ -8,7 +8,7 @@ import { type MenuOptions, drawMenu, isFloatingMenuOpen, consumeBranchNav, anyCu
 import { menu as menuIcon, x as closeIcon } from "../icons.js";
 import { iconButton } from "./button.js";
 import { isDialogOpen } from "./dialog.js";
-import { PanelStackController, SHELL_PX, type PanelStack, type AncestorTable, type Panel, type RouteHandler, type RouteTable, type Routes } from "./panels.js";
+import { PanelStackController, type PanelStack, type AncestorTable, type Panel, type RouteHandler, type RouteTable, type Routes } from "./panels.js";
 
 /** Options for {@link main}. */
 export interface MainOptions<R = Routes> {
@@ -229,6 +229,20 @@ export interface MainOptions<R = Routes> {
 	 * themselves up with them.
 	 */
 	maxWidth?: string;
+	/**
+	 * How wide a `"full"` panel gets, in pixels — and with it the whole content
+	 * area, since a `"full"` fills it exactly. A `"half"` gets half of this, and
+	 * a `"screen"` ignores it and takes the window. Defaults to 1080; the window
+	 * caps it when there is less room than that. Routed mode only.
+	 *
+	 * This plus {@link MainOptions.navWidth} is the app's standard page — see
+	 * there.
+	 *
+	 * Live, like {@link MainOptions.columns}: pass a proxied options object (or
+	 * make this field a getter) and a change is adopted in one layout pass,
+	 * every panel keeping its state.
+	 */
+	fullWidth?: number;
 	/** Aberdeen attr/style string applied to the content area. */
 	contentAttrs?: Attributes;
 	/** Aberdeen attr/style string applied to the top bar. */
@@ -255,11 +269,32 @@ export interface MainOptions<R = Routes> {
 	 * chrome goes assumes they are one.
 	 */
 	navPosition?: "left" | "right";
+	/**
+	 * How wide the nav sidebar column is, in pixels — its hairline included.
+	 * Defaults to 200.
+	 *
+	 * Together with {@link MainOptions.fullWidth} this is the app's *standard
+	 * page*: the width the top bar and footer keep to, and the width the
+	 * columns settle back to. The defaults come to the familiar 1280px.
+	 *
+	 * Live, like {@link MainOptions.fullWidth}.
+	 */
+	navWidth?: number;
 	/** Aberdeen attr/style string applied to the sidebar nav panel. */
 	navAttrs?: Attributes;
 	/** Aberdeen attr/style string applied to the narrow-screen full-page nav. */
 	navPageAttrs?: Attributes;
 }
+
+/**
+ * The default nav column (hairline included) and the default width of a
+ * `"full"` panel — see {@link MainOptions.navWidth} and
+ * {@link MainOptions.fullWidth}. Side by side they come to the 1280px page the
+ * shell is usually seen as, but that figure lives nowhere: the browser adds
+ * these two up, and an app that changes either simply gets a different page.
+ */
+const NAV_W = 200;
+const FULL_W = 1080;
 
 A.insertGlobalCss({
 	".s-main": {
@@ -342,7 +377,7 @@ A.insertGlobalCss({
 		".s-body main.s-scroll-y": "margin-right:$3",
 		// Routed mode takes its width from the stack instead of from
 		// `maxWidth`: the layout engine publishes the ensemble width (sidebar +
-		// separator + content area) as --s-shell-w — the standard 1280px page
+		// separator + content area) as --s-shell-w — the standard page
 		// normally, wider while the columns outgrow it (a "screen" page, or
 		// extra columns fitting a wide window) — and the body row caps itself
 		// to it, staying centred around the columns. Changing the custom
@@ -361,7 +396,7 @@ A.insertGlobalCss({
 		// the columns grow. (Below the standard width the ensemble is simply
 		// the window, which only a resize changes — so the bars never animate,
 		// and take no part in the transition above.)
-		[`&.s-routed > header > .s-bar, &.s-routed > footer > .s-bar`]: `max-width:${SHELL_PX}px`,
+		"&.s-routed > header > .s-bar, &.s-routed > footer > .s-bar": "max-width: calc(var(--s-nav-w) + var(--s-full-w))",
 	},
 	// Sidebar nav panel. Items reuse the shared `.s-menu-item` /
 	// `.s-menu-sep` styles from menu.ts, so the sidebar and the floating
@@ -372,7 +407,10 @@ A.insertGlobalCss({
 		// The generous horizontal padding is what keeps the rows clear of the content
 		// separator on one side and the shell edge on the other; the vertical scroll
 		// (overflow-y:auto, which also clips overflow-x) leaves no room to bleed past it.
-		"&": "display:flex flex-direction:column overflow-y:auto flex-shrink:0 max-width:228px padding:$3 gap:$1",
+		// `--s-nav-w` measures the whole column, hairline included, so the panel
+		// itself gives that 1px back — and the app's two widths then add up to
+		// exactly the page the bars above and below keep to.
+		"&": "display:flex flex-direction:column overflow-y:auto flex-shrink:0 width: calc(var(--s-nav-w) - 1px); padding:$3 gap:$1",
 	},
 	// The narrow-screen nav: a full "panel" that slides in over the content from the
 	// left, rather than a dropdown — on a phone a nav is a screenful of UI, not a
@@ -501,6 +539,9 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): PanelS
 			notFound: opts.notFound,
 			ancestors: opts.ancestors,
 			title: opts.title,
+			// Corrected below, and on every change, from the app's own option:
+			// read here it would subscribe the whole shell to it.
+			fullWidth: FULL_W,
 			$shell,
 		})
 		: null;
@@ -512,6 +553,7 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): PanelS
 		// the new link default. Nothing else of the shell is touched.
 		A(() => ctl.setColumns(opts.columns));
 		A(() => ctl.setLinkNavigation(opts.linkNavigation));
+		A(() => ctl.setFullWidth(opts.fullWidth ?? FULL_W));
 	}
 	// Where the brand mark and the app's name link — or nowhere, when the app
 	// said `home: null` (a title slot holding a control of its own, say).
@@ -521,12 +563,20 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): PanelS
 	const capWidth = ctl ? null : opts.maxWidth;
 
 	const root = A(`div.s-main${ctl ? ".s-routed" : ""}`, opts.attrs, () => {
-		// Which side the sidebar is on, as a class on the shell for the CSS above to
-		// hang off. Its own scope (see `nav` above), so a nav appearing or emptying
-		// out only retags the shell rather than redrawing it.
+		// The two widths the CSS above works from, and with them the standard page
+		// the bars keep to. Each sits in a scope of its own — one that draws
+		// nothing, so re-running it is a single style write: an app that changes
+		// either on a proxied options object resizes the shell in place, panels
+		// and their state untouched.
+		A(() => A(`--s-full-w: ${opts.fullWidth ?? FULL_W}px`));
+		// `--s-nav-w` is the sidebar's whole column, and nothing at all when there
+		// is no sidebar to give it to — a shell without one lines its bars up with
+		// the content. This scope also tags the shell with the side the sidebar is
+		// on, for the CSS above to hang off (see `nav` above: reading `nav.items`
+		// here subscribes this scope alone, never the shell entire).
 		A(() => {
-			if (nav == null || !nav.items.length) return;
-			A(`.s-nav-${navPos}`);
+			if (nav == null || !nav.items.length) A("--s-nav-w: 0px");
+			else A(`.s-nav-${navPos}`, `--s-nav-w: ${opts.navWidth ?? NAV_W}px`);
 		});
 
 		// Top bar: `[leading] [identity] …spacer… [trailing]`, where each slot's

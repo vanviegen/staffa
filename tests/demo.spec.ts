@@ -857,6 +857,26 @@ test("panels: maxWidth=half starts at half width, and the next lands in its open
 	expect(await playground.boundingBox()).toEqual(before);
 });
 
+test("panels: the nav column and a full panel add up to the standard page", async ({ page }) => {
+	// The two widths `S.main()` takes (`navWidth`, `fullWidth`) are the whole
+	// story: side by side they *are* the standard page, and the demo leaves both
+	// at their defaults — so this is where the familiar 1280px comes from.
+	await page.setViewportSize({ width: 1600, height: 900 });
+	await page.goto("./panels");
+	await page.getByText("Push a panel").waitFor();
+
+	page.describe("The sidebar, its hairline and the content area tile the page exactly");
+	const nav = (await page.locator(".s-nav-panel").boundingBox())!;
+	const sep = (await page.locator(".s-nav-sep").boundingBox())!;
+	const area = (await page.locator(".s-panels").boundingBox())!;
+	const bar = (await page.locator("header .s-bar").boundingBox())!;
+	expect(nav.width + sep.width).toBeCloseTo(200, 1);
+	expect(area.width).toBeCloseTo(1080, 1);
+	// The bars keep to that same page, so the chrome lines up with the columns.
+	expect(bar.width).toBeCloseTo(1280, 1);
+	expect(bar.x).toBeCloseTo(nav.x, 1);
+});
+
 test("panels: $panel.open builds on its own panel, not the current one", async ({ page }) => {
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
@@ -1052,6 +1072,53 @@ test("panels: a panel is sized before it draws, and resizes without redrawing", 
 	expect(halved).toBeLessThan(full.width * 0.7);
 	await expect(page.getByTestId("live-draws")).toHaveText("1");
 	expect(Math.abs(Number(await page.getByTestId("page-width").textContent()) - halved)).toBeLessThan(1.5);
+});
+
+test("panels: the width sliders resize the shell in place, chrome and all", async ({ page }) => {
+	// `navWidth` and `fullWidth` are live, so the demo hands them to the shell
+	// through getters and drives them from two sliders in the display-settings
+	// popover. Whatever they say, the sidebar plus the content area *is* the
+	// page — which is what the top bar and footer keep to.
+	await page.setViewportSize({ width: 1600, height: 900 });
+	await page.goto("./panels");
+	await page.getByText("Push a panel").waitFor();
+	await page.getByRole("link", { name: "Push the sizing & lifecycle panel" }).click();
+	await panelWith(page, /Sizing & lifecycle/).waitFor();
+	await expect(page.getByTestId("live-draws")).toHaveText("1");
+
+	const page_ = async () => {
+		const nav = (await page.locator(".s-nav-panel").boundingBox())!;
+		const sep = (await page.locator(".s-nav-sep").boundingBox())!;
+		const area = (await page.locator(".s-panels").boundingBox())!;
+		const bar = (await page.locator("header .s-bar").boundingBox())!;
+		return { nav: nav.width + sep.width, area: area.width, bar: bar.width };
+	};
+	expect(await page_()).toEqual({ nav: 200, area: 1080, bar: 1280 });
+
+	page.describe("Open the display settings: a slider each for the sidebar and the content area");
+	await page.getByRole("button", { name: "Display settings" }).click();
+	const sliders = page.locator("input[type=range]");
+	await expect(sliders).toHaveCount(2);
+
+	page.describe("A wider sidebar takes its room from the window, not from the content area");
+	await sliders.nth(0).fill("320");
+	await expect.poll(async () => (await page_()).nav).toBe(320);
+	// The content area is what `fullWidth` says, whatever the sidebar does — so
+	// the page (and the bars with it) grows by exactly what the sidebar took.
+	expect(await page_()).toEqual({ nav: 320, area: 1080, bar: 1400 });
+
+	page.describe("A narrower content area shrinks the columns, the page and the chrome together");
+	await sliders.nth(1).fill("900");
+	await expect.poll(async () => (await page_()).area).toBe(900);
+	expect(await page_()).toEqual({ nav: 320, area: 900, bar: 1220 });
+	// Panels reflow in place: the one on screen has its new width, and has not
+	// been drawn a second time.
+	await expect(page.getByTestId("page-width")).toHaveText("900");
+	await expect(page.getByTestId("live-draws")).toHaveText("1");
+
+	page.describe("Past what the window has beside the sidebar, the window wins");
+	await sliders.nth(1).fill("1600");
+	await expect.poll(async () => (await page_()).area).toBe(1280);
 });
 
 test("panels: a closing panel is torn down at once, and only its element lingers", async ({ page }) => {

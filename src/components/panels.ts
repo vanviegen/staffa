@@ -175,13 +175,15 @@ export interface Panel<P = Record<string, string | number | string[]>> {
 	 * because that is what it gets when two columns fit; this says how much
 	 * *more* it can take.
 	 *
-	 * - `"half"` — nothing more. Half the content area (360–540px), so a second
-	 *   column fits beside it. For lists and detail forms.
-	 * - `"full"` (the default) — the whole content area, up to ~1100px.
+	 * - `"half"` — nothing more. Half the content area (360px up to half of
+	 *   {@link MainOptions.fullWidth}), so a second column fits beside it. For
+	 *   lists and detail forms.
+	 * - `"full"` (the default) — the whole content area, which is exactly
+	 *   {@link MainOptions.fullWidth}: 1080px unless the app says otherwise.
 	 * - `"screen"` — the whole window, unbounded: boards, wide tables, dense
 	 *   dashboards. While one is open the columns stretch to the screen edges
-	 *   instead of stopping at the standard 1280px page; the top bar and
-	 *   footer hold the standard width throughout.
+	 *   instead of stopping at the standard page; the top bar and footer hold
+	 *   the standard width throughout.
 	 *
 	 * Below the width two columns need, everything takes the content area
 	 * whatever it asked for. Widths depend only on the window, never on what
@@ -416,14 +418,6 @@ function matchRoute(r: { segs: Seg[] }, segments: string[]): Record<string, any>
 const PAGE_MS = 250;
 /** How long a freshly pushed `loading` panel holds its enter animation. */
 const LOADING_HOLD_MS = 300;
-/**
- * The standard page width: sidebar plus content area, capped by the window.
- * `"full"` fills the content-area part of this exactly; only a `"screen"`
- * page makes the shell grow past it. The top bar and footer keep to this
- * width even then (see main.ts), so the chrome holds still while the
- * columns stretch.
- */
-export const SHELL_PX = 1280;
 /** Don't pair smalls when half the content area would be narrower than this. */
 const PAIR_MIN_PX = 360;
 /**
@@ -685,7 +679,7 @@ interface Geometry {
 	chrome: number;
 	/** Half the standard content area, or all of it when a half would be too narrow. */
 	half: number;
-	/** The standard content area: the 1280px page minus the chrome. */
+	/** The standard content area: what the app asked a `"full"` panel to be. */
 	full: number;
 	/** Everything the window has beside the chrome, with no upper limit. */
 	screen: number;
@@ -715,6 +709,8 @@ export interface PanelStackOptions {
 	columns?: "auto" | "single";
 	/** What a bare link does. See {@link MainOptions.linkNavigation}. */
 	linkNavigation?: "push" | "replace" | "open";
+	/** How wide a `"full"` panel gets, in px. See {@link MainOptions.fullWidth}. */
+	fullWidth: number;
 	/** The shell's own title, used as the suffix of `document.title`. */
 	title?: unknown;
 	/**
@@ -884,8 +880,8 @@ export class PanelStackController implements PanelStack {
 	private containerEl?: HTMLElement;
 	/** The shell's measurements, shared by everything drawn since they were taken. */
 	private geom?: Geometry;
-	/** The body width at the last layout; a change means a window resize → snap. */
-	private lastBodyW = -1;
+	/** The measurements the last layout ran on; a change in them → snap. */
+	private lastGeom?: Geometry;
 	private layoutQueued = false;
 	private timers = new Set<ReturnType<typeof setTimeout>>();
 	/** The arrangement the navigation in flight is heading for; see {@link intended}. */
@@ -1589,6 +1585,17 @@ export class PanelStackController implements PanelStack {
 	}
 
 	/**
+	 * Adopt a changed `fullWidth`: one layout pass, nothing redrawn. A changed
+	 * `navWidth` needs no counterpart — resizing the sidebar resizes the column
+	 * region, which the layout engine is already observing.
+	 */
+	setFullWidth(px: number): void {
+		if (this.opts.fullWidth === px) return;
+		this.opts.fullWidth = px;
+		this.scheduleLayout();
+	}
+
+	/**
 	 * The breadcrumb stack, drawn by `main()` into the top bar: every open
 	 * panel, oldest first, the ones on screen right now in bold, pinned ones
 	 * wearing their pin. Every crumb but the current panel's is a plain link to
@@ -1914,25 +1921,21 @@ export class PanelStackController implements PanelStack {
 			if (child !== container) chrome += child.getBoundingClientRect().width;
 		}
 
-		// The standard panel is SHELL_PX wide, capped by the window; what it leaves
-		// beside the sidebar is the *standard* content area. Widths are a pure
-		// function of the window — never of what else is open — so a panel NEVER
-		// resizes because a neighbour came or went; only a window resize (the
-		// snap pass in `layout`) changes them:
+		// What the window has beside the sidebar, and within that the *standard*
+		// content area: the width the app gave a "full" panel, or all there is
+		// when the window has less. Widths are a pure function of the window —
+		// never of what else is open — so a panel NEVER resizes because a
+		// neighbour came or went; only a window resize (the snap pass in
+		// `layout`) changes them:
 		// - "full" fills the standard content area exactly;
 		// - "half" is half of it whenever that half is still a usable column, and
 		//   the whole of it on narrower screens;
 		// - "screen" ignores the standard width and takes everything the window
 		//   has — which also means nothing ever fits beside it.
-		const full = Math.max(0, Math.min(SHELL_PX, total) - chrome);
+		const screen = Math.max(0, total - chrome);
+		const full = Math.min(this.opts.fullWidth, screen);
 		const halved = full / 2;
-		return {
-			total,
-			chrome,
-			half: halved >= PAIR_MIN_PX ? halved : full,
-			full,
-			screen: Math.max(0, total - chrome),
-		};
+		return { total, chrome, half: halved >= PAIR_MIN_PX ? halved : full, full, screen };
 	}
 
 	/**
@@ -1979,13 +1982,16 @@ export class PanelStackController implements PanelStack {
 
 		const stacking = this.opts.columns !== "single";
 
-		// A window resize (or the very first pass) must be adopted instantly —
-		// geometry tracking the window through a 450ms transition reads as lag,
-		// and a shell animating itself into place on load reads as a glitch.
+		// A window resize — or the app resizing the shell itself, by changing
+		// `navWidth` or `fullWidth` — must be adopted instantly: geometry tracking
+		// the window through a 450ms transition reads as lag, and a shell
+		// animating itself into place on its first pass reads as a glitch. Only
+		// what a *panel* did is worth animating, and none of those three are.
 		// `.s-shell-snap` suppresses every standing transition for this one pass.
-		const snap = this.lastBodyW !== geom.total;
+		const was = this.lastGeom;
+		const snap = was == null || was.total !== geom.total || was.chrome !== geom.chrome || was.full !== geom.full;
 		if (snap) {
-			this.lastBodyW = geom.total;
+			this.lastGeom = geom;
 			shell.classList.add("s-shell-snap");
 		}
 
@@ -2009,7 +2015,7 @@ export class PanelStackController implements PanelStack {
 		// The content area holds the run, but is never smaller than the standard
 		// panel (a lone small leaves its other half open — which is exactly where
 		// the next small lands, without anything on screen moving) and never
-		// wider than the window. So the panel is the familiar 1280px until extra
+		// wider than the window. So the page holds its standard width until extra
 		// columns genuinely fit, and stretches — centred — to hold the ones that
 		// do; with a "screen" up that's the window's edges.
 		const area = Math.min(geom.screen, Math.max(geom.full, runSum));

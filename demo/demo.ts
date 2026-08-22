@@ -101,6 +101,10 @@ const $shell = A.proxy({
 	columns: "auto" as "auto" | "single" | undefined,
 	linkNavigation: "push" as "push" | "replace" | "open" | undefined,
 	extraNavItem: false,
+	// The shell's own two widths, at their defaults. Side by side they are the
+	// standard page — which is where the familiar 1280px comes from.
+	navWidth: 200,
+	fullWidth: 1080,
 });
 
 // The page-lifecycle demo's state. Declared up here (like the icon data below)
@@ -184,6 +188,19 @@ A(() => {
 						bind: A.ref($shell, "linkNavigation"),
 						attrs: ".small",
 					}));
+					// The shell's two widths, live: drag either and the sidebar and
+					// the columns re-lay-out in place, panels keeping their state.
+					// Their sum is the page the top bar and footer keep to, so the
+					// chrome follows the columns as you go.
+					const widthRow = (label: string, key: "navWidth" | "fullWidth", min: number, max: number) =>
+						row(label, () => {
+							A("div display:flex align-items:center gap:$2", () => {
+								A("input type=range width:7rem", `min=${min}`, `max=${max}`, "step=10", { bind: A.ref($shell, key) });
+								A("span fg:$s-muted font-size:0.85em width:3em text-align:right", () => A(`#${$shell[key]}`));
+							});
+						});
+					widthRow("Sidebar", "navWidth", 120, 320);
+					widthRow("Content", "fullWidth", 640, 1600);
 					row("Primary colour", drawColorPickers);
 					row("Theme", drawThemeChooser);
 				}],
@@ -196,6 +213,8 @@ A(() => {
 		// rebuilt, and the open panels keep their state.
 		get columns() { return $shell.columns; },
 		get linkNavigation() { return $shell.linkNavigation; },
+		get navWidth() { return $shell.navWidth; },
+		get fullWidth() { return $shell.fullWidth; },
 		// Most demo pages keep the default `maxWidth: "full"` (filling the
 		// standard content area); the icons gallery, the icon detail and the
 		// Panels playground are `"half"`, which is what lets two of them sit side
@@ -509,7 +528,8 @@ function drawPanelsPlayground($panel: S.Panel) {
 	S.box({
 		header: "Shell options",
 		content: () => {
-			A("p m:0 rich='The shell-wide knobs live in the display-settings popover, up in the top bar: `columns: \"single\"` shows only the current panel however wide the screen, and `linkNavigation` sets what a link without a `data-panel` attribute does — try the links above with `replace` or `open`.'");
+			A("p mt:0 rich='The shell-wide knobs live in the display-settings popover, up in the top bar: `columns: \"single\"` shows only the current panel however wide the screen, and `linkNavigation` sets what a link without a `data-panel` attribute does — try the links above with `replace` or `open`.'");
+			A("p m:0 rich='The two sliders there are `navWidth` and `fullWidth`, the shell’s own widths in pixels. `fullWidth` is what a `\"full\"` page gets (and half of it is what a `\"half\"` gets); together with the sidebar it is the standard page the top bar and footer keep to. The defaults, 200 and 1080, are where the familiar 1280px comes from.'");
 		},
 	});
 }

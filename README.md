@@ -180,17 +180,19 @@ Navigations settle asynchronously (closes travel through the browser's history),
 
 Navigating faster than the shell can settle is fine: closing travels through the browser's history, so it takes a moment to land, and anything asked for in the meantime waits for it rather than being dropped. Two quick Escapes (or back gestures) peel two panels, each aimed at the stack the one before it was heading for.
 
-**Every panel must work at 360–540px**, because that is what it gets whenever two columns fit. `$panel.maxWidth` says how much *more* it can usefully take. The content area is the page, at most 1280px wide, minus the nav sidebar:
+**Every panel must work at 360–540px**, because that is what it gets whenever two columns fit. `$panel.maxWidth` says how much *more* it can usefully take. The content area is what `S.main()`'s `fullWidth` says it is — 1080px by default:
 
 | `maxWidth` | How wide the panel gets | Good for |
 | --- | --- | --- |
 | `"half"` | Half the content area: 360 to 540px. | lists, detail forms — anything that reads well at phone width |
-| `"full"` (default) | The whole content area: up to ~1100px. | ordinary screens; the safe default |
-| `"screen"` | The whole window, no upper limit: ~1750px on a 1920px screen. | boards, wide tables, dense dashboards |
+| `"full"` (default) | The whole content area: up to 1080px. | ordinary screens; the safe default |
+| `"screen"` | The whole window, no upper limit: ~1720px on a 1920px screen. | boards, wide tables, dense dashboards |
 
-Below the width two columns need, everything takes the whole content area whatever it asked for. Those numbers assume a nav sidebar of around 170px; without one, add that back. Nothing fits beside a `"full"` on a standard 1280px page, but on a wide enough window a `"half"` still can, and the page grows past 1280px to hold both.
+Below the width two columns need, everything takes the whole content area whatever it asked for. Nothing fits beside a `"full"` on a standard page, but on a wide enough window a `"half"` still can, and the page grows to hold both.
 
-A column's width depends only on the size of the window, never on what else is open. So opening or closing a panel never resizes the ones already on screen, and never reflows what someone was reading. A lone `"half"` leaves its other half empty, and that is exactly where the next one lands. When more columns fit than the standard 1280px page holds (three halves, say), the page itself grows, staying centred, to hold them — though the top bar and footer keep to the standard width, so the chrome holds still while the columns come and go.
+The standard page is those 1080px plus the nav sidebar's 200 — the 1280px an app is usually seen at, though neither figure is fixed: `S.main({ navWidth, fullWidth })` sets both, and everything above follows from them.
+
+A column's width depends only on the size of the window, never on what else is open. So opening or closing a panel never resizes the ones already on screen, and never reflows what someone was reading. A lone `"half"` leaves its other half empty, and that is exactly where the next one lands. When more columns fit than the standard page holds (three halves, say), the page itself grows, staying centred, to hold them — though the top bar and footer keep to the standard width, so the chrome holds still while the columns come and go.
 
 Columns tile that area, separated by a hairline and no gutter — a column brings its own padding, so their contents stay comfortably apart regardless.
 

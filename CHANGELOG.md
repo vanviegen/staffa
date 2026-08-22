@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.0
+
+- **`navWidth` and `fullWidth` on `S.main`** set how wide the nav sidebar and a `"full"` panel are in pixels.
+
 ## 0.12.1
 
 - **`$panel.open(path, how?)`** navigates from that panel, exactly as a link inside it would — for the places where navigation can't be a link, like a row's click handler or a keyboard shortcut.
