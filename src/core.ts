@@ -62,6 +62,25 @@ export interface ContentOptions {
  */
 export const NARROW_PX = 640;
 
+/**
+ * The narrowest layout the library is designed for. A panel must work at this
+ * width (panels.ts sizes its columns from it), and a window narrower than this
+ * is shown the 360px layout scaled down to fit rather than squeezed further
+ * (see `watchScale` in main.ts).
+ */
+export const MIN_PX = 360;
+
+/**
+ * `el`'s effective CSS zoom: the factor between its own coordinate space and
+ * the window's — 1 wherever `zoom` isn't in play, or in browsers that predate
+ * it. A `getBoundingClientRect()` or pointer coordinate is in window space;
+ * divide it by this before using it as a length or scroll offset, which live
+ * in the element's own space. (`offsetWidth` and friends already do.)
+ */
+export function cssZoom(el: Element): number {
+	return (el as { currentCSSZoom?: number }).currentCSSZoom ?? 1;
+}
+
 let idCounter = 0;
 /** Generates a process-unique id, used to wire `<label for>` to its control. */
 export function uniqueId(prefix = "s"): string {

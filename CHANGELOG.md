@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.14.0
+
+- **Breaking:** `S.main`'s `fullWidth` is gone. The shell now fills the window (instead of growing and shrinking with the columns), and `maxWidth` — which now also works in routed mode — caps and centres the whole shell, bars and sidebar included. Migrate `fullWidth: 1080` to `maxWidth: "1280px"` (the sidebar's 200 included).
+- **Breaking:** `$panel.maxWidth` asks for a number of columns now: `"small"` (was `"half"`), `"medium"` (was `"full"`, still the default), the new `"large"`, or `"none"` for the whole content area (replacing `"screen"`). A column is 360–540px — the narrowest that tiles the content area a whole number of times — and the ask is a hard ceiling: a panel is never wider than its column count × 540px.
+- **Breaking:** navigating to an already-open panel now closes everything stacked on top of it, instead of parking it. Pinned panels still ride along, and unsaved ones still park.
+- Columns that don't fill the content area are centred in it.
+- A `replace` or `open` navigation aiming at a path that is already open now applies its usual shape, moving the open panel into place with its state intact — instead of merely returning to it (or, when it was the current panel, doing nothing).
+- **`link` on `S.showFloatingMenu` and `S.addContextMenu`**: pass the path or URL the menu stands on, and **Open in new tab** / **Copy link** are prepended above a separator — the entries the browser's own link menu would have offered. The breadcrumbs' menu is built on it.
+- A window narrower than 360px shows the 360px layout scaled down to fit, instead of a squeezed one (browsers from before mid-2024 keep the squeeze).
+- Top-level content boxes go edge-to-edge below 540px of shell width now, rather than below 640px.
+- Fixed: a column's background could meet the page background in a visible step.
+- Fixed: `S.select` applied `inputAttrs` to its styled wrapper instead of the `<select>` itself, unlike every other field control.
+- The panel holding unsaved work now comes on screen as the tab-close prompt is raised, rather than only after choosing to stay.
+
 ## 0.13.0
 
 - **`navWidth` and `fullWidth` on `S.main`** set how wide the nav sidebar and a `"full"` panel are in pixels.

@@ -59,16 +59,31 @@ import A from "aberdeen";
  */
 
 /**
- * The surface sheen: the subtle single-colour wash every surface (and the page)
- * is painted with, as a `background:` declaration. A shared constant rather
- * than a CSS custom property, deliberately: `var()`s inside a custom property
- * resolve where the property is *defined*, so a `--s-sheen` at `:root` would
- * paint every surface with the page's wash instead of its own `$s-bg`'s. Also
- * used by panels.ts, where the routed columns have to visually *be* the
- * surface around them.
+ * The subtle single-colour wash a surface is painted with, as a `background:`
+ * declaration, at the given angle. Shared constants rather than a CSS custom
+ * property, deliberately: `var()`s inside a custom property resolve where the
+ * property is *defined*, so a `--s-sheen` at `:root` would paint every surface
+ * with the page's wash instead of its own `$s-bg`'s.
  */
-export const SURFACE_SHEEN =
-	"background: linear-gradient(170deg, color-mix(in oklab, $s-bg, white 9%), color-mix(in oklab, $s-bg, black 9%));";
+const sheen = (angle: string) =>
+	`background: linear-gradient(${angle}, color-mix(in oklab, $s-bg, white 9%), color-mix(in oklab, $s-bg, black 9%));`;
+
+/** The surface sheen: the wash every surface (and the page) is painted with. */
+export const SURFACE_SHEEN = sheen("170deg");
+
+/**
+ * The same wash, straight down — for panels.ts, where the routed columns and
+ * the ground beside them have to look like one continuous surface.
+ *
+ * A gradient at an angle takes its extent from the box's *width* as well as its
+ * height, so a 430px column and the 1720px region behind it would paint
+ * different slices of the same wash and meet at a visible step. Straight down,
+ * the extent is the height alone — which every column shares exactly with the
+ * region (a column is `top:0 bottom:0` in it) and so with every other column.
+ * The 10° of tilt is worth losing there; it buys the one place in the app where
+ * boxes of *different widths* must be seamless.
+ */
+export const PANEL_SHEEN = sheen("180deg");
 
 const STORAGE_KEY = "staffa:darkMode";
 

@@ -154,11 +154,11 @@ The first key that matches wins, and a segment a param refuses simply doesn't ma
 
 **Navigating is just links.** Write ordinary `<a href="/...">` links; Staffa handles the clicks (so don't also call Aberdeen's `interceptLinks()`).
 
-The open panels form a **stack**, and one of them is the **current** panel: the one the URL names, and the rightmost column on screen. Usually that's the newest panel — but going back along the stack moves the cursor without closing anything (see the breadcrumbs below), so panels can sit *after* the current one too, parked just past the viewport's right edge.
+The open panels form a **stack**, and its last panel is the **current** one: the panel the URL names, and the rightmost column on screen. Whatever you navigate to lands there.
 
-- A link inside a panel opens its target on top of that panel, closing everything after it first. That's why clicking a second project replaces the open project instead of adding a third column — and why the panels you'd browsed past don't pile up.
-- A `data-panel` attribute on the link picks a different one of the three navigations. `push` is the default just described; `replace` puts the target in place of the link's own panel rather than on top of it, which is what prev/next buttons want; and `open` leaves that panel behind altogether and gives the target its own stack, exactly as a nav item would — for a link that points somewhere else in the app, a search hit or a mention, where the panel you clicked from isn't the context you want to keep.
-- A link to something that's already open goes back to it instead of opening it twice — a move along the stack, closing nothing. The same path is never in the stack twice.
+- A link inside a panel opens its target on top of that panel, closing everything after it first. That's why clicking a second project replaces the open project instead of adding a third column.
+- A `data-panel` attribute on the link picks a different one of the three navigations, which differ only in how much of the link's own context the target keeps: `push` (the default just described) keeps the link's panel and builds on it; `replace` keeps everything under that panel but not the panel itself — what prev/next buttons want; and `open` keeps none of it, giving the target its own stack exactly as a nav item would — for a search hit or a mention, where the panel you clicked from is coincidence, not context.
+- A plain link to something that's already open goes back to it instead of opening it twice, closing whatever was stacked on top of it; a `replace` or `open` applies its usual shape instead, the open panel moving into place with its state intact. Either way the same path is never in the stack twice.
 - A link that isn't inside a panel (a nav item, or one in a dialog) has no panel to build on, so it replaces the stack as a whole: the panel you asked for, with its ancestor panels opened beneath it (see [below](#ancestors)). Panels that the new stack also contains stay as they are, so clicking the nav item for the section you're already in won't reset it. Clicking a nav item and opening that same URL in a fresh tab therefore give you the same columns.
 
 **The stack is an object, not a global.** In routed mode `S.main()` hands back the panel stack, and every panel gets the same object as `$panel.stack` — which is what a route handler uses, since it runs while the `S.main()` call is still going and can't see its return value yet.
@@ -180,21 +180,24 @@ Navigations settle asynchronously (closes travel through the browser's history),
 
 Navigating faster than the shell can settle is fine: closing travels through the browser's history, so it takes a moment to land, and anything asked for in the meantime waits for it rather than being dropped. Two quick Escapes (or back gestures) peel two panels, each aimed at the stack the one before it was heading for.
 
-**Every panel must work at 360–540px**, because that is what it gets whenever two columns fit. `$panel.maxWidth` says how much *more* it can usefully take. The content area is what `S.main()`'s `fullWidth` says it is — 1080px by default:
+**The content area is the window**, minus the nav sidebar — or, when `S.main({ maxWidth })` says so, that much of it, centred. Either way it is the same width whatever is open, so the sidebar, the top bar and the footer never move.
+
+The shell divides that area into columns: the narrowest whole number of them that keeps each one at least **360px** wide, and no column ever wider than **540**. A 1080px content area is three columns of 360; a 1520px one is four of 380; below 720px there is a single column — of at most 540, centred. `$panel.maxWidth` counts in those columns:
 
 | `maxWidth` | How wide the panel gets | Good for |
 | --- | --- | --- |
-| `"half"` | Half the content area: 360 to 540px. | lists, detail forms — anything that reads well at phone width |
-| `"full"` (default) | The whole content area: up to 1080px. | ordinary screens; the safe default |
-| `"screen"` | The whole window, no upper limit: ~1720px on a 1920px screen. | boards, wide tables, dense dashboards |
+| `"small"` | One column — never above 540px. | lists, detail forms — anything that reads well at phone width |
+| `"medium"` (default) | Two columns — never above 1080px. | ordinary screens; the safe default |
+| `"large"` | Three columns — never above 1620px. | wide tables, dense forms |
+| `"none"` | The whole content area, unbounded. | boards, dashboards |
 
-Below the width two columns need, everything takes the whole content area whatever it asked for. Nothing fits beside a `"full"` on a standard page, but on a wide enough window a `"half"` still can, and the page grows to hold both.
+The ask is a promise in both directions: the shell never draws a panel wider than its column count × 540px, and every size is also capped at the content area — so a draw function has to look right from 360px up to its own ceiling, and nowhere past it. There is nothing below 360 to handle either: a narrower window is shown the 360px layout scaled down to fit (dialogs, menus and toasts scaling along), so 360 really is the floor.
 
-The standard page is those 1080px plus the nav sidebar's 200 — the 1280px an app is usually seen at, though neither figure is fixed: `S.main({ navWidth, fullWidth })` sets both, and everything above follows from them.
+A column's width depends only on the size of the window, never on what else is open. So opening or closing a panel never resizes the ones already on screen, and never reflows what someone was reading. As many columns as fit are shown, ending at the current panel; when they don't fill the content area they sit centred in it, so an arriving column nudges the others over to share the room.
 
-A column's width depends only on the size of the window, never on what else is open. So opening or closing a panel never resizes the ones already on screen, and never reflows what someone was reading. A lone `"half"` leaves its other half empty, and that is exactly where the next one lands. When more columns fit than the standard page holds (three halves, say), the page itself grows, staying centred, to hold them — though the top bar and footer keep to the standard width, so the chrome holds still while the columns come and go.
+`S.main({ navWidth, maxWidth })` sets the sidebar's width and the cap. Leave `maxWidth` off and the app simply fills the window — worth capping (`"1600px"`, say) if you'd rather it didn't march across a 4K display.
 
-Columns tile that area, separated by a hairline and no gutter — a column brings its own padding, so their contents stay comfortably apart regardless.
+Columns tile the area they're given, separated by a hairline and no gutter — a column brings its own padding, so their contents stay comfortably apart regardless.
 
 The panel is sized before your handler runs, and `$panel.width` is the resolved figure in pixels — so a chart, a virtualised list or a column count has the real width from the first frame, with nothing to measure. Set `maxWidth` at the top of your handler and you draw at the new width; set it later and the panel reflows without being redrawn, so nothing in it is rebuilt or loses its state.
 
@@ -212,11 +215,11 @@ function drawTask($panel: S.Panel<{ taskId: number }>) {
 
 On a wide screen the title becomes the stack's last crumb and the Save button sits in a quiet strip at the top of the column. On a phone the crumb is still there and Save moves into the top bar, where the app menu was. Nothing in your code measures the viewport, and no screen is written twice.
 
-**The breadcrumbs are the navigation.** The top bar's second line writes the open panels out as breadcrumbs — `Projects / Trackle / Task 42` — with the panels currently on screen in bold. Clicking an earlier crumb goes back to it *without closing anything*: the panels right of it stay open, parked just past the viewport's right edge, and clicking their crumbs brings them back. Browsing the stack is free — it's opening a *new* panel that closes the panels after the one it came from. The app's name and logo link to the app's home (the `home` option, `/` by default; `null` links neither), going back to it when it's already open and opening it when it isn't. A stack too long for the bar scrolls sideways, in an `S.scrollStrip` like the tab strip's.
+**The breadcrumbs are the navigation.** The top bar's second line writes the open panels out as breadcrumbs — `Projects / Trackle / Task 42` — with the panels currently on screen in bold. A crumb is an ordinary link to its panel, so clicking one goes back to that panel and closes what was stacked on top of it — and the browser's back button brings those columns back. The app's name and logo link to the app's home (the `home` option, `/` by default; `null` links neither), going back to it when it's already open and opening it when it isn't. A stack too long for the bar scrolls sideways, in an `S.scrollStrip` like the tab strip's.
 
 That line is the `subtitle`'s while the stack has nothing to add: one panel open, reachable from a nav item that is already highlighted in a visible sidebar. Otherwise the stack takes it, since it is then the only thing naming the screen.
 
-Right-click (or long-press) a crumb for **Close** — which takes just that panel out, wherever it sits in the stack — and **Pin**. A pinned panel — its crumb wears a pin — never closes as a side effect of navigation elsewhere: where opening a new panel would prune it, it rides along beneath the new panel instead, one crumb click away. Pin the reference you keep coming back to, then navigate freely. An *explicit* close (Escape, `close()`, the crumb menu, `data-panel=replace`) still closes it, and it's yours from code as `$panel.pinned`. Because a crumb is a real link whose right-click the menu takes over, the menu also offers **Open in new tab** and **Copy link**.
+Right-click (or long-press) a crumb for **Close** — which takes just that panel out, wherever it sits in the stack — and **Pin**. A pinned panel — its crumb wears a pin — never closes as a side effect of navigation elsewhere: where a navigation would prune it, it rides along beneath the new panel instead (or parks out of sight, when the panel you went back to was already beneath it), one crumb click away. Pin the reference you keep coming back to, then navigate freely. An *explicit* close (Escape, `close()`, the crumb menu, `data-panel=replace`) still closes it, and it's yours from code as `$panel.pinned`. Because a crumb is a real link whose right-click the menu takes over, the menu also offers **Open in new tab** and **Copy link**.
 
 A crumb can also wear a **●**: the panel holds unsaved work, and nothing will close it (see `$panel.unsaved` below).
 
@@ -261,7 +264,7 @@ Closing the current panel hands the focus to the panel on its left. Closing one 
 
 A closed panel is torn down at once: its `A.clean()` hooks run the moment it closes, so subscriptions, timers and requests stop there and then. Only its element hangs around, inert and frozen, for the length of the exit animation.
 
-Escape steps one panel back along the stack: at the stack's end that closes the current panel, mid-stack it just moves left and parks the panel you leave, and at the stack's start it jumps to the navigation. The browser's back button replays whole arrangements — it re-opens what a navigation closed and re-parks what a crumb click brought back.
+Escape closes the current panel — or just steps left, when it holds unsaved work or panels sit parked beyond it — and at the stack's start it jumps to the navigation. The browser's back button replays whole arrangements, re-opening what a navigation closed.
 
 <a id="ancestors"></a>
 
@@ -293,7 +296,7 @@ Search params and the `#hash` belong to the current panel only. Anything another
 
 **A few more things.**
 
-- `columns: "single"` shows only the current panel, however wide the screen — the phone experience at every size. Only the display changes: the URL, the back button, unsaved panels and the panels' own close buttons all behave the same.
+- `columns: "single"` shows only the current panel, however wide the screen — one screen at a time at every size, each still at its asked width, centred. Only the display changes: the URL, the back button, unsaved panels and the panels' own close buttons all behave the same.
 - `linkNavigation` sets what a link *without* a `data-panel` attribute does: `"push"` (the default), `"replace"`, or `"open"`. With `"open"` every click replaces the content as a whole — which, with flat routes, is the conventional sidebar-and-content app: one pane, swapped on every click, the crumb line simply naming it.
 - Both are live: pass a proxied options object (or make the field a getter) and a change is adopted in place, every open panel keeping its state.
 - Only one routed `S.main()` can be mounted at a time; a second one throws — the URL is global, so two of them would fight over it. Nothing else is global: the stack belongs to its shell, and each handler gets its own `$panel`, since several panels are alive at once.

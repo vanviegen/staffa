@@ -1,5 +1,5 @@
 import A from "aberdeen";
-import { type Slot, type Attributes, drawSlot, mountPortal } from "../core.js";
+import { cssZoom, type Slot, type Attributes, drawSlot, mountPortal } from "../core.js";
 
 /** Options for {@link addTooltip}. */
 export interface TooltipOptions {
@@ -39,10 +39,12 @@ if (typeof window !== "undefined") {
 	window.addEventListener("scroll", () => { $ttActive.value = undefined; }, { capture: true, passive: true });
 }
 
-function computePos(rect: DOMRect, tipW: number, tipH: number, placement: string): { x: number; y: number } {
+function computePos(rect: DOMRect, tipW: number, tipH: number, placement: string, zoom: number): { x: number; y: number } {
+	// `rect` is handed over already in the tip's own coordinate space; the
+	// window's size has to be brought into it too (see `cssZoom`).
 	const gap = 7;
-	const vw = window.innerWidth;
-	const vh = window.innerHeight;
+	const vw = window.innerWidth / zoom;
+	const vh = window.innerHeight / zoom;
 	let x = 0, y = 0;
 
 	if (placement === "bottom") {
@@ -96,7 +98,12 @@ mountPortal(() => {
 
 	requestAnimationFrame(() => {
 		if (!document.body.contains(tipEl)) return;
-		const { x, y } = computePos(anchor.getBoundingClientRect(), tipEl.offsetWidth, tipEl.offsetHeight, placement);
+		// The anchor's rect is in window coordinates; the left/top set below live
+		// in the tip's own space — scale it over before computing (see `cssZoom`).
+		const z = cssZoom(tipEl);
+		const r = anchor.getBoundingClientRect();
+		const rect = new DOMRect(r.x / z, r.y / z, r.width / z, r.height / z);
+		const { x, y } = computePos(rect, tipEl.offsetWidth, tipEl.offsetHeight, placement, z);
 		tipEl.style.left = x + "px";
 		tipEl.style.top = y + "px";
 		tipEl.style.visibility = "";

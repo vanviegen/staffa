@@ -1,6 +1,6 @@
 import A from "aberdeen";
 import { current as currentRoute } from "aberdeen/route";
-import { type Slot, type Attributes, drawSlot, focusFirst, NARROW_PX } from "../core.js";
+import { type Slot, type Attributes, drawSlot, focusFirst, NARROW_PX, MIN_PX } from "../core.js";
 import { type MenuOptions, drawMenu, isFloatingMenuOpen, consumeBranchNav, anyCurrent } from "./menu.js";
 // The shell's own chrome glyphs, from the same Lucide set an app draws with —
 // so a nav trigger sits beside app icons as an equal. Named imports, so a
@@ -8,7 +8,7 @@ import { type MenuOptions, drawMenu, isFloatingMenuOpen, consumeBranchNav, anyCu
 import { menu as menuIcon, x as closeIcon } from "../icons.js";
 import { iconButton } from "./button.js";
 import { isDialogOpen } from "./dialog.js";
-import { PanelStackController, type PanelStack, type AncestorTable, type Panel, type RouteHandler, type RouteTable, type Routes } from "./panels.js";
+import { PanelStackController, SMALL_MAX_PX, type PanelStack, type AncestorTable, type Panel, type RouteHandler, type RouteTable, type Routes } from "./panels.js";
 
 /** Options for {@link main}. */
 export interface MainOptions<R = Routes> {
@@ -94,16 +94,15 @@ export interface MainOptions<R = Routes> {
 	 * Navigating is just links: the shell handles the clicks itself, so do *not*
 	 * also call Aberdeen's `interceptLinks()`. A link opens its target on top of
 	 * the panel it sits in, closing everything after that panel first. The
-	 * `data-panel` attribute picks another of the three {@link PanelStack}
-	 * navigations instead: `replace` puts the target in place of the link's own
-	 * panel, and `open` leaves that panel behind and gives the target its own
-	 * stack, the way a nav item does. A link
-	 * to something already open goes back to it rather than opening it twice —
-	 * a move along the stack that closes nothing: the panels right of it stay
-	 * open, parked past the viewport's right edge, until a *new* panel prunes
-	 * them (pinned panels excepted — see {@link Panel.pinned}).
-	 * From code, use {@link pushPanel} and friends: navigating
-	 * with `aberdeen/route`'s own `go()` works too — a panel with
+	 * `data-panel` attribute keeps less of that context instead: `replace`
+	 * drops the link's own panel too, putting the target in its place, and
+	 * `open` drops it all, giving the target its own stack, the way a nav item
+	 * does. A plain link to something already open goes back to it rather than
+	 * opening it twice, closing whatever was stacked on top — pinned panels
+	 * excepted (see {@link Panel.pinned}), and panels holding unsaved work,
+	 * which park instead; a `replace` or `open` applies its usual shape, the
+	 * open panel moving into it alive. From code, use {@link pushPanel} and
+	 * friends: navigating with `aberdeen/route`'s own `go()` works too — a panel with
 	 * {@link Panel.unsaved} work still survives it — but builds the whole stack
 	 * from the path. A navigation guard the app registered with
 	 * `route.setGuard` (an auth redirect, say) keeps working: the shell
@@ -113,11 +112,11 @@ export interface MainOptions<R = Routes> {
 	 * is called ({@link Panel.title} — unset, its first line of text stands in)
 	 * and what it can do ({@link Panel.actions}); everything else in a column is
 	 * the panel's own content, boxes included. The shell writes the stack of
-	 * open panels as breadcrumbs in the top bar — click one to go back to it,
-	 * closing nothing — and places each panel's actions where the room is: on
-	 * its own column while several fit, in the bar once the shell is narrow and
-	 * the current panel *is* the screen. Nothing in an app measures the
-	 * viewport to lay its screens out twice.
+	 * open panels as breadcrumbs in the top bar — click one to go back to it —
+	 * and places each panel's actions where the room is: on its own column while
+	 * several fit, in the bar once the shell is narrow and the current panel *is*
+	 * the screen. Nothing in an app measures the viewport to lay its screens out
+	 * twice.
 	 *
 	 * Only one routed shell can be mounted at a time (a second one throws) —
 	 * the URL is global, so two of them would fight over it. Nothing else is:
@@ -192,9 +191,10 @@ export interface MainOptions<R = Routes> {
 	 * How many panels are *shown* at a time. `"auto"` (the default) shows as
 	 * many columns, side by side, as comfortably fit, ending at the current
 	 * panel; `"single"` shows only the current panel, however wide the screen
-	 * — the phone experience at every size (the nav sidebar still sits beside
-	 * it). Only the display differs: the stack, the breadcrumbs, the URL,
-	 * Escape and the back button behave identically in both. Routed mode only.
+	 * — one screen at a time at every size, each still at its asked width,
+	 * centred (the nav sidebar still sits beside it). Only the display
+	 * differs: the stack, the breadcrumbs, the URL, Escape and the back
+	 * button behave identically in both. Routed mode only.
 	 *
 	 * Live: pass a proxied options object (or make this field a getter) and a
 	 * change is adopted in place — one layout pass, every panel keeping its
@@ -203,12 +203,13 @@ export interface MainOptions<R = Routes> {
 	columns?: "auto" | "single";
 	/**
 	 * What a link *without* a `data-panel` attribute does — the per-link
-	 * attribute always wins. `"push"` (the default) opens the target on top of
-	 * the panel the link sits in; `"replace"` opens it in that panel's place;
-	 * `"open"` gives it its own stack, the way a nav item does. With `"open"`
-	 * every click replaces the content as a whole — which, with flat routes,
-	 * is the conventional sidebar-and-content app: one pane, swapped on every
-	 * click, the crumb line simply naming it. Routed mode only.
+	 * attribute always wins. The three keep less and less of the link's own
+	 * context: `"push"` (the default) builds on the panel the link sits in,
+	 * `"replace"` swaps that panel out, and `"open"` ignores it and gives the
+	 * target its own stack, the way a nav item does. So with `"open"` every
+	 * click replaces the content as a whole — which, with flat routes, is the
+	 * conventional sidebar-and-content app: one pane, swapped on every click,
+	 * the crumb line simply naming it. Routed mode only.
 	 *
 	 * Live, like {@link MainOptions.columns}: change it and the next click
 	 * uses the new default.
@@ -217,32 +218,23 @@ export interface MainOptions<R = Routes> {
 	/** Footer content, pinned below the scroll area. */
 	footer?: Slot;
 	/**
-	 * Max width for the panel's *content*, e.g. `"60rem"`. The header and footer
+	 * Max width for the shell's *content*, e.g. `"80rem"`. The header and footer
 	 * backgrounds still span the full shell width, but their contents — and the
 	 * sidebar + separator + content trio (or just the content when there's no
 	 * sidebar) — cap to this width and centre horizontally. When unset, everything
 	 * fills the available width. Either way the content shares the panel surface —
 	 * it is not boxed.
 	 *
-	 * Ignored when you pass {@link MainOptions.routes}: there the open panels
-	 * decide the width (see {@link Panel.maxWidth}), and the header and footer line
-	 * themselves up with them.
-	 */
-	maxWidth?: string;
-	/**
-	 * How wide a `"full"` panel gets, in pixels — and with it the whole content
-	 * area, since a `"full"` fills it exactly. A `"half"` gets half of this, and
-	 * a `"screen"` ignores it and takes the window. Defaults to 1080; the window
-	 * caps it when there is less room than that. Routed mode only.
-	 *
-	 * This plus {@link MainOptions.navWidth} is the app's standard page — see
-	 * there.
+	 * In routed mode this is what the columns divide up (see
+	 * {@link Panel.maxWidth}), which is the reason to set it on a very wide
+	 * screen: left uncapped, a stack of small panels will happily march right
+	 * across a 4K display.
 	 *
 	 * Live, like {@link MainOptions.columns}: pass a proxied options object (or
-	 * make this field a getter) and a change is adopted in one layout pass,
-	 * every panel keeping its state.
+	 * make this field a getter) and a change is adopted in one layout pass, every
+	 * open panel keeping its state.
 	 */
-	fullWidth?: number;
+	maxWidth?: string;
 	/** Aberdeen attr/style string applied to the content area. */
 	contentAttrs?: Attributes;
 	/** Aberdeen attr/style string applied to the top bar. */
@@ -271,13 +263,9 @@ export interface MainOptions<R = Routes> {
 	navPosition?: "left" | "right";
 	/**
 	 * How wide the nav sidebar column is, in pixels — its hairline included.
-	 * Defaults to 200.
+	 * Defaults to 200. Whatever it takes comes off the content area beside it.
 	 *
-	 * Together with {@link MainOptions.fullWidth} this is the app's *standard
-	 * page*: the width the top bar and footer keep to, and the width the
-	 * columns settle back to. The defaults come to the familiar 1280px.
-	 *
-	 * Live, like {@link MainOptions.fullWidth}.
+	 * Live, like {@link MainOptions.maxWidth}.
 	 */
 	navWidth?: number;
 	/** Aberdeen attr/style string applied to the sidebar nav panel. */
@@ -286,20 +274,15 @@ export interface MainOptions<R = Routes> {
 	navPageAttrs?: Attributes;
 }
 
-/**
- * The default nav column (hairline included) and the default width of a
- * `"full"` panel — see {@link MainOptions.navWidth} and
- * {@link MainOptions.fullWidth}. Side by side they come to the 1280px page the
- * shell is usually seen as, but that figure lives nowhere: the browser adds
- * these two up, and an app that changes either simply gets a different page.
- */
+/** The default nav column, hairline included — see {@link MainOptions.navWidth}. */
 const NAV_W = 200;
-const FULL_W = 1080;
 
 A.insertGlobalCss({
 	".s-main": {
 		// container-type so @container queries below can respond to shell width.
-		"&": "display:flex flex-direction:column min-height:100vh max-height:100vh container-type:inline-size",
+		// The vh divided by --s-zoom: viewport units shrink with the page-fitting
+		// zoom (see `watchScale`), and this height means the window.
+		"&": "display:flex flex-direction:column min-height:calc(100vh/var(--s-zoom,1)) max-height:calc(100vh/var(--s-zoom,1)) container-type:inline-size",
 		// <body> carries a default $3 padding; when the shell is a direct child of it,
 		// cancel that padding with matching negative margins so the chrome still spans
 		// edge to edge (and the 100vh sizing stays exact).
@@ -375,28 +358,6 @@ A.insertGlobalCss({
 		// and the bar already comes from `.s-content`'s padding. Without a scrollbar
 		// there's no margin, so the content keeps its single $3 edge — not 2×$3.
 		".s-body main.s-scroll-y": "margin-right:$3",
-		// Routed mode takes its width from the stack instead of from
-		// `maxWidth`: the layout engine publishes the ensemble width (sidebar +
-		// separator + content area) as --s-shell-w — the standard page
-		// normally, wider while the columns outgrow it (a "screen" page, or
-		// extra columns fitting a wide window) — and the body row caps itself
-		// to it, staying centred around the columns. Changing the custom
-		// property animates the max-width consuming it, with no JS in the loop:
-		// the body recentres in step with the panel whose arrival or departure
-		// moved it, over the same --s-panel-ms (see panels.ts). During a window
-		// resize (and the very first pass) the layout engine raises
-		// `.s-shell-snap` so the new width is adopted instantly instead of
-		// chasing the window through a transition.
-		"&.s-routed > .s-body > .s-body-inner":
-			"max-width: var(--s-shell-w, 100%); transition: max-width var(--s-panel-ms) ease;",
-		"&.s-routed.s-shell-snap > .s-body > .s-body-inner": "transition:none",
-		// The bars don't follow the ensemble past the standard page: a header
-		// stretching to the window's edges and back with every "screen" panel
-		// reads as the whole app flexing, so the chrome holds still and only
-		// the columns grow. (Below the standard width the ensemble is simply
-		// the window, which only a resize changes — so the bars never animate,
-		// and take no part in the transition above.)
-		"&.s-routed > header > .s-bar, &.s-routed > footer > .s-bar": "max-width: calc(var(--s-nav-w) + var(--s-full-w))",
 	},
 	// Sidebar nav panel. Items reuse the shared `.s-menu-item` /
 	// `.s-menu-sep` styles from menu.ts, so the sidebar and the floating
@@ -443,12 +404,19 @@ A.insertGlobalCss({
 		// A phone's bar holds two lines of chrome in a screen's width, so it buys
 		// the stack and the screen's actions room by spending less on air.
 		".s-main > header > .s-bar": "gap:$1 padding: $1 $2;",
-		// On phones a top-level content box becomes a full-bleed block: pull it out
-		// to negate the content padding and drop the rounded corners.
-		".s-content > .s-box": "margin-inline: calc(-1 * $3); r:0 border-inline:0",
-		// At narrow widths, content boxes are full-bleed so there's no inset to
-		// align the scrollbar with — cancel the right margin.
+		// The narrow bar tucks its content in to $2 (above), so the $3 scrollbar
+		// inset no longer has a chrome edge to align with — cancel it.
 		".s-main .s-body main.s-scroll-y": "margin-right:0",
+	},
+	// On phones a top-level content box becomes a full-bleed block: pull it out
+	// to negate the content padding and drop the rounded corners. Keyed on
+	// SMALL_MAX_PX, not the narrow threshold above: at or below it a column can
+	// never be narrower than the window (every size caps at the content area,
+	// and a lone column's cap is exactly this — see panels.ts), while just above
+	// it a small column floats centred, where a bleeding box would shed its card
+	// chrome over open ground.
+	[`@container (max-width: ${SMALL_MAX_PX}px)`]: {
+		".s-content > .s-box": "margin-inline: calc(-1 * $3); r:0 border-inline:0",
 	},
 });
 
@@ -464,7 +432,8 @@ A.insertGlobalCss({
  * Instead of a single `content` slot, pass {@link MainOptions.routes} and the
  * shell takes over navigation: each route draws one screen, called a panel,
  * and as many columns as fit are shown at a time, side by side on a wide screen
- * and one at a time on a phone. Each panel *declares* its chrome — its
+ * and one at a time on a phone; {@link MainOptions.maxWidth} caps how much room
+ * they have between them. Each panel *declares* its chrome — its
  * {@link Panel.title} and its {@link Panel.actions} — and this shell places it:
  * the stack of titles as breadcrumbs in the bar, the actions on the panel's
  * column while several fit and in the bar once the shell is narrow enough
@@ -539,9 +508,6 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): PanelS
 			notFound: opts.notFound,
 			ancestors: opts.ancestors,
 			title: opts.title,
-			// Corrected below, and on every change, from the app's own option:
-			// read here it would subscribe the whole shell to it.
-			fullWidth: FULL_W,
 			$shell,
 		})
 		: null;
@@ -553,22 +519,18 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): PanelS
 		// the new link default. Nothing else of the shell is touched.
 		A(() => ctl.setColumns(opts.columns));
 		A(() => ctl.setLinkNavigation(opts.linkNavigation));
-		A(() => ctl.setFullWidth(opts.fullWidth ?? FULL_W));
 	}
 	// Where the brand mark and the app's name link — or nowhere, when the app
 	// said `home: null` (a title slot holding a control of its own, say).
 	const homeHref = ctl && opts.home !== null ? opts.home ?? "/" : null;
-	// Routed mode caps the shell to the ensemble width the layout engine publishes,
-	// rather than to `maxWidth`.
-	const capWidth = ctl ? null : opts.maxWidth;
+	// The shell's one width cap, applied to the body row and to both bars, so the
+	// chrome and the content always line up. Each of the three reads it in a
+	// scope of its own — one that draws nothing, so re-running it is a single
+	// style write: an app that changes it on a proxied options object resizes the
+	// shell in place, panels and their state untouched.
+	const capWidth = () => { if (opts.maxWidth != null) A("max-width:", opts.maxWidth); };
 
-	const root = A(`div.s-main${ctl ? ".s-routed" : ""}`, opts.attrs, () => {
-		// The two widths the CSS above works from, and with them the standard page
-		// the bars keep to. Each sits in a scope of its own — one that draws
-		// nothing, so re-running it is a single style write: an app that changes
-		// either on a proxied options object resizes the shell in place, panels
-		// and their state untouched.
-		A(() => A(`--s-full-w: ${opts.fullWidth ?? FULL_W}px`));
+	const root = A("div.s-main", opts.attrs, () => {
 		// `--s-nav-w` is the sidebar's whole column, and nothing at all when there
 		// is no sidebar to give it to — a shell without one lines its bars up with
 		// the content. This scope also tags the shell with the side the sidebar is
@@ -598,9 +560,7 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): PanelS
 			A("header.s-s.neutral", opts.topbarAttrs, () => {
 				A("div.s-bar", () => {
 					// Cap the bar's content to maxWidth and centre it within the full-width header.
-					A(() => {
-						if (capWidth != null) A("max-width:", capWidth);
-					});
+					A(capWidth);
 
 					// Leading: the ☰ once the nav has collapsed, the logo otherwise.
 					// Deliberately no back button, at any width: going back is the
@@ -661,9 +621,7 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): PanelS
 		// are identical with and without a sidebar nav.
 		A("div.s-body", () => {
 			A("div.s-body-inner", () => {
-				A(() => {
-					if (capWidth != null) A("max-width:", capWidth);
-				});
+				A(capWidth);
 				// The sidebar, in its own scope so a changing item list redraws just
 				// it — never the content area beside it (see `nav` above).
 				A(() => {
@@ -686,9 +644,7 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): PanelS
 			if (opts.footer != null) {
 				A("footer", () => {
 					A("div.s-bar", () => {
-						A(() => {
-							if (capWidth != null) A("max-width:", capWidth);
-						});
+						A(capWidth);
 						drawSlot(opts.footer);
 					});
 				});
@@ -697,6 +653,7 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): PanelS
 	}) as HTMLElement;
 
 	watchNarrow(root, $shell);
+	watchScale();
 
 	// Escape peels back a panel of UI, and finally jumps to the navigation: into
 	// the sidebar's current item when the sidebar is showing, or — when it has
@@ -829,6 +786,48 @@ function taglineFits(ctl: PanelStackController, nav: MenuOptions | undefined, $s
 	if ($shell.narrow || nav == null) return false;
 	if (ctl.panels.length > 1) return false;
 	return anyCurrent(nav.items);
+}
+
+/** How many mounted shells are watching the window; the listener is one per page. */
+let scaleShells = 0;
+
+/** Lay the page out at a virtual {@link MIN_PX} and zoom it down to the window. */
+function applyScale(): void {
+	// The real window width: <html> is never zoomed, so this stays unscaled.
+	const w = document.documentElement.clientWidth;
+	const f = w && w < MIN_PX ? w / MIN_PX : 0;
+	document.body.style.zoom = f ? String(f) : "";
+	// Published for the vh/vw lengths in the library's CSS, which zoom shrinks
+	// and a `/var(--s-zoom,1)` restores to meaning the window.
+	if (f) document.body.style.setProperty("--s-zoom", String(f));
+	else document.body.style.removeProperty("--s-zoom");
+}
+
+/**
+ * Below {@link MIN_PX} of window the shell stops squeezing and starts scaling:
+ * the page keeps its {@link MIN_PX} layout and CSS `zoom` shrinks it to fit,
+ * so a 180px window shows the 360px layout at half size. The zoom goes on
+ * `<body>`, so the overlays that portal there — dialogs, menus, toasts,
+ * tooltips — scale with the shell. `zoom` rather than `transform:scale`,
+ * because zoom keeps layout, container queries and the top layer in one
+ * system; what it splits instead is coordinate spaces — window-space rects
+ * against element-space lengths — which the few places mixing those bridge
+ * with {@link cssZoom}, and vh/vw lengths with `--s-zoom` (see `applyScale`).
+ * Browsers that predate `currentCSSZoom` (mid-2024) keep the squeeze.
+ */
+function watchScale(): void {
+	if (typeof window === "undefined" || !("currentCSSZoom" in document.documentElement)) return;
+	if (++scaleShells === 1) {
+		window.addEventListener("resize", applyScale);
+		applyScale();
+	}
+	A.clean(() => {
+		if (--scaleShells === 0) {
+			window.removeEventListener("resize", applyScale);
+			document.body.style.zoom = "";
+			document.body.style.removeProperty("--s-zoom");
+		}
+	});
 }
 
 /**

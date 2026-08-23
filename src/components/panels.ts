@@ -1,33 +1,36 @@
 import A, { OPAQUE } from "aberdeen";
 import * as route from "aberdeen/route";
-import { type Slot, drawSlot } from "../core.js";
+import { type Slot, drawSlot, cssZoom, MIN_PX } from "../core.js";
 import {
-	circle as dotIcon, externalLink as newTabIcon, link as linkIcon,
-	pin as pinIcon, pinOff as pinOffIcon, slash as sepIcon, x as closeIcon,
+	circle as dotIcon, pin as pinIcon, pinOff as pinOffIcon,
+	slash as sepIcon, x as closeIcon,
 } from "../icons.js";
-import { SURFACE_SHEEN } from "../theme.js";
+import { PANEL_SHEEN } from "../theme.js";
 import { addContextMenu } from "./menu.js";
 import { scrollStrip, revealInStrip } from "./tabs.js";
-import { toast } from "./toast.js";
 
 /**
  * Routed, multi-column panel navigation for {@link main}.
  *
  * Each route draws one screen of the app, called a *panel*. The open panels
- * form a **stack**, and one of them is the **current** panel: the one the URL
+ * form a **stack**, whose last panel is the **current** one: the panel the URL
  * names, and the rightmost column on screen. As many panels as fit are shown,
  * ending at the current one — on a phone that is one at a time, on a wider
  * screen the panels that would have covered each other sit side by side
  * instead. The app's own code is the same either way.
  *
- * Going to a panel that is already open — a breadcrumb, or any link to it —
- * just moves the current-panel cursor along the stack: panels right of it stay
- * open, parked past the right edge of the viewport, and nothing closes.
- * Opening a *new* panel is what prunes: everything after the panel it came
- * from closes, except panels the user pinned — which ride along beneath the
- * new panel — and panels holding unsaved work, which no navigation ever tears
- * down. Escape steps one panel left, closing the panel it leaves only when
- * that panel is the stack's discardable end.
+ * Whatever a navigation lands on becomes the top of that stack, and the same
+ * path is never in it twice. Opening a new panel closes everything after the
+ * panel it came from; a plain link to a panel that is already open — a
+ * breadcrumb, a nav item for the section you are in — returns to its own
+ * place, closing whatever was stacked on top, while a `replace` or `open`
+ * applies its usual shape, the open panel moving into it alive.
+ * Two kinds of panel survive that: the ones the user pinned, which ride along,
+ * and the ones holding unsaved work, which no navigation ever tears down.
+ * Those wait parked out of sight past the rightmost column, which is the only
+ * way a panel ever sits *after* the current one. Escape closes the current
+ * panel — or just steps left, when it holds unsaved work or panels sit parked
+ * beyond it.
  *
  * Navigation runs through `aberdeen/route`: the URL holds the current panel,
  * and the rest of the arrangement — the panels before it, the ones parked
@@ -102,6 +105,15 @@ export type AncestorTable<R> = {
 // ─── The Panel object ─────────────────────────────────────────────────────────
 
 /**
+ * How wide a panel asks to be — a ceiling the shell never exceeds; see
+ * {@link Panel.maxWidth}. `"small"` is the column the content area is divided
+ * into; `"medium"` and `"large"` are two and three of those, and `"none"` is
+ * the whole area. Each is capped at the content area, so on a narrow window
+ * they all come to the same thing.
+ */
+export type PanelSize = "small" | "medium" | "large" | "none";
+
+/**
  * What a route handler gets: the params from its route, plus everything the
  * shell needs to know about the panel it is drawing. It's an Aberdeen proxy, so
  * you can set things later, such as a `title` that arrives with your data or
@@ -171,35 +183,35 @@ export interface Panel<P = Record<string, string | number | string[]>> {
 	 */
 	readonly visible: boolean;
 	/**
-	 * The widest this panel can usefully be. Every panel must work at 360–540px,
-	 * because that is what it gets when two columns fit; this says how much
-	 * *more* it can take.
+	 * The widest this panel can usefully be — a ceiling the shell never
+	 * exceeds, so the draw function never has to look right past it. It is
+	 * counted in the shell's *columns*: the content area divides into the
+	 * narrowest whole number of columns of at least 360px each (three columns
+	 * of 360 in a 1080px area, four of 380 in 1520px), and a column is never
+	 * wider than 540 — where the area holds just one, a small centres in it
+	 * rather than stretching. So an ask never exceeds its column count × 540:
 	 *
-	 * - `"half"` — nothing more. Half the content area (360px up to half of
-	 *   {@link MainOptions.fullWidth}), so a second column fits beside it. For
-	 *   lists and detail forms.
-	 * - `"full"` (the default) — the whole content area, which is exactly
-	 *   {@link MainOptions.fullWidth}: 1080px unless the app says otherwise.
-	 * - `"screen"` — the whole window, unbounded: boards, wide tables, dense
-	 *   dashboards. While one is open the columns stretch to the screen edges
-	 *   instead of stopping at the standard page; the top bar and footer hold
-	 *   the standard width throughout.
+	 * - `"small"` — one column, never above 540px: lists, detail forms.
+	 * - `"medium"` (the default) — two columns, never above 1080px.
+	 * - `"large"` — three columns, never above 1620px: wide tables.
+	 * - `"none"` — the whole content area, unbounded: boards, dashboards.
+	 *   Bound it with the shell's own `maxWidth` where that matters.
 	 *
-	 * Below the width two columns need, everything takes the content area
-	 * whatever it asked for. Widths depend only on the window, never on what
-	 * else is open, so opening or closing a panel never resizes another.
+	 * Every size is capped at the content area, so on a phone they all come to
+	 * the same thing: one screen at a time. And a width depends only on the
+	 * window, never on what else is open, so opening or closing a panel never
+	 * resizes another — the run of columns just recentres in the area.
 	 *
-	 * This is a *layout regime*, not a width guarantee: handle whatever width
-	 * the bucket yields, and ask only for what your content can actually use —
-	 * a screen that would cap its own content narrower than its ask is holding
-	 * room that would have let another column fit beside it.
+	 * Ask only for what your content can actually use: a panel that would cap
+	 * its own content narrower than its ask is holding room that would have
+	 * let another column fit beside it.
 	 *
 	 * Set it at the top of your handler and the panel is already that wide when
 	 * you draw (see {@link Panel.width}); set it later — when your data tells you
 	 * — and the panel reflows without being redrawn, keeping its state, while
 	 * the columns beside it move over.
 	 */
-	maxWidth?: "half" | "full" | "screen";
+	maxWidth?: PanelSize;
 	/**
 	 * Set this while you're fetching what the panel needs, and back to `false`
 	 * when you're done. A new panel waits a moment before sliding in, so it can
@@ -210,10 +222,10 @@ export interface Panel<P = Record<string, string | number | string[]>> {
 	loading?: boolean;
 	/**
 	 * Keeps this panel from being closed by navigation happening *elsewhere*.
-	 * Opening a new panel normally closes everything after the panel it came
-	 * from; a pinned panel survives that, staying in the stack — parked past the
-	 * right edge of the viewport — slotted in beneath the new panel, one crumb
-	 * click away. The user toggles it from the crumb's context menu
+	 * A navigation normally closes everything after the panel it came from (or
+	 * returned to); a pinned panel survives that, staying in the stack — slotted
+	 * in beneath the new panel, or parked out of sight when the new panel was
+	 * already beneath it. Either way it is one crumb click away. The user toggles it from the crumb's context menu
 	 * (right-click or long-press), which is also where the pin shows; setting
 	 * it from code does the same thing.
 	 *
@@ -225,12 +237,11 @@ export interface Panel<P = Record<string, string | number | string[]>> {
 	/**
 	 * Set this while the panel holds work that must not be lost — a dirty form,
 	 * an upload in flight. An unsaved panel cannot be closed, by anything:
-	 * navigation that would prune it parks it instead, past the viewport's
-	 * right edge, wearing a ● in its crumb — even the browser's back button
-	 * only parks it. {@link Panel.close} and the crumb menu's Close refuse,
+	 * navigation that would prune it parks it out of sight instead, wearing a
+	 * ● in its crumb — even the browser's back button only parks it. {@link Panel.close} and the crumb menu's Close refuse,
 	 * Escape on it steps left along the stack rather than closing, and closing
-	 * the browser tab runs into the browser's own are-you-sure (after which the
-	 * shell brings the unsaved panel back on screen).
+	 * the browser tab runs into the browser's own are-you-sure, the unsaved
+	 * panel brought on screen as the question is raised.
 	 *
 	 * Only the app clears it; the user has no toggle. A Save or Discard button
 	 * clears it and then closes:
@@ -406,10 +417,9 @@ function matchRoute(r: { segs: Seg[] }, segments: string[]): Record<string, any>
 
 /**
  * The one duration every bit of shell motion shares: the enter/exit fades, the
- * `left` moves of columns shifting sideways, the ensemble-width transition the
- * body row follows (see `--s-shell-w` in main.ts), and the narrow-screen nav
- * panel's slide. Published as the `--s-panel-ms` custom property below, so CSS
- * and JS can't drift apart.
+ * `left` moves of columns shifting sideways, and the narrow-screen nav panel's
+ * slide. Published as the `--s-panel-ms` custom property below, so CSS and JS
+ * can't drift apart.
  *
  * Short enough to read as *the screen responded*, rather than as an animation
  * being played at you: a panel arriving is navigation, and navigation should
@@ -418,8 +428,15 @@ function matchRoute(r: { segs: Seg[] }, segments: string[]): Record<string, any>
 const PAGE_MS = 250;
 /** How long a freshly pushed `loading` panel holds its enter animation. */
 const LOADING_HOLD_MS = 300;
-/** Don't pair smalls when half the content area would be narrower than this. */
-const PAIR_MIN_PX = 360;
+/**
+ * The bounds of a column. At least 360px — the phone width every panel must
+ * handle anyway. And at most 540: that is the width the multi-column regime
+ * never reaches (`area / floor(area / 360)` stays under it), so capping the
+ * lone column of a 540–720px area to it too — centred, rather than stretched —
+ * makes an ask's ceiling uniform: never wider than its column count × 540.
+ */
+const SMALL_MIN_PX = MIN_PX;
+export const SMALL_MAX_PX = 540;
 /**
  * Panels are layered by their depth in the stack, two `z-index` steps per panel:
  * a panel sits on the odd layer for its depth, and a *closing* one drops to the
@@ -439,9 +456,11 @@ A.insertGlobalCss({
 	// layers they stack themselves in (see LAYER_STEP) to themselves: the region
 	// as a whole still sits under the shell's own chrome — the sticky top bar, and
 	// the nav panel that slides across the body — however deep the stack gets.
-	// The region paints the panel's sheen over its own box, and every panel shows
-	// a slice of that same gradient (see `.s-panel` below), so the columns and
-	// the ground beside them are one continuous surface.
+	// The region paints the columns' sheen over its own box, and every panel
+	// paints the very same one (see `.s-panel` below) — which, being a straight
+	// vertical wash over boxes of one height, comes out identical whatever a
+	// column's width, so the columns and the ground beside them are one
+	// continuous surface.
 	// `overflow:clip`, not `hidden`: a hidden box is still a scroll container,
 	// and anything that ever scrolls it — find-in-page reaching for text in a
 	// parked column, an in-page anchor, an extension — shifts every column
@@ -449,7 +468,7 @@ A.insertGlobalCss({
 	// `clip` clips without being scrollable at all, closing the whole class.
 	".s-panels":
 		"flex:1 min-width:0 min-height:0 position:relative overflow:clip isolation:isolate " +
-		SURFACE_SHEEN,
+		PANEL_SHEEN,
 	".s-panel": {
 		// A panel rests at a plain `left` offset and carries no transform: a
 		// transformed element is composited, which costs it subpixel text
@@ -472,18 +491,17 @@ A.insertGlobalCss({
 		//
 		// Every panel paints an opaque ground, because panels animate over one
 		// another — entering, leaving, being crowded out — and two transparent ones
-		// mean text sliding over text. It takes the panel's own sheen, the one
-		// `.s-s, body` paints in theme.ts, resolved here against the inherited
-		// `--s-bg` (a panel is not a surface, so it has to paint it itself).
+		// mean text sliding over text. It takes {@link PANEL_SHEEN}, resolved here
+		// against the inherited `--s-bg` (a panel is not a surface, so it has to
+		// paint it itself).
 		//
-		// Painted per panel, over the panel's own box, which is as good as it
-		// needs to be: the sheen is a 9%-either-way wash over a whole column, so
-		// two columns' worth of it meeting at a hairline is not something the eye
-		// picks out. The region (`.s-panels` above) paints the same wash, so the
-		// ground beside a lone column matches it just as closely.
+		// Painted per panel, over the panel's own box — and yet seamless with its
+		// neighbours and with the ground beside them, because that wash runs
+		// straight down: it takes its extent from the height these boxes all share,
+		// never from their differing widths. See PANEL_SHEEN for why that matters.
 		"&":
 			"position:absolute top:0 bottom:0 left:0 display:flex flex-direction:column " +
-			SURFACE_SHEEN + " " +
+			PANEL_SHEEN + " " +
 			"visibility:visible transition: left var(--s-panel-ms) ease, transform var(--s-panel-ms) ease-out, opacity var(--s-panel-ms) linear, visibility 0s;",
 		// The hairline between two columns, fading out at both ends — the same
 		// treatment as the sidebar's `.s-nav-sep`. Columns tile the area with no
@@ -657,39 +675,34 @@ interface PanelEntry {
 	/** Whether its `loading` hold has already expired, so it can't hold again. */
 	holdDone?: boolean;
 	/** What the panel asks for, kept in step with its `$panel.maxWidth`. */
-	maxWidth: "half" | "full" | "screen";
+	maxWidth: PanelSize;
 	/**
 	 * The width it was last laid out at. Set before the panel's content is first
 	 * drawn, so that content has a real box to measure itself against. Visible
-	 * panels get a fresh value every pass (widths are a pure function of the
-	 * content area and small-pairing); hidden and closing panels keep this, so
-	 * nothing invisible ever reflows.
+	 * panels get a fresh value every pass (a width is a pure function of the
+	 * content area); hidden and closing panels keep this, so nothing invisible
+	 * ever reflows.
 	 */
 	width: number;
 }
 
 /**
  * What the shell measures out to, and with it the width every panel size gets.
- * A pure function of the window, so it is the same for every panel in a pass.
+ * A pure function of the content area, so it is the same for every panel in a
+ * pass — and a panel never resizes because a neighbour came or went.
  */
 interface Geometry {
-	/** The body row: everything the columns and the sidebar share. */
-	total: number;
-	/** What sits beside the columns — the sidebar and its hairline, if shown. */
-	chrome: number;
-	/** Half the standard content area, or all of it when a half would be too narrow. */
-	half: number;
-	/** The standard content area: what the app asked a `"full"` panel to be. */
-	full: number;
-	/** Everything the window has beside the chrome, with no upper limit. */
-	screen: number;
+	/** The content area: all the room the columns have between them. */
+	area: number;
+	/** What each {@link PanelSize} comes to in that area. */
+	size: Record<PanelSize, number>;
 }
 
 /**
  * One state of the stack: the open paths, oldest first, and which of them is
  * the current panel. The panels before `focus` sit (or are crowded out) to the
- * current panel's left; the ones after it are parked past the right edge of the
- * viewport. What a history entry describes, and what every navigation is
+ * current panel's left; the ones after it are parked out of sight — panels
+ * that refused to be closed, which is the only way anything ends up there. What a history entry describes, and what every navigation is
  * expressed as a change to.
  */
 interface Arrangement {
@@ -709,8 +722,6 @@ export interface PanelStackOptions {
 	columns?: "auto" | "single";
 	/** What a bare link does. See {@link MainOptions.linkNavigation}. */
 	linkNavigation?: "push" | "replace" | "open";
-	/** How wide a `"full"` panel gets, in px. See {@link MainOptions.fullWidth}. */
-	fullWidth: number;
 	/** The shell's own title, used as the suffix of `document.title`. */
 	title?: unknown;
 	/**
@@ -774,10 +785,10 @@ export interface PanelStack {
 	 * the new panel).
 	 *
 	 * The same rules as a link click apply: pushing a path that is already open
-	 * goes back to it — a focus move along the stack, closing nothing — rather
-	 * than opening it twice, and a panel holding {@link Panel.unsaved} work is
-	 * never closed, only parked. That's what a plain link does, and what
-	 * `data-panel=push` says outright.
+	 * returns to it — closing whatever was stacked on top — rather than opening
+	 * it twice, and a panel holding {@link Panel.unsaved} work is never closed,
+	 * only parked. That's what a plain link does, and what `data-panel=push`
+	 * says outright.
 	 *
 	 * Note that a link builds on the panel it is *drawn in*, which is the
 	 * current panel only while no column beside it has the focus. Code
@@ -1158,7 +1169,7 @@ export class PanelStackController implements PanelStack {
 			path,
 			draw,
 			$ui: A.proxy({ holding: false }),
-			maxWidth: "full" as const,
+			maxWidth: "medium" as const,
 			width: 0,
 		} as PanelEntry;
 		// `close` closes *this* panel, current or not, and `open` navigates
@@ -1304,31 +1315,32 @@ export class PanelStackController implements PanelStack {
 	}
 
 	/**
-	 * Make the stack's `index`th panel current: the URL and the visible run move
-	 * to it, while the panels right of it stay open, parked past the right edge
-	 * of the viewport. Nothing closes; it is a history entry, so the browser's
-	 * back button returns the focus to where it was. What a click on a
-	 * breadcrumb — any link to an open panel — comes down to.
+	 * Make the stack's `index`th panel current without closing anything, leaving
+	 * the panels right of it parked out of sight.
+	 *
+	 * Only ever a step around a panel that refuses to close — nothing else is
+	 * left sitting after the current one — so this is Escape's way past an
+	 * unsaved panel, and the way back to one. It is a history entry, so the
+	 * browser's back button returns the focus to where it was.
 	 */
-	private focusAt(index: number, search?: Record<string, string>, hash?: string): Promise<boolean> {
+	private focusAt(index: number): Promise<boolean> {
 		const arr = this.intended();
 		if (index < 0 || index >= arr.stack.length || index === arr.focus) return Promise.resolve(false);
 		const target = { stack: arr.stack, focus: index };
 		const path = arr.stack[index];
 		return this.issue(target, () => {
-			// The panel gets its own last search and hash back, unless the link
-			// that brought us here carries its own.
+			// The panel gets its own last search and hash back (see PanelEntry.search).
 			const entry = this.$state.live.find((e) => e.path === path);
-			return route.go({ path, search: search ?? entry?.search, hash: hash ?? entry?.hash, state: this.stateFor(target) });
+			return route.go({ path, search: entry?.search, hash: entry?.hash, state: this.stateFor(target) });
 		});
 	}
 
 	/**
 	 * One step back along the stack — what Escape does (`main()` calls this;
-	 * it is not {@link PanelStack} API). At the stack's end this closes the
-	 * current panel; mid-stack — with panels parked to the right — or when the
-	 * panel holds {@link Panel.unsaved} work, the panel stays open and the
-	 * focus just moves to the panel on its left, parking the one it leaves.
+	 * it is not {@link PanelStack} API). Normally that closes the current panel,
+	 * which is the stack's end. When it holds {@link Panel.unsaved} work — or
+	 * panels sit parked beyond it — it stays open instead, and the focus
+	 * simply moves to the panel on its left.
 	 * Resolves `false` at the stack's start, where there is no left to go.
 	 */
 	back(): Promise<boolean> {
@@ -1424,11 +1436,14 @@ export class PanelStackController implements PanelStack {
 	 * that know it.
 	 *
 	 * `how` is the link's `data-panel` attribute (or the caller's word for
-	 * it): absent — like a link without the attribute — it is the shell's
-	 * `linkNavigation` default, an unrecognised value is a push on top of
-	 * `from`, `"replace"` swaps `from` out rather than stacking on it, and
-	 * `"open"` drops `from` altogether so the target arrives with its own
-	 * stack, the way a nav item's link does.
+	 * it), picking how much of `from`'s context the target keeps: a push (the
+	 * default, and what unrecognised values fall back to) keeps `from` and
+	 * builds on it, `"replace"` keeps only what is beneath `from`, and
+	 * `"open"` keeps nothing — the target arrives with its own stack, the way
+	 * a nav item's link does. Absent, it is the shell's `linkNavigation`
+	 * default, like a link without the attribute. A target that is already
+	 * open is returned to by a push, and *moved* — alive, state intact — by
+	 * the other two: the stack never holds a path twice.
 	 *
 	 * Resolves the way every {@link PanelStack} method does: `true` once the
 	 * navigation lands, `false` when it doesn't (already there counts as
@@ -1442,48 +1457,61 @@ export class PanelStackController implements PanelStack {
 			let url: URL;
 			try { url = new URL(href, location.href); } catch { return Promise.resolve(false); }
 			const path = normalizePath(url.pathname);
-			const search = Object.fromEntries(new URLSearchParams(url.search));
-			const hash = url.hash;
 			const arr = this.intended();
 
-			// A link to a panel that is already open is a return, not a navigation —
-			// a stack never holds the same path twice. Returning just moves the
-			// focus: the panels right of the target stay open, parked past the right
-			// edge, and nothing closes. That is the whole behaviour of a breadcrumb,
-			// which is exactly such a link.
+			// Whatever we navigate to ends up on top of the stack; all that differs
+			// is what it lands on.
 			const open = beneath ? -1 : arr.stack.indexOf(path);
-			if (open >= 0 && open !== arr.focus) {
-				return this.focusAt(open, url.search ? search : undefined, hash || undefined);
-			}
-			if (open >= 0) {
-				// The target is the panel we're already on. Going nowhere — but the link
-				// may still carry a different search or hash, which belong to the
-				// current panel: record that as a history entry, leaving the stack alone
-				// (the panel reconciles by path, so it isn't even redrawn).
-				if (url.search === location.search && (url.hash || "") === (location.hash || "")) return Promise.resolve(true);
-				return this.issue(arr, () => route.go({ path, search, hash, state: this.stateFor(arr) }));
+			let target: Arrangement;
+			if (open >= 0 && mode !== "replace" && mode !== "open") {
+				// A push to a path that is already open is a return: the panel takes
+				// back its own place, and whatever was stacked on top of it closes.
+				// (A stack never holds the same path twice, so there is no second
+				// copy to open — and a breadcrumb is exactly such a link.) Pinned
+				// panels above it are the exception, as ever: they stay in their
+				// order, parked past the panel we return to, one crumb click away.
+				const above = this.pinnedIn(arr.stack.slice(open + 1), []);
+				target = { stack: [...arr.stack.slice(0, open + 1), ...above], focus: open };
+			} else {
+				// The target opens on top of the panel the link sits in, or in its
+				// place for a `replace`, closing the panels after it. Without an
+				// originating panel there is no stack to build on, so it is the
+				// caller's own `beneath` or one derived from the path — which is what
+				// makes a nav click and a deep link to the same URL land identically
+				// (bar the pins, which a fresh tab doesn't have).
+				const originIndex = origin == null ? -1 : arr.stack.indexOf(origin);
+				const raw = beneath
+					? beneath.map(normalizePath)
+					: originIndex < 0
+						? this.deriveStack(path).slice(0, -1)
+						: arr.stack.slice(0, replace ? originIndex : originIndex + 1);
+				// A stack never holds the same path twice (rendering reconciles by
+				// path), so the target is dropped from the base — a `replace` or
+				// `open` may well aim at a path that is open mid-stack, whose panel
+				// then simply *moves* to the top, alive — and a caller-supplied
+				// `beneath` is deduplicated for the same reason.
+				const base = raw.filter((p, i, all) => p !== path && all.indexOf(p) === i);
+				// Pinned panels ride along, keeping their order, beneath the new one
+				// (unsaved ones the commit itself keeps, parked — see `propose`). A
+				// replaced origin closes, pin or no pin: replacing is the panel's own
+				// doing, not somewhere else navigating over it.
+				const under = [...base, ...this.pinnedIn(arr.stack, [...base, path, replace ? origin : null])];
+				target = { stack: [...under, path], focus: under.length };
 			}
 
-			// A new panel: it opens at the stack's end and becomes current. The
-			// panels after the origin close — except pinned ones, which ride along,
-			// keeping their order, beneath the new panel (and unsaved ones, which
-			// the commit itself keeps, parked — see `propose`). Without an
-			// originating panel there is no stack to build on, so derive one — a
-			// nav click and a deep link to the same URL land identically (bar the
-			// pins, which a fresh tab doesn't have).
-			const originIndex = origin == null ? -1 : arr.stack.indexOf(origin);
-			// A stack never holds the same path twice (rendering reconciles by
-			// path), so a caller-supplied `beneath` is deduplicated, not just
-			// filtered against the target.
-			const base = beneath
-				? beneath.map(normalizePath).filter((p, i, all) => p !== path && all.indexOf(p) === i)
-				: originIndex < 0
-					? this.deriveStack(path).slice(0, -1)
-					: arr.stack.slice(0, replace ? originIndex : originIndex + 1);
-			// A replaced origin closes, pin or no pin: replacing is the panel's own
-			// doing, not somewhere else navigating over it.
-			const under = [...base, ...this.pinnedIn(arr.stack, [...base, path, replace ? origin : null])];
-			const target = { stack: [...under, path], focus: under.length };
+			// Search and hash belong to the current panel only, so a panel we return
+			// to gets its own back (see PanelEntry.search) — unless the link carries
+			// its own, which win.
+			const returning = open >= 0 ? this.$state.live.find((e) => e.path === path) : undefined;
+			const search = url.search ? Object.fromEntries(new URLSearchParams(url.search)) : returning?.search ?? {};
+			const hash = url.hash || returning?.hash || "";
+
+			// Going nowhere at all: this panel, on this arrangement, with the query
+			// the link asks for. Not even a history entry.
+			if (target.focus === arr.focus && sameStack(target.stack, arr.stack)
+				&& url.search === location.search && (url.hash || "") === (location.hash || "")) {
+				return Promise.resolve(true);
+			}
 			return this.issue(target, () => route.go({ path, search, hash, state: this.stateFor(target) }));
 		});
 	}
@@ -1570,7 +1598,9 @@ export class PanelStackController implements PanelStack {
 	// app that reads them off a proxy (or through a getter) can change them at
 	// runtime and the shell adapts in place — nothing is redrawn, no panel
 	// loses its state. Not {@link PanelStack} API: the app talks to `main()`'s
-	// options; these are how `main()` talks to the stack.
+	// options; these are how `main()` talks to the stack. The shell's *widths*
+	// need no counterpart here: `navWidth` and `maxWidth` both resize the
+	// column region, which the layout engine is already observing.
 
 	/** Adopt a changed `columns` setting: one layout pass, nothing redrawn. */
 	setColumns(columns: "auto" | "single" | undefined): void {
@@ -1585,25 +1615,14 @@ export class PanelStackController implements PanelStack {
 	}
 
 	/**
-	 * Adopt a changed `fullWidth`: one layout pass, nothing redrawn. A changed
-	 * `navWidth` needs no counterpart — resizing the sidebar resizes the column
-	 * region, which the layout engine is already observing.
-	 */
-	setFullWidth(px: number): void {
-		if (this.opts.fullWidth === px) return;
-		this.opts.fullWidth = px;
-		this.scheduleLayout();
-	}
-
-	/**
 	 * The breadcrumb stack, drawn by `main()` into the top bar: every open
 	 * panel, oldest first, the ones on screen right now in bold, pinned ones
 	 * wearing their pin. Every crumb but the current panel's is a plain link to
-	 * that panel, and a link to an open panel is a focus move (see `navigate`) —
-	 * so clicking along the stack closes nothing, in either direction, and the
-	 * panels right of the current one wait just past the viewport's edge.
-	 * Right-click (or long-press) offers pinning, and closing just that one
-	 * panel — the close that splices it out of the middle when it isn't last.
+	 * that panel, and a link to an open panel returns to it (see `navigate`) —
+	 * so clicking a crumb goes back to that panel and closes what was stacked on
+	 * top of it, pinned and unsaved panels excepted. Right-click (or long-press)
+	 * offers pinning, and closing just that one panel — the close that splices
+	 * it out of the middle when it isn't last.
 	 */
 	drawCrumbs(): void {
 		// The very same row `S.tabs` puts its tab strip in: it scrolls when the
@@ -1648,24 +1667,9 @@ export class PanelStackController implements PanelStack {
 			A(() => { if (entry?.$panel.pinned) pinIcon({ size: "0.85em", attrs: ".s-crumb-pin" }); });
 			// `||`, not `??`: the root path's last segment is the empty string.
 			A(() => { A("#", entry?.$panel.title ?? entry?.$ui.fallback ?? (path.split("/").pop() || path)); });
-			// Taking over right-click means taking the browser's link menu away, so
-			// the two entries anyone actually reaches for on a link come first,
-			// where that menu would have had them, and the shell's own verbs sit
-			// below the rule.
-			addContextMenu({ items: [
-				{
-					// A real new tab, so it arrives cold and builds its own stack
-					// from the path — exactly what the same link middle-clicked does.
-					label: "Open in new tab",
-					icon: newTabIcon,
-					click: () => { window.open(path, "_blank", "noopener"); },
-				},
-				{
-					label: "Copy link",
-					icon: linkIcon,
-					click: () => void copyLink(path),
-				},
-				{ separator: true },
+			// `link` puts the browser's own link entries — Open in new tab, Copy
+			// link — above the rule; the shell's own verbs sit below it.
+			addContextMenu({ link: path, items: [
 				{
 					label: () => { A(() => { A("#", entry?.$panel.pinned ? "Unpin" : "Pin"); }); },
 					icon: () => { A(() => { (entry?.$panel.pinned ? pinOffIcon : pinIcon)(); }); },
@@ -1720,29 +1724,24 @@ export class PanelStackController implements PanelStack {
 
 	/**
 	 * While any open panel holds unsaved work, closing the tab — or navigating
-	 * the whole browser away — runs into the browser's own are-you-sure. When
-	 * the user stays, the unsaved panel is brought back on screen if it wasn't,
-	 * so what held the tab is in front of them rather than parked out of sight.
+	 * the whole browser away — runs into the browser's own are-you-sure, with
+	 * the unsaved panel brought on screen as the question is raised, so what is
+	 * holding the tab is in front of the user rather than parked out of sight.
 	 */
 	private guardTabClose(): void {
 		if (typeof window === "undefined") return;
-		let leaving = false;
-		const onHide = () => { leaving = true; };
 		const onBeforeUnload = (e: BeforeUnloadEvent) => {
-			// Being asked again means we weren't gone after all (a bfcache restore).
-			leaving = false;
 			const dirty = this.$state.live.find((entry) => entry.$panel.unsaved);
 			if (!dirty) return;
 			e.preventDefault();
 			e.returnValue = true; // Chrome/Edge < 119
-			// This task only ever amounts to anything if the user cancels: a
-			// confirmed leave unloads the document (`pagehide`) first.
-			const path = dirty.path;
-			setTimeout(() => {
-				if (leaving) return;
-				const entry = this.$state.live.find((live) => live.path === path);
-				if (entry && !entry.$panel.visible) void this.focusAt(this.intended().stack.indexOf(path));
-			}, 0);
+			// Bring the unsaved panel on screen right here, so what is holding the
+			// tab is in front of the user — behind the browser's dialog where the
+			// browser paints that early, and the moment they choose to stay
+			// otherwise. A confirmed leave unloads the document before any of it
+			// is seen; the history entry the move makes is then where a back
+			// navigation returns to, which is right: the panel that held the tab.
+			if (!dirty.$panel.visible) void this.focusAt(this.intended().stack.indexOf(dirty.path));
 		};
 		// Registered only while a panel actually holds unsaved work: a page with a
 		// `beforeunload` listener is shut out of the browser's back/forward cache,
@@ -1751,11 +1750,7 @@ export class PanelStackController implements PanelStack {
 		A(() => {
 			if (!this.$state.live.some((entry) => entry.$panel.unsaved)) return;
 			window.addEventListener("beforeunload", onBeforeUnload);
-			window.addEventListener("pagehide", onHide);
-			A.clean(() => {
-				window.removeEventListener("beforeunload", onBeforeUnload);
-				window.removeEventListener("pagehide", onHide);
-			});
+			A.clean(() => window.removeEventListener("beforeunload", onBeforeUnload));
 		});
 	}
 
@@ -1786,12 +1781,11 @@ export class PanelStackController implements PanelStack {
 		}) as HTMLElement;
 
 		if (typeof ResizeObserver !== "undefined") {
+			// The region *is* the content area every width is measured from (see
+			// `measure`), so watching it catches the lot: a window resize, the
+			// sidebar coming or going, the shell's own `maxWidth` changing.
 			const ro = new ResizeObserver(() => this.layout());
-			// The region *and* the body it sits in: the region alone misses a shell
-			// resize that the columns happen to absorb, which still re-resolves widths.
 			ro.observe(container);
-			const body = container.parentElement?.parentElement;
-			if (body) ro.observe(body);
 			A.clean(() => ro.disconnect());
 		}
 		A.clean(() => { if (this.containerEl === container) this.containerEl = undefined; });
@@ -1805,13 +1799,13 @@ export class PanelStackController implements PanelStack {
 		// element that arrives without a width has no box for its content to measure
 		// itself against until the next frame's layout pass, which is a frame too
 		// late for anything that sizes itself from its container. So the panel is
-		// created at the width the window gives it — the "full" width until the panel
-		// says otherwise. Reactively, too: a panel that changes its mind later (when
-		// its data arrives, say) reflows in place rather than being redrawn, and the
-		// columns beside it slide over to make room.
+		// created at the width the window gives it — the "medium" width until the
+		// panel says otherwise. Reactively, too: a panel that changes its mind later
+		// (when its data arrives, say) reflows in place rather than being redrawn,
+		// and the columns beside it slide over to make room.
 		A(() => {
 			const asked = entry.$panel.maxWidth;
-			entry.maxWidth = asked === "half" || asked === "screen" ? asked : "full";
+			entry.maxWidth = asked === "small" || asked === "large" || asked === "none" ? asked : "medium";
 			const width = this.roomFor(entry.maxWidth);
 			if (!width) return;
 			entry.width = width;
@@ -1897,45 +1891,38 @@ export class PanelStackController implements PanelStack {
 	}
 
 	/**
-	 * Measure the shell, and with it the width the window gives a panel of each
-	 * layout. Measured on the *shell*, not on the column region: the region's width
-	 * is the layout engine's own output, so reading it back would nail the layout
-	 * to whatever it happened to be a frame ago. Fractional widths throughout — a
-	 * rounded column edge would drift a pixel away from the chrome above it.
+	 * Measure the content area, and with it the width a panel of each size gets.
+	 *
+	 * The column region *is* the content area: it takes whatever the shell has
+	 * left beside the sidebar, capped by the shell's own `maxWidth` — all of it
+	 * CSS's doing, so there is nothing to add up here and nothing that could
+	 * drift from the width the bars above and below line up with. Fractional
+	 * widths throughout: a rounded column edge would drift a pixel away from that
+	 * chrome.
+	 *
+	 * The area divides into the narrowest whole number of columns that keeps each
+	 * at least {@link SMALL_MIN_PX} wide — the `"small"` unit every other size is
+	 * a multiple of, capped at the area itself. So 1080px is three columns of 360
+	 * and 1520px four of 380. An area too narrow for two is a single column,
+	 * itself capped at {@link SMALL_MAX_PX}: a small centres there instead of
+	 * stretching toward 720, so its ceiling holds, while the larger sizes still
+	 * take the whole area. A width is thus a pure function of the window: a panel
+	 * NEVER resizes because a neighbour came or went, and only a window resize
+	 * (the snap pass in `layout`) changes one.
 	 *
 	 * `undefined` while the shell has no width to speak of (it isn't in a document
 	 * yet, or it's `display:none`); the next pass tries again.
 	 */
 	private measure(): Geometry | undefined {
-		const container = this.containerEl;
-		const inner = container?.parentElement;
-		const body = inner?.parentElement;
-		if (!container || !inner || !body) return undefined;
-		const total = body.getBoundingClientRect().width;
-		if (!total) return undefined;
-
-		// Everything that sits beside the columns: the sidebar and its hairline,
-		// either of which may be display:none on a narrow shell.
-		let chrome = 0;
-		for (const child of inner.children) {
-			if (child !== container) chrome += child.getBoundingClientRect().width;
-		}
-
-		// What the window has beside the sidebar, and within that the *standard*
-		// content area: the width the app gave a "full" panel, or all there is
-		// when the window has less. Widths are a pure function of the window —
-		// never of what else is open — so a panel NEVER resizes because a
-		// neighbour came or went; only a window resize (the snap pass in
-		// `layout`) changes them:
-		// - "full" fills the standard content area exactly;
-		// - "half" is half of it whenever that half is still a usable column, and
-		//   the whole of it on narrower screens;
-		// - "screen" ignores the standard width and takes everything the window
-		//   has — which also means nothing ever fits beside it.
-		const screen = Math.max(0, total - chrome);
-		const full = Math.min(this.opts.fullWidth, screen);
-		const halved = full / 2;
-		return { total, chrome, half: halved >= PAIR_MIN_PX ? halved : full, full, screen };
+		const el = this.containerEl;
+		// The rect is in window coordinates; the widths this yields are written
+		// back as CSS lengths, which live in the region's own space — different
+		// spaces when the shell has zoomed the page (see `watchScale` in main.ts).
+		const area = el ? el.getBoundingClientRect().width / cssZoom(el) : 0;
+		if (!area) return undefined;
+		const small = Math.min(area / Math.max(1, Math.floor(area / SMALL_MIN_PX)), SMALL_MAX_PX);
+		const units = (n: number) => Math.min(n * small, area);
+		return { area, size: { small, medium: units(2), large: units(3), none: area } };
 	}
 
 	/**
@@ -1949,13 +1936,12 @@ export class PanelStackController implements PanelStack {
 	}
 
 	/** How wide a panel asking for this is, right now; 0 while the shell can't be measured. */
-	private roomFor(maxWidth: PanelEntry["maxWidth"]): number {
-		return this.geometry()?.[maxWidth] ?? 0;
+	private roomFor(size: PanelSize): number {
+		return this.geometry()?.size[size] ?? 0;
 	}
 
 	/**
-	 * Size and position every panel, and publish the width of the whole ensemble
-	 * (sidebar + separator + columns) for the shell to centre itself on.
+	 * Size and position every panel.
 	 *
 	 * This is everything CSS can't work out for itself: which panels exist, which
 	 * of them are visible, how wide each one is and where it sits. All the motion
@@ -1980,22 +1966,21 @@ export class PanelStackController implements PanelStack {
 		const geom = this.geometry();
 		if (!geom) return;
 
-		const stacking = this.opts.columns !== "single";
+		const single = this.opts.columns === "single";
 
 		// A window resize — or the app resizing the shell itself, by changing
-		// `navWidth` or `fullWidth` — must be adopted instantly: geometry tracking
+		// `navWidth` or `maxWidth` — must be adopted instantly: geometry tracking
 		// the window through a 450ms transition reads as lag, and a shell
 		// animating itself into place on its first pass reads as a glitch. Only
 		// what a *panel* did is worth animating, and none of those three are.
 		// `.s-shell-snap` suppresses every standing transition for this one pass.
-		const was = this.lastGeom;
-		const snap = was == null || was.total !== geom.total || was.chrome !== geom.chrome || was.full !== geom.full;
+		const snap = this.lastGeom?.area !== geom.area;
 		if (snap) {
 			this.lastGeom = geom;
 			shell.classList.add("s-shell-snap");
 		}
 
-		const width = (entry: PanelEntry) => geom[entry.maxWidth];
+		const width = (entry: PanelEntry) => geom.size[entry.maxWidth];
 
 		// The visible run: as many columns as the window fits, at the sizes the
 		// window gives them, ending at the current panel — which always shows.
@@ -2003,22 +1988,20 @@ export class PanelStackController implements PanelStack {
 		const cur = Math.min(this.$state.focus, n - 1);
 		let first = cur;
 		let runSum = width(live[cur]);
-		if (stacking) {
+		if (!single) {
 			for (let i = cur - 1; i >= 0; i--) {
 				const sum = runSum + width(live[i]);
-				if (sum > geom.screen) break;
+				if (sum > geom.area) break;
 				runSum = sum;
 				first = i;
 			}
 		}
 
-		// The content area holds the run, but is never smaller than the standard
-		// panel (a lone small leaves its other half open — which is exactly where
-		// the next small lands, without anything on screen moving) and never
-		// wider than the window. So the page holds its standard width until extra
-		// columns genuinely fit, and stretches — centred — to hold the ones that
-		// do; with a "screen" up that's the window's edges.
-		const area = Math.min(geom.screen, Math.max(geom.full, runSum));
+		// The content area is a fixed width, so a run that doesn't fill it sits
+		// centred in it rather than hanging off its left edge. Everything around
+		// the columns holds still meanwhile: the sidebar, the top bar and the
+		// footer never move, however many columns come and go.
+		const left = (geom.area - runSum) / 2;
 
 		for (let i = first; i <= cur; i++) live[i].width = width(live[i]);
 		// Panels that have never been visible get their would-be width too, so a
@@ -2027,29 +2010,22 @@ export class PanelStackController implements PanelStack {
 			if (!entry.width) entry.width = width(entry);
 		}
 
-		// The body row caps itself to the ensemble width, keeping the columns
-		// centred however far the area stretches, and transitions its max-width
-		// (see main.ts) so the recentring plays along with the panel that caused
-		// it. The bars above and below don't follow — they hold at the standard
-		// page width (also main.ts).
-		shell.style.setProperty("--s-shell-w", `${geom.chrome + area}px`);
-
 		// Phase 1 — every panel's *start* state for this frame. Panels already on
 		// screen simply move (their standing transition animates it); freshly
 		// mounted ones still have transitions switched off, so what we set here is
 		// adopted instantly and becomes the "before" of their enter animation.
 		const fresh: PanelEntry[] = [];
-		let x = 0;
+		let x = left;
 		for (let i = 0; i < n; i++) {
 			const entry = live[i];
 			const el = entry.el!;
 			const shown = i >= first && i <= cur;
-			// Visible columns tile the content area, left to right. Panels crowded
-			// out from under the run rest at its left edge; panels beyond the
-			// current panel park just past its right edge — both keep their last
-			// width. Deeper panels layer over shallower ones, each on the odd
-			// layer for its depth (see LAYER_STEP).
-			place(el, shown ? x : i > cur ? area : 0, entry.width, LAYER_STEP * i + 1);
+			// Visible columns tile the run, left to right. Panels crowded out from
+			// under it rest at its left edge; panels beyond the current panel park
+			// just past its right edge — both keep their last width. Deeper panels
+			// layer over shallower ones, each on the odd layer for its depth (see
+			// LAYER_STEP).
+			place(el, shown ? x : i > cur ? left + runSum : left, entry.width, LAYER_STEP * i + 1);
 			// What `$panel.visible` and `$panel.width` report: this pass is the one
 			// thing that knows them, window resizes included. Written only on a
 			// change, so per-panel UI hanging off them isn't rebuilt by every pass.
@@ -2125,22 +2101,6 @@ function firstText(el: HTMLElement): string | undefined {
 	for (let n = walker.nextNode(); n; n = walker.nextNode()) {
 		const t = n.textContent!.trim();
 		if (t) return t.length > 48 ? `${t.slice(0, 47).trimEnd()}…` : t;
-	}
-}
-
-/**
- * Put a panel's address on the clipboard, as the absolute URL someone can paste
- * anywhere — which is what the browser's own "Copy link" would have given them.
- * Confirmed with a toast, since a silent copy leaves you wondering; `writeText`
- * needs a secure context, so a failure says so rather than lying.
- */
-async function copyLink(path: string): Promise<void> {
-	const url = new URL(path, location.href).href;
-	try {
-		await navigator.clipboard.writeText(url);
-		toast({ message: "Link copied." });
-	} catch {
-		toast({ message: "Couldn't copy the link.", type: "danger" });
 	}
 }
 

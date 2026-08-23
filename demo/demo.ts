@@ -101,10 +101,11 @@ const $shell = A.proxy({
 	columns: "auto" as "auto" | "single" | undefined,
 	linkNavigation: "push" as "push" | "replace" | "open" | undefined,
 	extraNavItem: false,
-	// The shell's own two widths, at their defaults. Side by side they are the
-	// standard page — which is where the familiar 1280px comes from.
+	// The sidebar's width, and the cap on the whole layout. The shell fills the
+	// window by default; 1920 leaves it doing exactly that on any ordinary
+	// screen, and drag the slider down to watch it cap and centre.
 	navWidth: 200,
-	fullWidth: 1080,
+	maxWidth: 1920,
 });
 
 // The page-lifecycle demo's state. Declared up here (like the icon data below)
@@ -138,6 +139,21 @@ const $navItems = A.proxy<S.MenuEntry[]>([
 	{ label: "Staffa docs", icon: icons.arrowUpRight, href: "https://wildloop.dev/projects/staffa/", target: "_blank" },
 	{ label: "Aberdeen docs", icon: icons.arrowUpRight, href: "https://wildloop.dev/projects/aberdeen/", target: "_blank" },
 ]);
+
+/** The pages the stack box's navigator can open. */
+const NAV_PAGES = [
+	{ label: "Playground", value: "/demo/panels" },
+	{ label: "Small A", value: "/demo/panels/a" },
+	{ label: "Small B", value: "/demo/panels/b" },
+	{ label: "Medium", value: "/demo/panels/medium" },
+	{ label: "Large", value: "/demo/panels/large" },
+	{ label: "Unlimited", value: "/demo/panels/unlimited" },
+	{ label: "Unsaved changes", value: "/demo/form/guard" },
+	{ label: "Sizing & lifecycle", value: "/demo/panels/live" },
+	{ label: "Edge-to-edge rows", value: "/demo/panels/rows" },
+	{ label: "Untitled", value: "/demo/panels/untitled" },
+	{ label: "Thread 8", value: "/demo/thread/8" },
+];
 
 A(() => {
 	S.main({
@@ -190,9 +206,9 @@ A(() => {
 					}));
 					// The shell's two widths, live: drag either and the sidebar and
 					// the columns re-lay-out in place, panels keeping their state.
-					// Their sum is the page the top bar and footer keep to, so the
-					// chrome follows the columns as you go.
-					const widthRow = (label: string, key: "navWidth" | "fullWidth", min: number, max: number) =>
+					// `maxWidth` caps the lot — sidebar, columns and the bars above
+					// and below them — so the chrome always lines up with the columns.
+					const widthRow = (label: string, key: "navWidth" | "maxWidth", min: number, max: number) =>
 						row(label, () => {
 							A("div display:flex align-items:center gap:$2", () => {
 								A("input type=range width:7rem", `min=${min}`, `max=${max}`, "step=10", { bind: A.ref($shell, key) });
@@ -200,7 +216,7 @@ A(() => {
 							});
 						});
 					widthRow("Sidebar", "navWidth", 120, 320);
-					widthRow("Content", "fullWidth", 640, 1600);
+					widthRow("Max width", "maxWidth", 640, 1920);
 					row("Primary colour", drawColorPickers);
 					row("Theme", drawThemeChooser);
 				}],
@@ -214,31 +230,31 @@ A(() => {
 		get columns() { return $shell.columns; },
 		get linkNavigation() { return $shell.linkNavigation; },
 		get navWidth() { return $shell.navWidth; },
-		get fullWidth() { return $shell.fullWidth; },
-		// Most demo pages keep the default `maxWidth: "full"` (filling the
-		// standard content area); the icons gallery, the icon detail and the
-		// Panels playground are `"half"`, which is what lets two of them sit side
-		// by side (or stack, on a phone). `/demo/panels/large` shows the shell
-		// growing to the window's edges.
+		get maxWidth() { return `${$shell.maxWidth}px`; },
+		// The demo pages spread over the sizes: the form is `"large"`, the icons
+		// gallery and the panels playground `"medium"`, the icon detail and the
+		// small panels pages `"small"` — so columns pair up and crowd each other
+		// out in every combination (or stack, on a phone).
 		routes: {
-			"/demo/form":                    ($panel) => { $panel.title = "Form";     drawForm(); },
+			"/demo/form":                    ($panel) => { $panel.title = "Form"; $panel.maxWidth = "large"; drawForm(); },
 			"/demo/form/guard":              drawGuardDemo,
 			"/demo/buttons":                 ($panel) => { $panel.title = "Buttons";  drawButtons(); },
 			"/demo/tabs":                    ($panel) => { $panel.title = "Tabs";     drawTabsPage(); },
 			"/demo/overlays":                ($panel) => { $panel.title = "Overlays"; drawOverlays(); },
 			"/demo/surfaces":                ($panel) => { $panel.title = "Surfaces"; drawSurfaces(); },
 			"/demo/content":                 ($panel) => { $panel.title = "Content";  drawContent(); },
-			"/demo/icons":                   ($panel) => { $panel.title = "Icons"; $panel.maxWidth = "half"; drawIcons(); },
+			"/demo/icons":                   ($panel) => { $panel.title = "Icons"; $panel.maxWidth = "medium"; drawIcons(); },
 			"/demo/icons/[name]":            drawIconDetail,
 			"/demo/panels":                  drawPanelsPlayground,
 			"/demo/panels/live":             drawLivePanel,
 			"/demo/panels/item/[id=integer]": drawItemPanel,
-			"/demo/panels/a":                ($panel) => drawSmallPanel($panel, "A", "b"),
-			"/demo/panels/b":                ($panel) => drawSmallPanel($panel, "B", "a"),
+			"/demo/panels/a":                ($panel) => drawSmallPanel($panel, "A"),
+			"/demo/panels/b":                ($panel) => drawSmallPanel($panel, "B"),
 			"/demo/panels/rows":             drawRowsPanel,
 			"/demo/panels/untitled":         drawUntitledPanel,
 			"/demo/panels/medium":           drawMediumPanel,
 			"/demo/panels/large":            drawLargePanel,
+			"/demo/panels/unlimited":        drawUnlimitedPanel,
 			// Reached by URL (tests, mostly): a chain of long-titled pages showing
 			// how the crumbs share a bar that is too tight for all of them.
 			"/demo/panels/long":             ($panel) => drawLongTitledPanel($panel, "Quarterly financial projections for the northern region", "/demo/panels/long/detail"),
@@ -264,7 +280,8 @@ A(() => {
 				header: "Not found",
 				content: () => {
 					A("p mt:0 #", `There is no page at ${$panel.path}.`);
-					A("a href=/demo/form #Back to the demo");
+					// `open`: a dead end is no context to build the form on top of.
+					A("a href=/demo/form data-panel=open #Back to the demo");
 				},
 			});
 		},
@@ -440,7 +457,43 @@ function drawGuardDemo($panel: S.Panel) {
 // ─── Panels playground ───────────────────────────────────────────────────────
 
 /**
- * The panels playground: a `"half"`-width page whose links and buttons push
+ * The stack box every panel page shares: the live stack, plus a little
+ * navigator for trying every combination — any page, opened any of the three
+ * ways, either from this very panel or through the stack's own methods.
+ */
+function drawStackBox($panel: S.Panel) {
+	const $nav = A.proxy({ how: "push", page: "/demo/panels/a", origin: "here" });
+	const go = () => {
+		const how = $nav.how as "push" | "replace" | "open";
+		// From this panel: its own `open`, exactly what a link drawn in it (with
+		// `data-panel=<how>`) would do. Via the stack: the stack's methods,
+		// which build on the current panel instead.
+		if ($nav.origin === "here") void $panel.open($nav.page, how);
+		else if (how === "push") void $panel.stack.pushPanel($nav.page);
+		else if (how === "replace") void $panel.stack.replacePanel($nav.page);
+		else void $panel.stack.openPanelStack($nav.page);
+	};
+	S.box({
+		header: "The stack",
+		content: () => {
+			drawStackList($panel.stack);
+			A("div mt:$3 display:flex gap:$1 align-items:center flex-wrap:wrap", () => {
+				S.select({ options: ["push", "replace", "open"], bind: A.ref($nav, "how"), inputAttrs: "aria-label=Navigation" });
+				S.select({ options: NAV_PAGES, bind: A.ref($nav, "page"), inputAttrs: "aria-label=Page", attrs: "flex:1 min-width:7rem" });
+				S.select({
+					options: [{ value: "here", label: "from this panel" }, { value: "stack", label: "via the stack" }],
+					bind: A.ref($nav, "origin"),
+					inputAttrs: "aria-label=Origin",
+				});
+				S.iconButton({ icon: icons.arrowRight, ariaLabel: "Go", click: go });
+			});
+			A("p m:0 mt:$2 fg:$s-muted font-size:0.85em rich='*From this panel* navigates like a link drawn in it; *via the stack* uses the stack’s methods, which build on the *current* panel — a different one whenever a column beside this one has the focus.'");
+		},
+	});
+}
+
+/**
+ * The panels playground: a default-sized (`"medium"`) page whose boxes push
  * further pages, so you can watch columns arrive, crowd one another out, and
  * come back. It sits at `/demo/panels`, and everything it pushes lives under
  * that path — so a deep link derives the same columns a click here would have
@@ -448,7 +501,6 @@ function drawGuardDemo($panel: S.Panel) {
  */
 function drawPanelsPlayground($panel: S.Panel) {
 	$panel.title = "Panels";
-	$panel.maxWidth = "half";
 	// Deliberately bare: no `box` and no `actions`, and — as the bottom of the
 	// stack — no way out either. So its column gets no strip at all, and on a
 	// phone the bar reads `☰ · Pages · <the app's own menu>`.
@@ -456,51 +508,12 @@ function drawPanelsPlayground($panel: S.Panel) {
 	S.box({
 		header: "Push a panel",
 		content: () => {
-			A("p mt:0 rich='A `maxWidth: \"half\"` page takes half the content area (when the screen is wide enough for two columns), the default `\"full\"` fills it, and `\"screen\"` grows the whole page to the window’s edges. A lone half leaves its other half open — exactly where the next one lands — and when the window fits more columns than the standard page holds, the page stretches to fit them.'");
-			A("div display:flex flex-direction:column gap:$1 align-items:flex-start", () => {
-				A("a href=/demo/panels/a #Push small A");
-				A("a href=/demo/panels/medium #Push a medium panel");
-				A("a href=/demo/panels/large #Push a large panel");
-				A("a href=/demo/form/guard #Push the unsaved-changes panel");
-				A("a href=/demo/panels/live #Push the sizing & lifecycle panel");
-				A("a href=/demo/panels/rows #Push an edge-to-edge list");
-				A("a href=/demo/panels/untitled #Push an untitled panel");
-			});
-			A("div display:flex gap:$2 flex-wrap:wrap mt:$3", () => {
-				S.button({
-					content: "stack.pushPanel()",
-					attrs: ".neutral",
-					click: () => $panel.stack.pushPanel("/demo/panels/b"),
-				});
-				// The panel's own `open` navigates from *this* panel — exactly like
-				// a link drawn here, whose handling is the same call — even while
-				// another column beside it is the current one. The stack's push
-				// above builds on the current panel instead.
-				S.button({
-					content: "$panel.open()",
-					attrs: ".neutral",
-					click: () => void $panel.open("/demo/panels/b"),
-				});
-				// The other way in: a whole arrangement at once, for a screen whose
-				// URL doesn't say where it belongs. Here the stack under it is spelled
-				// out; `stack.openPanelStack("/demo/thread/8")` alone would ask the shell's
-				// `ancestors` for it, which is what a cold link to the same path gets.
-				S.button({
-					content: "stack.openPanelStack()",
-					attrs: ".neutral",
-					click: () => $panel.stack.openPanelStack("/demo/thread/8", ["/demo/panels"]),
-				});
-			});
+			A("p mt:0 rich='Every page asks for a width in *columns*: `\"small\"` is one, `\"medium\"` (the default) two, `\"large\"` three, and `\"none\"` takes the whole content area. As many pages as fit show side by side, ending at the current one.'");
+			A("p mb:0 rich='Navigating is just links: the shell handles every ordinary `<a href>` click itself. **push** (the default) opens the target on top of the link’s own page, **replace** puts it in that page’s place, and **open** gives it a fresh stack, the way a nav item does. A link picks one with a `data-panel` attribute, and the **Links** chooser up in the display settings sets the default for links without one. **The stack** box below drives the same three from code.'");
 		},
 	});
 
-	S.box({
-		header: "The stack",
-		content: () => {
-			A("p mt:0 rich='Click an earlier crumb up in the bar and the panels right of it stay open, parked past the viewport’s edge — their crumbs bring them back. Opening a new panel closes the parked ones, unless a panel is **pinned** (right-click its crumb).'");
-			drawStackList($panel.stack);
-		},
-	});
+	drawStackBox($panel);
 
 	// Only once there is something to say — see `drawLivePanel`, which writes here
 	// as it is torn down, from a page that is by then only an animation.
@@ -529,7 +542,7 @@ function drawPanelsPlayground($panel: S.Panel) {
 		header: "Shell options",
 		content: () => {
 			A("p mt:0 rich='The shell-wide knobs live in the display-settings popover, up in the top bar: `columns: \"single\"` shows only the current panel however wide the screen, and `linkNavigation` sets what a link without a `data-panel` attribute does — try the links above with `replace` or `open`.'");
-			A("p m:0 rich='The two sliders there are `navWidth` and `fullWidth`, the shell’s own widths in pixels. `fullWidth` is what a `\"full\"` page gets (and half of it is what a `\"half\"` gets); together with the sidebar it is the standard page the top bar and footer keep to. The defaults, 200 and 1080, are where the familiar 1280px comes from.'");
+			A("p m:0 rich='The two sliders there are `navWidth` and `maxWidth`. The shell fills the window by default; `maxWidth` caps it — sidebar, columns and the bars above and below alike — and centres what is left, which is what a very wide screen wants.'");
 		},
 	});
 }
@@ -545,7 +558,7 @@ function drawPanelsPlayground($panel: S.Panel) {
  */
 function drawRowsPanel($panel: S.Panel) {
 	$panel.title = "Edge-to-edge rows";
-	$panel.maxWidth = "half";
+	$panel.maxWidth = "small";
 	// An `iconButton` opening a menu by hand, rather than `S.menuButton` — which
 	// draws a full `S.button` — so this reads as chrome, not as a call to action.
 	$panel.actions = () => S.iconButton({
@@ -577,7 +590,7 @@ function drawRowsPanel($panel: S.Panel) {
  * breadcrumb up in the bar still manages to read "An untitled panel".
  */
 function drawUntitledPanel($panel: S.Panel) {
-	$panel.maxWidth = "half";
+	$panel.maxWidth = "small";
 
 	A("h3 mt:0 mb:$2 #An untitled panel");
 	A("p mt:0 rich='This page never set `$panel.title`. The crumb up in the bar (and `document.title`) borrowed this heading, being the body’s first line of text — good enough for a stack, though a page that cares says it itself.'");
@@ -604,7 +617,7 @@ function drawUntitledPanel($panel: S.Panel) {
 function drawLivePanel($panel: S.Panel) {
 	$panel.title = "Sizing & lifecycle";
 	// The default, spelled out so the size picker below has something selected.
-	$panel.maxWidth = "full";
+	$panel.maxWidth = "medium";
 
 	// `A()` with no arguments is the element we're drawing into — the page's
 	// content area, kept here only to prove below that a closed page is torn
@@ -625,7 +638,7 @@ function drawLivePanel($panel: S.Panel) {
 	// room for it: in this column's strip on a wide screen, in the top bar (where
 	// it takes the app's own menu's place) on a phone.
 	$panel.actions = () => S.buttonChooser({
-		options: { half: "half", full: "full", screen: "screen" },
+		options: { small: "small", medium: "medium", large: "large", none: "none" },
 		bind: A.ref($panel, "maxWidth"),
 		attrs: ".small",
 	});
@@ -674,7 +687,7 @@ function drawLivePanel($panel: S.Panel) {
 function drawThreadPanel($panel: S.Panel<{ id: number }>) {
 	const { id } = $panel.params;
 	$panel.title = `Thread ${id}`;
-	$panel.maxWidth = "half";
+	$panel.maxWidth = "small";
 	// A *link* among the actions. On a narrow shell these are promoted into the
 	// top bar, outside the panel's own column — but the link still builds on
 	// this panel, exactly as it does at full width (see the chrome tests).
@@ -719,7 +732,7 @@ function drawScratchNavRow() {
 function drawItemPanel($panel: S.Panel<{ id: number }>) {
 	const { id } = $panel.params;
 	$panel.title = `Item ${id}`;
-	$panel.maxWidth = "half";
+	$panel.maxWidth = "small";
 
 	S.box({
 		header: `Item ${id}`,
@@ -765,9 +778,9 @@ function drawStackList(stack: S.PanelStack) {
  * keeps working while another column sits on top — closing then splices this
  * one column out of the stack and leaves the rest alone.
  */
-function drawSmallPanel($panel: S.Panel, name: string, other: string) {
+function drawSmallPanel($panel: S.Panel, name: string) {
 	$panel.title = `Small ${name}`;
-	$panel.maxWidth = "half";
+	$panel.maxWidth = "small";
 	$panel.actions = () => {
 		S.iconButton({
 			icon: icons.share2,
@@ -785,48 +798,43 @@ function drawSmallPanel($panel: S.Panel, name: string, other: string) {
 	S.box({
 		header: `Small ${name}`,
 		content: () => {
-			A("p mt:0 #", `Small ${name} is a "half"-width page: half the content area, leaving room for one more beside it. On a phone it fills the screen.`);
-			A("p rich='Going back is the breadcrumbs’ job — click an earlier crumb up in the bar (or press Escape). Delete closes *this* column even when it isn’t the top one: it is spliced out and the columns on its right stay put.'");
-			A("div display:flex flex-direction:column gap:$1 align-items:flex-start", () => {
-				A("a href=", `/demo/panels/${other}`, "#", `Push small ${other.toUpperCase()}`);
-				A("a href=/demo/panels/medium #Push a medium panel");
-				A("a href=/demo/panels #Back to the playground");
-			});
+			A("p mt:0 #", `Small ${name} is a "small"-width page: one of the shell's columns, so there is always room for another beside it. On a phone it fills the screen.`);
+			A("p mb:0 rich='Going back is the breadcrumbs’ job — click an earlier crumb up in the bar (or press Escape), which closes the pages stacked on it. Delete closes *this* column even when it isn’t the top one: it is spliced out and the columns on its right stay put.'");
 		},
 	});
 
-	S.box({ header: "The stack", content: () => drawStackList($panel.stack) });
+	drawStackBox($panel);
 }
 
-/** A default-size (`"full"`) page, which always fills the whole content area. */
+/** One sized page each: a title, a Share action, a blurb and the stack box. */
+function drawSizedPanel($panel: S.Panel, title: string, size: S.PanelSize, rich: string) {
+	$panel.title = title;
+	$panel.maxWidth = size;
+	$panel.actions = () => S.iconButton({
+		icon: icons.share2,
+		ariaLabel: "Share",
+		click: () => S.toast({ message: "Shared." }),
+	});
+
+	A("p mt:0 rich=", rich);
+
+	drawStackBox($panel);
+}
+
+// Function declarations, since the route table up top is built at module load.
 function drawMediumPanel($panel: S.Panel) {
-	$panel.title = "Medium";
-	$panel.actions = () => S.iconButton({
-		icon: icons.share2,
-		ariaLabel: "Share",
-		click: () => S.toast({ message: "Shared." }),
-	});
-
-	A("p mt:0 rich='This page takes the default `maxWidth: \"full\"`: it fills the standard content area exactly, so nothing beside it is ever blank. Anything beneath it is crowded out, and comes back when this one closes.'");
-	A("a href=/demo/panels #Back to the playground");
-
-	S.box({ header: "The stack", content: () => drawStackList($panel.stack) });
+	drawSizedPanel($panel, "Medium", "medium",
+		'This page takes the default `maxWidth: "medium"`: two of the shell’s columns. A small page still fits beside it whenever the content area has three, and anything crowded out from under the run comes back when this one closes.');
 }
 
-/** A `"screen"` page: the whole page grows to the window's edges while it's up. */
 function drawLargePanel($panel: S.Panel) {
-	$panel.title = "Large";
-	$panel.maxWidth = "screen";
-	$panel.actions = () => S.iconButton({
-		icon: icons.share2,
-		ariaLabel: "Share",
-		click: () => S.toast({ message: "Shared." }),
-	});
+	drawSizedPanel($panel, "Large", "large",
+		'A `maxWidth: "large"` page takes three of the shell’s columns — or the whole content area, if it holds fewer than three. For dense screens like wide tables.');
+}
 
-	A("p mt:0 rich='A `maxWidth: \"screen\"` page takes as much room as the window has: while it is up, the columns stretch to the screen edges instead of the standard 1280px, and settle back when it closes — the top bar and footer hold the standard width throughout. For dense screens like boards and wide tables.'");
-	A("a href=/demo/panels #Back to the playground");
-
-	S.box({ header: "The stack", content: () => drawStackList($panel.stack) });
+function drawUnlimitedPanel($panel: S.Panel) {
+	drawSizedPanel($panel, "Unlimited", "none",
+		'A `maxWidth: "none"` page has no ceiling: it always takes the whole content area, however wide. For boards and dashboards that genuinely scale.');
 }
 
 /**
@@ -838,7 +846,7 @@ function drawLargePanel($panel: S.Panel) {
  */
 function drawLongTitledPanel($panel: S.Panel, title: string, deeper?: string) {
 	$panel.title = title;
-	$panel.maxWidth = "half";
+	$panel.maxWidth = "small";
 	A("p mt:0 rich='This page declares a long `title`. Its crumb shows it in full while the bar has room, and is among the first to be shortened when it hasn’t: the longest crumbs always give way first.'");
 	if (deeper) A("a href=", deeper, "#Push another long-titled panel");
 	else A("a href=/demo/panels #Back to the playground");
@@ -1083,6 +1091,9 @@ function drawOverlays() {
 			A("div.s-s.neutral mt:$3 padding:$3 text-align:center user-select:none fg:$s-muted", () => {
 				A("#Right-click (or long-press) here for a context menu.");
 				S.addContextMenu({
+					// `link` prepends the browser's own link entries — Open in new
+					// tab, Copy link — above a separator, like the breadcrumbs' menu.
+					link: "/demo/overlays",
 					items: [
 						{ label: "Cut",   icon: icons.scissors,       click: () => S.toast({ message: "Cut!", type: "warning" }) },
 						{ label: "Copy",  icon: icons.copy,           click: () => S.toast({ message: "Copied!", type: "success" }) },
@@ -1257,7 +1268,7 @@ function drawContent() {
 	S.box({
 		header: "Native form controls",
 		content: () => {
-			A("p rich='These are raw `<input>`, `<select>`, `<textarea>` and friends — *no* Staffa components. The reset borrows the surface colours and accent, keeping things unsurprising.'");
+			A("p rich='These are raw `<input>`, `<select>`, `<textarea>` and friends — *no* Staffa components. The reset borrows the surface colours and accent, but does no excessive styling likely to break intended layouts.'");
 
 			A("div display:flex flex-direction:column gap:$3 max-width:24rem", () => {
 				A("input type=text placeholder=Plain text input");
@@ -1456,8 +1467,8 @@ function drawIconDetail($panel: S.Panel<{ name: string }>) {
 	const name = $panel.params.name;
 	const fn = iconByName[name];
 	$panel.title = name;
-	// A small column: on a wide enough screen it sits beside the (small) gallery.
-	$panel.maxWidth = "half";
+	// A small column: on a wide enough screen it sits beside the (medium) gallery.
+	$panel.maxWidth = "small";
 
 	const list = showcaseIcons.includes(name) ? showcaseIcons : allIcons.map(([n]) => n);
 	const at = list.indexOf(name);

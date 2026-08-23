@@ -43,10 +43,10 @@ S.main({
 		"/settings": ($panel) => {
 			// @ts-expect-error — nothing to destructure here.
 			$panel.params.anything;
+			$panel.maxWidth = "small";
+			$panel.maxWidth = "none";
+			// @ts-expect-error — the only four bounds there are.
 			$panel.maxWidth = "half";
-			$panel.maxWidth = "screen";
-			// @ts-expect-error — the only three bounds there are.
-			$panel.maxWidth = "third";
 		},
 		// The chrome a page declares, which the shell then places.
 		"/chrome": ($panel) => {

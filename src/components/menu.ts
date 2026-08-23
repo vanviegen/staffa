@@ -1,8 +1,9 @@
 import A from "aberdeen";
 import { matchCurrent, current as currentRoute, go } from "aberdeen/route";
-import { type Slot, type Attributes, drawSlot, mountPortal, focusFirst } from "../core.js";
-import { menu as menuIcon, chevronRight } from "../icons.js";
+import { cssZoom, type Slot, type Attributes, drawSlot, mountPortal, focusFirst } from "../core.js";
+import { menu as menuIcon, chevronRight, externalLink as newTabIcon, link as linkIcon } from "../icons.js";
 import { button, type ButtonOptions } from "./button.js";
+import { toast } from "./toast.js";
 
 /**
  * A clickable item in a menu or sidebar nav.
@@ -130,6 +131,14 @@ export interface FloatingMenuOptions {
 	 * context menu — whose anchor has no click handler — wants the click to close.
 	 */
 	closeOnAnchorClick?: boolean;
+	/**
+	 * The link this menu stands on, as a path or URL. A menu that takes over a
+	 * link's right-click takes the browser's own link menu away, so it owes the
+	 * two entries anyone actually reaches for there: with this set, **Open in
+	 * new tab** and **Copy link** are prepended above a separator, where that
+	 * menu would have had them. The shell's breadcrumbs use it.
+	 */
+	link?: string;
 	/** Aberdeen attr/style string on the floating panel. */
 	dropdownAttrs?: Attributes;
 }
@@ -152,7 +161,7 @@ A.insertGlobalCss({
 	".s-menu-list":
 		"position:fixed z-index:350 min-width:10rem display:flex flex-direction:column p:$1 " +
 		"r:$s-radius-lg " +
-		"overflow-y:auto max-height:min(80vh,28rem) " +
+		"overflow-y:auto max-height:min(calc(80vh/var(--s-zoom,1)),28rem) " +
 		"transition: opacity 0.15s, transform 0.15s, visibility 0.15s;",
 	".s-menu-list.hidden": "opacity:0 pointer-events:none transform:translateY(-6px) visibility:hidden",
 	// One class for both the `<a>` (link) and `<button>` forms — they look
@@ -529,15 +538,48 @@ export function closeFloatingMenu(anchor?: HTMLElement): void {
 }
 
 function positionMenu(menuEl: HTMLElement, rect: { left: number; right: number; top: number; bottom: number }): void {
+	// The rect arrives in window coordinates (an anchor's rect, or a pointer
+	// position); the left/top set below live in the menu's own space. The two
+	// differ when the shell has zoomed the page (see `watchScale` in main.ts),
+	// so everything is brought into the menu's space first.
+	const z = cssZoom(menuEl);
 	const mw = menuEl.offsetWidth, mh = menuEl.offsetHeight;
-	const vw = window.innerWidth,  vh = window.innerHeight;
+	const vw = window.innerWidth / z, vh = window.innerHeight / z;
 	const gap = 4;
-	let x = rect.left;
-	if (x + mw > vw - 8) x = Math.max(8, rect.right - mw);
-	let y = rect.bottom + gap;
-	if (y + mh > vh - 8 && rect.top - mh - gap >= 8) y = rect.top - mh - gap;
+	let x = rect.left / z;
+	if (x + mw > vw - 8) x = Math.max(8, rect.right / z - mw);
+	let y = rect.bottom / z + gap;
+	if (y + mh > vh - 8 && rect.top / z - mh - gap >= 8) y = rect.top / z - mh - gap;
 	menuEl.style.left = Math.max(8, x) + "px";
 	menuEl.style.top  = Math.max(8, y) + "px";
+}
+
+/**
+ * The standard entries for the link a menu stands on (see
+ * {@link FloatingMenuOptions.link}). "Open in new tab" is a real new tab, so
+ * the target arrives cold, exactly as the link middle-clicked would.
+ */
+function linkItems(href: string): MenuEntry[] {
+	return [
+		{ label: "Open in new tab", icon: newTabIcon, click: () => { window.open(href, "_blank", "noopener"); } },
+		{ label: "Copy link", icon: linkIcon, click: () => void copyLink(href) },
+	];
+}
+
+/**
+ * Put the link's address on the clipboard, as the absolute URL someone can
+ * paste anywhere — what the browser's own "Copy link" would have given them.
+ * Confirmed with a toast, since a silent copy leaves you wondering; `writeText`
+ * needs a secure context, so a failure says so rather than lying.
+ */
+async function copyLink(href: string): Promise<void> {
+	const url = new URL(href, location.href).href;
+	try {
+		await navigator.clipboard.writeText(url);
+		toast({ message: "Link copied." });
+	} catch {
+		toast({ message: "Couldn't copy the link.", type: "danger" });
+	}
 }
 
 mountPortal(() => {
@@ -545,7 +587,9 @@ mountPortal(() => {
 	if (!f) return;
 
 	const menuEl = A("div.s-menu-list.s-s.neutral.shadow create=hidden destroy=hidden", f.dropdownAttrs, () => {
-		drawMenu(f.items, closeFloating);
+		// One drawMenu call, not one per section: it owns the container's roving
+		// keyboard focus, and two of them would move it twice per keypress.
+		drawMenu(f.link != null ? [...linkItems(f.link), { separator: true }, ...f.items] : f.items, closeFloating);
 	}) as HTMLElement;
 
 	// Capture-phase document handlers replace an invisible backdrop element:
@@ -672,13 +716,13 @@ export function addContextMenu(opts: ContextMenuOptions): void {
 		e.preventDefault();
 		myEl = e.currentTarget as HTMLElement;
 		// Anchor at the exact click/tap point, and close on a plain click of the
-		// element (it has no toggle handler of its own).
+		// element (it has no toggle handler of its own). The rest of the options
+		// pass through whole, so a shared option can't be dropped on the way.
 		showFloatingMenu({
-			items: opts.items,
+			...opts,
 			anchor: myEl,
 			at: { x: e.clientX, y: e.clientY },
 			closeOnAnchorClick: true,
-			dropdownAttrs: opts.dropdownAttrs,
 		});
 	});
 }

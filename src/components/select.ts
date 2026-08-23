@@ -37,8 +37,10 @@ A.insertGlobalCss({
  */
 export function select(opts: SelectOptions): void {
 	drawField(opts, (id, isInvalid) => {
-		A("div.s-select_wrap", opts.inputAttrs, () => {
-			A("select.s-input", () => {
+		A("div.s-select_wrap", () => {
+			// On the <select> itself, like every other field control — an
+			// aria-label on the wrapper div would label nothing.
+			A("select.s-input", opts.inputAttrs, () => {
 				applyControlAttrs(opts, id, isInvalid);
 
 				A("change=", (e: Event) => {

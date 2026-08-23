@@ -473,10 +473,29 @@ function panelBody(page: Page) {
 /**
  * The live page whose content matches `text`. A `RegExp` rather than a string,
  * because a string match is case-insensitive and "Small A" would then also hit
- * every "Push small A" link.
+ * the navigation grid's "Small A" links.
  */
 function panelWith(page: Page, text: RegExp) {
 	return page.locator(livePanels, { hasText: text });
+}
+
+/**
+ * Drive the stack box's navigator inside `panel`: pick the target page, set
+ * whether to navigate from that very panel (its own `open`) or through the
+ * stack's methods (which build on the current panel), and fire one of the
+ * three navigations.
+ */
+async function stackNav(panel: ReturnType<typeof topPanel>, name: string, how: "push" | "replace" | "open", fromHere = true) {
+	const box = panel.locator(".s-box", { hasText: "The stack" });
+	await box.getByLabel("Navigation").selectOption(how);
+	await box.getByLabel("Page").selectOption({ label: name });
+	await box.getByLabel("Origin").selectOption(fromHere ? "here" : "stack");
+	await box.getByRole("button", { name: "Go" }).click();
+}
+
+/** The leftmost open panel — the playground, in the tests that start there. */
+function firstPanel(page: Page) {
+	return page.locator(livePanels).first();
 }
 
 test("panels: a phone pushes and pops one screen at a time", async ({ page }) => {
@@ -534,8 +553,8 @@ test("panels: Escape pops a panel, and only then opens the nav", async ({ page }
 });
 
 test("panels: a deep link derives its columns, and links replace the top one", async ({ page }) => {
-	// The gallery and the detail are both "half"-width, so they pair up as two columns
-	// on any ordinary desktop width.
+	// The medium gallery and the small detail add up to exactly the content
+	// area, so they pair up as two columns on any ordinary desktop width.
 	// /demo/icons matches a route, so it becomes the page beneath
 	// /demo/icons/heart (while /demo, which has no route, is skipped).
 	await page.goto("./icons/heart");
@@ -567,39 +586,35 @@ test("panels: a deep link derives its columns, and links replace the top one", a
 	await expect(page.locator(livePanels)).toHaveCount(2);
 });
 
-test("panels: a link to an already-open panel returns to it, closing nothing", async ({ page }) => {
+test("panels: a link to an already-open panel goes back to it", async ({ page }) => {
 	await page.goto("./panels/medium");
 	// Not the box header: the playground beneath holds a "Push a medium panel" link
 	// that a substring match would also hit.
-	await page.getByText("it fills the standard content area").waitFor();
+	await page.getByText("two of the shell").waitFor();
 	await expect(page.locator(livePanels)).toHaveCount(2);
 
-	page.describe("A link to the already-open playground returns to it; the medium panel parks");
-	await panelWith(page, /it fills the standard content area/)
-		.getByRole("link", { name: "Back to the playground" }).click();
+	page.describe("A push to the already-open playground goes back to it; the medium page closes");
+	await stackNav(panelWith(page, /two of the shell/), "Playground", "push");
 	await expect(page).toHaveURL(/\/demo\/panels$/);
 	await page.getByText("Push a panel").waitFor();
-	await expect(page.locator(livePanels)).toHaveCount(2);
-	await expect(page.locator(visiblePanels)).toHaveCount(1);
-	await expect(page.locator(".s-panel-parked")).toHaveCount(1);
+	await expect(page.locator(livePanels)).toHaveCount(1);
 	// The playground is the current page again, so its title takes over.
 	await expect(page).toHaveTitle("Panels · Staffa");
 
-	page.describe("The parked page's crumb brings it back — still nothing closed");
-	await page.locator(".s-crumb", { hasText: "Medium" }).click();
+	page.describe("The browser's back button brings the closed column back");
+	await page.goBack();
 	await expect(page).toHaveURL(/\/demo\/panels\/medium$/);
 	await expect(page.locator(livePanels)).toHaveCount(2);
-	await expect(page.locator(".s-panel-parked")).toHaveCount(0);
 	await expect(page).toHaveTitle("Medium · Staffa");
 });
 
-test("panels: crumbs browse the stack, and a new panel prunes the parked ones", async ({ page }) => {
+test("panels: a crumb goes back to its panel, closing what was stacked on it", async ({ page }) => {
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
-	await page.getByRole("link", { name: "Push small A" }).click();
-	await panelWith(page, /Small A/).waitFor();
-	await panelWith(page, /Small A/).getByRole("link", { name: "Push small B" }).click();
-	await panelWith(page, /Small B/).waitFor();
+	await stackNav(firstPanel(page), "Small A", "push");
+	await panelWith(page, /Small A is a/).waitFor();
+	await stackNav(panelWith(page, /Small A is a/), "Small B", "push");
+	await panelWith(page, /Small B is a/).waitFor();
 	await expect(page.locator(livePanels)).toHaveCount(3);
 
 	// `shell.panels` holds the live Panel objects and `shell.currentPanelIndex`
@@ -609,37 +624,25 @@ test("panels: crumbs browse the stack, and a new panel prunes the parked ones", 
 		"/demo/panels", "/demo/panels/a", "/demo/panels/b ← current",
 	]);
 
-	page.describe("The first crumb goes back; A and B stay open, parked");
+	page.describe("The first crumb goes back to the playground; A and B close behind it");
 	await page.locator(".s-crumb", { hasText: "Panels" }).click();
 	await expect(page).toHaveURL(/\/demo\/panels$/);
 	await page.getByText("Push a panel").waitFor();
-	await expect(page.locator(livePanels)).toHaveCount(3);
-	await expect(page.locator(".s-panel-parked")).toHaveCount(2);
-	await expect(stackList.locator("li")).toHaveText([
-		"/demo/panels ← current", "/demo/panels/a", "/demo/panels/b",
-	]);
+	await expect(page.locator(livePanels)).toHaveCount(1);
+	await expect(stackList.locator("li")).toHaveText(["/demo/panels ← current"]);
 
-	page.describe("Browser back and forward replay the arrangements, closing nothing");
+	page.describe("Browser back and forward replay the arrangements");
 	await page.goBack();
 	await expect(page).toHaveURL(/\/demo\/panels\/b$/);
-	await expect(page.locator(".s-panel-parked")).toHaveCount(0);
+	await expect(page.locator(livePanels)).toHaveCount(3);
 	await page.goForward();
 	await expect(page).toHaveURL(/\/demo\/panels$/);
-	await expect(page.locator(".s-panel-parked")).toHaveCount(2);
-	await expect(page.locator(livePanels)).toHaveCount(3);
+	await expect(page.locator(livePanels)).toHaveCount(1);
 
-	page.describe("A reload restores the arrangement, parked panels included");
+	page.describe("A reload restores the arrangement");
 	await page.reload();
 	await page.getByText("Push a panel").waitFor();
-	await expect(page.locator(livePanels)).toHaveCount(3);
-	await expect(page.locator(".s-panel-parked")).toHaveCount(2);
-
-	page.describe("Opening a *new* page prunes the parked (unpinned) panels");
-	await page.getByRole("link", { name: "Push a medium panel" }).click();
-	await expect(page).toHaveURL(/\/demo\/panels\/medium$/);
-	await page.getByText("it fills the standard content area").waitFor();
-	await expect(page.locator(livePanels)).toHaveCount(2);
-	await expect(page.locator(".s-panel-parked")).toHaveCount(0);
+	await expect(page.locator(livePanels)).toHaveCount(1);
 });
 
 test("panels: crumbs only shorten under pressure, longest first", async ({ page }) => {
@@ -677,27 +680,29 @@ test("panels: crumbs only shorten under pressure, longest first", async ({ page 
 	await screenshot(page, "crumbs-floored-scrolling");
 });
 
-test("panels: a screen page grows only the columns; the bars hold the standard width", async ({ page }) => {
+test("panels: a large page takes three columns, and the shell holds still", async ({ page }) => {
 	await page.setViewportSize({ width: 1600, height: 900 });
 	await page.goto("./panels/large");
-	await page.getByText("boards and wide tables").waitFor();
+	await page.getByText("three of the shell").waitFor();
 
-	page.describe("The column reaches the window's edges; header and footer keep to the 1280px page, centred");
+	page.describe("The page is three of the shell's columns; the bars are the shell, as ever");
+	const region = (await page.locator(".s-panels").boundingBox())!;
 	const panelW = (await topPanel(page).boundingBox())!.width;
 	const headerBar = (await page.locator("header .s-bar").boundingBox())!;
 	const footerBar = (await page.locator("footer .s-bar").boundingBox())!;
-	expect(panelW).toBeGreaterThan(headerBar.width + 100); // the column outgrew the chrome
-	expect(headerBar.width).toBeLessThanOrEqual(1280);
-	expect(footerBar.width).toBeLessThanOrEqual(1280);
-	expect(headerBar.x).toBeGreaterThan(100); // centred, not hugging the left edge
-	await screenshot(page, "screen-panel-bars-hold");
+	// 1600 window − 200 sidebar = 1400 of content area: three columns of 466⅔.
+	expect(region.width).toBeCloseTo(1400, 0);
+	expect(panelW).toBeCloseTo(1400, 0);
+	expect(headerBar.width).toBeCloseTo(1600, 0);
+	expect(footerBar.width).toBeCloseTo(1600, 0);
+	await screenshot(page, "large-panel-fills-area");
 });
 
 test("panels: a pinned panel survives navigation elsewhere, but not its own close", async ({ page }) => {
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
-	await page.getByRole("link", { name: "Push small A" }).click();
-	await panelWith(page, /Small A/).waitFor();
+	await stackNav(firstPanel(page), "Small A", "push");
+	await panelWith(page, /Small A is a/).waitFor();
 
 	page.describe("Pin Small A from its crumb's context menu");
 	await page.locator(".s-crumb", { hasText: "Small A" }).click({ button: "right" });
@@ -707,16 +712,16 @@ test("panels: a pinned panel survives navigation elsewhere, but not its own clos
 	page.describe("Open a new page elsewhere: the pinned panel rides along beneath it");
 	await page.locator(".s-crumb", { hasText: "Panels" }).click();
 	await page.getByText("Push a panel").waitFor();
-	await page.getByRole("link", { name: "Push a medium panel" }).click();
+	await stackNav(firstPanel(page), "Medium", "push");
 	await expect(page).toHaveURL(/\/demo\/panels\/medium$/);
-	await page.getByText("it fills the standard content area").waitFor();
+	await page.getByText("two of the shell").waitFor();
 	await expect(page.locator(livePanels)).toHaveCount(3);
 	await expect(page.locator(".s-crumb")).toHaveCount(3);
 	await expect(page.locator(".s-crumb-pin")).toHaveCount(1);
 
 	page.describe("A reload keeps the pin");
 	await page.reload();
-	await page.getByText("it fills the standard content area").waitFor();
+	await page.getByText("two of the shell").waitFor();
 	await expect(page.locator(".s-crumb-pin")).toHaveCount(1);
 
 	page.describe("An explicit Close from the crumb menu still takes the pinned page out");
@@ -796,7 +801,7 @@ test("panels: browser back keeps an unsaved panel, parked", async ({ page }) => 
 	// from before the page existed — for the browser's back button to head for.
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
-	await page.getByRole("link", { name: "Push the unsaved-changes panel" }).click();
+	await stackNav(firstPanel(page), "Unsaved changes", "push");
 	await page.getByLabel("Draft").fill("precious");
 
 	page.describe("Browser back keeps the unsaved page anyway, parked with its ●");
@@ -839,156 +844,160 @@ test("panels: a whole-stack replacement still keeps the unsaved panel", async ({
 	await expect(page).toHaveTitle(/^• /);
 });
 
-test("panels: maxWidth=half starts at half width, and the next lands in its open room", async ({ page }) => {
+test("panels: the columns on screen are centred in the content area", async ({ page }) => {
+	// 1280 window − 200 sidebar = 1080 of content area, which divides into three
+	// columns of 360 — the narrowest whole number that keeps each one at 360+.
+	await page.setViewportSize({ width: 1280, height: 900 });
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
 
-	page.describe("A lone half-width panel leaves its other half open");
-	const playground = page.locator(livePanels).first();
-	const before = (await playground.boundingBox())!;
-	const region = (await page.locator(".s-panels").boundingBox())!;
-	expect(before.width).toBeLessThan(region.width * 0.6);
-	expect(before.x).toBeCloseTo(region.x, 1);
+	// The room left either side of the run of columns, and their widths.
+	const run = () => page.locator(".s-panels").evaluate((region) => {
+		const area = region.getBoundingClientRect();
+		const cols = [...region.querySelectorAll(".s-panel:not(.s-panel-closing):not([inert])")]
+			.map((el) => el.getBoundingClientRect())
+			.sort((a, b) => a.left - b.left);
+		return {
+			gaps: [Math.round(cols[0].left - area.left), Math.round(area.right - cols[cols.length - 1].right)],
+			widths: cols.map((c) => Math.round(c.width)),
+		};
+	});
 
-	page.describe("The next half lands exactly there: nothing on screen moves or resizes");
-	await page.getByRole("link", { name: "Push small A" }).click();
-	await panelWith(page, /Small A/).waitFor();
-	await expect(page.locator(visiblePanels)).toHaveCount(2);
-	expect(await playground.boundingBox()).toEqual(before);
+	page.describe("The lone medium playground: two thirds of the area, centred in it");
+	await expect.poll(run).toEqual({ gaps: [180, 180], widths: [720] });
+
+	page.describe("A small column beside it fills the area exactly");
+	await stackNav(firstPanel(page), "Small A", "push");
+	await panelWith(page, /Small A is a/).waitFor();
+	await expect.poll(run).toEqual({ gaps: [0, 0], widths: [720, 360] });
+
+	page.describe("A third crowds the playground out; the two smalls recentre");
+	await stackNav(topPanel(page), "Small B", "push");
+	await panelWith(page, /Small B is a/).waitFor();
+	await expect.poll(run).toEqual({ gaps: [180, 180], widths: [360, 360] });
 });
 
-test("panels: the nav column and a full panel add up to the standard page", async ({ page }) => {
-	// The two widths `S.main()` takes (`navWidth`, `fullWidth`) are the whole
-	// story: side by side they *are* the standard page, and the demo leaves both
-	// at their defaults — so this is where the familiar 1280px comes from.
+test("panels: the sidebar and the content area tile the window, whatever is open", async ({ page }) => {
+	// Uncapped, the shell *is* the window: the sidebar takes its `navWidth` and
+	// the content area takes the rest. Neither depends on what's open, which is
+	// the whole point — the chrome never moves while columns come and go.
 	await page.setViewportSize({ width: 1600, height: 900 });
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
 
-	page.describe("The sidebar, its hairline and the content area tile the page exactly");
-	const nav = (await page.locator(".s-nav-panel").boundingBox())!;
-	const sep = (await page.locator(".s-nav-sep").boundingBox())!;
-	const area = (await page.locator(".s-panels").boundingBox())!;
-	const bar = (await page.locator("header .s-bar").boundingBox())!;
-	expect(nav.width + sep.width).toBeCloseTo(200, 1);
-	expect(area.width).toBeCloseTo(1080, 1);
-	// The bars keep to that same page, so the chrome lines up with the columns.
-	expect(bar.width).toBeCloseTo(1280, 1);
-	expect(bar.x).toBeCloseTo(nav.x, 1);
+	const shell = async () => {
+		const nav = (await page.locator(".s-nav-panel").boundingBox())!;
+		const sep = (await page.locator(".s-nav-sep").boundingBox())!;
+		const area = (await page.locator(".s-panels").boundingBox())!;
+		const bar = (await page.locator("header .s-bar").boundingBox())!;
+		return { nav: nav.width + sep.width, area: area.width, bar: bar.width, navX: Math.round(nav.x) };
+	};
+
+	page.describe("The sidebar, its hairline and the content area tile the window exactly");
+	expect(await shell()).toEqual({ nav: 200, area: 1400, bar: 1600, navX: 0 });
+
+	page.describe("Two more columns later, not one of those figures has moved");
+	await stackNav(firstPanel(page), "Small A", "push");
+	await panelWith(page, /Small A is a/).waitFor();
+	await stackNav(topPanel(page), "Small B", "push");
+	await panelWith(page, /Small B is a/).waitFor();
+	expect(await shell()).toEqual({ nav: 200, area: 1400, bar: 1600, navX: 0 });
 });
 
-test("panels: $panel.open builds on its own panel, not the current one", async ({ page }) => {
+test("panels: a link builds on its own panel, a stack method on the current one", async ({ page }) => {
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
-	await page.getByRole("link", { name: "Push small A" }).click();
-	await panelWith(page, /Small A/).waitFor();
+	await stackNav(firstPanel(page), "Small A", "push");
+	await panelWith(page, /Small A is a/).waitFor();
 	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small A"]);
 
-	page.describe("An open() from the playground panel replaces Small A instead of stacking on it");
-	// Small A is the current panel; the button lives in the playground column
-	// beside it, and opens from *that* panel — so Small A closes first,
-	// exactly as it would for a link clicked in the playground.
-	await page.getByRole("button", { name: "$panel.open()" }).click();
-	await panelWith(page, /Small B/).waitFor();
+	page.describe("A from-here push in the playground replaces Small A instead of stacking on it");
+	// Small A is the current panel; the navigator sits in the playground column
+	// beside it, and `$panel.open` builds on *that* panel — so Small A closes.
+	await stackNav(firstPanel(page), "Small B", "push");
+	await panelWith(page, /Small B is a/).waitFor();
 	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small B"]);
 
-	page.describe("stack.pushPanel() builds on the current panel instead");
-	// Back to [Panels, Small A] first, via the *playground's* link (Small B
-	// carries a link of the same name), which likewise builds on the playground.
-	await page.locator(livePanels).first().getByRole("link", { name: "Push small A" }).click();
-	await panelWith(page, /Small A/).waitFor();
-	// The stack's own push builds on the *current* panel — Small A — so Small B
-	// lands on top of it: three crumbs, nothing closed. That difference is why
-	// a list's click handler wants the panel's own push.
-	await page.getByRole("button", { name: "stack.pushPanel()" }).click();
-	await panelWith(page, /Small B/).waitFor();
+	page.describe("The stack-method cell builds on the current panel instead");
+	// Back to [Panels, Small A] first, via the grid again.
+	await stackNav(firstPanel(page), "Small A", "push");
+	await panelWith(page, /Small A is a/).waitFor();
+	// stack.pushPanel builds on the *current* panel — Small A — so Small B lands
+	// on top of it: three crumbs, nothing closed. That difference is why a
+	// list's click handler wants the panel's own `open` instead.
+	await stackNav(firstPanel(page), "Small B", "push", false);
+	await panelWith(page, /Small B is a/).waitFor();
 	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small A", "Small B"]);
 });
 
-test("panels: the page stretches past 1280 when a third column fits", async ({ page }) => {
-	// Wide enough for three small columns (~3×540 plus the sidebar).
+test("panels: replace and open recycle a panel that is already open", async ({ page }) => {
+	// Wide enough for all three columns, so the playground's navigator stays usable.
 	await page.setViewportSize({ width: 1920, height: 900 });
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
+	await stackNav(firstPanel(page), "Small A", "push");
+	await panelWith(page, /Small A is a/).waitFor();
+	await stackNav(topPanel(page), "Small B", "push");
+	await panelWith(page, /Small B is a/).waitFor();
+	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small A", "Small B"]);
 
-	// Alone (and even two-up) the shell is the standard centred 1280px page.
-	const inner = page.locator(".s-body-inner");
-	expect((await inner.boundingBox())!.width).toBeLessThanOrEqual(1280);
+	page.describe("Replace from the playground, aiming at the already-open Small B");
+	// Mark Small B's element, to prove the panel moves rather than being rebuilt.
+	await panelWith(page, /Small B is a/).evaluate((el) => { (el as HTMLElement).dataset.probe = "kept"; });
+	// Replace semantics from the playground: everything in its place goes, and
+	// Small B — already open — moves into the one remaining slot, alive.
+	await stackNav(firstPanel(page), "Small B", "replace");
+	await expect(page.locator(".s-crumb")).toHaveText(["Small B"]);
+	await expect(page.locator(livePanels)).toHaveCount(1);
+	expect(await page.locator(livePanels).evaluate((el) => (el as HTMLElement).dataset.probe)).toBe("kept");
 
-	page.describe("Push two more columns: a third fits, so the columns stretch to hold all three — the bars hold at 1280");
-	await page.getByRole("link", { name: "Push small A" }).click();
-	await panelWith(page, /Small A/).waitFor();
-	await topPanel(page).getByRole("link", { name: "Push small B" }).click();
-	await panelWith(page, /Small B/).waitFor();
-	await expect(page.locator(visiblePanels)).toHaveCount(3);
-	expect((await inner.boundingBox())!.width).toBeGreaterThan(1600);
-
-	page.describe("Parking the third column settles the page back to the standard width");
-	await page.locator(".s-crumb", { hasText: "Small A" }).click();
-	await page.waitForFunction(() =>
-		document.querySelector(".s-body-inner")!.getBoundingClientRect().width <= 1280);
-	await expect(page.locator(visiblePanels)).toHaveCount(2);
-});
-
-test("panels: a large panel grows the page to the window's edges", async ({ page }) => {
-	// Wider than the standard 1280px page, so there's somewhere to grow to.
-	await page.setViewportSize({ width: 1800, height: 900 });
-	await page.goto("./panels");
-	await page.getByText("Push a panel").waitFor();
-
-	// The standard page: the body (and the bars) cap at 1280px, centred.
-	const inner = page.locator(".s-body-inner");
-	expect((await inner.boundingBox())!.width).toBeLessThanOrEqual(1280);
-
-	page.describe("Push a large panel: the columns stretch to the screen edges — the bars hold at 1280");
-	await page.getByRole("link", { name: "Push a large panel" }).click();
-	await panelWith(page, /takes as much room as the window has/).waitFor();
-	expect((await inner.boundingBox())!.width).toBeGreaterThan(1700);
-
-	page.describe("Leave it: the page settles back to the standard width");
-	await page.locator(".s-crumb", { hasText: "Panels" }).click();
-	await page.getByText("Push a panel").waitFor();
-	await page.waitForFunction(() =>
-		document.querySelector(".s-body-inner")!.getBoundingClientRect().width <= 1280);
+	page.describe("Browser back restores the arrangement — Small B still the same element");
+	await page.goBack();
+	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small A", "Small B"]);
+	expect(await panelWith(page, /Small B is a/).evaluate((el) => (el as HTMLElement).dataset.probe)).toBe("kept");
 });
 
 test("panels: a panel closes itself while another column sits on top of it", async ({ page }) => {
+	// At 1280 the area is 1080: the medium playground (720) plus one small (360)
+	// fill it exactly, so a third column crowds one out.
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
 
-	page.describe("Stack playground → A → B; only two halves fit at a time");
-	await page.getByRole("link", { name: "Push small A" }).click();
-	await panelWith(page, /Small A/).waitFor();
-	await topPanel(page).getByRole("link", { name: "Push small B" }).click();
-	await panelWith(page, /Small B/).waitFor();
+	page.describe("Stack playground → A → B; the playground is crowded out");
+	await stackNav(firstPanel(page), "Small A", "push");
+	await panelWith(page, /Small A is a/).waitFor();
+	await stackNav(topPanel(page), "Small B", "push");
+	await panelWith(page, /Small B is a/).waitFor();
 	await expect(page.locator(livePanels)).toHaveCount(3);
 	await expect(page.locator(visiblePanels)).toHaveCount(2);
 
 	page.describe("Delete A — not the top page — and it is spliced out from under B");
 	// `$panel.close()` on a mid-stack page: B keeps its state and the URL, and
 	// the playground is revealed in the room A gave up.
-	const smallA = page.locator(livePanels, { hasText: /Small A/ });
+	const smallA = page.locator(livePanels, { hasText: /Small A is a/ });
 	await smallA.getByRole("button", { name: "Delete" }).click();
 	await expect(page).toHaveURL(/\/demo\/panels\/b$/);
 	await page.getByText("Push a panel").waitFor();
 	await expect(page.locator(visiblePanels)).toHaveCount(2);
 	// (A plain count: ShoTest's wrapped expect can't assert on absent elements.)
-	expect(await page.locator(livePanels, { hasText: /Small A/ }).count()).toBe(0);
+	expect(await page.locator(livePanels, { hasText: /Small A is a/ }).count()).toBe(0);
 
 	page.describe("The splice is a history entry, so browser back undoes it");
 	await page.goBack();
-	await panelWith(page, /Small A/).waitFor();
+	await panelWith(page, /Small A is a/).waitFor();
 	await expect(page.locator(livePanels)).toHaveCount(3);
 });
 
 test("panels: closing the top column reveals the one crowded out beneath it", async ({ page }) => {
+	// At 1280 the medium playground plus one small fill the area, so the third
+	// column crowds the playground out.
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
 
-	await page.getByRole("link", { name: "Push small A" }).click();
-	await panelWith(page, /Small A/).waitFor();
-	await topPanel(page).getByRole("link", { name: "Push small B" }).click();
-	await panelWith(page, /Small B/).waitFor();
+	await stackNav(firstPanel(page), "Small A", "push");
+	await panelWith(page, /Small A is a/).waitFor();
+	await stackNav(topPanel(page), "Small B", "push");
+	await panelWith(page, /Small B is a/).waitFor();
 	// Three panels, room for two: the playground is hidden beneath the run.
 	await expect(page.locator(livePanels)).toHaveCount(3);
 	await expect(page.locator(visiblePanels)).toHaveCount(2);
@@ -1002,8 +1011,10 @@ test("panels: closing the top column reveals the one crowded out beneath it", as
 });
 
 test("panels: linkNavigation sets what a link without data-panel does", async ({ page }) => {
-	await page.goto("./panels");
-	await page.getByText("Push a panel").waitFor();
+	// The icons gallery is full of bare links (no `data-panel`), which is
+	// exactly what the setting governs.
+	await page.goto("./icons");
+	await page.getByText("Gallery").waitFor();
 	// The chooser lives in the header's display-settings popover, so it can be
 	// reached from any page — the panel a bare link then swaps out included.
 	const chooseLinks = async (mode: string) => {
@@ -1015,20 +1026,23 @@ test("panels: linkNavigation sets what a link without data-panel does", async ({
 
 	page.describe("linkNavigation=replace: a bare link swaps the panel it sits in for its target");
 	await chooseLinks("replace");
-	await page.getByRole("link", { name: "Push small A" }).click();
-	await panelWith(page, /Small A is a/).waitFor();
-	await expect(page).toHaveURL(/\/demo\/panels\/a$/);
-	await expect(page.locator(".s-crumb")).toHaveText(["Small A"]);
-	await topPanel(page).getByRole("link", { name: "Back to the playground" }).click();
-	await page.getByText("Push a panel").waitFor();
+	await page.getByRole("link", { name: "heart", exact: true }).click();
+	await expect(page).toHaveURL(/\/demo\/icons\/heart$/);
+	await page.getByText("import { heart }").waitFor();
+	await expect(page.locator(livePanels)).toHaveCount(1);
 
 	page.describe("linkNavigation=open: a bare link behaves like a nav item, deriving a fresh stack");
+	await page.goto("./icons");
+	await page.getByText("Gallery").waitFor();
 	await chooseLinks("open");
-	await page.getByRole("link", { name: "Push small A" }).click();
-	await panelWith(page, /Small A is a/).waitFor();
-	await topPanel(page).getByRole("link", { name: "Push small B" }).click();
-	await panelWith(page, /Small B is a/).waitFor();
-	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small B"]);
+	await page.getByRole("link", { name: "heart", exact: true }).click();
+	await page.getByText("import { heart }").waitFor();
+	// The gallery survived (the derived stack holds it); a second bare link
+	// from it derives afresh, so the heart detail closes rather than stacking.
+	await page.getByRole("link", { name: "star", exact: true }).click();
+	await page.getByText("import { star }").waitFor();
+	await expect(page.locator(livePanels)).toHaveCount(2);
+	await expect(page.locator(".s-crumb")).toHaveText(["Icons", "star"]);
 });
 
 test("panels: columns single keeps a single column at any width", async ({ page }) => {
@@ -1041,9 +1055,11 @@ test("panels: columns single keeps a single column at any width", async ({ page 
 	await page.keyboard.press("Escape");
 
 	page.describe("Only the current page shows now, however much room there is");
-	await page.getByRole("link", { name: "Push small A" }).click();
-	await panelWith(page, /Small A/).waitFor();
+	await stackNav(firstPanel(page), "Small A", "push");
+	await panelWith(page, /Small A is a/).waitFor();
 	await expect(page.locator(visiblePanels)).toHaveCount(1);
+	// Its "small" ask still holds — the ceiling is a promise, single mode or not.
+	expect((await page.locator(visiblePanels).boundingBox())!.width).toBeCloseTo(360, 0);
 
 	page.describe("Escape still pops the stack, at any width");
 	await page.setViewportSize({ width: 480, height: 800 });
@@ -1055,8 +1071,8 @@ test("panels: columns single keeps a single column at any width", async ({ page 
 test("panels: a panel is sized before it draws, and resizes without redrawing", async ({ page }) => {
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
-	await page.getByRole("link", { name: "Push the sizing & lifecycle panel" }).click();
-	await panelWith(page, /Sizing & lifecycle/).waitFor();
+	await stackNav(firstPanel(page), "Sizing & lifecycle", "push");
+	await panelWith(page, /is sized before its draw/).waitFor();
 
 	page.describe("The panel already knew its real width while it drew");
 	const column = topPanel(page);
@@ -1065,67 +1081,62 @@ test("panels: a panel is sized before it draws, and resizes without redrawing", 
 	expect(Math.abs(drawnWidth - full.width)).toBeLessThan(1.5);
 	await expect(page.getByTestId("live-draws")).toHaveText("1");
 
-	page.describe("Asking for half reflows the column in place — never redrawn");
-	await column.getByRole("button", { name: "half" }).click();
+	page.describe("Asking for a small column reflows it in place — never redrawn");
+	await column.getByRole("button", { name: "small" }).click();
 	await expect(page.locator(visiblePanels)).toHaveCount(2);
-	const halved = (await column.boundingBox())!.width;
-	expect(halved).toBeLessThan(full.width * 0.7);
+	const narrowed = (await column.boundingBox())!.width;
+	expect(narrowed).toBeLessThan(full.width * 0.7);
 	await expect(page.getByTestId("live-draws")).toHaveText("1");
-	expect(Math.abs(Number(await page.getByTestId("page-width").textContent()) - halved)).toBeLessThan(1.5);
+	expect(Math.abs(Number(await page.getByTestId("page-width").textContent()) - narrowed)).toBeLessThan(1.5);
 });
 
 test("panels: the width sliders resize the shell in place, chrome and all", async ({ page }) => {
-	// `navWidth` and `fullWidth` are live, so the demo hands them to the shell
+	// `navWidth` and `maxWidth` are live, so the demo hands them to the shell
 	// through getters and drives them from two sliders in the display-settings
-	// popover. Whatever they say, the sidebar plus the content area *is* the
-	// page — which is what the top bar and footer keep to.
+	// popover. The cap holds the sidebar, the columns and both bars to one
+	// width, so the chrome can't drift away from the content.
 	await page.setViewportSize({ width: 1600, height: 900 });
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
-	await page.getByRole("link", { name: "Push the sizing & lifecycle panel" }).click();
-	await panelWith(page, /Sizing & lifecycle/).waitFor();
+	await stackNav(firstPanel(page), "Sizing & lifecycle", "push");
+	await panelWith(page, /is sized before its draw/).waitFor();
 	await expect(page.getByTestId("live-draws")).toHaveText("1");
 
-	const page_ = async () => {
+	const shell = async () => {
 		const nav = (await page.locator(".s-nav-panel").boundingBox())!;
 		const sep = (await page.locator(".s-nav-sep").boundingBox())!;
 		const area = (await page.locator(".s-panels").boundingBox())!;
 		const bar = (await page.locator("header .s-bar").boundingBox())!;
-		return { nav: nav.width + sep.width, area: area.width, bar: bar.width };
+		return { nav: nav.width + sep.width, area: area.width, bar: bar.width, left: Math.round(nav.x) };
 	};
-	expect(await page_()).toEqual({ nav: 200, area: 1080, bar: 1280 });
+	// The demo's cap is 1920, so at this width the shell simply fills the window.
+	expect(await shell()).toEqual({ nav: 200, area: 1400, bar: 1600, left: 0 });
 
-	page.describe("Open the display settings: a slider each for the sidebar and the content area");
+	page.describe("Open the display settings: a slider each for the sidebar and the cap");
 	await page.getByRole("button", { name: "Display settings" }).click();
 	const sliders = page.locator("input[type=range]");
 	await expect(sliders).toHaveCount(2);
 
-	page.describe("A wider sidebar takes its room from the window, not from the content area");
+	page.describe("A wider sidebar takes its room from the content area beside it");
 	await sliders.nth(0).fill("320");
-	await expect.poll(async () => (await page_()).nav).toBe(320);
-	// The content area is what `fullWidth` says, whatever the sidebar does — so
-	// the page (and the bars with it) grows by exactly what the sidebar took.
-	expect(await page_()).toEqual({ nav: 320, area: 1080, bar: 1400 });
+	await expect.poll(async () => (await shell()).nav).toBe(320);
+	expect(await shell()).toEqual({ nav: 320, area: 1280, bar: 1600, left: 0 });
 
-	page.describe("A narrower content area shrinks the columns, the page and the chrome together");
-	await sliders.nth(1).fill("900");
-	await expect.poll(async () => (await page_()).area).toBe(900);
-	expect(await page_()).toEqual({ nav: 320, area: 900, bar: 1220 });
+	page.describe("Capping the shell narrows sidebar, columns and bars alike — and centres the lot");
+	await sliders.nth(1).fill("1200");
+	await expect.poll(async () => (await shell()).bar).toBe(1200);
+	expect(await shell()).toEqual({ nav: 320, area: 880, bar: 1200, left: 200 });
 	// Panels reflow in place: the one on screen has its new width, and has not
 	// been drawn a second time.
-	await expect(page.getByTestId("page-width")).toHaveText("900");
+	await expect(page.getByTestId("page-width")).toHaveText("880");
 	await expect(page.getByTestId("live-draws")).toHaveText("1");
-
-	page.describe("Past what the window has beside the sidebar, the window wins");
-	await sliders.nth(1).fill("1600");
-	await expect.poll(async () => (await page_()).area).toBe(1280);
 });
 
 test("panels: a closing panel is torn down at once, and only its element lingers", async ({ page }) => {
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
-	await page.getByRole("link", { name: "Push the sizing & lifecycle panel" }).click();
-	await panelWith(page, /Sizing & lifecycle/).waitFor();
+	await stackNav(firstPanel(page), "Sizing & lifecycle", "push");
+	await panelWith(page, /is sized before its draw/).waitFor();
 
 	// The page's `A.clean` hooks run when it closes, while its own element is
 	// still on screen playing the fade — not when the animation is over.
@@ -1136,8 +1147,8 @@ test("panels: a closing panel is torn down at once, and only its element lingers
 test("panels: a nav item arriving redraws the sidebar, not the columns", async ({ page }) => {
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
-	await page.getByRole("link", { name: "Push the sizing & lifecycle panel" }).click();
-	await panelWith(page, /Sizing & lifecycle/).waitFor();
+	await stackNav(firstPanel(page), "Sizing & lifecycle", "push");
+	await panelWith(page, /is sized before its draw/).waitFor();
 
 	// The shell's item list is a proxy array; adding to it must not resubscribe
 	// (and so rebuild) the shell around the open columns.
@@ -1154,10 +1165,10 @@ test("panels: a nav item arriving redraws the sidebar, not the columns", async (
 test("panels: two quick Escapes peel two columns", async ({ page }) => {
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
-	await page.getByRole("link", { name: "Push small A" }).click();
-	await panelWith(page, /Small A/).waitFor();
-	await topPanel(page).getByRole("link", { name: "Push small B" }).click();
-	await panelWith(page, /Small B/).waitFor();
+	await stackNav(firstPanel(page), "Small A", "push");
+	await panelWith(page, /Small A is a/).waitFor();
+	await stackNav(topPanel(page), "Small B", "push");
+	await panelWith(page, /Small B is a/).waitFor();
 	await expect(page.locator(livePanels)).toHaveCount(3);
 
 	// Back to back, with no time for the first to land: closing travels through
@@ -1186,7 +1197,7 @@ test("panels: a cold flat URL gets the ancestors the app names for it", async ({
 	await expect(page.locator(livePanels)).toHaveCount(1);
 
 	page.describe("openPanelStack() builds the same arrangement from code");
-	await page.getByRole("button", { name: "stack.openPanelStack()" }).click();
+	await stackNav(firstPanel(page), "Thread 8", "open", false);
 	await page.getByRole("heading", { name: "Thread 8" }).waitFor();
 	await expect(page).toHaveURL(/\/demo\/thread\/8$/);
 	await expect(page.locator(livePanels)).toHaveCount(2);
@@ -1212,8 +1223,8 @@ test("panels: a data-panel=open link gives its target its own stack", async ({ p
 test("nav: custom rows close the nav — on navigating, and on asking", async ({ page }) => {
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
-	await page.getByRole("link", { name: "Push the sizing & lifecycle panel" }).click();
-	await panelWith(page, /Sizing & lifecycle/).waitFor();
+	await stackNav(firstPanel(page), "Sizing & lifecycle", "push");
+	await panelWith(page, /is sized before its draw/).waitFor();
 	page.describe("Add the Scratch nav row: a custom slot the shell can't see into");
 	await page.getByLabel("Add a Scratch nav item").check();
 
@@ -1244,6 +1255,8 @@ test("nav: custom rows close the nav — on navigating, and on asking", async ({
 // ─── Panel-declared chrome ───────────────────────────────────────────────────
 
 test("chrome: a wide shell dresses each column, a narrow one promotes the top one", async ({ page }) => {
+	// Two columns' worth of content area, so a third crowds the playground out.
+	await page.setViewportSize({ width: 1100, height: 900 });
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
 
@@ -1260,7 +1273,7 @@ test("chrome: a wide shell dresses each column, a narrow one promotes the top on
 
 	page.describe("Push a page with actions: its column gets a quiet strip — nothing more");
 	// No title in the strip (that's the crumb's job) and no close (the crumbs again).
-	await page.getByRole("link", { name: "Push small A" }).click();
+	await stackNav(firstPanel(page), "Small A", "push");
 	await panelWith(page, /Small A is a/).waitFor();
 	const stripA = topPanel(page).locator(".s-panel-actions");
 	await expect(stripA).toHaveCount(1);
@@ -1271,7 +1284,7 @@ test("chrome: a wide shell dresses each column, a narrow one promotes the top on
 	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small A"]);
 
 	page.describe("Push B: everything in a column is the page's own content; bold crumbs = visible columns");
-	await topPanel(page).getByRole("link", { name: "Push small B" }).click();
+	await stackNav(topPanel(page), "Small B", "push");
 	await panelWith(page, /Small B is a/).waitFor();
 	await expect(page.locator(visiblePanels)).toHaveCount(2);
 	await expect(topPanel(page).locator(".s-box header").first()).toContainText("Small B");
@@ -1371,22 +1384,20 @@ test("chrome: the tagline holds the second line only while the stack adds nothin
 	await expect(page.locator(".s-crumb")).toHaveCount(0);
 
 	page.describe("Push a page: the stack has something to say, and takes the line");
-	await page.getByRole("link", { name: "Push small A" }).click();
-	await panelWith(page, /Small A/).waitFor();
+	await stackNav(firstPanel(page), "Small A", "push");
+	await panelWith(page, /Small A is a/).waitFor();
 	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small A"]);
 	await expect(page.locator("header .s-subtitle")).toHaveCount(0);
 
-	page.describe("Go back: Small A is merely parked, so the stack keeps the line");
+	page.describe("Go back: Small A closes with it, so the lone screen hands the line back");
 	await page.locator(".s-crumb", { hasText: "Panels" }).click();
 	await expect(page).toHaveURL(/\/demo\/panels$/);
-	// ...but not while Small A is merely parked: it is still open, and its crumb
-	// is the only way back to it.
-	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small A"]);
-	await expect(page.locator("header .s-subtitle")).toHaveCount(0);
+	await expect(page.locator(".s-crumb")).toHaveCount(0);
+	await expect(page.locator("header .s-subtitle")).toHaveText("components for Aberdeen");
 
 	page.describe("A narrow shell keeps the stack even for a lone nav-item screen");
 	// The nav is behind the ☰ there, so the crumb is the only thing naming the
-	// screen. (A fresh path: reloading would restore the parked page with it.)
+	// screen.
 	await page.setViewportSize({ width: 480, height: 800 });
 	await page.goto("./form");
 	await page.getByText("Account").waitFor();
@@ -1419,41 +1430,77 @@ function settleMenu(page: Page) {
 	});
 }
 
+// ─── Sub-360 scaling ─────────────────────────────────────────────────────────
+
+test("shell: a window below 360px shows the 360px layout, scaled to fit", async ({ page }) => {
+	await page.setViewportSize({ width: 240, height: 640 });
+	await page.goto("./buttons");
+	await page.getByText("Variants & sizes").waitFor();
+
+	page.describe("The body zooms to fit: a virtual 360px layout shown at two thirds");
+	expect(await page.evaluate(() => (document.body as any).currentCSSZoom)).toBeCloseTo(240 / 360, 5);
+	// The shell lays out at the virtual 360 (clientWidth is in its own space)...
+	expect(await page.evaluate(() => document.querySelector(".s-main")!.clientWidth)).toBe(360);
+	// ...while really spanning the whole window, full height (the 100vh fix).
+	const real = await page.evaluate(() => {
+		const r = document.querySelector(".s-main")!.getBoundingClientRect();
+		return { w: Math.round(r.width), h: Math.round(r.height) };
+	});
+	expect(real).toEqual({ w: 240, h: 640 });
+	await screenshot(page, "scaled-shell");
+
+	page.describe("A menu opened in the scaled page still lands by its anchor, inside the window");
+	await page.getByRole("button", { name: "Display settings" }).click();
+	await settleMenu(page);
+	const menu = (await page.locator(".s-menu-list:not(.hidden)").boundingBox())!;
+	expect(menu.x).toBeGreaterThanOrEqual(0);
+	expect(menu.x + menu.width).toBeLessThanOrEqual(240);
+	await screenshot(page, "scaled-menu");
+
+	page.describe("Widening past 360 drops the scaling again");
+	await page.keyboard.press("Escape");
+	await page.setViewportSize({ width: 480, height: 640 });
+	await expect.poll(() => page.evaluate(() => (document.body as any).currentCSSZoom)).toBe(1);
+});
+
 // ─── Breadcrumbs ─────────────────────────────────────────────────────────────
 
-test("crumbs: browsing moves the focus in both directions, closing nothing", async ({ page }) => {
+test("crumbs: going back keeps a pinned panel, parked past the one you land on", async ({ page }) => {
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
-	await page.getByRole("link", { name: "Push small A" }).click();
+	await stackNav(firstPanel(page), "Small A", "push");
 	await panelWith(page, /Small A is a/).waitFor();
-	await topPanel(page).getByRole("link", { name: "Push small B" }).click();
+	await stackNav(topPanel(page), "Small B", "push");
 	await panelWith(page, /Small B is a/).waitFor();
 	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small A", "Small B"]);
 
-	page.describe("Click an earlier crumb: the panels right of it park, closing nothing");
+	page.describe("Pin Small A, then click the first crumb: B closes, and the pinned A parks");
+	await page.locator(".s-crumb", { hasText: "Small A" }).click({ button: "right" });
+	await page.getByRole("button", { name: "Pin", exact: true }).click();
 	await page.locator(".s-crumb", { hasText: "Panels" }).click();
 	await expect(page).toHaveURL(/\/demo\/panels$/);
-	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small A", "Small B"]);
-	await expect(page.locator(".s-panel-parked")).toHaveCount(2);
+	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small A"]);
+	await expect(page.locator(".s-panel-parked")).toHaveCount(1);
 
-	page.describe("A parked crumb browses forward again");
+	page.describe("Its crumb brings it back");
 	await page.locator(".s-crumb", { hasText: "Small A" }).click();
 	await expect(page).toHaveURL(/\/demo\/panels\/a$/);
-	await expect(page.locator(".s-panel-parked")).toHaveCount(1);
 	await panelWith(page, /Small A is a/).waitFor();
-	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small A", "Small B"]);
+	await expect(page.locator(".s-panel-parked")).toHaveCount(0);
 });
 
 test("crumbs: right-click offers Close, which splices one panel out", async ({ page }) => {
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
-	await page.getByRole("link", { name: "Push small A" }).click();
+	await stackNav(firstPanel(page), "Small A", "push");
 	await panelWith(page, /Small A is a/).waitFor();
-	await topPanel(page).getByRole("link", { name: "Push small B" }).click();
+	await stackNav(topPanel(page), "Small B", "push");
 	await panelWith(page, /Small B is a/).waitFor();
 
 	page.describe("Close the middle panel from its crumb's menu: a splice, the URL unmoved");
 	await page.locator(".s-crumb", { hasText: "Small A" }).click({ button: "right" });
+	// The menu stands on a link, so the browser's own entries lead it.
+	await expect(page.locator(".s-menu-list").getByRole("button", { name: "Open in new tab" })).toBeVisible();
 	await page.locator(".s-menu-list").getByRole("button", { name: "Close" }).click();
 	await expect(page).toHaveURL(/\/demo\/panels\/b$/);
 	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small B"]);
@@ -1462,15 +1509,16 @@ test("crumbs: right-click offers Close, which splices one panel out", async ({ p
 
 test("crumbs: the app's name and logo lead home", async ({ page }) => {
 	// The demo's `home` is /demo/form. With the form open and a page pushed on
-	// top of it, home is already in the stack — so the logo is a return: focus
-	// moves to it, and the page on top parks rather than closing.
+	// top of it, home is already in the stack — so the logo goes back to it,
+	// closing the page that was stacked on top.
 	await page.goto("./form/guard");
 	await page.getByText("Type something below").waitFor();
-	page.describe("Home is already in the stack, so the logo is a return; the top page parks");
+	page.describe("Home is already in the stack, so the logo goes back to it");
 	await page.getByRole("link", { name: "Home" }).click();
 	await expect(page).toHaveURL(/\/demo\/form$/);
-	await expect(page.locator(".s-crumb")).toHaveText(["Form", "Unsaved demo"]);
-	await expect(page.locator(".s-panel-parked")).toHaveCount(1);
+	await expect(page.locator(livePanels)).toHaveCount(1);
+	// A lone nav-item screen again, so the tagline has the bar's second line.
+	await expect(page.locator("header .s-subtitle")).toBeVisible();
 
 	page.describe("From a stack without home, the app's name opens it like a nav item would");
 	await page.goto("./icons/heart");
