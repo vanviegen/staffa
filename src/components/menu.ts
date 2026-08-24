@@ -1,6 +1,6 @@
 import A from "aberdeen";
 import { matchCurrent, current as currentRoute, go } from "aberdeen/route";
-import { cssZoom, type Slot, type Attributes, drawSlot, mountPortal, focusFirst } from "../core.js";
+import { type Slot, type Attributes, drawSlot, mountPortal, focusFirst } from "../core.js";
 import { menu as menuIcon, chevronRight, externalLink as newTabIcon, link as linkIcon } from "../icons.js";
 import { button, type ButtonOptions } from "./button.js";
 import { toast } from "./toast.js";
@@ -161,7 +161,11 @@ A.insertGlobalCss({
 	".s-menu-list":
 		"position:fixed z-index:350 min-width:10rem display:flex flex-direction:column p:$1 " +
 		"r:$s-radius-lg " +
-		"overflow-y:auto max-height:min(calc(80vh/var(--s-zoom,1)),28rem) " +
+		// The 16px off max-width is the 8px gap `positionMenu` leaves at either
+		// window edge: in a window too narrow for the menu, it narrows rather
+		// than hanging off the screen. (A `min-width` from the caller still wins,
+		// as CSS says it must — that ask is the app's to keep sensible.)
+		"max-width: calc(100vw - 16px); overflow-y:auto max-height:min(80vh,28rem) " +
 		"transition: opacity 0.15s, transform 0.15s, visibility 0.15s;",
 	".s-menu-list.hidden": "opacity:0 pointer-events:none transform:translateY(-6px) visibility:hidden",
 	// One class for both the `<a>` (link) and `<button>` forms — they look
@@ -538,18 +542,13 @@ export function closeFloatingMenu(anchor?: HTMLElement): void {
 }
 
 function positionMenu(menuEl: HTMLElement, rect: { left: number; right: number; top: number; bottom: number }): void {
-	// The rect arrives in window coordinates (an anchor's rect, or a pointer
-	// position); the left/top set below live in the menu's own space. The two
-	// differ when the shell has zoomed the page (see `watchScale` in main.ts),
-	// so everything is brought into the menu's space first.
-	const z = cssZoom(menuEl);
 	const mw = menuEl.offsetWidth, mh = menuEl.offsetHeight;
-	const vw = window.innerWidth / z, vh = window.innerHeight / z;
+	const vw = window.innerWidth, vh = window.innerHeight;
 	const gap = 4;
-	let x = rect.left / z;
-	if (x + mw > vw - 8) x = Math.max(8, rect.right / z - mw);
-	let y = rect.bottom / z + gap;
-	if (y + mh > vh - 8 && rect.top / z - mh - gap >= 8) y = rect.top / z - mh - gap;
+	let x = rect.left;
+	if (x + mw > vw - 8) x = Math.max(8, rect.right - mw);
+	let y = rect.bottom + gap;
+	if (y + mh > vh - 8 && rect.top - mh - gap >= 8) y = rect.top - mh - gap;
 	menuEl.style.left = Math.max(8, x) + "px";
 	menuEl.style.top  = Math.max(8, y) + "px";
 }

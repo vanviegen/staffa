@@ -1,6 +1,6 @@
 import A from "aberdeen";
 import { current as currentRoute } from "aberdeen/route";
-import { type Slot, type Attributes, drawSlot, focusFirst, NARROW_PX, MIN_PX } from "../core.js";
+import { type Slot, type Attributes, drawSlot, focusFirst, NARROW_PX } from "../core.js";
 import { type MenuOptions, drawMenu, isFloatingMenuOpen, consumeBranchNav, anyCurrent } from "./menu.js";
 // The shell's own chrome glyphs, from the same Lucide set an app draws with —
 // so a nav trigger sits beside app icons as an equal. Named imports, so a
@@ -280,9 +280,7 @@ const NAV_W = 200;
 A.insertGlobalCss({
 	".s-main": {
 		// container-type so @container queries below can respond to shell width.
-		// The vh divided by --s-zoom: viewport units shrink with the page-fitting
-		// zoom (see `watchScale`), and this height means the window.
-		"&": "display:flex flex-direction:column min-height:calc(100vh/var(--s-zoom,1)) max-height:calc(100vh/var(--s-zoom,1)) container-type:inline-size",
+		"&": "display:flex flex-direction:column min-height:100vh max-height:100vh container-type:inline-size",
 		// <body> carries a default $3 padding; when the shell is a direct child of it,
 		// cancel that padding with matching negative margins so the chrome still spans
 		// edge to edge (and the 100vh sizing stays exact).
@@ -653,7 +651,6 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): PanelS
 	}) as HTMLElement;
 
 	watchNarrow(root, $shell);
-	watchScale();
 
 	// Escape peels back a panel of UI, and finally jumps to the navigation: into
 	// the sidebar's current item when the sidebar is showing, or — when it has
@@ -786,48 +783,6 @@ function taglineFits(ctl: PanelStackController, nav: MenuOptions | undefined, $s
 	if ($shell.narrow || nav == null) return false;
 	if (ctl.panels.length > 1) return false;
 	return anyCurrent(nav.items);
-}
-
-/** How many mounted shells are watching the window; the listener is one per page. */
-let scaleShells = 0;
-
-/** Lay the page out at a virtual {@link MIN_PX} and zoom it down to the window. */
-function applyScale(): void {
-	// The real window width: <html> is never zoomed, so this stays unscaled.
-	const w = document.documentElement.clientWidth;
-	const f = w && w < MIN_PX ? w / MIN_PX : 0;
-	document.body.style.zoom = f ? String(f) : "";
-	// Published for the vh/vw lengths in the library's CSS, which zoom shrinks
-	// and a `/var(--s-zoom,1)` restores to meaning the window.
-	if (f) document.body.style.setProperty("--s-zoom", String(f));
-	else document.body.style.removeProperty("--s-zoom");
-}
-
-/**
- * Below {@link MIN_PX} of window the shell stops squeezing and starts scaling:
- * the page keeps its {@link MIN_PX} layout and CSS `zoom` shrinks it to fit,
- * so a 180px window shows the 360px layout at half size. The zoom goes on
- * `<body>`, so the overlays that portal there — dialogs, menus, toasts,
- * tooltips — scale with the shell. `zoom` rather than `transform:scale`,
- * because zoom keeps layout, container queries and the top layer in one
- * system; what it splits instead is coordinate spaces — window-space rects
- * against element-space lengths — which the few places mixing those bridge
- * with {@link cssZoom}, and vh/vw lengths with `--s-zoom` (see `applyScale`).
- * Browsers that predate `currentCSSZoom` (mid-2024) keep the squeeze.
- */
-function watchScale(): void {
-	if (typeof window === "undefined" || !("currentCSSZoom" in document.documentElement)) return;
-	if (++scaleShells === 1) {
-		window.addEventListener("resize", applyScale);
-		applyScale();
-	}
-	A.clean(() => {
-		if (--scaleShells === 0) {
-			window.removeEventListener("resize", applyScale);
-			document.body.style.zoom = "";
-			document.body.style.removeProperty("--s-zoom");
-		}
-	});
 }
 
 /**

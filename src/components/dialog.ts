@@ -55,9 +55,7 @@ A.insertGlobalCss({
 			"position:fixed z-index:200 top:50% left:50% " +
 			"display:flex flex-direction:column " +
 			"transform:translate(-50%,-50%) " +
-			// vw/vh divided by --s-zoom: viewport units shrink with the page-fitting
-			// zoom (see `watchScale` in main.ts), and these caps mean the window.
-			"min-width:20rem max-width:min(calc(90vw/var(--s-zoom,1)),44rem) max-height:min(calc(88vh/var(--s-zoom,1)),800px) " +
+			"min-width:min(20rem,90vw) max-width:min(90vw,44rem) max-height:min(88vh,800px) " +
 			"r: $s-radius-lg; overflow:hidden " +
 			"transition: opacity 0.2s ease-out, transform 0.2s ease-out;",
 		"> header":

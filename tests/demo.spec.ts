@@ -1430,38 +1430,6 @@ function settleMenu(page: Page) {
 	});
 }
 
-// ─── Sub-360 scaling ─────────────────────────────────────────────────────────
-
-test("shell: a window below 360px shows the 360px layout, scaled to fit", async ({ page }) => {
-	await page.setViewportSize({ width: 240, height: 640 });
-	await page.goto("./buttons");
-	await page.getByText("Variants & sizes").waitFor();
-
-	page.describe("The body zooms to fit: a virtual 360px layout shown at two thirds");
-	expect(await page.evaluate(() => (document.body as any).currentCSSZoom)).toBeCloseTo(240 / 360, 5);
-	// The shell lays out at the virtual 360 (clientWidth is in its own space)...
-	expect(await page.evaluate(() => document.querySelector(".s-main")!.clientWidth)).toBe(360);
-	// ...while really spanning the whole window, full height (the 100vh fix).
-	const real = await page.evaluate(() => {
-		const r = document.querySelector(".s-main")!.getBoundingClientRect();
-		return { w: Math.round(r.width), h: Math.round(r.height) };
-	});
-	expect(real).toEqual({ w: 240, h: 640 });
-	await screenshot(page, "scaled-shell");
-
-	page.describe("A menu opened in the scaled page still lands by its anchor, inside the window");
-	await page.getByRole("button", { name: "Display settings" }).click();
-	await settleMenu(page);
-	const menu = (await page.locator(".s-menu-list:not(.hidden)").boundingBox())!;
-	expect(menu.x).toBeGreaterThanOrEqual(0);
-	expect(menu.x + menu.width).toBeLessThanOrEqual(240);
-	await screenshot(page, "scaled-menu");
-
-	page.describe("Widening past 360 drops the scaling again");
-	await page.keyboard.press("Escape");
-	await page.setViewportSize({ width: 480, height: 640 });
-	await expect.poll(() => page.evaluate(() => (document.body as any).currentCSSZoom)).toBe(1);
-});
 
 // ─── Breadcrumbs ─────────────────────────────────────────────────────────────
 

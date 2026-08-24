@@ -182,7 +182,7 @@ Navigating faster than the shell can settle is fine: closing travels through the
 
 **The content area is the window**, minus the nav sidebar — or, when `S.main({ maxWidth })` says so, that much of it, centred. Either way it is the same width whatever is open, so the sidebar, the top bar and the footer never move.
 
-The shell divides that area into columns: the narrowest whole number of them that keeps each one at least **360px** wide, and no column ever wider than **540**. A 1080px content area is three columns of 360; a 1520px one is four of 380; below 720px there is a single column — of at most 540, centred. `$panel.maxWidth` counts in those columns:
+The shell divides that area into columns: the narrowest whole number of them that keeps each one at least **360px** wide, and no column ever wider than **540**. (A content area narrower than 360 still gets one column — just a narrower one.) A 1080px content area is three columns of 360; a 1520px one is four of 380; below 720px there is a single column — of at most 540, centred. `$panel.maxWidth` counts in those columns:
 
 | `maxWidth` | How wide the panel gets | Good for |
 | --- | --- | --- |
@@ -191,7 +191,7 @@ The shell divides that area into columns: the narrowest whole number of them tha
 | `"large"` | Three columns — never above 1620px. | wide tables, dense forms |
 | `"none"` | The whole content area, unbounded. | boards, dashboards |
 
-The ask is a promise in both directions: the shell never draws a panel wider than its column count × 540px, and every size is also capped at the content area — so a draw function has to look right from 360px up to its own ceiling, and nowhere past it. There is nothing below 360 to handle either: a narrower window is shown the 360px layout scaled down to fit (dialogs, menus and toasts scaling along), so 360 really is the floor.
+The ask is a promise about the top end: the shell never draws a panel wider than its column count × 540px, and every size is also capped at the content area — so a draw function never has to look right past its own ceiling. At the bottom end there is no promise, because a window can be any width: aim your layout at **360px**, which is about the narrowest phone still in common use, and let it degrade gracefully below that (`min-width` on a fixed-size block, a table that has to scroll) rather than assuming a floor.
 
 A column's width depends only on the size of the window, never on what else is open. So opening or closing a panel never resizes the ones already on screen, and never reflows what someone was reading. As many columns as fit are shown, ending at the current panel; when they don't fill the content area they sit centred in it, so an arriving column nudges the others over to share the room.
 

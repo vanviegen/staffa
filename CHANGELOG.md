@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.15.0
+
+- **Breaking:** the shell no longer scales the page down when the window is narrower than 360px — it just lays out narrower, as it did before 0.14.0. The CSS `zoom` that did the scaling leaked into app code (rects, pointer coordinates and viewport units all had to be corrected for it), so it wasn't worth the one thing it bought.
+- **Breaking:** with it goes the promise that a panel never has to cope with less than 360px. Panels are still sized in columns of 360–540px, but a window can be any width, so aim your layout at 360px — about the narrowest phone still in common use — and let it degrade gracefully below that, rather than assuming a floor.
+- Fixed: closing the tab right after parking an unsaved panel could fail to bring that panel back on screen. The guard consulted a flag the layout pass only refreshes on an animation frame, so it could still believe the panel was in view — a race that a busy machine, or a tab already on its way out, would lose.
+
 ## 0.14.0
 
 - **Breaking:** `S.main`'s `fullWidth` is gone. The shell now fills the window (instead of growing and shrinking with the columns), and `maxWidth` — which now also works in routed mode — caps and centres the whole shell, bars and sidebar included. Migrate `fullWidth: 1080` to `maxWidth: "1280px"` (the sidebar's 200 included).

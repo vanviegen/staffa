@@ -1,5 +1,5 @@
 import A from "aberdeen";
-import { cssZoom, type Bindable, type Slot, type Attributes, drawSlot, uniqueId } from "../core.js";
+import { type Bindable, type Slot, type Attributes, drawSlot, uniqueId } from "../core.js";
 import { mk } from "../icons-helpers.js";
 
 /** A single tab definition. */
@@ -143,11 +143,8 @@ export function revealInStrip(el: HTMLElement): void {
 	// The overlays are 2.4em wide; clearing a little more than that keeps the
 	// revealed item from sitting right against one.
 	const pad = parseFloat(getComputedStyle(row).fontSize) * 2.6;
-	// The rects are in window coordinates while `scrollBy` counts in the row's
-	// own space; their difference scales over by the row's zoom (see `cssZoom`).
-	const z = cssZoom(row);
 	const box = el.getBoundingClientRect(), strip = row.getBoundingClientRect();
-	const left = (box.left - strip.left) / z, right = (box.right - strip.right) / z;
+	const left = box.left - strip.left, right = box.right - strip.right;
 	if (left < pad) row.scrollBy({ left: left - pad, behavior: "smooth" });
 	else if (right > -pad) row.scrollBy({ left: right + pad, behavior: "smooth" });
 }

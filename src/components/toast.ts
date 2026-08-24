@@ -32,9 +32,7 @@ A.insertGlobalCss({
 	".s-toasts":
 		"position:fixed bottom:$3 right:$3 z-index:400 " +
 		"display:flex flex-direction:column gap:$2 " +
-		// 90vw divided by --s-zoom: viewport units shrink with the page-fitting
-		// zoom (see `watchScale` in main.ts), and this cap means the window.
-		"pointer-events:none max-width:min(calc(90vw/var(--s-zoom,1)),24rem) w:24rem",
+		"pointer-events:none max-width:min(90vw,24rem) w:24rem",
 	".s-toast": {
 		"&":
 			"display:flex align-items:flex-start gap:$2 " +

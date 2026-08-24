@@ -1,6 +1,6 @@
 import A, { OPAQUE } from "aberdeen";
 import * as route from "aberdeen/route";
-import { type Slot, drawSlot, cssZoom, MIN_PX } from "../core.js";
+import { type Slot, drawSlot } from "../core.js";
 import {
 	circle as dotIcon, pin as pinIcon, pinOff as pinOffIcon,
 	slash as sepIcon, x as closeIcon,
@@ -201,6 +201,10 @@ export interface Panel<P = Record<string, string | number | string[]>> {
 	 * the same thing: one screen at a time. And a width depends only on the
 	 * window, never on what else is open, so opening or closing a panel never
 	 * resizes another — the run of columns just recentres in the area.
+	 *
+	 * The ask is a ceiling only; there is no matching floor, since the window can
+	 * be any width. Aim your layout at 360px — about the narrowest phone still in
+	 * common use — and let it degrade gracefully below that.
 	 *
 	 * Ask only for what your content can actually use: a panel that would cap
 	 * its own content narrower than its ask is holding room that would have
@@ -429,13 +433,15 @@ const PAGE_MS = 250;
 /** How long a freshly pushed `loading` panel holds its enter animation. */
 const LOADING_HOLD_MS = 300;
 /**
- * The bounds of a column. At least 360px — the phone width every panel must
- * handle anyway. And at most 540: that is the width the multi-column regime
- * never reaches (`area / floor(area / 360)` stays under it), so capping the
- * lone column of a 540–720px area to it too — centred, rather than stretched —
- * makes an ask's ceiling uniform: never wider than its column count × 540.
+ * The bounds of a column. At least 360px — about the narrowest phone still in
+ * common use, so it is where a panel's layout is aimed. And at most 540: that
+ * is the width the multi-column regime never reaches (`area / floor(area /
+ * 360)` stays under it), so capping the lone column of a 540–720px area to it
+ * too — centred, rather than stretched — makes an ask's ceiling uniform: never
+ * wider than its column count × 540. A content area narrower than 360 still
+ * gets its single column, just narrower than the minimum.
  */
-const SMALL_MIN_PX = MIN_PX;
+const SMALL_MIN_PX = 360;
 export const SMALL_MAX_PX = 540;
 /**
  * Panels are layered by their depth in the stack, two `z-index` steps per panel:
@@ -1741,6 +1747,13 @@ export class PanelStackController implements PanelStack {
 			// otherwise. A confirmed leave unloads the document before any of it
 			// is seen; the history entry the move makes is then where a back
 			// navigation returns to, which is right: the panel that held the tab.
+			// `visible` is written by the layout pass, which waits for an animation
+			// frame — and the frame owed to the navigation that parked this panel
+			// may not have landed, all the more so in a tab on its way out, which
+			// may never paint again. Settle it first, or a panel parked a moment
+			// ago still reads as on screen and the guard skips the very move it
+			// exists to make.
+			this.flushLayout();
 			if (!dirty.$panel.visible) void this.focusAt(this.intended().stack.indexOf(dirty.path));
 		};
 		// Registered only while a panel actually holds unsaved work: a page with a
@@ -1884,10 +1897,19 @@ export class PanelStackController implements PanelStack {
 	scheduleLayout(): void {
 		if (this.layoutQueued) return;
 		this.layoutQueued = true;
-		requestAnimationFrame(() => {
-			this.layoutQueued = false;
-			this.layout();
-		});
+		requestAnimationFrame(() => this.flushLayout());
+	}
+
+	/**
+	 * Run the pending layout pass now, rather than on the frame it is waiting
+	 * for. For the callers that have to *read* what only the pass knows —
+	 * `$panel.visible`, `$panel.width` — at a moment when waiting isn't an
+	 * option. Does nothing when no pass is owed.
+	 */
+	private flushLayout(): void {
+		if (!this.layoutQueued) return;
+		this.layoutQueued = false;
+		this.layout();
 	}
 
 	/**
@@ -1915,10 +1937,7 @@ export class PanelStackController implements PanelStack {
 	 */
 	private measure(): Geometry | undefined {
 		const el = this.containerEl;
-		// The rect is in window coordinates; the widths this yields are written
-		// back as CSS lengths, which live in the region's own space — different
-		// spaces when the shell has zoomed the page (see `watchScale` in main.ts).
-		const area = el ? el.getBoundingClientRect().width / cssZoom(el) : 0;
+		const area = el ? el.getBoundingClientRect().width : 0;
 		if (!area) return undefined;
 		const small = Math.min(area / Math.max(1, Math.floor(area / SMALL_MIN_PX)), SMALL_MAX_PX);
 		const units = (n: number) => Math.min(n * small, area);

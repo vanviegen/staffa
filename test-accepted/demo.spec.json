@@ -9332,7 +9332,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:1017",
-              "duration": 177
+              "duration": 187
             },
             {
               "type": "describe",
@@ -9349,7 +9349,7 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:1021",
-              "duration": 146
+              "duration": 148
             }
           ]
         },
@@ -9370,7 +9370,7 @@
                 "height": 26
               },
               "source": "tests/demo.spec.ts:1023",
-              "duration": 150
+              "duration": 165
             }
           ]
         },
@@ -9391,7 +9391,7 @@
                 "height": 50
               },
               "source": "tests/demo.spec.ts:1029",
-              "duration": 147
+              "duration": 143
             }
           ]
         },
@@ -9412,7 +9412,7 @@
                 "height": 59
               },
               "source": "tests/demo.spec.ts:1031",
-              "duration": 139
+              "duration": 140
             }
           ]
         },
@@ -9433,7 +9433,7 @@
                 "height": 797
               },
               "source": "tests/demo.spec.ts:1032",
-              "duration": 128
+              "duration": 131
             }
           ]
         },
@@ -9464,7 +9464,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:1036",
-              "duration": 176
+              "duration": 174
             },
             {
               "type": "action",
@@ -9476,7 +9476,7 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:1021",
-              "duration": 142
+              "duration": 151
             }
           ]
         },
@@ -9497,7 +9497,7 @@
                 "height": 26
               },
               "source": "tests/demo.spec.ts:1023",
-              "duration": 142
+              "duration": 143
             }
           ]
         },
@@ -9518,7 +9518,7 @@
                 "height": 50
               },
               "source": "tests/demo.spec.ts:1038",
-              "duration": 134
+              "duration": 141
             }
           ]
         },
@@ -9539,7 +9539,7 @@
                 "height": 59
               },
               "source": "tests/demo.spec.ts:1039",
-              "duration": 162
+              "duration": 156
             }
           ]
         },
@@ -9560,7 +9560,7 @@
                 "height": 50
               },
               "source": "tests/demo.spec.ts:1042",
-              "duration": 142
+              "duration": 153
             }
           ]
         },
@@ -9581,19 +9581,28 @@
                 "height": 59
               },
               "source": "tests/demo.spec.ts:1043",
-              "duration": 139
+              "duration": 146
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
               "source": "tests/demo.spec.ts:1044",
-              "duration": 99
-            },
+              "duration": 145
+            }
+          ]
+        },
+        {
+          "image": "0640ab387fa9e7ac",
+          "viewport": {
+            "width": 1280,
+            "height": 900
+          },
+          "events": [
             {
               "type": "assert",
               "message": "expect text \"Icons\", \"star\" (locator('.s-crumb'))",
               "source": "tests/demo.spec.ts:1045",
-              "duration": 135
+              "duration": 163
             }
           ]
         }
@@ -10753,102 +10762,6 @@
               },
               "source": "tests/demo.spec.ts:1183",
               "duration": 159
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "file": "tests/demo.spec.ts",
-      "title": "shell: a window below 360px shows the 360px layout, scaled to fit",
-      "steps": [
-        {
-          "image": "3b336fbc3a20252b",
-          "viewport": {
-            "width": 240,
-            "height": 640
-          },
-          "events": [
-            {
-              "type": "page",
-              "message": "setViewportSize 240×640",
-              "source": "tests/demo.spec.ts:1436"
-            },
-            {
-              "type": "console",
-              "consoleType": "debug",
-              "message": "Aberdeen queue took 10ms",
-              "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
-            },
-            {
-              "type": "page",
-              "message": "goto ./buttons",
-              "source": "tests/demo.spec.ts:1437"
-            },
-            {
-              "type": "check",
-              "message": "waitFor",
-              "box": {
-                "x": 0,
-                "y": 47,
-                "width": 240,
-                "height": 29
-              },
-              "source": "tests/demo.spec.ts:1438",
-              "duration": 126
-            },
-            {
-              "type": "describe",
-              "message": "The body zooms to fit: a virtual 360px layout shown at two thirds",
-              "source": "tests/demo.spec.ts:1440"
-            },
-            {
-              "type": "screenshot",
-              "message": "scaled-shell",
-              "source": "tests/demo.spec.ts:1450",
-              "duration": 58
-            },
-            {
-              "type": "describe",
-              "message": "A menu opened in the scaled page still lands by its anchor, inside the window",
-              "source": "tests/demo.spec.ts:1452"
-            },
-            {
-              "type": "action",
-              "message": "click",
-              "box": {
-                "x": 213,
-                "y": 6,
-                "width": 21,
-                "height": 21
-              },
-              "source": "tests/demo.spec.ts:1453",
-              "duration": 102
-            }
-          ]
-        },
-        {
-          "image": "12a8146175f87326",
-          "viewport": {
-            "width": 240,
-            "height": 640
-          },
-          "events": [
-            {
-              "type": "screenshot",
-              "message": "scaled-menu",
-              "source": "tests/demo.spec.ts:1458",
-              "duration": 63
-            },
-            {
-              "type": "describe",
-              "message": "Widening past 360 drops the scaling again",
-              "source": "tests/demo.spec.ts:1460"
-            },
-            {
-              "type": "page",
-              "message": "setViewportSize 480×640",
-              "source": "tests/demo.spec.ts:1462"
             }
           ]
         }
