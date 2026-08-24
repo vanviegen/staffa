@@ -8,9 +8,7 @@ export interface ToastOptions {
 	message: Slot;
 	/** Optional bold title above the message. */
 	title?: Slot;
-	/**
-	 * Colour role. Defaults to `"neutral"`.
-	 */
+	/** Colour role. Defaults to `"neutral"`. */
 	type?: "success" | "danger" | "warning" | "neutral"
 	/**
 	 * Auto-dismiss delay in milliseconds. Defaults to `6000`.
@@ -54,14 +52,13 @@ let toastCount = 0;
 const toasts = A.proxy({} as Record<number, ToastEntry>);
 
 mountPortal(() => {
-	// In initial peek is here to NOT subscribe to changes once `toasts` first becomes non empty,
-	// leaving the container in the DOM forever after. (So as not to cut of hide animations.)
+	// The peek keeps this scope from resubscribing once `toasts` is non-empty, so the
+	// container stays in the DOM afterwards and exit animations aren't cut off.
 	if (A.peek(() => A.isEmpty(toasts)) && A.isEmpty(toasts)) return;
 	A("div.s-toasts", () => {
 		A.onEach(toasts, (entry) => {
 			const { opts, id } = entry;
 			const role = opts.type === "danger" || opts.type === "warning" ? "alert" : "status";
-			// "neutral" (the default) is a neutral surface; the rest are accent surfaces.
 			const surface = opts.type == null || opts.type === "neutral" ? "neutral" : opts.type;
 			const duration = opts.duration ?? 6000;
 

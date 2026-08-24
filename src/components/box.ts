@@ -28,15 +28,10 @@ export interface BoxOptions extends ContentOptions {
 	footerAttrs?: Attributes;
 }
 
-// The box itself is a `.neutral` surface; its header/footer are `.neutral` surfaces
-// too — nested one level deeper, so they pick up the next elevation shade
-// automatically. Colours and borders come from the contextual tokens, so a box
-// stays legible on whatever surface it's nested in.
-// The box is just a `.s-s.neutral.shadow` surface: its border and shadow come from
-// the surface itself (see theme.ts), not from here. `.s-box` only does layout and
-// the header/footer dividers. Header/footer are `.neutral` surfaces too (one level
-// deeper, for the raised shade), so we cancel their full surface border down to a
-// single divider.
+// Colours, border and shadow come from the `.s-s.neutral.shadow` surface itself
+// (see theme.ts); `.s-box` only does layout. Header/footer are `.neutral` surfaces
+// one level deeper (for the raised shade), with their surface border cancelled
+// down to a single divider.
 A.insertGlobalCss({
 	".s-box": {
 		// position:relative so a headerless box can hang its ✕ in the corner.
@@ -45,11 +40,8 @@ A.insertGlobalCss({
 		"> header": "display:flex align-items:center gap:$2 padding: $2 $3; border:0 border-bottom: 1px solid $s-faint; r:0 font-weight:600",
 		"> footer": "display:flex align-items:center justify-content:flex-end gap:$2 padding: $2 $3; border:0 border-top: 1px solid $s-faint; r:0",
 		"> div": "p:$3 gap:$3",
-		// The ✕ is an `S.iconButton` (see `drawCloseButton`); this only places it.
-		// In a header row it parks at the far end...
+		// The ✕ parks at the end of a header row, or floats over the body when there is none.
 		"> header > .s-box-close": "margin-left:auto",
-		// ...and without a header there is no row to sit in, so it floats over the
-		// body's top-right corner instead.
 		"> .s-box-close": "position:absolute top:$2 right:$2 z-index:1",
 	},
 });
@@ -78,12 +70,11 @@ export function box(opts: BoxOptions | Slot = {}): void {
 	const o: BoxOptions = typeof opts === "string" || typeof opts === "function" ? { content: opts } : opts;
 
 	A("section.s-box.s-s.neutral.shadow", o.attrs, () => {
-		// Header and footer get their own scopes so toggling them doesn't recreate
-		// the body (which may hold focused inputs / lots of content).
+		// Header and footer get their own scopes, so toggling them doesn't recreate
+		// the body (which may hold focused inputs).
 		A(() => {
-			// The typeof guards against v0.9's `close: true` (removed API) reaching
-			// us from unchecked JS: a ✕ whose handler isn't a function would render
-			// but do nothing, which is worse than not rendering at all.
+			// typeof-guarded: v0.9's removed `close: true`, reaching us from unchecked
+			// JS, would otherwise render a ✕ that does nothing.
 			if (o.header != null) {
 				A("header.s-s.neutral", o.headerAttrs, () => {
 					drawSlot(o.header);
@@ -105,9 +96,8 @@ export function box(opts: BoxOptions | Slot = {}): void {
 }
 
 /**
- * The box's ✕: one definition, so the glyph, the label and the hit area are
- * identical whether it sits in the header row or floats over a headerless body.
- * The `.s-box-close` class is only a hook for the placement rules above.
+ * The box's ✕: one definition, so it is identical in a header row and floating
+ * over a headerless body. `.s-box-close` is only a hook for the placement rules.
  */
 function drawCloseButton(close: () => void): void {
 	iconButton({

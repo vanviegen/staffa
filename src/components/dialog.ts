@@ -25,8 +25,8 @@ export interface DialogOptions {
 	 */
 	allowCancel?: boolean;
 	/**
-	 * When set to `true` (default) the model will be destroyed when the `dialog()`-calling
-	 * scope is destroyed.
+	 * When `true` (default), the dialog is destroyed when the scope that called
+	 * `dialog()` is destroyed.
 	 */
 	cancelWithScope?: boolean;
 	/**
@@ -48,8 +48,8 @@ A.insertGlobalCss({
 		"&": "position:fixed inset:0 z-index:200 display:block background: rgba(0,0,0,0.55); transition: opacity 0.4s ease-in-out;",
 		"&.hidden": "opacity:0 pointer-events:none",
 	},
-	// The dialog panel is a `.s-s.neutral.extra-shadow` surface: border, radius (lg)
-	// and the deep floating shadow come from the surface itself (see theme.ts).
+	// Border, radius and the deep floating shadow come from the panel's
+	// `.s-s.neutral.extra-shadow` surface (see theme.ts).
 	".s-dialog": {
 		"&":
 			"position:fixed z-index:200 top:50% left:50% " +
@@ -87,8 +87,7 @@ mountPortal(() => {
 		const close = () => { delete dialogs[dialogId]; };
 
 		A.clean(() => {
-			// Fires when this render is torn down — either because $closed became
-			// true (normal close) or because the parent reactive scope was cleaned up.
+			// Fires on a normal close and on parent-scope teardown alike.
 			opts.onClose?.();
 			resolve();
 		});
@@ -99,7 +98,6 @@ mountPortal(() => {
 			if (opts.allowCancel !== false) close();
 		});
 
-		// Dialog itself
 		const dialogEl = A("div.s-dialog.neutral.s-s.extra-shadow create=hidden destroy=hidden", opts.attrs, () => {
 			A(() => {
 				if (opts.header != null) {
@@ -118,8 +116,8 @@ mountPortal(() => {
 			});
 		}) as HTMLElement;
 
-		// Once laid out, move focus into the dialog (first focusable element) so it's
-		// keyboard-ready and focus doesn't linger on whatever opened it.
+		// Once laid out, move focus into the dialog so it's keyboard-ready and focus
+		// doesn't linger on whatever opened it.
 		requestAnimationFrame(() => { if (document.body.contains(dialogEl)) focusFirst(dialogEl); });
 	});
 })
@@ -149,20 +147,18 @@ export function dialog(opts: DialogOptions): Promise<void> {
 	if (!dialogCount) {
 		// Install Esc handler the first time we create a dialog
 		document.addEventListener("keydown", (e: KeyboardEvent) => {
-			// A layer above us that consumed Escape (an open floating menu's capture
-			// handler, or a widget inside the dialog like an open autocomplete list)
-			// marks it with preventDefault — the dialog must not also act on it.
+			// A layer above us that consumed Escape (a floating menu, an open
+			// autocomplete list) marks it with preventDefault.
 			if (e.key !== "Escape" || e.defaultPrevented) return;
 			const ds = A.unproxy(dialogs);
 			// Search for top-most dialog
 			for(let i=dialogCount; i>0; i--) {
 				if (ds[i]) {
-					// A dialog owns Escape, closable or not — handlers beneath it
-					// must not also act (main()'s nav jump and cooperative page
-					// handlers check defaultPrevented, or S.isDialogOpen()).
+					// A dialog owns Escape, closable or not: handlers beneath it check
+					// defaultPrevented (or S.isDialogOpen()) and must not also act.
 					e.preventDefault();
 					if (ds[i].opts.allowCancel !== false) {
-						// The clean handler should call resolve and onClose
+						// The clean handler calls resolve and onClose.
 						delete dialogs[i];
 					}
 					break;

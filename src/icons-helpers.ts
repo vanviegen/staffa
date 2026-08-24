@@ -55,12 +55,8 @@ export function setDefaults(opts: Partial<IconDefaults>): void {
 }
 
 /**
- * Draw a single icon: build one `<svg>` through Aberdeen (applying the
+ * The shared body behind every icon: build one `<svg>` through Aberdeen (from the
  * {@link IconOptions} or the module defaults) and fill in its inner markup.
- *
- * This is the shared body behind every icon. {@link mk} hands it the icon's
- * `inner` markup, so the per-icon closures stay tiny instead of each carrying
- * a copy of this logic.
  */
 function drawIcon(inner: string, opts: IconOptions): void {
 	const size = opts.size ?? defaults.size;
@@ -74,16 +70,15 @@ function drawIcon(inner: string, opts: IconOptions): void {
 		"stroke-linejoin=", opts.join ?? defaults.join,
 		opts.attrs,
 	) as SVGSVGElement;
-	// Drop the primitives in via innerHTML: setting it on the `<svg>` itself
-	// makes the parser put the children in the SVG namespace. (Aberdeen's
-	// `html=` builds them in the HTML namespace, leaving them non-rendering.)
+	// innerHTML on the `<svg>` itself puts the children in the SVG namespace;
+	// Aberdeen's `html=` would build them in the HTML namespace, non-rendering.
 	el.innerHTML = inner;
 }
 
 /**
- * Turn a piece of inner-SVG markup into an icon draw-function. The returned
- * function emits a freshly-built `<svg>` into the current Aberdeen scope,
- * applying the {@link IconOptions} (or the module defaults).
+ * Turn a piece of inner-SVG markup into an icon draw-function: it emits a freshly
+ * built `<svg>` into the current Aberdeen scope, applying the {@link IconOptions}
+ * (or the module defaults).
  */
 export function mk(inner: string): (opts?: IconOptions) => void {
 	return (opts: IconOptions = {}) => drawIcon(inner, opts);

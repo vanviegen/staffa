@@ -38,8 +38,7 @@ A.insertGlobalCss({
 export function select(opts: SelectOptions): void {
 	drawField(opts, (id, isInvalid) => {
 		A("div.s-select_wrap", () => {
-			// On the <select> itself, like every other field control — an
-			// aria-label on the wrapper div would label nothing.
+			// Control attrs go on the <select>: on the wrapper div they'd label nothing.
 			A("select.s-input", opts.inputAttrs, () => {
 				applyControlAttrs(opts, id, isInvalid);
 
@@ -47,7 +46,6 @@ export function select(opts: SelectOptions): void {
 					if (opts.bind) opts.bind.value = (e.target as HTMLSelectElement).value;
 				});
 
-				// Render options reactively; re-runs when options list or selected value changes.
 				A(() => {
 					const raw = typeof opts.options === "function" ? opts.options() : opts.options;
 					const current = (opts.bind?.value ?? "") as string;

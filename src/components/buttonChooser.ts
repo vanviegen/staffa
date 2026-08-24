@@ -49,8 +49,7 @@ export function buttonChooser(opts: ButtonChooserOptions): void {
 			attrs: opts.attrs,
 			buttons: Object.entries(opts.options).map(([id, label]) => ({
 				content: label,
-				// Icon-only options (draw-function labels) get the id as their
-				// accessible name; plain-text labels speak for themselves.
+				// Icon-only (draw-function) labels get the id as their accessible name.
 				ariaLabel: typeof label === "function" ? id : undefined,
 				attrs: selected === id ? ".primary" : ".neutral",
 				click: () => {
@@ -61,7 +60,6 @@ export function buttonChooser(opts: ButtonChooserOptions): void {
 	});
 
 	if (opts.name) {
-		// Hidden input carries the value into native form submission.
 		A(() => A("input type=hidden name=", opts.name, "value=", opts.bind.value ?? ""));
 	}
 }

@@ -27,11 +27,10 @@
  * Every component takes a single typed options object (see each function's
  * docs). The options object — or parts of it — may be an Aberdeen proxy, in
  * which case the component re-renders the affected parts in place when you
- * mutate it. See `AGENTS.md` for the design philosophy.
+ * mutate it. See `README.md` for the design philosophy.
  */
-// Importing the theme module installs spacing vars, the reactive theme and the
-// base stylesheet. Customise it from your app with A.insertGlobalCss (see
-// theme.ts); toggle modes with setDarkMode / getDarkMode.
+// Importing theme.js installs the spacing vars, the reactive theme and the base
+// stylesheet.
 export { setDarkMode, getDarkMode } from "./theme.js";
 export { autocomplete, type AutocompleteOptions, type AutocompleteOptionInput } from "./components/autocomplete.js";
 export { box, type BoxOptions } from "./components/box.js";

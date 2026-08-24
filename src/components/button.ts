@@ -50,9 +50,8 @@ export interface ButtonOptions {
 	attrs?: Attributes;
 }
 
-// The button is a `.s-s` surface (defaulting to `.primary` in button() below), so
-// its colours, border, and border-radius come from the surface classes in theme.ts.
-// This rule only handles layout, focus, hover and sizing.
+// Colours, border and radius come from the `.s-s` surface classes in theme.ts;
+// this rule only does layout, focus, hover and sizing.
 A.insertGlobalCss({
 	".s-btn": {
 		"&":
@@ -60,52 +59,34 @@ A.insertGlobalCss({
 			"font-weight:450 line-height:1.1 white-space:nowrap cursor:pointer text-decoration:none " +
 			"padding: $m2 $m3; " +
 			"transition: background 0.15s, border-color 0.15s, color 0.15s, filter 0.15s, box-shadow 0.15s, transform 0.08s;",
-		// Focus ring via `outline` (not box-shadow) so it survives a `.no-shadow`
-		// (which hard-clears box-shadow). Modern browsers round it to the border-radius.
+		// Focus ring via `outline`, not box-shadow: `.no-shadow` hard-clears box-shadow.
 		"&:focus-visible": "outline: 3px solid $s-focus; outline-offset: 1px;",
-		// The button carries `.shadow` (added in button() below); on a filled accent
-		// surface that resolves to the signature self-coloured glow, on a neutral
-		// `.neutral` button to nothing, on tonal/outlined to nothing — all via theme.ts.
 		"&:hover": "filter: brightness(1.06)",
-		// Tonal/outlined hover deepen their translucent fill; a neutral `.neutral`
-		// button (which is already near-white) darkens toward its ink instead.
 		"&.tonal:hover, &.outlined:hover": "background: color-mix(in srgb, $s-bg 24%, transparent);",
+		// A `.neutral` button is already near-white, so it darkens toward its ink
+		// instead of brightening.
 		"&.neutral:hover": "filter:none background: color-mix(in srgb, $s-text 8%, $s-bg);",
-		// The button sizes its glyph, for the same reason `.s-icon-btn` does below:
-		// a caller can't know what the button beside it passed, and only a rule
-		// here makes every icon in a row come out alike. It rides the font size,
-		// so a `.small`/`.large` button scales its icon with its text.
+		// The button sizes its glyph rather than trusting the caller: only a rule here
+		// makes every icon in a row match. In `em`, so `.small`/`.large` scale it.
 		"> svg": "width:1.25em height:1.25em",
-		// Subtle press feedback.
 		"&:active:not(:disabled)": "transform: translateY(1px)",
-		// Size: set on the button itself, or inherited from a `.small`/`.large`
-		// parent (e.g. a buttonGroup), so a container can size all its buttons at once.
+		// Also inherited from a `.small`/`.large` parent (e.g. a buttonGroup), so a
+		// container can size all its buttons at once.
 		"&.small, .small > &": "padding: $m1 $m2; font-size:0.85em border-radius:$s-radius-sm",
 		"&.large, .large > &": "font-size:1.4em border-radius:$s-radius-lg",
 	},
-	// A bare glyph in a square hit area: no fill and no edge, just ink that lifts
-	// on hover. Deliberately *not* a `.s-s` surface — chrome that sits beside a
-	// title (a ✕, a ☰) should read as an affordance on the bar, not as
-	// another button competing with it, and a filled or outlined box around a
-	// 16px glyph is exactly what makes a top bar look busy.
+	// Deliberately *not* a `.s-s` surface: chrome sitting beside a title (a ✕, a ☰)
+	// should read as an affordance on the bar, not as another button competing with it.
 	".s-icon-btn": {
 		"&":
 			"display:inline-flex align-items:center justify-content:center flex-shrink:0 " +
 			"width:2rem height:2rem p:0 border:0 background:transparent cursor:pointer " +
 			"fg:$s-muted r:$s-radius-sm line-height:1 font-size:1rem text-decoration:none " +
 			"transition: color 0.12s, background 0.12s;",
-		// The container sizes the glyph, rather than trusting whatever the caller
-		// passed: a row of icon buttons only reads as a row when every glyph in it
-		// is the same size, and the caller of one of them can't know about the
-		// others. CSS beats the `width`/`height` attributes the icon set writes, so
-		// `iconButton({ icon: trash2 })` and a hand-sized glyph come out alike; an
-		// `attrs` override still wins over this, being an inline style. The same
-		// rule is on `.s-btn` above and on a floating menu's rows in menu.ts, so
-		// one `1.25em` governs the lot. (`S.main`'s nav rows are deliberately out
-		// of it — see the note there.)
+		// As on `.s-btn`: the container sizes the glyph so a row of icon buttons reads
+		// as a row. CSS beats the `width`/`height` attributes the icon set writes; an
+		// `attrs` override still wins over this, being an inline style.
 		"> svg": "width:1.25em height:1.25em",
-		// The ink resolves against whatever surface it sits on, so one treatment
-		// works on the page, in a box header, and on a coloured bar alike.
 		"&:hover:not(:disabled):not([aria-disabled=true])":
 			"fg:$s-text background: color-mix(in srgb, $s-text 10%, transparent);",
 		"&:focus-visible": "outline: 3px solid $s-focus; outline-offset:1px",
@@ -117,13 +98,12 @@ A.insertGlobalCss({
 
 /**
  * A bare glyph in a square hit area — no fill, no border, just ink that lifts on
- * hover. The quiet end of the button family, for chrome that has to sit beside
- * something more important without competing with it: a ✕ on a box, the ☰ a
- * routed `S.main()` puts in its top bar, the verbs in a
- * {@link Panel.actions | page's actions}.
+ * hover. For chrome that has to sit beside something more important without
+ * competing with it: a ✕ on a box, the ☰ a routed `S.main()` puts in its top bar,
+ * the verbs in a {@link Panel.actions | page's actions}.
  *
  * Reach for {@link button} instead whenever the thing has a name worth reading;
- * an icon alone is only unambiguous for a handful of universal actions.
+ * an icon alone is unambiguous only for a handful of universal actions.
  *
  * @example
  * ```ts
@@ -145,11 +125,10 @@ export function iconButton(opts: IconButtonOptions): void {
 }
 
 /**
- * The link-or-button plumbing {@link button} and {@link iconButton} share:
- * href/type, disabling, label and click. A disabled link keeps `role=button`
- * and `aria-disabled` but loses its `href` — an anchor without one is out of
- * the tab order and follows nothing, which is what makes it as disabled as
- * the `<button>` form's real `disabled` attribute.
+ * The link-or-button plumbing {@link button} and {@link iconButton} share. A
+ * disabled link keeps `role=button` and `aria-disabled` but loses its `href`: an
+ * anchor without one is out of the tab order and follows nothing, which is what
+ * makes it as disabled as a `<button>`'s real `disabled` attribute.
  */
 function applyActionBehavior(o: {
 	href?: string;
@@ -197,10 +176,8 @@ export function button(opts: ButtonOptions | Slot = {}): void {
 
 	const tag = o.href != null ? "a" : "button";
 
-	// A bare `.s-s` is a filled accent surface defaulting to `.primary` (see
-	// theme.ts) — the signature CTA. The caller's `attrs` simply names another
-	// role (`.danger`, `.neutral`, a custom `.brand`) or variant (`.outlined`); no
-	// role detection needed, since the default lives in CSS, not here.
+	// A bare `.s-s` is a filled `.primary` surface (see theme.ts), so no role
+	// detection here: `attrs` just names another role or variant.
 	A(`${tag}.s-btn.s-s.shadow`, o.attrs, () => {
 		applyActionBehavior(o);
 		if (o.ariaLabel) A("aria-label=", o.ariaLabel);

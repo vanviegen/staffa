@@ -6,9 +6,9 @@ export default defineConfig({
 		screenshot: "off", // ShoTest captures its own screenshots
 		viewport: { width: 1280, height: 900 },
 	},
-	// The overlays test now reloads mid-run (to clear auto-dismissing toasts before
-	// the dialog steps); with its many wrapped, screenshotted steps that lands it
-	// around 15 s, so give every test comfortable headroom.
+	// Each test walks one long session, so several run to 10-14 s (the overlays
+	// one also reloads mid-run, to clear auto-dismissing toasts before its dialog
+	// steps). Give them comfortable headroom.
 	timeout: 30000,
 	workers: 1,
 	webServer: [

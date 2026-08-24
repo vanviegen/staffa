@@ -12,31 +12,20 @@ import { scrollStrip, revealInStrip } from "./tabs.js";
 /**
  * Routed, multi-column panel navigation for {@link main}.
  *
- * Each route draws one screen of the app, called a *panel*. The open panels
- * form a **stack**, whose last panel is the **current** one: the panel the URL
- * names, and the rightmost column on screen. As many panels as fit are shown,
- * ending at the current one — on a phone that is one at a time, on a wider
- * screen the panels that would have covered each other sit side by side
- * instead. The app's own code is the same either way.
+ * Each route draws one screen, called a *panel*. The open panels form a
+ * **stack** whose last panel is the **current** one: the panel the URL names,
+ * and the rightmost column on screen. As many as fit are shown, ending there.
  *
- * Whatever a navigation lands on becomes the top of that stack, and the same
- * path is never in it twice. Opening a new panel closes everything after the
- * panel it came from; a plain link to a panel that is already open — a
- * breadcrumb, a nav item for the section you are in — returns to its own
- * place, closing whatever was stacked on top, while a `replace` or `open`
- * applies its usual shape, the open panel moving into it alive.
- * Two kinds of panel survive that: the ones the user pinned, which ride along,
- * and the ones holding unsaved work, which no navigation ever tears down.
- * Those wait parked out of sight past the rightmost column, which is the only
- * way a panel ever sits *after* the current one. Escape closes the current
- * panel — or just steps left, when it holds unsaved work or panels sit parked
- * beyond it.
+ * A navigation's target becomes the top of the stack, and the same path is
+ * never in it twice: opening a panel closes everything after the one it came
+ * from, while a plain link to an already-open panel returns to its place. Two
+ * kinds survive that — pinned panels, which ride along, and unsaved ones, which
+ * nothing tears down. Both wait parked past the rightmost column, the only way
+ * a panel ever sits *after* the current one.
  *
- * Navigation runs through `aberdeen/route`: the URL holds the current panel,
- * and the rest of the arrangement — the panels before it, the ones parked
- * after it, and which are pinned — is stored beside it in the history entry.
- * So back and forward step through whole arrangements of columns, and a reload
- * (or a shared link) brings the same columns back.
+ * Navigation runs through `aberdeen/route`: the URL holds the current panel and
+ * the rest of the arrangement is stored beside it in the history entry, so back
+ * and forward step through whole arrangements of columns.
  */
 
 // ─── Route table typing ──────────────────────────────────────────────────────
@@ -129,6 +118,10 @@ export interface Panel<P = Record<string, string | number | string[]>> {
 	 * The params matched from this panel's path, typed per its route key:
 	 * `[x]` is a `string`, `[x=integer]` a `number`, `[...x]` a `string`.
 	 * Read-only.
+	 *
+	 * Single-segment params are percent-decoded; `[...x]` is not, since decoding
+	 * it would make an encoded slash indistinguishable from a separator. Split it
+	 * yourself: `x.split("/").map(decodeURIComponent)`.
 	 */
 	readonly params: P;
 	/**
@@ -421,34 +414,25 @@ function matchRoute(r: { segs: Seg[] }, segments: string[]): Record<string, any>
 
 /**
  * The one duration every bit of shell motion shares: the enter/exit fades, the
- * `left` moves of columns shifting sideways, and the narrow-screen nav panel's
- * slide. Published as the `--s-panel-ms` custom property below, so CSS and JS
- * can't drift apart.
- *
- * Short enough to read as *the screen responded*, rather than as an animation
- * being played at you: a panel arriving is navigation, and navigation should
- * feel instant even when it moves.
+ * sideways `left` moves, the narrow-screen nav slide. Published below as the
+ * `--s-panel-ms` custom property, so CSS and JS can't drift apart.
  */
 const PAGE_MS = 250;
 /** How long a freshly pushed `loading` panel holds its enter animation. */
 const LOADING_HOLD_MS = 300;
 /**
- * The bounds of a column. At least 360px — about the narrowest phone still in
- * common use, so it is where a panel's layout is aimed. And at most 540: that
- * is the width the multi-column regime never reaches (`area / floor(area /
- * 360)` stays under it), so capping the lone column of a 540–720px area to it
- * too — centred, rather than stretched — makes an ask's ceiling uniform: never
- * wider than its column count × 540. A content area narrower than 360 still
- * gets its single column, just narrower than the minimum.
+ * The bounds of a column: at least 360px (about the narrowest phone in common
+ * use, so where a panel's layout is aimed), at most 540. The multi-column
+ * regime never reaches 540 on its own, so capping the lone column of a 540–720px
+ * area to it as well makes every ask's ceiling uniformly column count × 540.
  */
 const SMALL_MIN_PX = 360;
 export const SMALL_MAX_PX = 540;
 /**
- * Panels are layered by their depth in the stack, two `z-index` steps per panel:
- * a panel sits on the odd layer for its depth, and a *closing* one drops to the
- * even layer just below, where it is frozen for the length of its fade. So a
- * panel that replaces another comes in over it, while one that closes fades out
- * over whatever it was covering — which is the way round both should read.
+ * Two `z-index` steps per panel: a panel sits on the odd layer for its depth in
+ * the stack, a *closing* one on the even layer just below. So a replacement
+ * comes in over the panel it replaces, while a closing panel fades out over
+ * whatever it was covering.
  */
 const LAYER_STEP = 2;
 
@@ -456,129 +440,75 @@ const LAYER_STEP = 2;
 
 A.insertGlobalCss({
 	":root": `--s-panel-ms:${PAGE_MS}ms`,
-	// The clipping viewport that the columns slide through. Panels are absolutely
-	// positioned inside it, with their width and x offset set from JS (see
-	// `layout()`), so they can animate between arrangements. `isolation` keeps the
-	// layers they stack themselves in (see LAYER_STEP) to themselves: the region
-	// as a whole still sits under the shell's own chrome — the sticky top bar, and
-	// the nav panel that slides across the body — however deep the stack gets.
-	// The region paints the columns' sheen over its own box, and every panel
-	// paints the very same one (see `.s-panel` below) — which, being a straight
-	// vertical wash over boxes of one height, comes out identical whatever a
-	// column's width, so the columns and the ground beside them are one
-	// continuous surface.
+	// The clipping viewport the columns slide through; panels are absolutely
+	// positioned inside it, sized and offset from JS (see `layout()`).
+	// `isolation` keeps their z-index layers (see LAYER_STEP) below the shell's
+	// own chrome. It paints the same PANEL_SHEEN as every panel, so columns and
+	// the ground beside them read as one surface.
 	// `overflow:clip`, not `hidden`: a hidden box is still a scroll container,
-	// and anything that ever scrolls it — find-in-page reaching for text in a
-	// parked column, an in-page anchor, an extension — shifts every column
-	// sideways, permanently, because nothing here would ever scroll it back.
-	// `clip` clips without being scrollable at all, closing the whole class.
+	// and anything that scrolls it (find-in-page, an in-page anchor) shifts every
+	// column sideways permanently, with nothing to scroll it back.
 	".s-panels":
 		"flex:1 min-width:0 min-height:0 position:relative overflow:clip isolation:isolate " +
 		PANEL_SHEEN,
 	".s-panel": {
-		// A panel rests at a plain `left` offset and carries no transform: a
-		// transformed element is composited, which costs it subpixel text
-		// antialiasing. `transform` is used only to play the enter/exit slides,
-		// where the compositing is what makes them cheap. There is deliberately no
-		// `width` transition: a width changes only when the window resizes or when
-		// the panel itself asks for another layout, and animating one would reflow
-		// the column's content on every frame of it.
-		// Every duration is `--s-panel-ms`, so a column's move, its neighbour's fade
-		// and the chrome recentering around them all run as one motion. The drift
-		// eases out (it should read as a slow settle) while the fade runs *linear*
-		// across the whole duration — an eased opacity spends its last stretch near
-		// zero, which looks like the panel vanishing rather than fading.
-		// No `overflow:hidden` here: the scroll container below clips the content
-		// itself.
-		// Layering is set from JS (`layout()` and `beginClose`) rather than left to
-		// DOM order: a closing panel is no longer part of the reactive list, so
-		// where its element sits among the live ones is Aberdeen's business, not a
-		// thing to depend on. `LAYER_*` says what the numbers mean.
-		//
-		// Every panel paints an opaque ground, because panels animate over one
-		// another — entering, leaving, being crowded out — and two transparent ones
-		// mean text sliding over text. It takes {@link PANEL_SHEEN}, resolved here
-		// against the inherited `--s-bg` (a panel is not a surface, so it has to
-		// paint it itself).
-		//
-		// Painted per panel, over the panel's own box — and yet seamless with its
-		// neighbours and with the ground beside them, because that wash runs
-		// straight down: it takes its extent from the height these boxes all share,
-		// never from their differing widths. See PANEL_SHEEN for why that matters.
+		// A panel rests at a plain `left` offset with no transform: a transformed
+		// element is composited, costing it subpixel text antialiasing. Transform
+		// is used only for the enter/exit slides. No `width` transition either —
+		// animating one reflows the column's content every frame.
+		// The fade is deliberately `linear` while the drift eases out: an eased
+		// opacity spends its last stretch near zero, reading as a vanish.
+		// Layering is set from JS (`layout()`, `beginClose`), not DOM order: a
+		// closing panel is no longer in the reactive list, so its element's
+		// position among the live ones is Aberdeen's business. See LAYER_STEP.
+		// PANEL_SHEEN gives every panel an opaque ground (panels animate over one
+		// another, and two transparent ones mean text sliding over text).
 		"&":
 			"position:absolute top:0 bottom:0 left:0 display:flex flex-direction:column " +
 			PANEL_SHEEN + " " +
 			"visibility:visible transition: left var(--s-panel-ms) ease, transform var(--s-panel-ms) ease-out, opacity var(--s-panel-ms) linear, visibility 0s;",
-		// The hairline between two columns, fading out at both ends — the same
-		// treatment as the sidebar's `.s-nav-sep`. Columns tile the area with no
-		// gutter between them: each already brings its own `$3` of padding, which
-		// keeps two columns' *contents* comfortably apart, while a gutter on top
-		// of that only opened a strip of the panel's own ground between two columns
-		// painting theirs. So this sits exactly on the boundary — and an
-		// edge-to-edge column (`A("p:0")`) really does reach the line bounding it.
+		// The hairline between two columns, fading at both ends (like the sidebar's
+		// `.s-nav-sep`). Columns tile with no gutter — each brings its own `$3` of
+		// padding — so this sits exactly on the boundary.
 		"&.s-panel-sep::before":
 			"content:'' position:absolute left:0 top:0.6rem bottom:0.6rem width:1px z-index:1 " +
 			"background: linear-gradient(to bottom, transparent, $s-faint 18%, $s-faint 82%, transparent);",
-		// One vocabulary for every arrival and departure: a gradual fade over a short,
-		// slow drift — 8cqw (`cqw`: `.s-main` is the container). Panels appear and
-		// leave at the right edge; being crowded out at the left edge is its mirror.
-		//
-		// The start state of an enter, adopted with transitions off and then
-		// dropped, which is what makes the panel settle instead of jumping.
+		// Enter and exit share one vocabulary: a fade over a short 8cqw drift
+		// (`cqw`: `.s-main` is the container). This start state is applied with
+		// transitions off and then dropped, so the panel settles instead of jumping.
 		"&.s-panel-enter": "opacity:0 transition:none transform: translateX(8cqw);",
-		// On its way out: fading where it stands, drifting the same short distance,
-		// and out of reach while it does. It leaves the DOM when the fade itself
-		// ends (see `playExit`), never part-way through it.
+		// On its way out; leaves the DOM when the fade ends (see `playExit`).
 		"&.s-panel-closing": "opacity:0 pointer-events:none transform: translateX(8cqw);",
-		// Off screen but open: crowded out from under the visible run at the left
-		// edge (`hidden`), or right of the current panel, parked past the right
-		// edge (`parked`) — the two are mirror images. Either keeps its DOM (and
-		// thus its scroll position and half-typed forms), so `display:none` is out
-		// — `visibility` takes it out of the rendering instead, but only once the
-		// fade has played: a transitioned `visibility` counts as *visible* for the
-		// whole duration and flips at the very end. Revealing it again uses the
-		// rule above (`visibility 0s`), so it comes back instantly.
+		// Off screen but open: crowded out at the left edge (`hidden`) or parked
+		// past the right one (`parked`). Both keep their DOM — and so their scroll
+		// position and half-typed forms — hence `visibility`, not `display:none`.
+		// Transitioning it counts as *visible* for the whole fade, flipping at the
+		// very end; the rule above (`visibility 0s`) reveals it again instantly.
 		"&.s-panel-hidden, &.s-panel-parked":
 			"opacity:0 visibility:hidden " +
 			"transition: left var(--s-panel-ms) ease, transform var(--s-panel-ms) ease-out, opacity var(--s-panel-ms) linear, visibility var(--s-panel-ms);",
 		"&.s-panel-hidden": "transform: translateX(-8cqw);",
 		"&.s-panel-parked": "transform: translateX(8cqw);",
 	},
-	// The scroll container, with the column's own padding. A scrollbar here is
-	// left flush against the column's right edge — unlike content mode's, which
-	// insets one from the shell edge to line up with the bar above it. A column
-	// has something better to line up with: the hairline the next column starts
-	// at, or the edge of the content area. Both want the bar hard against them,
-	// and an inset would leave a strip of nothing between the two.
+	// The scroll container, with the column's own padding. Its scrollbar sits
+	// flush against the column edge (unlike content mode's inset one), so it meets
+	// the next column's hairline with no strip of nothing between.
 	".s-panel > .s-content": "flex:1 min-height:0 overflow-y:auto overflow-x:hidden p:$3",
 	// A panel's actions on a wide shell: a quiet strip at the column's top-right,
 	// above the scroll area (never sticky inside it). On a narrow shell the top
 	// bar carries them instead, and no strip is drawn at all.
 	".s-panel-actions": "display:flex align-items:center justify-content:flex-end gap:$1 flex-shrink:0 padding: $3 $3 0;",
-	// The breadcrumb stack the top bar shows: every open panel, oldest first,
-	// the ones on screen right now in bold ink (see `drawCrumbs`). One row that
-	// scrolls sideways when the bar is tight — scrollbarless, with a fade at
-	// whichever edge has more stack behind it, so the cut-off reads as "keep
-	// going" rather than as the stack simply ending.
-	// The stack is a `.s-strip` (see tabs.ts), so the scrolling, the hidden
-	// scrollbar and the ‹ / › come with it; all that is left to say is the gap
-	// between a crumb and its chevron.
+	// The breadcrumb stack the top bar shows: every open panel, oldest first, the
+	// ones on screen in bold ink (see `drawCrumbs`). It is a `.s-strip` (see
+	// tabs.ts), so scrolling and the ‹ / › come with it; only the gap is left.
 	".s-crumbs > .s-strip-row": "gap:$m1",
 	".s-crumb": {
-		// Quiet ink for the stack, full ink and weight for the panels on screen:
-		// the weight change alone is ambiguous in a short crumb, the colour alone
-		// too subtle. No padding of its own — the first crumb has to start on the
-		// same pixel as the app's name above it, and the gap below spaces the row.
-		// The flex is how a tight row is shared out. Every crumb grows from the
-		// same 4rem basis in equal shares, freezing at its own text
-		// (`max-width:max-content`) — so with room to spare every title shows in
-		// full, and under pressure it is the *longest* crumbs that give way
-		// first, equalising downward while short ones keep every character. No
-		// crumb drops below min(its text, 4rem) though: `flex-shrink:0`, so past
-		// that point the row overflows and the strip scrolls — which is what
-		// keeps a deep stack on a phone readable. (Crumbs allowed to shrink
-		// would ellipsise to a row of stubs instead, and the stack would never
-		// scroll.)
+		// Quiet ink for the stack, full ink and weight for the panels on screen.
+		// No padding of its own: the first crumb must start on the same pixel as
+		// the app's name above it. The flex shares out a tight row — every crumb
+		// grows from a 4rem basis and freezes at its own text, so the longest give
+		// way first. `flex-shrink:0` is what stops them ellipsising into a row of
+		// stubs: past that point the row overflows and the strip scrolls instead.
 		"&":
 			"flex: 1 0 4rem; font-size:0.85em line-height:1.5 fg:$s-muted text-decoration:none " +
 			"white-space:nowrap max-width:max-content overflow:hidden text-overflow:ellipsis " +
@@ -587,23 +517,19 @@ A.insertGlobalCss({
 		// The same hover treatment as a menu item. The panel you are on is a plain
 		// span rather than a link, so it needs no `:not()` guard here.
 		"a&:hover": "filter:none color: color-mix(in lab, $s-primary 33%, $s-text);",
-		// The pin of a pinned panel, sitting inline just before its title. Filled:
-		// at crumb size the icon's hairline strokes alias into a wobble, while the
-		// body path filled solid reads as the classic pinned-tab pushpin.
+		// The pin of a pinned panel, inline before its title. Filled, because at
+		// crumb size the icon's hairline strokes alias into a wobble.
 		"svg.s-crumb-pin": "vertical-align:-0.12em margin-right:0.3em opacity:0.8 fill:currentColor",
 		// The ● of a panel holding unsaved work — the editors' dirty mark, filled
 		// solid for the same reason as the pin.
 		"svg.s-crumb-unsaved": "vertical-align:0.08em margin-right:0.3em fill:currentColor",
 	},
-	// A slash, not a chevron: the stack is a path, and a path's separator is what
-	// the URL itself uses. It also has to stay clearly *unlike* the ‹ / › the
-	// strip grows when the stack overflows (see `scrollStrip` in tabs.ts) — two
-	// near-identical chevrons, one meaningful and one a button, read as a bug.
+	// A slash, not a chevron: the stack is a path, and a chevron would be
+	// confusable with the strip's own ‹ / › scroll buttons (see tabs.ts).
 	"svg.s-crumb-sep": "flex-shrink:0 opacity:0.4",
-	// A window resize (and the very first pass) must track the window instantly,
-	// not rubber-band 450ms behind it: the layout engine raises this class on the
-	// shell for exactly those passes, applies the new geometry, and drops it
-	// after a forced reflow. Beats the standing transitions on specificity.
+	// A resize (and the first pass) must track the window instantly rather than
+	// rubber-band behind it: the layout engine raises this class, applies the new
+	// geometry, and drops it after a forced reflow.
 	".s-main.s-shell-snap .s-panel": "transition:none",
 	// A minimal "still fetching" hint, centred over the panel's content (which
 	// stays mounted underneath, so it can fill in reactively).
@@ -622,29 +548,25 @@ A.insertGlobalCss({
 // ─── Panel entries ───────────────────────────────────────────────────────────
 
 /**
- * A {@link Panel} as the controller holds it: the same object the handler gets,
- * minus the `readonly`s. `width` and `visible` are read-only *to the app* —
- * they are facts about the panel, not requests — but the shell keeps them up to
- * date by writing them, which is what makes reading them reactive.
+ * A {@link Panel} as the controller holds it: the handler's own object, minus
+ * the `readonly`s — `width` and `visible` are read-only to the app only; the
+ * shell writes them, which is what makes reading them reactive.
  */
 type PanelState = { -readonly [K in keyof Panel<any>]: Panel<any>[K] };
 
 interface PanelEntry {
 	/**
-	 * Opaque to Aberdeen: an entry rides inside the reactive `$state` and
-	 * `$open` collections, but is itself the controller's plain state — its
-	 * reactive faces are `$panel` (the app's) and `$ui` (the shell's own).
-	 * Without this, reading an entry back out of either collection would wrap
-	 * it in a proxy, DOM element, draw function and all.
+	 * Opaque to Aberdeen: without it, reading an entry back out of the reactive
+	 * `$state`/`$open` collections would wrap the whole thing — DOM element and
+	 * draw function included — in a proxy. Its reactive faces are `$panel`/`$ui`.
 	 */
 	readonly [OPAQUE]: true;
 	/**
 	 * The DOM sort key: one shared counter, so panels sit in creation order.
-	 * Deliberately never updated: rewriting it would make Aberdeen redraw the
-	 * panel, throwing away the scroll position and half-typed forms rule 5
-	 * promises to keep. So the DOM order drifts from the stack order once
-	 * panels are spliced or restored out of sequence — invisible, since panels
-	 * are absolutely positioned, beyond a small drift in tab order.
+	 * Never updated — rewriting it would make Aberdeen redraw the panel, losing
+	 * the scroll position and half-typed forms. DOM order therefore drifts from
+	 * stack order once panels are spliced out of sequence; invisible beyond tab
+	 * order, since panels are absolutely positioned.
 	 */
 	order: number;
 	path: string;
@@ -655,20 +577,18 @@ interface PanelEntry {
 		holding: boolean;
 		/**
 		 * The title borrowed from the panel's first line of text, for a panel that
-		 * never set one. Kept beside `$panel.title` rather than written into it,
-		 * so the app's own field only ever holds what the app wrote — and so a
-		 * body redraw can refresh the borrowed text, which a write into `title`
-		 * would have frozen.
+		 * set none. Kept beside `$panel.title` rather than written into it, so the
+		 * app's field only holds what the app wrote and a body redraw can refresh
+		 * the borrowed text.
 		 */
 		fallback?: string;
 	};
 	el?: HTMLElement;
 	/**
-	 * The search params and hash the URL held while this panel was last the
-	 * current panel, stashed when the focus moves off it and restored when a
-	 * crumb (or any link) makes it current again. Search and hash belong to
-	 * the current panel only, so this is the one place they survive a visit
-	 * elsewhere along the stack.
+	 * The search params and hash from while this panel was last current, stashed
+	 * when the focus moves off it and restored when it becomes current again.
+	 * Search and hash belong to the current panel only, so this is the one place
+	 * they survive a visit elsewhere along the stack.
 	 */
 	search?: Record<string, string>;
 	hash?: string;
@@ -683,19 +603,17 @@ interface PanelEntry {
 	/** What the panel asks for, kept in step with its `$panel.maxWidth`. */
 	maxWidth: PanelSize;
 	/**
-	 * The width it was last laid out at. Set before the panel's content is first
-	 * drawn, so that content has a real box to measure itself against. Visible
-	 * panels get a fresh value every pass (a width is a pure function of the
-	 * content area); hidden and closing panels keep this, so nothing invisible
+	 * The width it was last laid out at, set before the content is first drawn so
+	 * that content has a real box to measure against. Visible panels get a fresh
+	 * value every pass; hidden and closing ones keep this, so nothing invisible
 	 * ever reflows.
 	 */
 	width: number;
 }
 
 /**
- * What the shell measures out to, and with it the width every panel size gets.
- * A pure function of the content area, so it is the same for every panel in a
- * pass — and a panel never resizes because a neighbour came or went.
+ * What the shell measures out to, and with it every panel size. A pure function
+ * of the content area, so a panel never resizes because a neighbour came or went.
  */
 interface Geometry {
 	/** The content area: all the room the columns have between them. */
@@ -705,11 +623,10 @@ interface Geometry {
 }
 
 /**
- * One state of the stack: the open paths, oldest first, and which of them is
- * the current panel. The panels before `focus` sit (or are crowded out) to the
- * current panel's left; the ones after it are parked out of sight — panels
- * that refused to be closed, which is the only way anything ends up there. What a history entry describes, and what every navigation is
- * expressed as a change to.
+ * One state of the stack: the open paths, oldest first, and which is current.
+ * Panels before `focus` sit to its left; those after it are parked out of sight,
+ * having refused to close — the only way anything ends up there. This is what a
+ * history entry describes, and what every navigation is expressed as a change to.
  */
 interface Arrangement {
 	stack: string[];
@@ -731,18 +648,16 @@ export interface PanelStackOptions {
 	/** The shell's own title, used as the suffix of `document.title`. */
 	title?: unknown;
 	/**
-	 * The shell's live narrow flag (see `main()`), which decides where a panel's
-	 * chrome goes: in its own column, or promoted into the top bar. Shared rather
-	 * than measured again here, so the bar and the columns can't disagree about
-	 * which regime they are in.
+	 * The shell's live narrow flag (see `main()`), deciding whether a panel's
+	 * chrome sits in its own column or is promoted into the top bar. Shared
+	 * rather than measured again, so the two can't disagree about the regime.
 	 */
 	$shell: { narrow: boolean };
 }
 
 /**
- * The URL is global, so two routed shells would fight over it. This is only a
- * guard against that — the stack is reached through the object `main()` hands
- * back, never through a module-level singleton.
+ * The URL is global, so two routed shells would fight over it; this only guards
+ * against that. The stack itself is reached through `main()`'s return value.
  */
 let mounted = false;
 
@@ -850,10 +765,9 @@ export interface PanelStack {
  */
 export class PanelStackController implements PanelStack {
 	/**
-	 * Kept out of Aberdeen's proxy wrapping: this is a class instance holding
-	 * DOM nodes, timers and route handlers, and it rides inside every
-	 * {@link Panel.stack}. Its reactivity doesn't need the wrapper — it comes
-	 * from `$state` and the panels, which are proxies in their own right.
+	 * Kept out of Aberdeen's proxy wrapping: a class instance holding DOM nodes,
+	 * timers and route handlers, riding inside every {@link Panel.stack}. Its
+	 * reactivity comes from `$state` and the panels, which are proxies already.
 	 */
 	readonly [OPAQUE] = true;
 	private compiled: CompiledRoute[];
@@ -861,35 +775,24 @@ export class PanelStackController implements PanelStack {
 	private ancestors: { key: string; segs: Seg[]; fn: AncestorsHandler }[];
 	private opts: PanelStackOptions;
 	/**
-	 * The live stack, oldest first (closing panels are no longer part of it),
-	 * and which of its panels is current — the one reactive fact about the
-	 * stack's *shape*. The getters, the crumbs and `document.title` subscribe
-	 * to it simply by reading it; each commit publishes the next shape by
-	 * assigning a fresh `live` array. The entries themselves are opaque (see
-	 * {@link PanelEntry}), so the array carries their comings, goings and
-	 * order — nothing deeper; a panel's own facts stay separately reactive on
-	 * its `$panel`, which is what lets a panel rename itself without the
-	 * stack redrawing.
+	 * The live stack, oldest first (closing panels have left it), and which panel
+	 * is current — the one reactive fact about the stack's *shape*. Each commit
+	 * publishes the next shape by assigning a fresh `live` array; the entries are
+	 * opaque, so a panel renaming itself doesn't redraw the stack.
 	 *
-	 * One rule makes this safe to touch from anywhere: **queries subscribe,
-	 * commands peek**. The getters below are the queries. Every navigation
-	 * entry point (`navigate`, `closePath`, `back`, …) wraps itself in
-	 * `A.peek`, so an app calling one from inside a reactive scope (a
-	 * redirect in a route handler, say) can't subscribe that scope to the
-	 * very stack it is changing — and everything those commands call through
-	 * to, `propose` and `commit` included, inherits the same guarantee and
-	 * reads the stack plainly.
+	 * The invariant that makes this safe to touch from anywhere: **queries
+	 * subscribe, commands peek**. Every navigation entry point (`navigate`,
+	 * `closePath`, `back`, …) wraps itself in `A.peek`, so an app calling one
+	 * from a reactive scope can't subscribe that scope to the stack it is
+	 * changing; `propose` and `commit` inherit that and read the stack plainly.
 	 */
 	private $state = A.proxy({ live: [] as PanelEntry[], focus: 0 });
 	/**
-	 * The open panels again, keyed by path — the shape as the DOM consumes it.
-	 * `drawColumns`' `onEach` mounts and unmounts panels by key, so a panel
-	 * spliced out of the middle of the stack touches exactly one key, and the
-	 * DOM of the retained columns — scroll positions, half-typed forms — is
-	 * left alone. (Iterating `live` itself would key panels by array index,
-	 * and a splice renumbers every index after it, redrawing them all.) A
-	 * key's value is its entry, by reference, and is never reassigned, so a
-	 * panel only ever redraws wholesale when its path closes.
+	 * The open panels again, keyed by path — the shape the DOM consumes.
+	 * `drawColumns`' `onEach` mounts by key, so splicing a panel out of the
+	 * middle touches exactly one key and the retained columns keep their scroll
+	 * positions and half-typed forms. (Iterating `live` would key by array index,
+	 * which a splice renumbers, redrawing every panel after it.)
 	 */
 	private $open = A.proxy<Record<string, PanelEntry>>({});
 	/** Feeds {@link PanelEntry.order}: one shared counter, so keys never tie. */
@@ -921,25 +824,20 @@ export class PanelStackController implements PanelStack {
 			.filter((entry): entry is [string, AncestorsHandler] => entry[1] != null)
 			.map(([key, fn]) => ({ ...compileKey(key), fn }));
 
-		// Commit the stack whenever the URL or its snapshot changes — the initial
-		// load, our own navigations, and browser back/forward. There is no route
-		// guard of the shell's own to pass first: closes are refused up front
-		// (`closePath` on an unsaved panel) or repaired at the commit (`propose`
-		// keeps unsaved panels a navigation would drop), so a guard the app
-		// itself registered with `route.setGuard` — an auth redirect, say — is
-		// left exactly where it is and keeps working untouched.
+		// Commit the stack whenever the URL or its snapshot changes — initial load,
+		// our own navigations, browser back/forward. The shell registers no route
+		// guard of its own (closes are refused in `closePath` or repaired in
+		// `propose`), so an app's `route.setGuard` keeps working untouched.
 		A(() => {
 			const target = this.computeTarget();
-			// Subscribed (not peeked) deliberately: a search/hash change with the
-			// path staying put must refresh `lastSeen` too, or the next stash would
-			// restore stale ones.
+			// Subscribed, not peeked: a search/hash change with the path staying put
+			// must refresh `lastSeen` too, or the next stash restores stale ones.
 			const search = { ...route.current.search };
 			const hash = route.current.hash;
 			A.peek(() => {
-				// Stash the query of the panel the URL just left on that panel, for
-				// when a crumb brings it back (see PanelEntry.search). Done here, on
-				// the shared pipeline, so every origin is covered alike: the stack's
-				// own navigations, an app's `route.go()`, and browser back/forward.
+				// Stash the query of the panel the URL just left, for when a crumb
+				// brings it back (see PanelEntry.search). Here on the shared pipeline,
+				// so our navigations, `route.go()` and back/forward are all covered.
 				const prev = this.lastSeen;
 				if (prev && prev.path !== route.current.path) {
 					const entry = this.$state.live.find((e) => e.path === prev.path);
@@ -950,11 +848,10 @@ export class PanelStackController implements PanelStack {
 				}
 				this.lastSeen = { path: route.current.path, search, hash };
 				this.propose(target);
-				// A history entry that doesn't describe an arrangement — the initial
-				// load, or an app's own `route.go()` — is stamped with the one it
-				// just produced: a reload restores the same columns, and a later
-				// `route.back()` can recognize the entry (its matching wants the
-				// `panels`/`parked` keys present, not merely compatible).
+				// A history entry describing no arrangement (initial load, an app's own
+				// `route.go()`) is stamped with the one it just produced, so a reload
+				// restores the same columns and `route.back()` can recognize the entry
+				// — its matching wants the `panels`/`parked` keys actually present.
 				if (!Array.isArray(route.current.state.panels)) {
 					Object.assign(route.current.state, this.stateFor({ stack: this.paths(), focus: this.$state.focus }));
 				}
@@ -968,8 +865,7 @@ export class PanelStackController implements PanelStack {
 		A.clean(() => {
 			for (const t of this.timers) clearTimeout(t);
 			this.timers.clear();
-			// Nothing is going to navigate a shell that isn't there: whatever was
-			// waiting its turn is answered rather than left hanging.
+			// Answer whatever was waiting its turn, rather than leave it hanging.
 			this.queued?.settle(false);
 			this.queued = null;
 			mounted = false;
@@ -995,17 +891,12 @@ export class PanelStackController implements PanelStack {
 
 	/**
 	 * The stack for origin-less navigation: a cold deep link, a nav item, a
-	 * `route.go()` — anything arriving without a panel to build on and without a
-	 * snapshot to restore.
-	 *
-	 * The app's {@link PanelStackOptions.ancestors} gets first say, since only it
-	 * can know what belongs under a path that doesn't spell its own context out
-	 * (a `/thread/[id]` reached from a notification). Failing that — or when it
-	 * has no opinion — every prefix of the path is probed against the route table
-	 * and the matching ones become the stack. Either way, a path with no route is
-	 * skipped rather than opened as a "not found" column, so an app that doesn't
-	 * want one screen stacked under another simply doesn't route it. The path
-	 * itself always ends the derived stack, matched or not.
+	 * `route.go()` — anything with no panel to build on and no snapshot to
+	 * restore. {@link PanelStackOptions.ancestors} gets first say; failing that,
+	 * every prefix of the path is probed against the route table. A path with no
+	 * route is skipped rather than opened as a "not found" column, so not routing
+	 * a screen keeps it from appearing under another. The path itself always ends
+	 * the derived stack, matched or not.
 	 */
 	private deriveStack(path: string): string[] {
 		const top = normalizePath(path);
@@ -1020,10 +911,9 @@ export class PanelStackController implements PanelStack {
 	}
 
 	/**
-	 * Ask the `ancestors` table what belongs beneath `path`. The first key that
-	 * matches answers — with its own matched params, so it never has to take the
-	 * path apart itself — and `undefined` from it means "no opinion", leaving the
-	 * path to the prefix derivation just as an unlisted one is.
+	 * Ask the `ancestors` table what belongs beneath `path`. The first matching
+	 * key answers, with its own matched params; `undefined` means "no opinion",
+	 * leaving the path to the prefix derivation as an unlisted one would be.
 	 */
 	private askAncestors(path: string): readonly string[] | undefined {
 		const segments = splitPath(path);
@@ -1060,23 +950,20 @@ export class PanelStackController implements PanelStack {
 	}
 
 	/**
-	 * The arrangement a route implies: its snapshot around its path, or —
-	 * without a snapshot — derived, with the new panel current at the end and
-	 * any pinned panels carried along beneath it.
+	 * The arrangement a route implies: its snapshot around its path, or — without
+	 * one — derived, the new panel current at the end with pinned panels beneath.
 	 *
-	 * The snapshot reads subscribe — they are the URL's, exactly what the
-	 * route observer is for. The derivation is peeked instead: it reads the
-	 * live stack for its pins, which is the very thing that observer rewrites,
-	 * and subscribing to it would re-run the observer once per commit.
+	 * The snapshot reads subscribe (they are the URL's). The derivation is peeked:
+	 * it reads the live stack for its pins, which the route observer rewrites, so
+	 * subscribing would re-run that observer once per commit.
 	 */
 	private targetFor(path: string, state: Record<string, any>): Arrangement {
 		const before = Array.isArray(state?.panels) ? state.panels.map(String) : null;
 		if (before) {
 			const after = Array.isArray(state.parked) ? state.parked.map(String) : [];
 			// A stack never holds the same path twice: rendering reconciles by path,
-			// so a duplicate would leave a permanently element-less entry that stalls
-			// the layout. Our own states are clean, but `route.go` accepts
-			// hand-written ones — drop duplicates rather than wedge.
+			// so a duplicate leaves a permanently element-less entry that stalls the
+			// layout. `route.go` accepts hand-written states, so drop rather than wedge.
 			const cur = normalizePath(path);
 			const seen = new Set([cur]);
 			const uniq = (paths: string[]) =>
@@ -1103,13 +990,11 @@ export class PanelStackController implements PanelStack {
 	}
 
 	/**
-	 * Adopt an arrangement proposed by the URL — after repairing it: panels
-	 * holding unsaved work are never torn down by a navigation, wherever it
-	 * came from — a link, a nav item, even a browser back to an entry from
-	 * before the panel existed. Whatever the target drops, they stay, parked
-	 * after the current panel and wearing the ● that says why. (They are
-	 * deliberately not written into history entries: the work they protect
-	 * lives in the page's DOM, which a reload clears anyway.)
+	 * Adopt an arrangement proposed by the URL, after repairing it: a panel holding
+	 * unsaved work is never torn down by any navigation — including a back to an
+	 * entry from before it existed — so whatever the target drops, it stays, parked
+	 * after the current panel. Parked panels are deliberately kept out of history
+	 * entries: the work they protect lives in DOM a reload clears anyway.
 	 */
 	private propose(target: Arrangement): void {
 		const kept = this.$state.live
@@ -1124,20 +1009,17 @@ export class PanelStackController implements PanelStack {
 	 * Apply a target arrangement: unmount what's gone, mount what's new, animate
 	 * the difference.
 	 *
-	 * Reconciliation is BY PATH (a stack can't hold the same path twice, so that's
-	 * well-defined): a panel present in both stacks stays mounted *even if its
-	 * index shifted*, which is what lets a panel be spliced out of the middle
-	 * (§7) without disturbing the columns above it. A common-prefix diff would
-	 * remount every one of them, throwing away exactly the scroll and form state
-	 * rule 5 promises to keep.
+	 * Reconciliation is BY PATH, not by index: a panel in both stacks stays mounted
+	 * even if its index shifted, which is what lets one be spliced out of the middle
+	 * without disturbing the columns above it. A common-prefix diff would remount
+	 * them all, throwing away their scroll and form state.
 	 */
 	private commit(target: Arrangement, nav: string): void {
-		// The panels this commit mounts size themselves as they draw, so make them
-		// measure the shell as it is now rather than trusting the last pass's numbers.
+		// Panels size themselves as they draw, so make them measure the shell as it
+		// is now rather than trust the last pass's numbers.
 		this.geom = undefined;
-		// Pin flags for panels this commit *creates* — a reload, or a cold
-		// restore. Live panels keep their own flag: a pin is the user's mark on
-		// the panel, not part of where back/forward travel.
+		// Pin flags for panels this commit *creates* (a reload or cold restore).
+		// Live panels keep their own: a pin is the user's mark, not history state.
 		const pinned = route.current.state.pinned;
 		const seedPins = new Set<string>(Array.isArray(pinned) ? pinned.map(String) : []);
 		const existing = new Map(this.$state.live.map((entry) => [entry.path, entry]));
@@ -1145,22 +1027,18 @@ export class PanelStackController implements PanelStack {
 		for (const path of target.stack) {
 			const kept = existing.get(path);
 			if (kept) {
-				// Retained: it just takes its new place in the stack. Its `order` (the
-				// DOM sort key) deliberately stays put — see PanelEntry.order.
+				// Retained; its `order` deliberately stays put — see PanelEntry.order.
 				existing.delete(path);
 				next.push(kept);
 				continue;
 			}
 			const entry = this.createEntry(path, next.length <= target.focus, seedPins.has(path));
-			// An initial load just appears, and so do panels *revealed* by a back —
-			// they belong underneath the ones sliding away. Everything else enters at
-			// the right edge, a replacement exactly like a push.
+			// An initial load just appears, and so do panels *revealed* by a back:
+			// they belong underneath the ones sliding away.
 			if (nav !== "load" && nav !== "back") entry.enter = true;
 			next.push(entry);
 			this.$open[path] = entry;
 		}
-		// Whatever the target no longer holds leaves the same way: fading out over
-		// the right edge, which is also where its replacement (if any) comes in from.
 		for (const entry of existing.values()) this.beginClose(entry);
 		this.$state.live = next;
 		this.$state.focus = Math.min(target.focus, next.length - 1);
@@ -1178,17 +1056,11 @@ export class PanelStackController implements PanelStack {
 			maxWidth: "medium" as const,
 			width: 0,
 		} as PanelEntry;
-		// `close` closes *this* panel, current or not, and `open` navigates
-		// *from* it, through the very implementation a link click uses (see
-		// `navigate`). Both resolve the panel's place in the stack at call
-		// time, so they keep working after a splice has moved it; an `open`
-		// from a panel that has since closed falls back to a derived stack,
-		// like a link from nowhere.
-		//
-		// `visible` starts at what the panel's place implies: shown when it sits
-		// at or before the current panel (a pushed panel always does), hidden when
-		// it is restored already parked. `width` is filled in by the sizing scope
-		// in `drawPanel` before the handler draws.
+		// `close` and `open` resolve this panel's place in the stack at call time,
+		// so they keep working after a splice has moved it; an `open` from a panel
+		// that has since closed falls back to a derived stack, like a link from
+		// nowhere. `width` is filled in by `drawPanel`'s sizing scope before the
+		// handler draws.
 		entry.$panel = A.proxy({
 			stack: this,
 			params,
@@ -1203,40 +1075,31 @@ export class PanelStackController implements PanelStack {
 	}
 
 	/**
-	 * Take a panel out of the shell. The *scope* goes now: its cleaners run this
-	 * tick, so whatever the panel registered with `A.clean` — subscriptions,
-	 * timers, an open portal — is torn down when the panel closes, not when its
-	 * animation is over. Only the element lingers, to play that animation, which
-	 * is what the `destroy=` hook in `drawPanel` is for: Aberdeen hands the
-	 * element to {@link playExit} instead of removing it.
+	 * Take a panel out of the shell. The *scope* goes now — its `A.clean` hooks run
+	 * this tick, so subscriptions, timers and portals stop at the close rather than
+	 * at the end of the animation. Only the element lingers to play that animation,
+	 * which is what `drawPanel`'s `destroy=` hook hands to {@link playExit}.
 	 */
 	private beginClose(entry: PanelEntry): void {
 		entry.closing = true;
-		// It is on its way out, so it is no longer "on screen" as far as anything
-		// hanging off `$panel.visible` is concerned — even though its element lingers
-		// to play the fade.
 		entry.$panel.visible = false;
-		// Frozen one layer below where it was, which is still above everything it
-		// was covering: it fades out over the panel it uncovers, and under the one
-		// that takes its place (see LAYER_STEP). Set here, while the element is
-		// still ours — a moment later the scope, and with it `entry.el`, is gone.
+		// Frozen one layer below where it was, so it fades out over the panel it
+		// uncovers and under the one replacing it (see LAYER_STEP). Set here, while
+		// the element is still ours — a moment later `entry.el` is gone.
 		if (entry.el) entry.el.style.zIndex = String(LAYER_STEP * this.$state.live.indexOf(entry));
 		delete this.$open[entry.path];
 	}
 
 	/**
-	 * A closed panel's send-off, run by Aberdeen once the panel's scope is gone (so
-	 * the content it shows is frozen, which is exactly what a departing column
-	 * should be): it fades where it stands, inert, and leaves the DOM when the fade
-	 * itself ends. Removing it on a fixed timer instead would race the transition —
-	 * pull the element a frame early and the panel appears to fade half-way and
-	 * then vanish. The timeout is just a fallback for when no `transitionend` is
-	 * coming at all (transitions off, or an element that never got placed).
+	 * A closed panel's send-off, run by Aberdeen once its scope is gone: it fades
+	 * where it stands, inert, and leaves the DOM on `transitionend`. A fixed timer
+	 * would race the transition and pull the element a frame early, making the
+	 * panel appear to fade half-way and vanish; the timeout is only a fallback for
+	 * when no `transitionend` is coming (transitions off, element never placed).
 	 */
 	private playExit(entry: PanelEntry, el: HTMLElement): void {
-		// Only a close is worth animating. A panel being *redrawn* (a reactive
-		// dependency in its handler) replaces its element through here too, and that
-		// one simply goes, so the new one isn't drawn over a ghost of the old.
+		// A panel being *redrawn* replaces its element through here too; that one
+		// simply goes, so the new one isn't drawn over a ghost of the old.
 		if (!entry.closing) { el.remove(); return; }
 		el.classList.add("s-panel-closing");
 		el.setAttribute("inert", "");
@@ -1256,13 +1119,10 @@ export class PanelStackController implements PanelStack {
 
 	/**
 	 * The arrangement navigation works from: the one we're on the way to while a
-	 * change is still settling, and the one on screen otherwise.
-	 *
-	 * Settling takes a moment more often than it looks: every `route.back()`
-	 * travels through the browser's history and lands on a `popstate`, and an
-	 * app-registered route guard may be async. Working from the committed
-	 * arrangement in that window would make a second Escape aim at the panel the
-	 * first one is already taking away — so two quick Escapes would peel one panel.
+	 * change is still settling, the one on screen otherwise. That window is common
+	 * (every `route.back()` waits for a `popstate`), and working from the committed
+	 * arrangement inside it would aim a second Escape at the panel the first is
+	 * already taking away — two quick Escapes would peel one panel.
 	 */
 	private intended(): Arrangement {
 		return this.intent ?? { stack: this.paths(), focus: this.$state.focus };
@@ -1283,15 +1143,10 @@ export class PanelStackController implements PanelStack {
 	}
 
 	/**
-	 * Put a navigation to the router, or — while one is still settling — behind
-	 * the one that is. Only the newest waits: each was worked out against
-	 * {@link intended}, so the newest is the one that means what the user last
-	 * asked for, and the one it displaces resolves `false`.
-	 *
-	 * A refusal empties the queue instead of running it: a navigation can still
-	 * fail to land — an app-registered route guard vetoes it, or another one
-	 * supersedes it — and what was queued behind it was worked out against the
-	 * arrangement it would have produced.
+	 * Put a navigation to the router, or — while one is still settling — behind the
+	 * one that is. Only the newest waits; the one it displaces resolves `false`.
+	 * A refusal empties the queue rather than running it, since what was queued
+	 * was worked out against the arrangement the refused one would have produced.
 	 */
 	private issue(target: Arrangement, run: () => boolean | Promise<boolean>): Promise<boolean> {
 		this.intent = target;
@@ -1307,10 +1162,9 @@ export class PanelStackController implements PanelStack {
 			this.settling = null;
 			const next = this.queued;
 			this.queued = null;
-			// The router applies a change (and runs Aberdeen's queue, so our own
-			// commit has happened) before it settles us, which is what lets the next
-			// one go straight out: it asks the guards of the panels it removes from
-			// the stack as it stands now, not the one it was queued against.
+			// The router has already applied the change (and flushed Aberdeen's queue,
+			// so our commit has happened) before settling us, so the next one can go
+			// straight out against the stack as it now stands.
 			if (ok && next) this.start(next.run).then(next.settle, () => next.settle(false));
 			else { this.intent = null; next?.settle(false); }
 			return ok;
@@ -1322,12 +1176,8 @@ export class PanelStackController implements PanelStack {
 
 	/**
 	 * Make the stack's `index`th panel current without closing anything, leaving
-	 * the panels right of it parked out of sight.
-	 *
-	 * Only ever a step around a panel that refuses to close — nothing else is
-	 * left sitting after the current one — so this is Escape's way past an
-	 * unsaved panel, and the way back to one. It is a history entry, so the
-	 * browser's back button returns the focus to where it was.
+	 * the panels right of it parked out of sight — Escape's way past an unsaved
+	 * panel, and back to one. A history entry, so back returns the focus.
 	 */
 	private focusAt(index: number): Promise<boolean> {
 		const arr = this.intended();
@@ -1342,12 +1192,10 @@ export class PanelStackController implements PanelStack {
 	}
 
 	/**
-	 * One step back along the stack — what Escape does (`main()` calls this;
-	 * it is not {@link PanelStack} API). Normally that closes the current panel,
-	 * which is the stack's end. When it holds {@link Panel.unsaved} work — or
-	 * panels sit parked beyond it — it stays open instead, and the focus
-	 * simply moves to the panel on its left.
-	 * Resolves `false` at the stack's start, where there is no left to go.
+	 * One step back along the stack — what Escape does (`main()` calls this; it is
+	 * not {@link PanelStack} API). Normally that closes the current panel; when it
+	 * holds {@link Panel.unsaved} work, or panels sit parked beyond it, the focus
+	 * moves left instead. Resolves `false` at the stack's start.
 	 */
 	back(): Promise<boolean> {
 		return A.peek(() => {
@@ -1363,21 +1211,15 @@ export class PanelStackController implements PanelStack {
 	/**
 	 * Close whichever panel is open at `path`, current or not — what
 	 * {@link Panel.close}, {@link PanelStack.closePanel} and the crumb menu's
-	 * Close come down to. `false` when that path isn't open, is the stack's
-	 * only panel, or holds {@link Panel.unsaved} work — nothing may close an
-	 * unsaved panel; the app clears the flag first, which is its explicit
-	 * "this is now discardable".
+	 * Close all come down to. `false` when that path isn't open, is the stack's
+	 * only panel, or holds {@link Panel.unsaved} work.
 	 *
-	 * Closing the current panel at the stack's very end pops back through the
-	 * browser's history to the entry beneath it, when it is there (restoring its
-	 * scroll and search state); the arrangement is part of the match, so an
-	 * entry where the closing panel was merely parked won't do. Every other
-	 * close is a *splice*: the columns around the closed one keep their place
-	 * and state (the commit reconciles by path). That still gets its own
-	 * history entry, so the browser's back button restores the closed column
-	 * like any other arrangement — which is why it goes through `route.go` here
-	 * rather than through `navigate()`, whose "link to an open panel" check
-	 * would turn it into a focus move.
+	 * Closing the current panel at the stack's end pops back through history to
+	 * the entry beneath it (restoring its scroll and search state); the
+	 * arrangement is part of the match, so an entry where the closing panel was
+	 * merely parked won't do. Every other close is a *splice*, which still earns
+	 * its own history entry — hence `route.go` here rather than `navigate()`,
+	 * whose "link to an open panel" check would turn it into a focus move.
 	 */
 	private closePath(path: string): Promise<boolean> {
 		return A.peek(() => {
@@ -1385,19 +1227,16 @@ export class PanelStackController implements PanelStack {
 			const index = arr.stack.indexOf(normalizePath(path));
 			if (index < 0 || arr.stack.length < 2 || this.unsavedAt(arr.stack[index])) return Promise.resolve(false);
 			const stack = arr.stack.filter((_, i) => i !== index);
-			// Closing the current panel hands the focus to the panel on its left (or,
-			// at the stack's start, to the one that was parked beside it); closing
-			// any other panel moves the focus not at all.
+			// Closing the current panel hands the focus to the panel on its left;
+			// closing any other panel moves the focus not at all.
 			const focus = index === arr.focus ? Math.max(0, index - 1) : arr.focus - (index < arr.focus ? 1 : 0);
 			const target = { stack, focus };
 
 			if (index === arr.focus && index === arr.stack.length - 1) {
-				// When no history entry matches and the current one is replaced
-				// instead, the panel beneath gets its stashed query back through the
-				// fallback (a match restores the matched entry's own). Pins can't
-				// ride the same way — a `state` in the fallback would be shadowed by
-				// the match target's — so they are re-stamped onto whatever entry we
-				// land on, the way `togglePin` writes them.
+				// With no matching history entry the current one is replaced instead,
+				// and the panel beneath gets its stashed query back via the fallback.
+				// Pins can't ride along there (the match target's `state` would shadow
+				// it), so they are re-stamped onto whatever entry we land on.
 				const beneath = this.$state.live.find((e) => e.path === stack[focus]);
 				const fallback: { search?: Record<string, string>; hash?: string } = {};
 				if (beneath?.search) fallback.search = beneath.search;
@@ -1416,9 +1255,8 @@ export class PanelStackController implements PanelStack {
 			const current = stack[focus];
 			const moved = current !== arr.stack[arr.focus];
 			return this.issue(target, () => {
-				// The current panel keeps its search params and hash: it isn't going
-				// anywhere, and `go()` would otherwise default them away. When the
-				// close *did* move the focus, the newly current panel gets its own back.
+				// The current panel keeps its search and hash — `go()` would otherwise
+				// default them away. If the focus moved, the new panel gets its own back.
 				const entry = moved ? this.$state.live.find((e) => e.path === current) : undefined;
 				return route.go({
 					path: current,
@@ -1432,28 +1270,19 @@ export class PanelStackController implements PanelStack {
 
 	/**
 	 * Navigate to `href` — the one implementation behind a link click,
-	 * {@link Panel.open} and the stack's own methods, so none of them can
-	 * behave differently.
+	 * {@link Panel.open} and the stack's own methods, so none can drift.
 	 *
-	 * `from` is the path of the panel the navigation starts from — the one
-	 * the link lives in — or absent when it has none: a nav item, or a call
-	 * that means the whole stack, which is then built instead (see
-	 * {@link deriveStack}), or taken outright from `beneath`, for callers
-	 * that know it.
+	 * `from` is the panel the navigation starts from, absent when it has none (a
+	 * nav item), in which case the stack is derived or taken from `beneath`.
 	 *
-	 * `how` is the link's `data-panel` attribute (or the caller's word for
-	 * it), picking how much of `from`'s context the target keeps: a push (the
-	 * default, and what unrecognised values fall back to) keeps `from` and
-	 * builds on it, `"replace"` keeps only what is beneath `from`, and
-	 * `"open"` keeps nothing — the target arrives with its own stack, the way
-	 * a nav item's link does. Absent, it is the shell's `linkNavigation`
-	 * default, like a link without the attribute. A target that is already
-	 * open is returned to by a push, and *moved* — alive, state intact — by
-	 * the other two: the stack never holds a path twice.
+	 * `how` is the link's `data-panel` attribute, picking how much of `from`'s
+	 * context the target keeps: a push (the default, and the fallback for
+	 * unrecognised values) builds on `from`, `"replace"` keeps only what is
+	 * beneath it, `"open"` keeps nothing. A target that is already open is
+	 * returned to by a push and *moved* — alive — by the other two, since the
+	 * stack never holds a path twice.
 	 *
-	 * Resolves the way every {@link PanelStack} method does: `true` once the
-	 * navigation lands, `false` when it doesn't (already there counts as
-	 * landed).
+	 * Resolves `true` once the navigation lands (already being there counts).
 	 */
 	private navigate(href: string, { from, how, beneath }: { from?: string; how?: string; beneath?: readonly string[] } = {}): Promise<boolean> {
 		const mode = how ?? this.opts.linkNavigation;
@@ -1465,55 +1294,44 @@ export class PanelStackController implements PanelStack {
 			const path = normalizePath(url.pathname);
 			const arr = this.intended();
 
-			// Whatever we navigate to ends up on top of the stack; all that differs
-			// is what it lands on.
+			// The target always ends up on top; only what it lands on differs.
 			const open = beneath ? -1 : arr.stack.indexOf(path);
 			let target: Arrangement;
 			if (open >= 0 && mode !== "replace" && mode !== "open") {
-				// A push to a path that is already open is a return: the panel takes
-				// back its own place, and whatever was stacked on top of it closes.
-				// (A stack never holds the same path twice, so there is no second
-				// copy to open — and a breadcrumb is exactly such a link.) Pinned
-				// panels above it are the exception, as ever: they stay in their
-				// order, parked past the panel we return to, one crumb click away.
+				// A push to an open path is a return: the panel takes back its place
+				// and whatever was stacked on top closes (a breadcrumb is such a
+				// link). Pinned panels above it park instead, keeping their order.
 				const above = this.pinnedIn(arr.stack.slice(open + 1), []);
 				target = { stack: [...arr.stack.slice(0, open + 1), ...above], focus: open };
 			} else {
-				// The target opens on top of the panel the link sits in, or in its
-				// place for a `replace`, closing the panels after it. Without an
-				// originating panel there is no stack to build on, so it is the
-				// caller's own `beneath` or one derived from the path — which is what
-				// makes a nav click and a deep link to the same URL land identically
-				// (bar the pins, which a fresh tab doesn't have).
+				// The target opens on top of the link's own panel — in its place for a
+				// `replace` — closing the panels after it. With no originating panel
+				// the base is the caller's `beneath` or derived from the path, which
+				// is what makes a nav click and a cold deep link land identically.
 				const originIndex = origin == null ? -1 : arr.stack.indexOf(origin);
 				const raw = beneath
 					? beneath.map(normalizePath)
 					: originIndex < 0
 						? this.deriveStack(path).slice(0, -1)
 						: arr.stack.slice(0, replace ? originIndex : originIndex + 1);
-				// A stack never holds the same path twice (rendering reconciles by
-				// path), so the target is dropped from the base — a `replace` or
-				// `open` may well aim at a path that is open mid-stack, whose panel
-				// then simply *moves* to the top, alive — and a caller-supplied
-				// `beneath` is deduplicated for the same reason.
+				// A stack never holds the same path twice, so the target is dropped
+				// from the base (a `replace`/`open` aimed mid-stack moves that panel
+				// to the top, alive) and `beneath` is deduplicated for the same reason.
 				const base = raw.filter((p, i, all) => p !== path && all.indexOf(p) === i);
-				// Pinned panels ride along, keeping their order, beneath the new one
-				// (unsaved ones the commit itself keeps, parked — see `propose`). A
-				// replaced origin closes, pin or no pin: replacing is the panel's own
-				// doing, not somewhere else navigating over it.
+				// Pinned panels ride along beneath the new one, keeping their order
+				// (unsaved ones `propose` parks). A replaced origin closes pin or no
+				// pin: replacing is the panel's own doing, not navigation over it.
 				const under = [...base, ...this.pinnedIn(arr.stack, [...base, path, replace ? origin : null])];
 				target = { stack: [...under, path], focus: under.length };
 			}
 
-			// Search and hash belong to the current panel only, so a panel we return
-			// to gets its own back (see PanelEntry.search) — unless the link carries
-			// its own, which win.
+			// A panel we return to gets its own search and hash back (see
+			// PanelEntry.search), unless the link carries its own, which win.
 			const returning = open >= 0 ? this.$state.live.find((e) => e.path === path) : undefined;
 			const search = url.search ? Object.fromEntries(new URLSearchParams(url.search)) : returning?.search ?? {};
 			const hash = url.hash || returning?.hash || "";
 
-			// Going nowhere at all: this panel, on this arrangement, with the query
-			// the link asks for. Not even a history entry.
+			// Going nowhere at all — not even a history entry.
 			if (target.focus === arr.focus && sameStack(target.stack, arr.stack)
 				&& url.search === location.search && (url.hash || "") === (location.hash || "")) {
 				return Promise.resolve(true);
@@ -1533,24 +1351,20 @@ export class PanelStackController implements PanelStack {
 	// ── Link interception ──────────────────────────────────────────────────
 
 	/**
-	 * Link handling through `route.interceptLinks()`, whose handler hook hands us
-	 * the anchor so we can decide what the click *means*. The exclusion rules
-	 * (targets, downloads, modified clicks, external URLs) live in Aberdeen; the
-	 * close guards run in `checkChange` when our navigation reaches the router.
+	 * Link handling through `route.interceptLinks()`, whose hook hands us the
+	 * anchor so we can decide what the click means. The exclusion rules (targets,
+	 * downloads, modified clicks, external URLs) live in Aberdeen.
 	 *
-	 * A link inside a panel is that panel's {@link Panel.open}, the `data-panel`
-	 * attribute as its `how` (see {@link navigate}, the shared implementation).
-	 * A link that isn't inside any panel — a nav item, one in a dialog — has no
-	 * panel to build on, so it replaces the stack as a whole, exactly as a cold
-	 * link to the same URL would open it.
+	 * A link inside a panel is that panel's {@link Panel.open}, with `data-panel`
+	 * as its `how`. A link outside every panel — a nav item, one in a dialog —
+	 * has nothing to build on, so it replaces the stack as a cold link would.
 	 */
 	private interceptLinks(): void {
 		route.interceptLinks((url, anchor) => {
 			const how = anchor.getAttribute("data-panel") ?? undefined;
-			// The panel the link lives in: the enclosing `.s-panel`, or — for the
-			// current panel's actions, promoted into the top bar on a narrow shell
-			// (see main.ts), outside every `.s-panel` — the current panel, whose
-			// own chrome they remain at every width.
+			// The panel the link lives in: the enclosing `.s-panel`, or the current
+			// panel for its actions once a narrow shell has promoted them into the
+			// top bar (see main.ts), outside every `.s-panel`.
 			const panelEl = anchor.closest<HTMLElement>(".s-panel");
 			const entry = panelEl
 				? this.$state.live.find((e) => e.el === panelEl)
@@ -1564,9 +1378,8 @@ export class PanelStackController implements PanelStack {
 
 	// ── What the shell's top bar asks ──────────────────────────────────────
 
-	// The {@link PanelStack} face, where all the documentation lives. These are
-	// the *queries* of the "queries subscribe, commands peek" rule on `$state`:
-	// read one in a scope and that scope follows the stack's shape.
+	// The {@link PanelStack} face, where the documentation lives. These are the
+	// *queries* of the "queries subscribe, commands peek" rule on `$state`.
 
 	get currentPanel(): Panel | undefined {
 		return this.$state.live[this.$state.focus]?.$panel;
@@ -1600,13 +1413,11 @@ export class PanelStackController implements PanelStack {
 	}
 
 	// ── Live settings ──────────────────────────────────────────────────────
-	// `main()` keeps these fed from small reactive scopes of their own, so an
-	// app that reads them off a proxy (or through a getter) can change them at
-	// runtime and the shell adapts in place — nothing is redrawn, no panel
-	// loses its state. Not {@link PanelStack} API: the app talks to `main()`'s
-	// options; these are how `main()` talks to the stack. The shell's *widths*
-	// need no counterpart here: `navWidth` and `maxWidth` both resize the
-	// column region, which the layout engine is already observing.
+	// `main()` feeds these from small reactive scopes, so an app changing them at
+	// runtime is adopted in place — nothing redrawn, no panel losing its state.
+	// Not {@link PanelStack} API: this is how `main()` talks to the stack.
+	// `navWidth`/`maxWidth` need no counterpart; they resize the column region,
+	// which the layout engine already observes.
 
 	/** Adopt a changed `columns` setting: one layout pass, nothing redrawn. */
 	setColumns(columns: "auto" | "single" | undefined): void {
@@ -1621,19 +1432,14 @@ export class PanelStackController implements PanelStack {
 	}
 
 	/**
-	 * The breadcrumb stack, drawn by `main()` into the top bar: every open
-	 * panel, oldest first, the ones on screen right now in bold, pinned ones
-	 * wearing their pin. Every crumb but the current panel's is a plain link to
-	 * that panel, and a link to an open panel returns to it (see `navigate`) —
-	 * so clicking a crumb goes back to that panel and closes what was stacked on
-	 * top of it, pinned and unsaved panels excepted. Right-click (or long-press)
-	 * offers pinning, and closing just that one panel — the close that splices
-	 * it out of the middle when it isn't last.
+	 * The breadcrumb stack, drawn by `main()` into the top bar: every open panel,
+	 * oldest first, the ones on screen in bold. Every crumb but the current one is
+	 * a plain link, and a link to an open panel returns to it (see `navigate`),
+	 * closing what was stacked on top. Right-click offers pinning and closing.
 	 */
 	drawCrumbs(): void {
-		// The very same row `S.tabs` puts its tab strip in: it scrolls when the
-		// stack outgrows the bar, and shows a ‹ / › over whichever end still has
-		// crumbs to reach — which a mouse can use, unlike a bare scroll area.
+		// The same row `S.tabs` uses: it scrolls when the stack outgrows the bar,
+		// with a ‹ / › a mouse can use over whichever end has crumbs left to reach.
 		scrollStrip({
 			attrs: ".s-crumbs role=navigation aria-label=Breadcrumbs",
 			content: () => {
@@ -1654,21 +1460,17 @@ export class PanelStackController implements PanelStack {
 	}
 
 	private drawCrumb(path: string, index: number, current: boolean): HTMLElement {
-		// Safe to close over: the crumb list is rebuilt whenever the stack (or
-		// its focus) changes, so this entry is `paths[index]`'s for the crumb's
-		// whole life.
+		// Safe to close over: the crumb list is rebuilt whenever the stack or its
+		// focus changes, so this stays `paths[index]`'s entry for the crumb's life.
 		const entry = this.$state.live[index];
-		// A real link, for the panel it names — so it has an address to hover, to
-		// middle-click, to copy. No click handling of its own: the shell's link
-		// handling already makes any link to an open panel the focus move a crumb
-		// should be (see `navigate`). The panel you are on is a span: nowhere to go.
+		// A real link, so it can be hovered, middle-clicked and copied. No click
+		// handling of its own: link interception already turns a link to an open
+		// panel into the focus move a crumb wants (see `navigate`).
 		return A(current ? "span.s-crumb aria-current=page" : "a.s-crumb", () => {
 			if (!current) A("href=", path);
-			// Bold = on screen right now, so the stack also says which of its panels
-			// are the visible columns — not just which one is current.
+			// Bold = on screen right now, so the stack says which panels are the
+			// visible columns, not just which one is current.
 			A(() => { if (entry?.$panel.visible) A(".s-crumb-on"); });
-			// The ● of unsaved work — the mark that nothing can close this panel —
-			// and the pin of a panel that navigation elsewhere won't close.
 			A(() => { if (entry?.$panel.unsaved) dotIcon({ size: "0.45em", attrs: ".s-crumb-unsaved" }); });
 			A(() => { if (entry?.$panel.pinned) pinIcon({ size: "0.85em", attrs: ".s-crumb-pin" }); });
 			// `||`, not `??`: the root path's last segment is the empty string.
@@ -1684,10 +1486,8 @@ export class PanelStackController implements PanelStack {
 				{
 					label: "Close",
 					icon: closeIcon,
-					// Greyed out while the panel holds unsaved work: nothing may
-					// close it (`closePath` would refuse anyway). Read here, in the
-					// crumb's own scope, so the flag flipping redraws the crumb —
-					// the ● above and this menu entry stay one truth.
+					// Read here, in the crumb's own scope, so flipping the flag
+					// redraws the crumb and the ● above stays in step with this.
 					disabled: entry?.$panel.unsaved === true,
 					click: () => void this.closePath(path),
 				},
@@ -1696,9 +1496,8 @@ export class PanelStackController implements PanelStack {
 	}
 
 	/**
-	 * Flip a panel's pin (see {@link Panel.pinned}). The flag lives on the panel;
-	 * the current history entry's snapshot is rewritten too, so a reload keeps
-	 * the pin — a same-panel state tweak, which the router applies unguarded.
+	 * Flip a panel's pin (see {@link Panel.pinned}). The current history entry's
+	 * snapshot is rewritten too, so a reload keeps the pin.
 	 */
 	private togglePin(entry: PanelEntry): void {
 		entry.$panel.pinned = !entry.$panel.pinned || undefined;
@@ -1708,10 +1507,9 @@ export class PanelStackController implements PanelStack {
 	// ── document.title ─────────────────────────────────────────────────────
 
 	/**
-	 * `"<panel title> · <app title>"`, kept in sync with the current panel — and
-	 * prefixed `"• "` while *any* open panel holds unsaved work, the way editors
-	 * mark a dirty document. Any panel, not just the current one: the risk of
-	 * losing the work is tab-wide, so the mark on the tab is too.
+	 * `"<panel title> · <app title>"`, kept in sync with the current panel, and
+	 * prefixed `"• "` while *any* open panel holds unsaved work — not just the
+	 * current one, since the risk of losing it is tab-wide.
 	 */
 	private watchTitle(): void {
 		const original = document.title;
@@ -1719,8 +1517,6 @@ export class PanelStackController implements PanelStack {
 			const entry = this.$state.live[this.$state.focus];
 			const panelTitle = entry?.$panel.title ?? entry?.$ui.fallback;
 			const appTitle = typeof this.opts.title === "string" ? this.opts.title : undefined;
-			// Reading the stack re-runs this when its shape changes; each panel's
-			// own `unsaved` (up to the first dirty one) does the rest.
 			const dirty = this.$state.live.some((e) => e.$panel.unsaved);
 			const title = panelTitle && appTitle ? `${panelTitle} · ${appTitle}` : panelTitle || appTitle;
 			if (title) document.title = (dirty ? "• " : "") + title;
@@ -1729,10 +1525,9 @@ export class PanelStackController implements PanelStack {
 	}
 
 	/**
-	 * While any open panel holds unsaved work, closing the tab — or navigating
-	 * the whole browser away — runs into the browser's own are-you-sure, with
-	 * the unsaved panel brought on screen as the question is raised, so what is
-	 * holding the tab is in front of the user rather than parked out of sight.
+	 * While any open panel holds unsaved work, closing the tab runs into the
+	 * browser's own are-you-sure, with that panel brought on screen as the
+	 * question is raised rather than left parked out of sight.
 	 */
 	private guardTabClose(): void {
 		if (typeof window === "undefined") return;
@@ -1741,25 +1536,18 @@ export class PanelStackController implements PanelStack {
 			if (!dirty) return;
 			e.preventDefault();
 			e.returnValue = true; // Chrome/Edge < 119
-			// Bring the unsaved panel on screen right here, so what is holding the
-			// tab is in front of the user — behind the browser's dialog where the
-			// browser paints that early, and the moment they choose to stay
-			// otherwise. A confirmed leave unloads the document before any of it
-			// is seen; the history entry the move makes is then where a back
-			// navigation returns to, which is right: the panel that held the tab.
+			// Bring the unsaved panel on screen, so what is holding the tab is in
+			// front of the user the moment they choose to stay.
 			// `visible` is written by the layout pass, which waits for an animation
-			// frame — and the frame owed to the navigation that parked this panel
-			// may not have landed, all the more so in a tab on its way out, which
-			// may never paint again. Settle it first, or a panel parked a moment
-			// ago still reads as on screen and the guard skips the very move it
-			// exists to make.
+			// frame that a tab on its way out may never get. Settle it first, or a
+			// panel parked a moment ago still reads as on screen and the guard skips
+			// the very move it exists to make.
 			this.flushLayout();
 			if (!dirty.$panel.visible) void this.focusAt(this.intended().stack.indexOf(dirty.path));
 		};
 		// Registered only while a panel actually holds unsaved work: a page with a
-		// `beforeunload` listener is shut out of the browser's back/forward cache,
-		// and that is a tax every navigation in the app would otherwise pay — for a
-		// guard that almost never has anything to guard.
+		// `beforeunload` listener is shut out of the back/forward cache, a tax
+		// every navigation in the app would otherwise pay.
 		A(() => {
 			if (!this.$state.live.some((entry) => entry.$panel.unsaved)) return;
 			window.addEventListener("beforeunload", onBeforeUnload);
@@ -1772,20 +1560,17 @@ export class PanelStackController implements PanelStack {
 	/**
 	 * Draw the column viewport into the current element. Called by `main()`.
 	 *
-	 * A column is the panel's own content, plus the one bit of chrome the shell
-	 * places for it: its {@link Panel.actions}, in a strip on wide shells and in
-	 * the top bar on narrow ones (see {@link drawActions}).
+	 * A column is the panel's own content plus the one bit of chrome the shell
+	 * places for it: its {@link Panel.actions} (see {@link drawActions}).
 	 */
 	drawColumns(): void {
 		const container = A("div.s-panels role=main", () => {
-			// Published before the first panel draws, rather than from the return
-			// value below: a panel sizes itself from the shell's measurements (see
-			// `measure`), and the first ones do that while this very call is still
-			// running. `A()` without arguments is "the element we're in".
+			// Published here rather than from the return value below: a panel sizes
+			// itself from the shell's measurements, and the first ones do that while
+			// this call is still running.
 			this.containerEl = A() as HTMLElement;
-			// Mounted and unmounted by path (see `$open`); a panel's DOM position
-			// among its siblings is its creation order, which is all the layering
-			// needs — `layout()` places and stacks the columns itself.
+			// Mounted by path (see `$open`); DOM order is creation order, which is
+			// all that's needed — `layout()` places and stacks the columns itself.
 			A.onEach(
 				this.$open,
 				(entry) => this.drawPanel(entry),
@@ -1794,9 +1579,9 @@ export class PanelStackController implements PanelStack {
 		}) as HTMLElement;
 
 		if (typeof ResizeObserver !== "undefined") {
-			// The region *is* the content area every width is measured from (see
-			// `measure`), so watching it catches the lot: a window resize, the
-			// sidebar coming or going, the shell's own `maxWidth` changing.
+			// The region *is* the content area every width is measured from, so
+			// watching it catches a window resize, the sidebar coming or going, and
+			// the shell's own `maxWidth` changing alike.
 			const ro = new ResizeObserver(() => this.layout());
 			ro.observe(container);
 			A.clean(() => ro.disconnect());
@@ -1808,14 +1593,10 @@ export class PanelStackController implements PanelStack {
 	private drawPanel(entry: PanelEntry): void {
 		let el: HTMLElement | undefined;
 
-		// How much room the panel wants, resolved *before* its content is drawn: an
-		// element that arrives without a width has no box for its content to measure
-		// itself against until the next frame's layout pass, which is a frame too
-		// late for anything that sizes itself from its container. So the panel is
-		// created at the width the window gives it — the "medium" width until the
-		// panel says otherwise. Reactively, too: a panel that changes its mind later
-		// (when its data arrives, say) reflows in place rather than being redrawn,
-		// and the columns beside it slide over to make room.
+		// How much room the panel wants, resolved *before* its content is drawn:
+		// an element that arrives width-less has no box for its content to measure
+		// against until the next frame — a frame too late. Reactive, so a panel
+		// changing its mind later reflows in place rather than being redrawn.
 		A(() => {
 			const asked = entry.$panel.maxWidth;
 			entry.maxWidth = asked === "small" || asked === "large" || asked === "none" ? asked : "medium";
@@ -1825,36 +1606,31 @@ export class PanelStackController implements PanelStack {
 			// Published to the panel too, so a handler can read the box it is about
 			// to draw into without measuring it.
 			if (A.peek(entry.$panel, "width") !== width) entry.$panel.width = width;
-			// The first run has no element to put it on yet — it's created with this
-			// width, just below. Later runs are the panel changing its mind.
+			// The first run has no element yet — it's created with this width below.
 			if (!el) return;
 			el.style.width = `${width}px`;
 			this.scheduleLayout();
 		});
 
 		el = A(`section.s-panel${entry.width ? ` w:${entry.width}px` : ""}`, "destroy=", (node: HTMLElement) => this.playExit(entry, node), () => {
-			// The actions strip, in its own scope: chrome may redraw freely — when
-			// the panel changes its actions, when the shell crosses the narrow
-			// threshold — but the body below never may.
+			// In its own scope: the chrome may redraw freely, the body below may not.
 			A(() => this.drawActions(entry));
 
 			A("div.s-content", () => {
 				entry.draw(entry.$panel);
 				// After the content, so there is something to scroll when restoring.
 				route.persistScroll(entry.path);
-				// A panel that named itself is done; one that didn't lends its
-				// first line of text (the DOM is already built — Aberdeen draws
-				// synchronously) to the crumbs and document.title, so neither
-				// ever goes blank. Peeked: a rename must not redraw the panel.
+				// A panel that set no title borrows its first line of text (the DOM
+				// is built already — Aberdeen draws synchronously) so the crumbs and
+				// document.title never go blank. Peeked: a rename must not redraw.
 				if (A.peek(entry.$panel, "title") == null) {
 					const text = firstText(A() as HTMLElement);
 					if (text && A.peek(entry.$ui, "fallback") !== text) entry.$ui.fallback = text;
 				}
 			});
 
-			// The loading hint, in its own scope so flipping the flag doesn't
-			// redraw the panel's content. Held-back panels show nothing yet: they
-			// are still parked off screen, waiting to slide in with real content.
+			// Its own scope, so flipping the flag doesn't redraw the panel's content.
+			// A held-back panel shows nothing: it is still off screen.
 			A(() => {
 				if (!entry.$panel.loading || entry.$ui.holding) return;
 				A("div.s-panel-loading aria-hidden=true", () => { A("i"); A("i"); A("i"); });
@@ -1862,11 +1638,10 @@ export class PanelStackController implements PanelStack {
 		}) as HTMLElement;
 
 		entry.el = el;
-		// It has its width, but nothing animates from the arbitrary initial spot;
-		// `layout()` gives the panel its place in the run (and turns transitions
-		// back on) in the upcoming frame, before anything is painted. A redraw (a
-		// reactive dependency inside the handler) lands here too, with a brand-new
-		// element that has to be placed again before it may animate.
+		// Nothing may animate from the arbitrary initial spot; `layout()` gives the
+		// panel its place (and turns transitions back on) in the coming frame,
+		// before anything is painted. A redraw lands here too, with a new element
+		// that has to be placed again first.
 		entry.placed = false;
 		el.style.transition = "none";
 		A.clean(() => { if (entry.el === el) entry.el = undefined; });
@@ -1883,9 +1658,7 @@ export class PanelStackController implements PanelStack {
 	/**
 	 * The one bit of column chrome the shell draws: the panel's actions, in a
 	 * quiet strip above the scroll area — and only while the shell is wide, the
-	 * top bar carrying them otherwise. Everything else in a column is the panel's
-	 * own content: a screen that wants a heading or a card draws them itself.
-	 * Going back isn't here either — that is the breadcrumbs' job, in the bar.
+	 * top bar carrying them otherwise. Everything else is the panel's own content.
 	 */
 	private drawActions(entry: PanelEntry): void {
 		if (this.opts.$shell.narrow || entry.$panel.actions == null) return;
@@ -1901,10 +1674,9 @@ export class PanelStackController implements PanelStack {
 	}
 
 	/**
-	 * Run the pending layout pass now, rather than on the frame it is waiting
-	 * for. For the callers that have to *read* what only the pass knows —
-	 * `$panel.visible`, `$panel.width` — at a moment when waiting isn't an
-	 * option. Does nothing when no pass is owed.
+	 * Run the pending layout pass now instead of on the frame it waits for, for
+	 * callers that must read what only the pass knows (`$panel.visible`,
+	 * `$panel.width`) and can't wait. Does nothing when no pass is owed.
 	 */
 	private flushLayout(): void {
 		if (!this.layoutQueued) return;
@@ -1914,26 +1686,17 @@ export class PanelStackController implements PanelStack {
 
 	/**
 	 * Measure the content area, and with it the width a panel of each size gets.
+	 * The column region *is* that area (CSS's doing), so there is nothing to add
+	 * up here that could drift from the bars above and below. Widths stay
+	 * fractional: a rounded column edge would drift a pixel away from that chrome.
 	 *
-	 * The column region *is* the content area: it takes whatever the shell has
-	 * left beside the sidebar, capped by the shell's own `maxWidth` — all of it
-	 * CSS's doing, so there is nothing to add up here and nothing that could
-	 * drift from the width the bars above and below line up with. Fractional
-	 * widths throughout: a rounded column edge would drift a pixel away from that
-	 * chrome.
+	 * The area divides into the narrowest whole number of columns of at least
+	 * {@link SMALL_MIN_PX} — so 1080px is three of 360, 1520px four of 380 — each
+	 * capped at {@link SMALL_MAX_PX}. A width is therefore a pure function of the
+	 * window: a panel NEVER resizes because a neighbour came or went.
 	 *
-	 * The area divides into the narrowest whole number of columns that keeps each
-	 * at least {@link SMALL_MIN_PX} wide — the `"small"` unit every other size is
-	 * a multiple of, capped at the area itself. So 1080px is three columns of 360
-	 * and 1520px four of 380. An area too narrow for two is a single column,
-	 * itself capped at {@link SMALL_MAX_PX}: a small centres there instead of
-	 * stretching toward 720, so its ceiling holds, while the larger sizes still
-	 * take the whole area. A width is thus a pure function of the window: a panel
-	 * NEVER resizes because a neighbour came or went, and only a window resize
-	 * (the snap pass in `layout`) changes one.
-	 *
-	 * `undefined` while the shell has no width to speak of (it isn't in a document
-	 * yet, or it's `display:none`); the next pass tries again.
+	 * `undefined` while the shell has no width yet (not in a document, or
+	 * `display:none`); the next pass tries again.
 	 */
 	private measure(): Geometry | undefined {
 		const el = this.containerEl;
@@ -1945,10 +1708,9 @@ export class PanelStackController implements PanelStack {
 	}
 
 	/**
-	 * The measurements this pass runs on. Taken once per layout pass and per
-	 * commit, and shared with the panels drawn in between — they all size
-	 * themselves against the same shell, and a `getBoundingClientRect()` each
-	 * would be a forced reflow each, in the middle of building their DOM.
+	 * The measurements this pass runs on, taken once per pass and per commit and
+	 * shared with the panels drawn in between: they must all size against the
+	 * same shell, and a `getBoundingClientRect()` each is a forced reflow each.
 	 */
 	private geometry(): Geometry | undefined {
 		return (this.geom ??= this.measure());
@@ -1960,24 +1722,20 @@ export class PanelStackController implements PanelStack {
 	}
 
 	/**
-	 * Size and position every panel.
-	 *
-	 * This is everything CSS can't work out for itself: which panels exist, which
-	 * of them are visible, how wide each one is and where it sits. All the motion
-	 * between two of these arrangements is CSS's job.
+	 * Size and position every panel — everything CSS can't work out for itself:
+	 * which panels exist, which are visible, how wide each is and where it sits.
+	 * The motion between two such arrangements is CSS's job.
 	 */
 	private layout(): void {
 		const container = this.containerEl;
 		const shell = container?.closest<HTMLElement>(".s-main");
 		if (!container || !shell) return;
-		// This pass always runs from a fresh frame (rAF, a ResizeObserver) — no
-		// reactive scope is active, so the stack and the panels are read plainly:
-		// nothing here can subscribe to anything.
+		// Always runs from a fresh frame (rAF, a ResizeObserver), so no reactive
+		// scope is active and nothing read here can subscribe to anything.
 		const live = this.$state.live;
 		const n = live.length;
-		// A panel that hasn't drawn yet has no width to contribute, which would make
-		// this pass's arithmetic (and any enter animation it triggers) meaningless.
-		// Every mount schedules another pass, so simply wait for it.
+		// A panel that hasn't drawn yet has no width to contribute, which would
+		// make this pass meaningless. Every mount schedules another, so just wait.
 		if (!n || live.some((entry) => !entry.el)) return;
 
 		// This pass measures afresh — it is the one thing that runs after a resize.
@@ -1987,11 +1745,9 @@ export class PanelStackController implements PanelStack {
 
 		const single = this.opts.columns === "single";
 
-		// A window resize — or the app resizing the shell itself, by changing
-		// `navWidth` or `maxWidth` — must be adopted instantly: geometry tracking
-		// the window through a 450ms transition reads as lag, and a shell
-		// animating itself into place on its first pass reads as a glitch. Only
-		// what a *panel* did is worth animating, and none of those three are.
+		// A resize of the window (or of the shell, via `navWidth`/`maxWidth`) must
+		// be adopted instantly — geometry chasing the window through a transition
+		// reads as lag. Only what a *panel* did is worth animating, so
 		// `.s-shell-snap` suppresses every standing transition for this one pass.
 		const snap = this.lastGeom?.area !== geom.area;
 		if (snap) {
@@ -2001,9 +1757,8 @@ export class PanelStackController implements PanelStack {
 
 		const width = (entry: PanelEntry) => geom.size[entry.maxWidth];
 
-		// The visible run: as many columns as the window fits, at the sizes the
-		// window gives them, ending at the current panel — which always shows.
-		// Panels beyond it are parked past the right edge (see phase 1).
+		// The visible run: as many columns as fit, ending at the current panel,
+		// which always shows. Panels beyond it are parked (see phase 1).
 		const cur = Math.min(this.$state.focus, n - 1);
 		let first = cur;
 		let runSum = width(live[cur]);
@@ -2016,45 +1771,37 @@ export class PanelStackController implements PanelStack {
 			}
 		}
 
-		// The content area is a fixed width, so a run that doesn't fill it sits
-		// centred in it rather than hanging off its left edge. Everything around
-		// the columns holds still meanwhile: the sidebar, the top bar and the
-		// footer never move, however many columns come and go.
+		// The content area is a fixed width, so a run that doesn't fill it centres
+		// rather than hanging off the left edge — the chrome around it never moves.
 		const left = (geom.area - runSum) / 2;
 
 		for (let i = first; i <= cur; i++) live[i].width = width(live[i]);
-		// Panels that have never been visible get their would-be width too, so a
-		// reveal doesn't start from nothing.
+		// Never-visible panels get their would-be width, so a reveal doesn't start
+		// from nothing.
 		for (const entry of live) {
 			if (!entry.width) entry.width = width(entry);
 		}
 
-		// Phase 1 — every panel's *start* state for this frame. Panels already on
-		// screen simply move (their standing transition animates it); freshly
-		// mounted ones still have transitions switched off, so what we set here is
-		// adopted instantly and becomes the "before" of their enter animation.
+		// Phase 1 — every panel's *start* state for this frame. Panels on screen
+		// simply move; freshly mounted ones still have transitions off, so what is
+		// set here is adopted instantly and becomes the "before" of their enter.
 		const fresh: PanelEntry[] = [];
 		let x = left;
 		for (let i = 0; i < n; i++) {
 			const entry = live[i];
 			const el = entry.el!;
 			const shown = i >= first && i <= cur;
-			// Visible columns tile the run, left to right. Panels crowded out from
-			// under it rest at its left edge; panels beyond the current panel park
-			// just past its right edge — both keep their last width. Deeper panels
-			// layer over shallower ones, each on the odd layer for its depth (see
-			// LAYER_STEP).
+			// Visible columns tile the run left to right; crowded-out ones rest at
+			// its left edge and parked ones just past its right, both keeping their
+			// last width. Deeper panels layer over shallower (see LAYER_STEP).
 			place(el, shown ? x : i > cur ? left + runSum : left, entry.width, LAYER_STEP * i + 1);
-			// What `$panel.visible` and `$panel.width` report: this pass is the one
-			// thing that knows them, window resizes included. Written only on a
-			// change, so per-panel UI hanging off them isn't rebuilt by every pass.
+			// Written only on a change, so per-panel UI hanging off `visible` or
+			// `width` isn't rebuilt by every pass.
 			if (entry.$panel.visible !== shown) entry.$panel.visible = shown;
 			if (entry.$panel.width !== entry.width) entry.$panel.width = entry.width;
 			if (shown) x += entry.width;
 			el.classList.toggle("s-panel-sep", shown && i > first);
-			// Off-screen panels fade out over the edge they park at and, once
-			// faded, stop being rendered at all — but they keep their DOM, and
-			// their scroll position.
+			// Off-screen panels fade out and stop rendering, keeping their DOM.
 			el.classList.toggle("s-panel-hidden", i < first);
 			el.classList.toggle("s-panel-parked", i > cur);
 			el.toggleAttribute("inert", !shown);
@@ -2064,14 +1811,13 @@ export class PanelStackController implements PanelStack {
 			// it can enter with real content instead of an empty column.
 			if (!entry.$panel.loading || entry.holdDone) entry.$ui.holding = false;
 			else if (!entry.$ui.holding) { entry.$ui.holding = true; this.holdEnter(entry); }
-			// Already at its resting place; the enter animation is the offset (and
-			// the transparency) it starts from, one edge to the right.
+			// Already at its resting place; the enter is the offset and transparency
+			// it starts from, one edge to the right.
 			if (entry.enter && shown) el.classList.add("s-panel-enter");
 		}
 
-		// Phase 2 — force the browser to adopt those start states (and, on a snap
-		// pass, the transition-free geometry) as the ones to animate *from*.
-		// (Reading a layout property is what does it.)
+		// Phase 2 — reading a layout property forces the browser to adopt those
+		// start states (and a snap pass's transition-free geometry) to animate from.
 		if (fresh.length || snap) void container.offsetWidth;
 		if (snap) shell.classList.remove("s-shell-snap");
 		// Phase 3 — transitions back on, start state dropped, and off they go.

@@ -3,11 +3,9 @@ import { type Bindable, type Slot, type Attributes, drawSlot, uniqueId } from ".
 
 /**
  * Options shared by all *form field* components (textline, textarea, checkbox,
- * autocomplete, ...).
- *
- * Fields share a consistent vertical layout: an optional label, the control
- * itself, and optional help/error text below it. {@link form} relies on this
- * shared structure to align groups of fields.
+ * autocomplete, ...). Every field lays out the same way — optional label,
+ * control, optional help/error below — which is what lets {@link form} align
+ * groups of them.
  */
 export interface FieldOptions {
 	/** Aberdeen attr/style string applied to the field's wrapper element. */
@@ -42,9 +40,8 @@ A.insertGlobalCss({
 	".s-help": "font-size:0.82em fg:$s-muted",
 	".s-error": "font-size:0.82em fg:$s-danger",
 	".s-input": {
-		// A light inset field, derived from the surrounding surface: the surface
-		// background nudged slightly toward its ink, with the ink as text. Adapts to
-		// whatever surface (and mode) holds the field, no fixed input colour needed.
+		// Derived from the surrounding surface — its background nudged toward its ink —
+		// so the field adapts to any surface and mode, with no fixed input colour.
 		"&": "w:100% background: color-mix(in oklab, $s-bg, $s-text 4%); color:$s-text border: 1px solid $s-faint; r:$s-radius padding: 0.55em 0.7em; transition: border-color 0.15s, box-shadow 0.15s;",
 		"&:hover:not(:disabled)": "border-color: color-mix(in oklab, $s-text, $s-bg 55%);",
 		"&:focus-visible": "border-color:$s-accent box-shadow: 0 0 0 3px $s-focus; outline:none",
@@ -56,9 +53,8 @@ A.insertGlobalCss({
  * Render the standard field chrome (label + control + help/error) around a
  * caller-supplied control.
  *
- * Each piece is read inside its own small reactive scope, so e.g. flipping
- * `error` on a proxied options object only re-renders the error line — not the
- * control.
+ * Each piece gets its own reactive scope, so flipping `error` on a proxied
+ * options object re-renders just the error line, not the control.
  *
  * @param opts The field options.
  * @param drawControl Receives the resolved `id` and the live "invalid" getter,

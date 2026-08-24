@@ -31,13 +31,11 @@ A.insertGlobalCss({
 });
 
 /**
- * An opinionated `<form>` wrapper that lays its fields out consistently — a clean
- * single column by default, or a responsive grid — and provides a standard
- * action bar.
- *
- * Field components ({@link import("./textline").textline} et al.) drop straight
- * in as {@link ContentOptions.content}. Submission is wired so the browser's
- * native validation runs, but the page never reloads.
+ * An opinionated `<form>` wrapper: fields in a single column by default, or a
+ * responsive grid, plus a standard action bar. Field components
+ * ({@link import("./textline").textline} et al.) drop straight in as
+ * {@link ContentOptions.content}; the browser's native validation runs on submit,
+ * but the page never reloads.
  *
  * @example
  * ```ts
@@ -56,8 +54,7 @@ export function form(opts: FormOptions | Slot = {}): void {
 	const o: FormOptions = typeof opts === "string" || typeof opts === "function" ? { content: opts } : opts;
 
 	A(`form.s-form`, o.attrs, () => {
-		// Toggle grid class in its own scope so changing layout doesn't recreate
-		// the fields (which would lose focus / input state).
+		// Own scope, so a layout change doesn't recreate the fields (losing focus/input state).
 		A(() => {
 			A(".grid=", o.layout === 'grid');
 		});

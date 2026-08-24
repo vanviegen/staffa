@@ -44,8 +44,8 @@ A.insertGlobalCss({
 		".s-chip > button": "cursor:pointer border:0 background:transparent fg:$s-muted font-size:1.1em line-height:1 padding: 0 0.2em; r:4px",
 		".s-chip > button:hover": "fg:$s-text background:$s-faint",
 		"input": "flex:1 min-width:6ch border:0 background:transparent color:inherit outline:none padding:0.25em",
-		// The popup is a `.s-s.neutral.shadow` surface (see below): background, border,
-		// radius and elevation all come from the surface.
+		// Background, border, radius and elevation come from the popup's
+		// `.s-s.neutral.shadow` surface (see below).
 		"> .s-menu": "position:absolute top:100% left:0 right:0 z-index:20 margin-top:4px max-height:15rem overflow-y:auto list-style:none p:$1 margin-bottom:0",
 		"> .s-menu li": "margin:0",
 		".s-option": "padding: 0.45em 0.6em; r:6px cursor:pointer transition: background 0.1s;",
@@ -261,9 +261,8 @@ export function autocomplete(opts: AutocompleteOptions): void {
 				$st.open = false;
 			}
 		} else if (e.key === "Escape") {
-			// Only consume Escape while the list is showing: it dismisses the
-			// innermost layer, so a surrounding dialog must not also close. With the
-			// list already closed, let it pass through to the dialog/nav handlers.
+			// Only consume Escape while the list is showing: it dismisses the innermost
+			// layer, so a surrounding dialog closes on the next press, not this one.
 			if ($st.open) {
 				e.preventDefault();
 				$st.open = false;

@@ -1,12 +1,10 @@
 import A from "aberdeen";
 
 /**
- * Shared building blocks for the Staffa component library.
- *
- * Every component in Staffa is "just an Aberdeen draw function": a plain function
- * that takes a single, strongly typed options object and emits DOM through
- * Aberdeen's {@link A} function. This module defines the option-type hierarchy
- * that all components build on, plus a couple of tiny helpers.
+ * Shared building blocks for the Staffa component library: the option-type
+ * hierarchy every component builds on, plus a couple of tiny helpers. A
+ * component is just an Aberdeen draw function — one typed options object in,
+ * DOM out through {@link A}.
  */
 
 /**
@@ -56,9 +54,9 @@ export interface ContentOptions {
 
 /**
  * Shell width — not viewport width — at or below which the app shell goes
- * "narrow": the nav sidebar collapses to a hamburger, and a routed shell
- * has room for exactly one full-bleed column. Shared by the `@container` queries
- * that do the switching and by the JS that has to agree with them.
+ * "narrow": the nav sidebar collapses to a hamburger, and a routed shell has room
+ * for exactly one full-bleed column. Shared by the `@container` queries that do
+ * the switching and by the JS that has to agree with them.
  */
 export const NARROW_PX = 640;
 
@@ -84,13 +82,12 @@ const FOCUSABLE_SELECTOR = "a[href], button, input, select, textarea, [tabindex]
 
 /**
  * Move keyboard focus to the first focusable element inside `container`, skipping
- * disabled, `aria-disabled`, `tabindex=-1` and hidden ones. When `prefer` (a
- * selector) matches a focusable element it wins — e.g. a menu's current item — so
- * opening lands where the user already is. Returns whether anything was focused.
+ * disabled, `aria-disabled`, `tabindex=-1` and hidden ones. A `prefer` selector,
+ * where it matches a focusable element, wins — e.g. a menu's current item.
+ * Returns whether anything was focused.
  *
- * Shared by overlays (the floating menu, dialogs) so "open → focus the right
- * thing" behaves identically everywhere. Call it after the element is in the DOM
- * and laid out (typically inside a `requestAnimationFrame`).
+ * Shared by the overlays (floating menu, dialogs). Call it once the element is in
+ * the DOM and laid out — typically inside a `requestAnimationFrame`.
  */
 export function focusFirst(container: HTMLElement, prefer?: string): boolean {
 	const ok = (el: Element): el is HTMLElement =>
@@ -108,15 +105,11 @@ export function focusFirst(container: HTMLElement, prefer?: string): boolean {
 
 /**
  * Mount a portal (tooltip, toast, menu, dialog, …) directly into `<body>`.
- * Must be called at module top level, where Aberdeen's root scope (whose
- * element is `document.body`) is current. Separate `A.mount`s sharing a parent
- * can't tell their nodes apart, but sibling scopes within the root scope track
- * their positions, so portals coexist without wrapper elements and add nothing
- * to the DOM while they draw nothing.
- *
- * Scope creation is deferred a microtask so that an app drawing into `<body>`
- * at module top level gets its content *before* the portals, keeping overlays
- * at the end of the document.
+ * Must be called at module top level, where Aberdeen's root scope (whose element
+ * is `document.body`) is current: sibling scopes there track their positions, so
+ * portals coexist without wrapper elements — separate `A.mount`s sharing a parent
+ * could not. Scope creation is deferred a microtask, so an app drawing into
+ * `<body>` gets its content first and the overlays stay at the end.
  */
 export function mountPortal(draw: () => void): void {
 	queueMicrotask(() => A(draw));

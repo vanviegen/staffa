@@ -14,9 +14,8 @@ export interface TooltipOptions {
 	attrs?: Attributes;
 }
 
-// The tip is a `.s-s.neutral.shadow` surface (it portals to <body>, so it renders at
-// the page's next neutral shade), which provides its background, ink, border,
-// radius and elevation.
+// Background, ink, border, radius and elevation come from the `.s-s.neutral.shadow`
+// surface; portalled to <body>, it renders at the page's next neutral shade.
 A.insertGlobalCss({
 	".s-tt-tip": {
 		"&":
@@ -29,8 +28,7 @@ A.insertGlobalCss({
 
 // ─── Global portal state ────────────────────────────────────────────────────
 
-// At most one tooltip is visible at a time. The anchor is the element the
-// handlers were attached to (its bounding rect drives positioning).
+// At most one tooltip at a time; the anchor is the element whose rect positions it.
 const $ttActive = A.proxy<{ opts: TooltipOptions; anchor: HTMLElement } | undefined>(undefined);
 let hideTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -107,11 +105,10 @@ mountPortal(() => {
 // ─── Public component ────────────────────────────────────────────────────────
 
 /**
- * Attaches a tooltip to the current element: adds hover/focus handlers via
- * {@link A} so the tip appears when the element is hovered or keyboard-focused.
- * The tip panel is rendered into `document.body` via a portal, so it is never
- * clipped by `overflow:hidden` ancestors. Position is computed from the
- * element's bounding rect and automatically flips when near the viewport edge.
+ * Attaches a tooltip to the current element, shown on hover or keyboard focus.
+ * The tip panel is portalled into `document.body`, so `overflow:hidden` ancestors
+ * never clip it; it is placed from the element's bounding rect, flipping to the
+ * opposite side when near the viewport edge.
  *
  * @example
  * ```ts

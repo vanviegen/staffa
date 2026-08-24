@@ -40,11 +40,9 @@ export interface TextlineOptions extends FieldOptions {
 }
 
 /**
- * A single-line text input — covering text, passwords, numbers, email, dates and
- * the other line-oriented `<input>` types.
- *
- * Renders inside the standard {@link drawField} chrome (label, control,
- * help/error), so it aligns cleanly inside a {@link form}.
+ * A single-line text input — text, passwords, numbers, email, dates and the other
+ * line-oriented `<input>` types. Renders inside the standard {@link drawField}
+ * chrome (label, control, help/error), so it aligns cleanly inside a {@link form}.
  *
  * @example
  * ```ts

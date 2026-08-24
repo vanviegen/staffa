@@ -3,54 +3,23 @@ import A from "aberdeen";
 /**
  * Theming and global base styles for Staffa.
  *
- * # The surface model
+ * A Staffa app is a tree of **surfaces** (`.s-s`), in two families:
  *
- * A Staffa app is a tree of **surfaces**. A surface is anything with its own
- * background and matching ink — the page, a card, a coloured button. Mark an
- * element with `.s-s` and (usually) one modifier class. There are two families:
+ * - **Neutral** — `.neutral`, and the implicit page at `:root`. Its shade steps
+ *   with nesting depth (capped). No `tonal`/`outlined` variants.
+ * - **Accent** — `.primary`, `.danger`, `.success`, `.warning`, `.link` (a bare
+ *   `.s-s` is primary): a bright fill with white ink, `.tonal`/`.outlined`
+ *   variants supported. A surface nested *inside* one is forced back to filled,
+ *   so it can't bleed into the vivid parent.
  *
- * - **Neutral surfaces** — `.s-s.neutral` (and the implicit page at `:root`). A calm
- *   neutral whose shade steps automatically with nesting depth (page → panel →
- *   raised, capped). No `tonal`/`outlined` variants. Use them for cards, bars,
- *   popovers — anything that just holds content.
- * - **Accent surfaces** — `.s-s.primary`, `.s-s.danger`, `.s-s.success`,
- *   `.s-s.warning`, `.s-s.link` (a bare `.s-s` defaults to primary). A bright
- *   fill with white ink, painted as a subtle single-colour gradient. They support
- *   `.tonal` and `.outlined` variants. A surface nested *inside* an accent surface
- *   is always rendered filled, so it can't bleed into the vivid parent.
- *
- * # Contextual tokens
- *
- * Inside any surface (including `:root`) these inherited custom properties are
- * defined, so widgets adapt to wherever they're nested:
- *
- * | token        | meaning                                                   |
- * | ------------ | --------------------------------------------------------- |
- * | `--s-bg`     | the surface background                                    |
- * | `--s-text`   | default ink (also applied as `color`)                     |
- * | `--s-muted`  | secondary text (subtitles, help)                          |
- * | `--s-accent` | the surface's "pop" — the brand primary on neutral surfaces, the ink on accent surfaces |
- * | `--s-faint` | hairline, derived from text/bg                            |
- *
- * The brand/semantic colours are mode-independent and settable: `--s-primary`
- * (the one brand colour — it tints the neutrals and defines `.s-s.primary`),
- * `--s-danger`, `--s-success`, `--s-warning`, and `--s-link` (the link colour,
- * also the fill of the `.s-s.link` surface). Links render in `--s-link` on
- * neutral surfaces and in the ink on accent surfaces.
- *
- * # Borders & shadows
- *
- * Neutral surfaces carry a subtle hairline border by default (so a card reads as a
- * card with no component help); it's applied through `:where()`, so a bar that
- * wants only a divider overrides it trivially. Any surface can opt into elevation
- * with `.shadow` or `.extra-shadow`, or drop a component's built-in shadow with
- * `.no-shadow` (e.g. `S.button({ attrs: ".no-shadow" })`).
- *
- * # Customising
- *
- * Re-skin by overriding the colour tokens (e.g. `--s-primary`). To add your own
- * accent surface, just set `--s-bg` (and, if needed, `--s-text`) — the gradient
- * and the rest of the tokens follow automatically:
+ * Every surface (and `:root`) defines the inherited tokens widgets style against,
+ * so they adapt to wherever they're nested: `--s-bg`, `--s-text` (also applied as
+ * `color`), `--s-muted` (secondary text), `--s-accent` (the surface's "pop" — the
+ * brand primary on neutral surfaces, the ink on accent ones) and `--s-faint`
+ * (hairline). The brand/semantic colours — `--s-primary`, `--s-danger`,
+ * `--s-success`, `--s-warning`, `--s-link` — are mode-independent and settable;
+ * overriding them re-skins the app. A custom accent surface needs only `--s-bg`
+ * (and, if needed, `--s-text`); gradient and tokens follow:
  *
  * ```ts
  * A.insertGlobalCss({ ".s-s.brand": "--s-bg:#ef6b00 --s-text:#fff" });
@@ -60,10 +29,9 @@ import A from "aberdeen";
 
 /**
  * The subtle single-colour wash a surface is painted with, as a `background:`
- * declaration, at the given angle. Shared constants rather than a CSS custom
- * property, deliberately: `var()`s inside a custom property resolve where the
- * property is *defined*, so a `--s-sheen` at `:root` would paint every surface
- * with the page's wash instead of its own `$s-bg`'s.
+ * declaration, at the given angle. A shared constant rather than a `--s-sheen`
+ * custom property: `var()`s inside a custom property resolve where it is
+ * *defined*, so every surface would get the page's wash instead of its own.
  */
 const sheen = (angle: string) =>
 	`background: linear-gradient(${angle}, color-mix(in oklab, $s-bg, white 9%), color-mix(in oklab, $s-bg, black 9%));`;
@@ -72,16 +40,10 @@ const sheen = (angle: string) =>
 export const SURFACE_SHEEN = sheen("170deg");
 
 /**
- * The same wash, straight down — for panels.ts, where the routed columns and
- * the ground beside them have to look like one continuous surface.
- *
- * A gradient at an angle takes its extent from the box's *width* as well as its
- * height, so a 430px column and the 1720px region behind it would paint
- * different slices of the same wash and meet at a visible step. Straight down,
- * the extent is the height alone — which every column shares exactly with the
- * region (a column is `top:0 bottom:0` in it) and so with every other column.
- * The 10° of tilt is worth losing there; it buys the one place in the app where
- * boxes of *different widths* must be seamless.
+ * The same wash, straight down — for panels.ts, where the routed columns and the
+ * ground beside them have to look like one continuous surface. An angled gradient
+ * takes its extent from the box's *width* as well as its height, so boxes of
+ * different widths would paint different slices of it and meet at a visible step.
  */
 export const PANEL_SHEEN = sheen("180deg");
 
@@ -129,13 +91,9 @@ export function getDarkMode(allowAuto = false): boolean | undefined {
 	return v === undefined && !allowAuto ? A.darkMode() : v;
 }
 
-// ---------------------------------------------------------------------------
-// The only mode-dependent thing: the neutral surface shades and their ink,
-// written straight onto the surfaces (no intermediate palette vars). `:root` is
-// the page (depth 0); each nested `.neutral` steps one shade up, capped at the
-// `.neutral .neutral` rule. The accent (coloured) surfaces and everything else are
-// mode-independent and live in the static block below.
-// ---------------------------------------------------------------------------
+// The only mode-dependent thing: the neutral shades and their ink, written
+// straight onto the surfaces (no intermediate palette vars). `:root` is the page
+// (depth 0); each nested `.neutral` steps a shade up, capped at the second level.
 A(() => {
 	if (getDarkMode()) {
 		A.insertGlobalCss({
@@ -152,37 +110,29 @@ A(() => {
 	}
 });
 
-// ---------------------------------------------------------------------------
-// Static structure — inserted once. The colour tokens are mode-independent
-// (saturated fills that carry white ink on either background); shape/effect
-// tokens are single values kept only because they're reused across components.
-// Rule order matters: role fills come after the `:not(.neutral)` default, so a
-// caller's `attrs` override wins at equal specificity.
-// ---------------------------------------------------------------------------
+// Static structure — inserted once, mode-independent. Rule order matters: role
+// fills come after the `:not(.neutral)` default, so a caller's `attrs` override
+// wins at equal specificity.
 
 A.setSpacingCssVars(1.1);
 
 A.insertGlobalCss({
-	// What follows is a lightweight CSS reset. Semantic HTML should keep working, but less ugly/with some reasonable defaults.
+	// A lightweight reset: bare semantic HTML, with less ugly defaults.
 	"*, *::before, *::after": "box-sizing:border-box",
 	html: "text-size-adjust:100%",
 	body: "m:0 p:$3 line-height:1.5 font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing:antialiased background-color:$s-bg text:$s-text",
-	// Links resolve to the contextual link foreground: the link colour on nesting
-	// surfaces, the ink on accent surfaces.
+	// The contextual link colour: `--s-link` on neutral surfaces, the ink on accent ones.
 	a: "color: $s-link-fg; text-decoration:underline text-underline-offset:2px; transition: color 0.12s, filter 0.12s;",
 	"a:hover": "filter: brightness(1.15)",
 	"input, button, textarea, select, optgroup": "font:inherit color:inherit",
-	// Bare text-like fields get a calm bordered box derived from the surface. The
-	// styled controls (`.s-input`, autocomplete's `.s-control`) override this via
-	// higher specificity, so this only governs otherwise-unstyled HTML. `:where()`
-	// keeps it at element specificity, so a component class always wins.
+	// Bare text-like fields get a calm bordered box derived from the surface.
+	// `:where()` keeps it at element specificity, so a component class always wins.
 	"input:where(:not([type=checkbox],[type=radio],[type=range],[type=file],[type=color],[type=image],[type=submit],[type=button],[type=reset],[type=hidden])), textarea, select":
 		"background:$s-bg border: 1px solid $s-faint; r:$s-radius-sm padding: 0.45em 0.65em; max-width:100%",
-	// Checkboxes/radios: a touch larger with a pointer cursor. (The brand accent —
-	// `accent-color` — is inherited from the surface, see the `:root, .s-s` rule.)
+	// Checkboxes/radios: a touch larger, with a pointer cursor. (`accent-color` is
+	// inherited from the surface, see the `:root, .s-s` rule.)
 	"input:where([type=checkbox],[type=radio])": "width:1.15em height:1.15em cursor:pointer",
-	// Range: a thin pill track (faint, brand-filled on the lower side in Firefox)
-	// with a round brand thumb — no native groove/outline.
+	// Range: a thin faint pill track with a round brand thumb — no native groove.
 	"input[type=range]": "appearance:none background:transparent cursor:pointer vertical-align:middle",
 	"input[type=range]::-webkit-slider-runnable-track": "height:4px r:99px background:$s-faint",
 	"input[type=range]::-moz-range-track": "height:4px r:99px background:$s-faint",
@@ -223,12 +173,11 @@ A.insertGlobalCss({
 		// Brand sweep for the headline mark, the active nav pill, the selected tab.
 		"--s-gradient: linear-gradient(135deg, color-mix(in oklab, $s-primary, white 16%), color-mix(in oklab, $s-primary, black 14%));",
 
-	// Neutral surfaces (and the page): the pop colour is the brand primary, and
-	// links use the link colour. (The bg/ink come from the mode block above.)
+	// Neutral surfaces (and the page); their bg/ink come from the mode block above.
 	":root, .s-s.neutral": "--s-accent:$s-primary --s-link-fg:$s-link",
 
-	// Accent surfaces: bright fill, white ink. The bare `:not(.neutral)` carries the
-	// shared defaults (with a primary fallback fill); each role names its own fill.
+	// Accent surfaces: bright fill, white ink. The bare `:not(.neutral)` holds the
+	// shared defaults; each role below names its own fill.
 	".s-s:not(.neutral)":
 		"--s-bg:$s-primary " + // Default .s-s to .primary
 		"border:0 " +
@@ -241,8 +190,8 @@ A.insertGlobalCss({
 	".s-s.link": "--s-bg:$s-link",
 	".s-s.primary": "--s-bg:$s-primary",
 
-	// Shared derive: every surface (and the page) gets a muted ink + hairline from
-	// its resolved text/bg pair, plus `color` and themed scrollbars.
+	// Every surface (and the page) derives its muted ink + hairline from the
+	// text/bg pair it resolved to above.
 	":root, .s-s":
 		"--s-muted: color-mix(in oklab, $s-text, $s-bg 42%); " +
 		"--s-faint: color-mix(in oklab, $s-text, $s-bg 80%); " +
@@ -250,55 +199,44 @@ A.insertGlobalCss({
 	// Subtle single-colour gradient sheen, painted on every surface (and the page).
 	".s-s, body": SURFACE_SHEEN,
 	".s-s": "r:$s-radius",
-	// Neutral surfaces own a subtle hairline border (a card reads as a card without
-	// any component help). `:where()` keeps it zero-specificity, so a bar/panel that
-	// wants only a divider (a box header, the app top bar, the nav panel) overrides
-	// it with a single plain rule. Accent (filled) surfaces don't get it — their fill
-	// is the edge. Buttons keep their own `border:0`.
+	// A neutral surface owns a hairline border, so a card reads as a card without
+	// any component help. `:where()` keeps it zero-specificity, so a bar that wants
+	// only a divider overrides it with a single plain rule.
 	":where(.s-s.neutral)": "border: 1px solid $s-faint;",
 	".s-s::-webkit-scrollbar, .s-s ::-webkit-scrollbar": "width:10px height:10px",
 	".s-s::-webkit-scrollbar-track, .s-s ::-webkit-scrollbar-track": "background:transparent",
 	".s-s::-webkit-scrollbar-thumb, .s-s ::-webkit-scrollbar-thumb":
 		"background:$s-faint border-radius:99px border: 2px solid transparent; background-clip:padding-box",
 
-	// Elevation utilities — add `.shadow` or `.extra-shadow` to any surface:
-	//  • neutral surface       → a neutral drop shadow
-	//  • accent (filled) surface → a self-coloured glow, keyed on its own --s-bg (a
-	//    lit button is just this on a `.primary` surface)
-	//  • tonal/outlined surface → ignored (a translucent body has nothing to lift)
-	// A `.neutral` button stays flat (so segmented groups gain no stray
-	// shadows). `.no-shadow` is a hard override of any of the above — place it last
-	// and make it !important so it beats the higher-specificity glow rule.
+	// Elevation: `.shadow`/`.extra-shadow` give a neutral surface a drop shadow and
+	// an accent one a self-coloured glow; tonal/outlined have nothing to lift. A
+	// `.neutral` button stays flat, so segmented groups gain no stray shadows.
+	// `.no-shadow` comes last and needs `!important` to beat the glow rules.
 	".s-s.shadow.neutral:not(.s-btn)": "box-shadow: 0 4px 14px rgba(0,0,0,0.13);",
 	".s-s.extra-shadow.neutral:not(.s-btn)": "box-shadow: 0 18px 50px rgba(0,0,0,0.28);",
 	".s-s.shadow:not(.neutral):not(.tonal):not(.outlined)": "box-shadow: 0 4px 14px color-mix(in srgb, $s-bg 30%, transparent);",
 	".s-s.extra-shadow:not(.neutral):not(.tonal):not(.outlined)": "box-shadow: 0 14px 40px color-mix(in srgb, $s-bg 40%, transparent);",
 	".s-s.no-shadow": "box-shadow: none !important;",
 
-	// Accent variants. `tonal`: the fill colour becomes the ink over a soft
-	// self-tint. `outlined`: the fill colour is the ink over a transparent body
-	// with a colour edge. (Neutral surfaces ignore these.)
+	// Accent variants: the fill colour becomes the ink, over a soft self-tint
+	// (`tonal`) or a transparent body with a colour edge (`outlined`).
 	".s-s:not(.neutral).tonal, .s-s:not(.neutral).outlined":
 		"--s-text:$s-bg --s-accent:$s-bg --s-link-fg:$s-bg --s-faint: color-mix(in srgb, $s-bg 30%, transparent); --s-muted: color-mix(in srgb, $s-bg 70%, transparent);",
 	".s-s:not(.neutral).tonal":
 		"background: color-mix(in srgb, $s-bg 15%, transparent); border: 1px solid $s-faint;",
 	".s-s:not(.neutral).outlined":
 		"background: transparent; border: 1px solid color-mix(in srgb, $s-bg 45%, transparent);",
-	// A surface nested inside an accent surface is forced back to a filled look —
-	// a translucent tonal/outlined body would bleed into the vivid parent fill.
-	// Specificity (4 classes) beats the 2-class variant rules — no !important.
+	// A surface inside an accent surface is forced back to filled: a translucent
+	// body would bleed into the vivid parent. 4 classes beats the variant rules.
 	".s-s:not(.neutral) .s-s.tonal, .s-s:not(.neutral) .s-s.outlined":
 		"--s-text:#fff --s-accent:#fff --s-link-fg:#fff " +
 		SURFACE_SHEEN + " border-color: transparent;",
 });
 
 // ── Suppress transitions during the initial load ─────────────────────────────
-// Buttons (and links) transition their colours, so a light↔dark switch animates
-// smoothly. On a *cold* load that's a liability: elements mount and paint in the
-// active theme in one pass, but a transitioning element animates from its
-// default (unstyled) colours into the theme. Tag <html> until the first frame
-// has painted and hard-disable transitions under that tag, so the initial render
-// snaps straight to the right colours.
+// Colour transitions make a light↔dark switch smooth, but on a cold load they'd
+// animate from the unstyled colours into the theme. Tag <html> until the first
+// frame has painted, so the initial render snaps to the right colours.
 A.insertGlobalCss({
 	".s-preload, .s-preload *, .s-preload *::before, .s-preload *::after":
 		"transition: none !important; animation: none !important;",
@@ -310,19 +248,16 @@ if (typeof document !== "undefined" && typeof requestAnimationFrame === "functio
 }
 
 // ── Disabled region ───────────────────────────────────────────────────────────
-// aria-disabled="true" on any container dims it and blocks pointer events on
-// it and all descendants, matching the per-element disabled look. Keyboard
-// access to focusable descendants is unaffected — add the `inert` attribute too
-// if you need that.
+// aria-disabled="true" on any container dims it and blocks pointer events on it
+// and all descendants. Keyboard access is unaffected — add `inert` for that.
 A.insertGlobalCss({
 	":disabled, [aria-disabled=true]": "opacity:0.45 filter:saturate(0.6) user-select:none",
 	":disabled, [aria-disabled=true], :disabled *, [aria-disabled=true] *": "pointer-events:none cursor:not-allowed",
 });
 
 // ── Flow content: vertical rhythm & light typography ─────────────────────────
-// Sensible block defaults for *any* content — your own UI just as much as
-// markdown-rendered HTML. The rhythm: strip the browser's block margins, then
-// give every block a *top* margin only when it isn't its parent's first child.
+// Block defaults for *any* content, markdown-rendered or your own: no browser
+// block margins, but a *top* margin unless the block is its parent's first child.
 const BLOCK = "p, ul, ol, dl, blockquote, pre, table, figure, hr, h1, h2, h3, h4, h5, h6";
 
 A.insertGlobalCss({
