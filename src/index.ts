@@ -32,6 +32,8 @@
 // Importing theme.js installs the spacing vars, the reactive theme and the base
 // stylesheet.
 export { setDarkMode, getDarkMode } from "./theme.js";
+export { formatKey, bindKey } from "./keys.js";
+export { showKeyHelp, setKeyHelp } from "./components/keyhelp.js";
 export { autocomplete, type AutocompleteOptions, type AutocompleteOptionInput } from "./components/autocomplete.js";
 export { box, type BoxOptions } from "./components/box.js";
 export { button, iconButton, type ButtonOptions, type IconButtonOptions } from "./components/button.js";

@@ -1,7 +1,8 @@
 import A from "aberdeen";
 import { current as currentRoute } from "aberdeen/route";
 import { type Slot, type Attributes, drawSlot, focusFirst, NARROW_PX } from "../core.js";
-import { type MenuOptions, drawMenu, isFloatingMenuOpen, consumeBranchNav, anyCurrent } from "./menu.js";
+import { bindKey } from "../keys.js";
+import { type MenuOptions, drawMenu, isFloatingMenuOpen, consumeBranchNav, anyCurrent, registerMenuKeys } from "./menu.js";
 // Named imports, so a bundler tree-shakes the other ~1950 icons away.
 import { menu as menuIcon, x as closeIcon } from "../icons.js";
 import { iconButton } from "./button.js";
@@ -355,11 +356,15 @@ A.insertGlobalCss({
 			// Under the sticky header's 10: they never overlap, but the bar should win.
 			"position:absolute inset:0 z-index:5 display:flex flex-direction:column " +
 			"overflow-y:auto overscroll-behavior:contain border:0 r:0 padding:$2 gap:$1 " +
-			"transition: transform var(--s-panel-ms) ease, visibility var(--s-panel-ms);",
+			"transition: transform var(--s-panel-ms) ease, visibility 0s;",
 		// Parked one screen left: what the `create=`/`destroy=` hooks transition out
-		// of and back into. `visibility` flips only at the slide's end, so the
-		// dismissed page isn't reachable while it waits for Aberdeen's removal timer.
-		"&.s-nav-page-off": "transform:translateX(-100%) pointer-events:none visibility:hidden",
+		// of and back into. On dismissal (this rule's transition) `visibility` flips
+		// only at the slide's end, so the dismissed page isn't reachable while it
+		// waits for Aberdeen's removal timer; on entry it flips instantly (the `0s`
+		// above), or the opening page would refuse the focus handed to it mid-slide.
+		"&.s-nav-page-off":
+			"transform:translateX(-100%) pointer-events:none visibility:hidden " +
+			"transition: transform var(--s-panel-ms) ease, visibility var(--s-panel-ms);",
 		// Roomier than the dropdown's: every row here is a thumb target.
 		".s-menu-item": "padding: $2 $3; min-height:3rem font-size:1.05em gap:$3",
 	},
@@ -592,44 +597,53 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): PanelS
 
 	watchNarrow(root, $shell);
 
+	// The nav's own keyboard shortcuts (see `MenuItem.key`), bound for as long as
+	// the shell is up: a nav row's key belongs to the whole app, not just to the
+	// moments its sidebar is on screen. A shortcut that doesn't navigate gets the
+	// collapsed nav out of the way itself; one that does is dismissed by the
+	// navigation, like a click on the row.
+	if (nav != null) registerMenuKeys(() => nav.items, () => { $nav.open = false; });
+
 	// Escape peels back a panel of UI, and at the stack's start jumps to the
-	// navigation. On `document`, so it works wherever focus is, but bowing out
-	// while a dialog or menu is up — those handle Escape themselves.
+	// navigation. A `global` binding in its own reactive scope: it stays put at
+	// the body while dialogs shadow it, and re-registers as the state its
+	// description tells about changes. Menus and dialogs own Escape themselves,
+	// so bow out while one is up (an open dialog shadows this binding wherever
+	// focus is inside it; this guard covers focus having strayed elsewhere).
 	if (nav != null || ctl) {
-		const onKey = (e: KeyboardEvent) => {
-			if (e.key !== "Escape" || e.defaultPrevented) return;
-			// An open dialog or menu owns Escape itself — don't also jump to the nav.
-			if (isDialogOpen() || isFloatingMenuOpen()) return;
-			const trigger = root.querySelector<HTMLElement>(".s-nav-trigger button");
-			// So does the full-page nav: dismiss it and hand focus back to its trigger.
+		A(() => {
+			const press = (act: () => void) => () => {
+				if (isDialogOpen() || isFloatingMenuOpen()) return;
+				act();
+			};
+			const trigger = () => root.querySelector<HTMLElement>(".s-nav-trigger button");
 			if ($nav.open) {
-				e.preventDefault();
-				$nav.open = false;
-				trigger?.focus();
-				return;
+				// The full-page nav: dismiss it and hand focus back to its trigger.
+				bindKey("Esc", "Close the navigation", press(() => {
+					$nav.open = false;
+					trigger()?.focus();
+				}), "global");
+			} else if (ctl && ctl.currentPanelIndex > 0) {
+				// Steps back along the stack: closes the current panel when it is the
+				// last, otherwise just moves one panel left (see `back`).
+				bindKey("Esc", "Back to the previous panel", press(() => void ctl.back()), "global");
+			} else {
+				bindKey("Esc", "Jump to the navigation", press(() => {
+					// Asked of the DOM, not `nav.items`: a subscription here would land
+					// on this scope, re-registering for no reason. `offsetParent` is
+					// null when the sidebar is hidden (display:none).
+					const sidebar = root.querySelector<HTMLElement>(".s-nav-panel");
+					if (sidebar?.offsetParent != null) {
+						const item =
+							sidebar.querySelector<HTMLElement>("[aria-current=page]") ??
+							sidebar.querySelector<HTMLElement>(".s-menu-item:not([aria-disabled=true])");
+						item?.focus();
+					} else {
+						trigger()?.click();
+					}
+				}), "global");
 			}
-			// Steps back along the stack: closes the current panel when it is the
-			// last, otherwise just moves one panel left (see `back`).
-			if (ctl && ctl.currentPanelIndex > 0) {
-				e.preventDefault();
-				void ctl.back();
-				return;
-			}
-			// Asked of the DOM, not `nav.items`: a subscription here would land on
-			// the shell's own scope again. `offsetParent` is null when the sidebar
-			// is hidden (display:none).
-			const sidebar = root.querySelector<HTMLElement>(".s-nav-panel");
-			if (sidebar?.offsetParent != null) {
-				const item =
-					sidebar.querySelector<HTMLElement>("[aria-current=page]") ??
-					sidebar.querySelector<HTMLElement>(".s-menu-item:not([aria-disabled=true])");
-				if (item) { e.preventDefault(); item.focus(); }
-				return;
-			}
-			if (trigger) { e.preventDefault(); trigger.click(); }
-		};
-		document.addEventListener("keydown", onKey);
-		A.clean(() => document.removeEventListener("keydown", onKey));
+		});
 	}
 
 	// Handed back rather than parked in a module-level global, so nothing can

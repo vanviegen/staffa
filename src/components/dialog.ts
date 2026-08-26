@@ -3,6 +3,7 @@ import { type Slot, type Attributes, drawSlot, mountPortal, focusFirst } from ".
 import { button } from "./button.js";
 import { buttonGroup } from "./buttonGroup.js";
 import { textline } from "./textline.js";
+import { bindKey, claimKeyboard, keyboardOwner } from "../keys.js";
 
 /** Options for {@link dialog}. */
 export interface DialogOptions {
@@ -29,6 +30,13 @@ export interface DialogOptions {
 	 * `dialog()` is destroyed.
 	 */
 	cancelWithScope?: boolean;
+	/**
+	 * Leave the keyboard shortcuts behind this dialog working, instead of owning
+	 * the keyboard the way a modal does. For overlays that inform rather than
+	 * interrupt — the `?` shortcut overview is one. Esc still closes it first,
+	 * whatever it meant before.
+	 */
+	keyboardTransparent?: boolean;
 	/**
 	 * Dialog body. A {@link Slot} whose draw-function receives a `close()` function
 	 * — call it to dismiss the dialog programmatically. (A plain string renders as
@@ -69,7 +77,7 @@ A.insertGlobalCss({
 	},
 });
 
-const dialogs = A.proxy({} as Record<number,{resolve: (value: void | PromiseLike<void>) => void, opts: DialogOptions}>);
+const dialogs = A.proxy({} as Record<string,{resolve: (value: void | PromiseLike<void>) => void, opts: DialogOptions}>);
 let dialogCount = 0;
 
 const topDialogId = A.derive(() => {
@@ -92,6 +100,13 @@ mountPortal(() => {
 			resolve();
 		});
 
+		// Return focus to where it was when this dialog opened, so a keyboard
+		// user doesn't lose their place.
+		const prevFocus = document.activeElement;
+		A.clean(() => {
+			if (prevFocus instanceof HTMLElement && document.contains(prevFocus)) prevFocus.focus();
+		});
+
 		// Backdrop - hide when not the top dialog
 		const overlaid = A.derive(() => topDialogId.value != dialogId);
 		A("div.s-backdrop create=hidden destroy=hidden .hidden=", overlaid, "click=", () => {
@@ -99,6 +114,21 @@ mountPortal(() => {
 		});
 
 		const dialogEl = A("div.s-dialog.neutral.s-s.extra-shadow create=hidden destroy=hidden", opts.attrs, () => {
+			// A modal owns the keyboard: claiming makes the shortcuts drawn inside
+			// (the content below included) register here and silences the rest. The
+			// `?` overview passes `keyboardTransparent` to leave them all working.
+			if (!opts.keyboardTransparent) A.clean(claimKeyboard());
+			// Esc closes the dialog — or, while `allowCancel` forbids it, is
+			// swallowed by the no-op press, so nothing below acts on it either.
+			// Anchored at whoever owned the keyboard as this dialog opened —
+			// itself, or with `keyboardTransparent` the modal beneath (or the page)
+			// — so it shadows whatever Esc meant so far, restored on close.
+			const escAt = keyboardOwner();
+			A(() => {
+				const can = opts.allowCancel !== false;
+				bindKey("esc", can ? "Close this dialog" : undefined, can ? close : () => {}, escAt);
+			});
+
 			A(() => {
 				if (opts.header != null) {
 					A("header.s-s.neutral", opts.headerAttrs, () => drawSlot(opts.header));
@@ -144,28 +174,6 @@ mountPortal(() => {
  * ```
  */
 export function dialog(opts: DialogOptions): Promise<void> {
-	if (!dialogCount) {
-		// Install Esc handler the first time we create a dialog
-		document.addEventListener("keydown", (e: KeyboardEvent) => {
-			// A layer above us that consumed Escape (a floating menu, an open
-			// autocomplete list) marks it with preventDefault.
-			if (e.key !== "Escape" || e.defaultPrevented) return;
-			const ds = A.unproxy(dialogs);
-			// Search for top-most dialog
-			for(let i=dialogCount; i>0; i--) {
-				if (ds[i]) {
-					// A dialog owns Escape, closable or not: handlers beneath it check
-					// defaultPrevented (or S.isDialogOpen()) and must not also act.
-					e.preventDefault();
-					if (ds[i].opts.allowCancel !== false) {
-						// The clean handler calls resolve and onClose.
-						delete dialogs[i];
-					}
-					break;
-				}
-			}
-		});
-	}
 	const dialogId = ++dialogCount;
 	if (opts.cancelWithScope !== false) A.clean(() => { delete dialogs[dialogId]; });
 	return new Promise<void>((resolve) => {

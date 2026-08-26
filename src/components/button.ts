@@ -1,5 +1,7 @@
 import A from "aberdeen";
 import { type Slot, type Attributes, drawSlot } from "../core.js";
+import { bindKey, formatKey } from "../keys.js";
+import { addTooltip } from "./tooltip.js";
 
 /** Options for {@link iconButton}. */
 export interface IconButtonOptions {
@@ -9,6 +11,12 @@ export interface IconButtonOptions {
 	ariaLabel: string;
 	/** Click handler. */
 	click?: (event: Event) => void;
+	/**
+	 * A keyboard shortcut that presses this button — see {@link ButtonOptions.key}.
+	 * The tooltip shows it after the `ariaLabel` (a glyph is worth naming there
+	 * anyway), and the `?` overview lists it under that label too.
+	 */
+	key?: string;
 	/** Render as a link (`<a role=button>`) pointing here instead of a `<button>`. */
 	href?: string;
 	/** Disables it. */
@@ -37,6 +45,16 @@ export interface ButtonOptions {
 	href?: string;
 	/** Accessible label, when the button has only an icon. */
 	ariaLabel?: string;
+	/**
+	 * A keyboard shortcut that presses this button: `"mod+s"`, `"f2"` — see
+	 * {@link bindKey} for the spelling and which keystrokes are yours to take.
+	 * It works from anywhere while the button is drawn, shows in a tooltip,
+	 * reaches screen readers as `aria-keyshortcuts`, and does exactly what a
+	 * click does: a `type: "submit"` submits its form, an `href` navigates. The
+	 * `?` overview ({@link showKeyHelp}) lists it under the button's text (or
+	 * its `ariaLabel`).
+	 */
+	key?: string;
 	/**
 	 * Aberdeen attr/style string applied to the button. A button is a surface, so
 	 * pass surface modifier classes here to restyle it, e.g. `".danger"`,
@@ -120,6 +138,7 @@ export function iconButton(opts: IconButtonOptions): void {
 	A(`${tag}.s-icon-btn`, opts.attrs, () => {
 		applyActionBehavior(opts);
 		A("aria-label=", opts.ariaLabel);
+		if (opts.key) applyKey(opts.key, opts.ariaLabel, undefined, opts.disabled);
 		drawSlot(opts.icon);
 	});
 }
@@ -145,6 +164,30 @@ function applyActionBehavior(o: {
 		if (o.disabled) A("disabled=true");
 	}
 	if (o.click && !o.disabled) A("click=", o.click);
+}
+
+/**
+ * The shortcut plumbing {@link button} and {@link iconButton} share: bind it,
+ * announce it as `aria-keyshortcuts`, and hint at it in a tooltip — the only
+ * place a button can say what its key is without shouting it beside the label.
+ *
+ * Pressing it clicks the element rather than calling `click` directly, so a
+ * `type=submit` still submits its form and an `href` still navigates. Call this
+ * inside the button's own element scope, whose element it takes and whose life
+ * the binding follows.
+ */
+function applyKey(key: string, label: string | undefined, content: Slot | undefined, disabled?: boolean): void {
+	const el = A() as HTMLElement;
+	const tip = label ? `${label} · ${formatKey(key)}` : formatKey(key);
+	// A draw function, not a string: a key like `*` is markup to rich text.
+	addTooltip({ tip: () => A("#", tip) });
+	// Bound only while it can be pressed — a disabled button would otherwise
+	// swallow the combination rather than leave it to whoever else wants it. The
+	// overview names it by its visible text, or its aria label failing that.
+	if (!disabled) {
+		A("aria-keyshortcuts=", formatKey(key, true));
+		bindKey(key, typeof content === "string" ? content : label, () => el.click());
+	}
 }
 
 /**
@@ -181,6 +224,9 @@ export function button(opts: ButtonOptions | Slot = {}): void {
 	A(`${tag}.s-btn.s-s.shadow`, o.attrs, () => {
 		applyActionBehavior(o);
 		if (o.ariaLabel) A("aria-label=", o.ariaLabel);
+		// Before the content, so a tooltip the caller adds in there is the later of
+		// the two and wins the hover.
+		if (o.key) applyKey(o.key, o.ariaLabel, o.content, o.disabled);
 
 		drawSlot(o.icon);
 		drawSlot(o.content);

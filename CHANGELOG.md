@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.16.0
+
+- New: **keyboard shortcuts**. Menu items and buttons take a `key` option (`"mod+k"`, `"shift+f2"`, …) that works from anywhere, open menu or not; a menu row shows the combination, a button tells it in its tooltip. `S.bindKey` binds a key with no button to carry it, and `S.formatKey` spells one the way the platform does.
+- **`?` shows an overview of the shortcuts that work right now**, given where focus is and what's open — any keypress closes it and still lands. `S.setKeyHelp(false)` turns it off.
+- A modal dialog silences the shortcuts bound outside it; `keyboardTransparent` on `S.dialog` leaves them working.
+- Closing a dialog now hands focus back to where it was when the dialog opened.
+- Fixed: keyboard focus on menu and nav rows had become hardly discernible.
+- Fixed: Enter with a modifier held on a focused link now opens a new tab, as the browser would, instead of navigating in place.
+
 ## 0.15.0
 
 - **Breaking:** the shell no longer scales the page down when the window is narrower than 360px — it just lays out narrower, as it did before 0.14.0. The CSS `zoom` that did the scaling leaked into app code (rects, pointer coordinates and viewport units all had to be corrected for it), so it wasn't worth the one thing it bought.

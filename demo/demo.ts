@@ -925,6 +925,41 @@ function drawButtons() {
 			});
 		},
 	});
+
+	S.box({
+		header: "Keyboard shortcuts",
+		content: () => {
+			const $draft = A.proxy({ text: "" });
+			A("p mt:0 rich='A `key` presses the button from anywhere on the page, and says so in a tooltip rather than beside the label. `S.bindKey` binds a key with no button to carry it, and `?` shows what a keypress could do right now.'");
+			// A hand-bound shortcut: registered for as long as this page is drawn,
+			// and listed in the `?` overview by its description like the rest.
+			S.bindKey("mod+.", "Toggle the accent colour", () =>
+				A.cssVars["s-primary"] = A.peek(() => A.cssVars["s-primary"]) === "#00a884" ? "#e8590c" : "#00a884");
+			// Type, then send it with the key — a modified one reaches the button from
+			// inside a field, where an unmodified one would be left to the typing.
+			A("div display:flex gap:$2 align-items:center mt:$2", () => {
+				S.textline({
+					attrs: "flex:1",
+					// `S.formatKey` writes the combination the way *this* platform does,
+					// so the hint never has to name both.
+					placeholder: `Say something, then ${S.formatKey("mod+enter")}`,
+					bind: A.ref($draft, "text"),
+				});
+				S.iconButton({
+					icon: icons.send,
+					ariaLabel: "Send",
+					key: "mod+enter",
+					click: () => S.toast({ message: () => A("#", `Sent: ${$draft.text || "(nothing)"}`), type: "success" }),
+				});
+			});
+			A("div display:flex gap:$3 flex-wrap:wrap align-items:center mt:$3", () => {
+				S.button({ content: "Bookmark", key: "mod+b", attrs: ".neutral", click: () => S.toast({ message: "Bookmarked!" }) });
+				// Disabled, and deliberately claiming the same combination: it is never
+				// bound, so the key stays the working button's.
+				S.iconButton({ icon: icons.trash2, ariaLabel: "Delete", key: "mod+b", disabled: true, attrs: "fg:$s-danger" });
+			});
+		},
+	});
 }
 
 function drawTabsPage() {
@@ -1053,15 +1088,15 @@ function drawOverlays() {
 	S.box({
 		header: "Action menus",
 		content: () => {
-			A("p m:0 fg:$s-muted font-size:0.9em #Portal-rendered — never clipped. Full keyboard nav: arrows, Enter, Escape.");
+			A("p m:0 fg:$s-muted font-size:0.9em rich='Portal-rendered — never clipped. Full keyboard nav: arrows, Enter, Escape. Rows with a `key` show it on the right and answer to it whether or not the menu is open — `mod` is ⌘ on a Mac and Ctrl here.'");
 			A("div display:flex gap:$3 flex-wrap:wrap align-items:center mt:$2", () => {
 				S.menuButton({
 					button: { content: "Actions", attrs: ".neutral" },
 					items: [
-						{ label: "Edit",      icon: icons.pencil,  click: () => S.toast({ message: "Edit clicked",   type: "success" }) },
-						{ label: "Duplicate", icon: icons.copy,    click: () => S.toast({ message: "Duplicated",     type: "neutral" }) },
+						{ label: "Edit",      icon: icons.pencil,  key: "mod+e", click: () => S.toast({ message: "Edit clicked",   type: "success" }) },
+						{ label: "Duplicate", icon: icons.copy,    key: "mod+d", click: () => S.toast({ message: "Duplicated",     type: "neutral" }) },
 						{ separator: true },
-						{ label: "Archive",   icon: icons.archive, click: () => S.toast({ message: "Archived", type: "warning" }) },
+						{ label: "Archive",   icon: icons.archive, key: "mod+shift+a", click: () => S.toast({ message: "Archived", type: "warning" }) },
 						{ label: "Delete",    icon: icons.trash2,  attrs: "fg:$s-danger", click: () => S.toast({ message: "Deleted!", type: "danger" }) },
 					],
 				});
@@ -1095,6 +1130,9 @@ function drawOverlays() {
 					// tab, Copy link — above a separator, like the breadcrumbs' menu.
 					link: "/demo/overlays",
 					items: [
+						// A shortcut on a context menu answers without the right-click that
+						// would show it — which is rather the point of putting one there.
+						{ label: "Rename", icon: icons.pencil,      key: "f2", click: () => S.toast({ message: "Renaming…" }) },
 						{ label: "Cut",   icon: icons.scissors,       click: () => S.toast({ message: "Cut!", type: "warning" }) },
 						{ label: "Copy",  icon: icons.copy,           click: () => S.toast({ message: "Copied!", type: "success" }) },
 						{ label: "Paste", icon: icons.clipboardPaste, disabled: true },
@@ -1142,7 +1180,9 @@ function drawOverlays() {
 								A("p #This is the primary dialog.");
 								A("p #It should be wider and higher than the secondary.");
 								S.button({
-									content: "Open secondary", click: () => {
+									// The key works while this dialog is up: a modal only
+									// silences the shortcuts bound *outside* it.
+									content: "Open secondary", key: "mod+o", click: () => {
 										S.dialog({
 											header: "Secondary dialog",
 											allowCancel: true,
@@ -1183,7 +1223,9 @@ function drawOverlays() {
 							{ label: "Apple",  href: "/demo/overlays?pick=apple" },
 							{ label: "Banana", href: "/demo/overlays?pick=banana" },
 							{ label: "Citrus", items: [
-								{ label: "Lemon", href: "/demo/overlays?pick=lemon" },
+								// Folded away, but its key still answers — and picking it unfolds
+								// both branches, since the current page is what unfolds them.
+								{ label: "Lemon", href: "/demo/overlays?pick=lemon", key: "l" },
 								{ label: "Lime",  href: "/demo/overlays?pick=lime" },
 							]},
 						]},

@@ -1360,7 +1360,13 @@ export class PanelStackController implements PanelStack {
 	 * has nothing to build on, so it replaces the stack as a cold link would.
 	 */
 	private interceptLinks(): void {
-		route.interceptLinks((url, anchor) => {
+		route.interceptLinks((url, anchor, e) => {
+			// A modified keystroke is not a plain activation. Aberdeen leaves a
+			// ctrl/⌘/shift/alt *click* to the browser but not the Enter that stands
+			// in for it, so routing this one would turn the keyboard's own
+			// open-in-a-new-tab into an ordinary navigation. Declining leaves the
+			// event untouched, for the browser to open where the click would have.
+			if (e instanceof KeyboardEvent && (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey)) return false;
 			const how = anchor.getAttribute("data-panel") ?? undefined;
 			// The panel the link lives in: the enclosing `.s-panel`, or the current
 			// panel for its actions once a narrow shell has promoted them into the

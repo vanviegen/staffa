@@ -1,6 +1,6 @@
 {
   "name": "staffa",
-  "version": "0.15.1",
+  "version": "0.16.0",
   "description": "An opinionated component library for the Aberdeen reactive UI library.",
   "license": "ISC",
   "author": "",
@@ -41,7 +41,7 @@
     "jsdom": "^29.1.1",
     "lucide-static": "^1.17.0",
     "readme-tsdoc": "^1.2.1",
-    "shotest": "^2.3.2",
+    "shotest": "^2.4.0",
     "typescript": "^5.9.3"
   },
   "allowScripts": {

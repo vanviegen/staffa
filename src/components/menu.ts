@@ -4,6 +4,7 @@ import { type Slot, type Attributes, drawSlot, mountPortal, focusFirst } from ".
 import { menu as menuIcon, chevronRight, externalLink as newTabIcon, link as linkIcon } from "../icons.js";
 import { button, type ButtonOptions } from "./button.js";
 import { toast } from "./toast.js";
+import { bindKey, formatKey } from "../keys.js";
 
 /**
  * A clickable item in a menu or sidebar nav.
@@ -31,6 +32,24 @@ export interface MenuItem {
 	 * `attrs: "data-panel=push"` for a row that should stack instead.
 	 */
 	href?: string;
+	/**
+	 * A keyboard shortcut that activates this item: `"mod+k"`, `"f2"`, a bare
+	 * `"?"`. The spelling, and which keystrokes are yours to take, are
+	 * documented on {@link bindKey}. The combination shows at the right end of
+	 * the row (not on a touch device) and reaches screen readers as
+	 * `aria-keyshortcuts`; the `?` overview ({@link showKeyHelp}) lists it
+	 * under the item's label. Activating runs `click` with the `KeyboardEvent`
+	 * and follows `href` as a fresh navigation to it — the target getting its
+	 * own panel stack, as a nav item's does.
+	 *
+	 * The shortcut works with the menu shut — rather the point of one on a
+	 * dropdown or context menu — for as long as whatever owns the items is
+	 * drawn: the {@link menu}, {@link menuButton} or {@link addContextMenu}
+	 * call, or `S.main`'s `nav`. (The bare {@link showFloatingMenu} binds
+	 * nothing: its menu exists only while it is up.) A disabled item's key is
+	 * not bound.
+	 */
+	key?: string;
 	/**
 	 * Pages this item claims *beyond* its own `href`: a string claims that path
 	 * and everything under it (`"/mail"` claims `/mail/…`, not `/mailbox`), a
@@ -149,26 +168,37 @@ export type ContextMenuOptions = Omit<FloatingMenuOptions, "anchor" | "at" | "cl
 // Styles shared by the floating dropdown and the sidebar nav. The item styles
 // aren't scoped to a container, so `drawMenu` can render into either one.
 A.insertGlobalCss({
-	// `visibility` rides the fade transition, flipping only at its end: a dismissed
-	// menu lingers in the DOM (`destroy=` removes it on a timer), and without this it
-	// would spend that time invisible yet still hittable and read by assistive tech.
+	// On dismissal (the `.hidden` rule below), `visibility` rides the fade,
+	// flipping only at its end: a dismissed menu lingers in the DOM (`destroy=`
+	// removes it on a timer), and without this it would spend that time invisible
+	// yet still hittable and read by assistive tech. On entry it must flip
+	// instantly (`0s` here) instead: a hidden element refuses focus, so the
+	// menu's own opening focus() would silently fail mid-fade-in.
 	".s-menu-list":
 		"position:fixed z-index:350 min-width:10rem display:flex flex-direction:column p:$1 " +
 		"r:$s-radius-lg " +
 		// The 16px matches the 8px gap `positionMenu` leaves at either window edge, so
 		// a menu too wide for the window narrows instead of hanging off the screen.
 		"max-width: calc(100vw - 16px); overflow-y:auto max-height:min(80vh,28rem) " +
+		"transition: opacity 0.15s, transform 0.15s, visibility 0s;",
+	".s-menu-list.hidden":
+		"opacity:0 pointer-events:none transform:translateY(-6px) visibility:hidden " +
 		"transition: opacity 0.15s, transform 0.15s, visibility 0.15s;",
-	".s-menu-list.hidden": "opacity:0 pointer-events:none transform:translateY(-6px) visibility:hidden",
 	// One class for both the `<a>` and `<button>` forms. The scroll-margin keeps a
 	// revealed row (the scrollIntoView in `drawLeaf`) clear of the scrollport edge.
 	".s-menu-item":
-		"display:flex align-items:center gap:$2 w:100% outline:0 scroll-margin:$2 " +
+		"display:flex align-items:center gap:$2 w:100% scroll-margin:$2 " +
 		"padding: $m2 0; line-height:1.1 r:$s-radius cursor:pointer text-align:left font-weight:450 " +
 		"font-size:0.9em border:0 background:transparent fg:$s-text text-decoration:none " +
 		"transition: color 0.12s, transform 0.12s, text-shadow 0.12s;",
 	".s-menu-item:focus-visible:not([aria-current=page]), .s-menu-item:hover:not([aria-disabled=true]):not([aria-current=page])":
 		"filter:none color: color-mix(in lab, $s-primary 33%, $s-text);",
+	// Arrowing through a list is aiming blind unless the row you are on says so, and
+	// the hover colour alone doesn't — least of all on the current-page row, which
+	// already wears the accent. So: a tinted band, plus the theme's focus ring, inset
+	// because a row runs the full width of its list and an outset ring would clip.
+	".s-menu-item:focus-visible":
+		"outline-offset:-2px background: color-mix(in srgb, $s-accent 14%, transparent);",
 	// The active row is simply drawn in the surface's accent — no glow, no brightening.
 	// `filter:none` also keeps the global `a:hover` brighten off it.
 	".s-menu-item[aria-current=page]": "color:$s-accent filter:none",
@@ -188,8 +218,22 @@ A.insertGlobalCss({
 	"hr.s-menu-sep":
 		"border:0 height:1px margin: $1 0.6rem; " +
 		"background: linear-gradient(to right, transparent, $s-faint 18%, $s-faint 82%, transparent);",
+	// The shortcut hint (see `MenuItem.key`): pushed to the right end of the row, and
+	// kept quiet — it is there to be found, not read. In the row's own colour at a low
+	// opacity, so it follows the row through hover and the current-page accent.
+	".s-menu-key": "margin-left:auto padding-left:$2 font-family:inherit font-size:0.8em opacity:0.55 white-space:nowrap flex-shrink:0",
+	// A touch device gets no hint: a row advertising a key there is mostly noise.
+	// These describe the *primary* input, so a laptop with a touchscreen keeps its
+	// hints. The shortcuts stay bound whatever the device says — a keyboard clipped
+	// onto a tablet works, it just isn't advertised.
+	"@media (hover: none) and (pointer: coarse)": {
+		".s-menu-key": "display:none",
+	},
 	// A branch row's fold indicator: a › that turns downward while the branch is open.
 	".s-menu-chevron": "margin-left:auto flex-shrink:0 display:flex transition: transform 0.15s ease;",
+	// Two `margin-left:auto`s in one row would split the free space between them,
+	// stranding the hint in the middle; the hint's is the one that should win.
+	".s-menu-key + .s-menu-chevron": "margin-left:0",
 	".s-menu-chevron > svg": "width:1em height:1em",
 	// A branch is a native <details>: closed content is hidden, not unmounted, so a fold
 	// is one attribute flip — no teardown, no sibling redraws — and the browser animates
@@ -232,7 +276,7 @@ export function drawMenu(items: MenuEntry[], onLeafSelect?: () => void): void {
 		// interceptLinks' own Enter handler preventDefault()s the activation, so no
 		// synthetic `click` fires and the click-bound `onLeafSelect` never runs. Close
 		// it ourselves, deferred so this keydown finishes navigating first.
-		if (e.key === "Enter" && (e.target as HTMLElement).tagName === "A") {
+		if (e.key === "Enter" && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey && (e.target as HTMLElement).tagName === "A") {
 			queueMicrotask(() => onLeafSelect?.());
 			return;
 		}
@@ -292,6 +336,7 @@ function drawLeaf(entry: MenuItem, onLeafSelect?: () => void): void {
 			});
 		}
 		if (entry.disabled) A("aria-disabled=true");
+		if (entry.key) A("aria-keyshortcuts=", formatKey(entry.key, true));
 		A("click=", (e: Event) => {
 			if (entry.disabled) { e.preventDefault(); return; }
 			onLeafSelect?.();
@@ -299,6 +344,7 @@ function drawLeaf(entry: MenuItem, onLeafSelect?: () => void): void {
 		});
 		if (entry.icon) A("span.s-menu-icon", () => drawSlot(entry.icon));
 		drawSlot(entry.label);
+		drawKeyHint(entry);
 	});
 }
 
@@ -346,6 +392,7 @@ function drawBranch(entry: MenuItem, onLeafSelect?: () => void, $menuHasCurrent?
 
 		A("summary.s-menu-item.s-menu-branch", entry.attrs, () => {
 			if (entry.disabled) A("aria-disabled=true");
+			if (entry.key) A("aria-keyshortcuts=", formatKey(entry.key, true));
 			A(() => {
 				// Current only on its *own* page: when a descendant is current, that row
 				// carries the highlight, and two highlights would read as two pages.
@@ -364,6 +411,7 @@ function drawBranch(entry: MenuItem, onLeafSelect?: () => void, $menuHasCurrent?
 			});
 			if (entry.icon) A("span.s-menu-icon", () => drawSlot(entry.icon));
 			drawSlot(entry.label);
+			drawKeyHint(entry);
 			A("span.s-menu-chevron aria-hidden=true", () => chevronRight());
 		});
 
@@ -430,6 +478,69 @@ function firstLeafHref(items: MenuEntry[]): string | undefined {
 		if (href != null) return href;
 	}
 	return undefined;
+}
+
+// ─── Keyboard shortcuts ──────────────────────────────────────────────────────
+
+/** The quiet hint at the right end of a row. See {@link MenuItem.key}. */
+function drawKeyHint(entry: MenuItem): void {
+	// `aria-hidden`: the row already carries the shortcut as `aria-keyshortcuts`,
+	// which is what a screen reader reads out — this is the sighted half.
+	if (entry.key) A("kbd.s-menu-key aria-hidden=true text=", formatKey(entry.key));
+}
+
+/**
+ * Bind the shortcuts of every item in a menu — see {@link MenuItem.key} — for as
+ * long as the calling scope lives. The `?` overview lists each binding under its
+ * item's label. No `aria-keyshortcuts` here — the rows announce their own.
+ *
+ * `getItems` is a function rather than the array itself, so that the read happens
+ * in this scope and not the caller's: a menu's items are often a reactive array,
+ * and subscribing the caller (`S.main()`'s whole shell, say) to it would redraw
+ * far more than the menu.
+ */
+export function registerMenuKeys(getItems: () => MenuEntry[], onSelect?: () => void): void {
+	A(() => {
+		for (const entry of withKeys(getItems(), [])) {
+			bindKey(entry.key!, entry.label, (e) => {
+				// Picking a row from the keyboard is still picking a row: any menu that
+				// happens to be up steps out of the way, as it would on a click.
+				closeFloatingMenu();
+				onSelect?.();
+				entry.click?.(e);
+				if (entry.href != null) followHref(entry.href, entry.target);
+			});
+		}
+	});
+}
+
+/**
+ * Every item with a key worth binding, branches and their children included. A
+ * disabled one is left out rather than bound and ignored, so its combination
+ * stays free — and since `disabled` is read here, flipping it rebinds.
+ */
+function withKeys(items: MenuEntry[], out: MenuItem[]): MenuItem[] {
+	for (const entry of items) {
+		if (typeof entry === "string" || typeof entry === "function" || "separator" in entry) continue;
+		if (entry.key && !entry.disabled) out.push(entry);
+		if (entry.items) withKeys(entry.items, out);
+	}
+	return out;
+}
+
+/**
+ * Follow a row's `href` from the keyboard. The row may not even be drawn, so this
+ * can't just click it — it does what clicking it would: routing an ordinary in-app
+ * path, which lands where the row's own `data-panel=open` does (the target getting
+ * its own stack of columns, as a nav item's target does), and leaving the links
+ * Aberdeen doesn't intercept either — another target, another origin — to the
+ * browser.
+ */
+function followHref(href: string, target?: string): void {
+	const url = new URL(href, location.href);
+	if (target) window.open(url.href, target, target === "_blank" ? "noopener" : "");
+	else if (url.origin !== location.origin) location.href = url.href;
+	else void go(href);
 }
 
 // ─── Branch navigations ──────────────────────────────────────────────────────
@@ -600,7 +711,10 @@ mountPortal(() => {
  * ```
  */
 export function menu(opts: MenuListOptions): void {
-	A("nav.s-menu-inline", opts.attrs, () => drawMenu(opts.items, opts.onLeafSelect));
+	A("nav.s-menu-inline", opts.attrs, () => {
+		registerMenuKeys(() => opts.items, () => opts.onLeafSelect?.());
+		drawMenu(opts.items, opts.onLeafSelect);
+	});
 }
 
 /**
@@ -655,6 +769,9 @@ export function showFloatingMenu(opts: FloatingMenuOptions): () => void {
  * ```
  */
 export function addContextMenu(opts: ContextMenuOptions): void {
+	// Bound here rather than where the menu is drawn: a shortcut on a context menu
+	// is meant to work without right-clicking first (see {@link MenuItem.key}).
+	registerMenuKeys(() => opts.items);
 	let myEl: HTMLElement | null = null;
 	A.clean(() => { if ($floating.opts?.anchor === myEl) closeFloating(); });
 
@@ -693,6 +810,7 @@ export function addContextMenu(opts: ContextMenuOptions): void {
  * ```
  */
 export function menuButton(opts: MenuOptions): void {
+	registerMenuKeys(() => opts.items);
 	let myEl: HTMLElement | null = null;
 	A.clean(() => { if ($floating.opts?.anchor === myEl) closeFloating(); });
 

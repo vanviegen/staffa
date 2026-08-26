@@ -231,6 +231,10 @@ Every option of every component is documented in TSDoc on its `…Options` inter
 
 `src/index.ts` is the authoritative list of exports.
 
+### Keyboard shortcuts
+
+Menu items and buttons take a `key` option, and `S.bindKey(key, description, press)` binds a shortcut with no button to carry it, for as long as the calling scope lives. A key is spelled `"mod+k"` (⌘ on a Mac, Ctrl elsewhere), `"shift+f2"`, `"mod+shift+b"`, or a bare `"?"` — case doesn't matter, and no modifiers besides `mod` and `shift` are offered. Component shortcuts are announced to screen readers, and keystrokes a focused field or link owns are left to it. While a modal dialog is open only its own shortcuts fire, and binding a taken combination shadows the earlier binding until the new scope dies; `bindKey`'s docs describe the `"global"` and `"local"` modes that bend these rules. `?` pops an overview of exactly what a keypress could do right now, given where focus is — a cheat-sheet, not a modal: any keypress closes it and still lands, and Esc merely dismisses it; `S.setKeyHelp(false)` turns it off. Omit `press` to merely list a key your app handles by other means.
+
 ### Icons
 
 Staffa ships the full [Lucide icon set](https://lucide.dev/icons/) as named exports from `staffa/icons`. Import only the ones you use, so a bundler tree-shakes the rest (the whole set is ~82 kB gzipped). Each icon is a draw function usable anywhere a slot is accepted, or called directly:

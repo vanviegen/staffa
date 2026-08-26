@@ -182,6 +182,60 @@ test("pages: buttons, prose, icons and surfaces — then the same in the dark", 
 	await page.getByRole("button", { name: "primary" }).first().hover();
 	await page.getByRole("button", { name: "Month" }).click();
 
+	page.describe("A button's key: shown in its tooltip, pressed from anywhere");
+	await page.getByRole("button", { name: "Bookmark" }).scrollIntoViewIfNeeded();
+	await page.getByRole("button", { name: "Send" }).hover();
+	// An icon button's tip names it as well as its key; a labelled one just the key.
+	await page.getByText("Send · Ctrl+Enter").waitFor();
+	await page.mouse.move(0, 0);
+	await page.waitForSelector(".s-tt-tip", { state: "detached" });
+
+	page.describe("Arrowing down the nav says which row it lands on");
+	await page.getByRole("link", { name: "Buttons" }).click();
+	await page.keyboard.press("ArrowDown");
+	await expect(page.locator(".s-nav-panel :focus")).toHaveText("Tabs");
+
+	// A focused link keeps Enter, modified or not: that is the keyboard's own
+	// open-in-a-new-tab. Neither the shell (which would have routed it) nor the
+	// button's shortcut may take it — so nothing is published here.
+	await page.keyboard.press("Control+Enter");
+
+	page.describe("? is honest about it: the Send button's Ctrl+Enter is not listed while a link keeps it");
+	await page.keyboard.press("Shift+Slash");
+	const help = page.locator(".s-dialog", { hasText: "Keyboard shortcuts" });
+	await expect(help.locator(".s-keyhelp > div", { hasText: "Bookmark" })).toBeVisible();
+	expect(await help.locator(".s-keyhelp > div", { hasText: "Send" }).count()).toBe(0);
+	await page.keyboard.press("Shift+Slash");
+	await page.waitForSelector(".s-keyhelp", { state: "detached" });
+
+	page.describe("From the text field, though, Ctrl+Enter is the button's");
+	await page.getByPlaceholder(/Say something/).fill("Ship it");
+	await page.keyboard.press("Control+Enter");
+	await page.getByText("Sent: Ship it").waitFor();
+	// Modified keys reach a shortcut from inside a field too.
+	await page.keyboard.press("Control+b");
+	await page.getByText("Bookmarked!").waitFor();
+	// One toast per press: the Ctrl+Enter the nav row kept sent nothing.
+	await expect(page.locator(".s-toast")).toHaveCount(2);
+
+	page.describe("? lists what's bound — but from a field it is just typing");
+	const field = page.getByPlaceholder(/Say something/);
+	await field.press("Shift+Slash");
+	await expect(field).toHaveValue(/\?$/);
+	expect(await page.locator(".s-dialog").count()).toBe(0);
+
+	page.describe("mod+? reaches the overview even from inside the field");
+	await field.press("Control+Shift+Slash");
+	// Buttons list under their label, a hand-bound key under its description.
+	await expect(help.locator(".s-keyhelp > div", { hasText: "Bookmark" }).locator("kbd")).toHaveText("Ctrl+B");
+	await expect(help.locator(".s-keyhelp > div", { hasText: "accent colour" }).locator("kbd")).toHaveText("Ctrl+.");
+	// The shell's Escape shows too, described as what it would do right now.
+	await expect(help.locator(".s-keyhelp > div", { hasText: "navigation" }).locator("kbd")).toHaveText("Esc");
+
+	page.describe("The same combination again toggles it closed");
+	await field.press("Control+Shift+Slash");
+	await page.waitForSelector(".s-keyhelp", { state: "detached" });
+
 	page.describe("Prose rhythm and heading scale");
 	await page.goto("./content");
 	await page.getByText("Prose & flow content").waitFor();
@@ -272,6 +326,14 @@ test("overlays: toasts, tooltips, menus, dialogs and an inline menu tree", async
 	await page.getByRole("button", { name: "Danger" }).click();
 	await page.getByText("Something went wrong.").waitFor();
 
+	// Dismissed by hand once shown: their 6 s auto-expiry is wall-clock, so a
+	// toast left to expire straddles later captures — present in some runs,
+	// gone in others, depending on machine speed.
+	page.describe("Each × dismisses its toast");
+	await page.locator(".s-toast", { hasText: "saved" }).getByRole("button", { name: "Dismiss" }).click();
+	await page.locator(".s-toast", { hasText: "wrong" }).getByRole("button", { name: "Dismiss" }).click();
+	await expect(page.locator(".s-toast")).toHaveCount(0);
+
 	page.describe("Show a tooltip on hover");
 	await page.getByRole("button", { name: "Rich tip" }).hover();
 	await page.getByText("in tips").waitFor();
@@ -283,8 +345,20 @@ test("overlays: toasts, tooltips, menus, dialogs and an inline menu tree", async
 
 	page.describe("Open the Actions menu, pick an item");
 	await page.getByRole("button", { name: "Actions" }).click();
+	// The hint is `aria-hidden`, so the row is still named by its label alone.
+	await expect(menuItem(page, "Edit").locator(".s-menu-key")).toHaveText("Ctrl+E");
 	await page.getByRole("button", { name: "Edit" }).click();
 	await page.getByText("Edit clicked").waitFor();
+
+	page.describe("The same rows answer their keys with the menu shut");
+	await page.keyboard.press("Control+d");
+	await page.getByText("Duplicated").waitFor();
+	await page.keyboard.press("Control+Shift+A");
+	await page.getByText("Archived").waitFor();
+
+	page.describe("So does a context menu's, without the right-click that shows it");
+	await page.keyboard.press("F2");
+	await page.getByText("Renaming…").waitFor();
 
 	page.describe("Right-click the box for its context menu");
 	await page.getByText("Right-click (or long-press)").click({ button: "right" });
@@ -320,7 +394,20 @@ test("overlays: toasts, tooltips, menus, dialogs and an inline menu tree", async
 
 	page.describe("Stack a dialog inside a dialog; Escape peels them inside-out");
 	await page.getByRole("button", { name: "dialog in dialog" }).click();
-	await page.getByRole("button", { name: "Open secondary" }).click();
+	await page.getByText("This is the primary dialog.").waitFor();
+	// The modal silences the page's shortcuts: the menu's Ctrl+D raises no toast.
+	await page.keyboard.press("Control+d");
+	expect(await page.locator(".s-toast").count()).toBe(0);
+
+	page.describe("? over a modal lists only what works right now");
+	await page.keyboard.press("Shift+Slash");
+	// The dialog's own Esc and button, innermost first, then the global overview
+	// key — the page's silenced shortcuts don't show.
+	await expect(page.locator(".s-keyhelp > div")).toHaveText([/Close this dialog/, /Open secondary/, /This overview/]);
+
+	page.describe("A key pressed on the open overview closes it and still lands");
+	await page.keyboard.press("Control+o");
+	await page.waitForSelector(".s-keyhelp", { state: "detached" });
 	await page.getByText("Smaller than primary.").waitFor();
 	// Escape dismisses only the top-most dialog; the primary one stays up.
 	await page.keyboard.press("Escape");
@@ -335,6 +422,11 @@ test("overlays: toasts, tooltips, menus, dialogs and an inline menu tree", async
 	// Branches are native <details>; their rows stay mounted but hidden while
 	// folded, so no branch content shows before anything under it is current.
 	await expect(tree.getByRole("link", { name: "Apple" })).toBeHidden();
+
+	page.describe("Lemon's key picks it from two folds down, unfolding the branches above it");
+	await page.keyboard.press("l");
+	await expect(page).toHaveURL(/pick=lemon/);
+	await expect(tree.getByRole("link", { name: "Lemon" })).toHaveAttribute("aria-current", "page");
 
 	page.describe("Click the Fruit branch: it selects its first leaf, which unfolds it");
 	await tree.locator("summary", { hasText: "Fruit" }).click();
@@ -744,6 +836,10 @@ test("panels: closing splices a column out, reveals what it hid, and recycles wh
 	await expect(page.locator(visiblePanels)).toHaveCount(2);
 	// (A plain count: ShoTest's wrapped expect can't assert on absent elements.)
 	expect(await page.locator(livePanels, { hasText: /Small A is a/ }).count()).toBe(0);
+	// Dismiss the "Deleted" toast: left to its 6 s wall-clock expiry it straddles
+	// later captures, present in some runs and gone in others.
+	await page.locator(".s-toast").getByRole("button", { name: "Dismiss" }).click();
+	await expect(page.locator(".s-toast")).toHaveCount(0);
 
 	page.describe("The splice is a history entry, so browser back undoes it");
 	await page.goBack();
@@ -758,6 +854,8 @@ test("panels: closing splices a column out, reveals what it hid, and recycles wh
 	await page.getByText("Push a panel").waitFor();
 	await expect(page.locator(livePanels)).toHaveCount(2);
 	await expect(page.locator(visiblePanels)).toHaveCount(2);
+	await page.locator(".s-toast").getByRole("button", { name: "Dismiss" }).click();
+	await expect(page.locator(".s-toast")).toHaveCount(0);
 
 	page.describe("Widen past all three columns, so the playground's navigator stays usable");
 	await page.setViewportSize({ width: 1920, height: 900 });
