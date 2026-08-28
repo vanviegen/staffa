@@ -5989,7 +5989,7 @@
             {
               "type": "page",
               "message": "setViewportSize 1820×900",
-              "source": "tests/demo.spec.ts:1096"
+              "source": "tests/demo.spec.ts:1121"
             },
             {
               "type": "console",
@@ -6000,7 +6000,7 @@
             {
               "type": "page",
               "message": "goto ./icons/heart",
-              "source": "tests/demo.spec.ts:1097"
+              "source": "tests/demo.spec.ts:1122"
             },
             {
               "type": "check",
@@ -6011,8 +6011,8 @@
                 "width": 503,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:1098",
-              "duration": 210
+              "source": "tests/demo.spec.ts:1123",
+              "duration": 207
             },
             {
               "type": "check",
@@ -6023,19 +6023,19 @@
                 "width": 505,
                 "height": 59
               },
-              "source": "tests/demo.spec.ts:1099",
-              "duration": 176
+              "source": "tests/demo.spec.ts:1124",
+              "duration": 170
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:1100",
-              "duration": 146
+              "source": "tests/demo.spec.ts:1125",
+              "duration": 136
             },
             {
               "type": "describe",
               "message": "A click in the gallery replaces the detail rather than stacking a third",
-              "source": "tests/demo.spec.ts:1104"
+              "source": "tests/demo.spec.ts:1129"
             },
             {
               "type": "action",
@@ -6046,8 +6046,8 @@
                 "width": 48,
                 "height": 48
               },
-              "source": "tests/demo.spec.ts:1105",
-              "duration": 175
+              "source": "tests/demo.spec.ts:1130",
+              "duration": 178
             }
           ]
         },
@@ -6067,19 +6067,19 @@
                 "width": 505,
                 "height": 59
               },
-              "source": "tests/demo.spec.ts:1107",
-              "duration": 176
+              "source": "tests/demo.spec.ts:1132",
+              "duration": 174
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:1108",
-              "duration": 111
+              "source": "tests/demo.spec.ts:1133",
+              "duration": 119
             },
             {
               "type": "describe",
               "message": "The Next pager (data-panel=replace) swaps the detail in place",
-              "source": "tests/demo.spec.ts:1110"
+              "source": "tests/demo.spec.ts:1135"
             },
             {
               "type": "action",
@@ -6090,8 +6090,8 @@
                 "width": 32,
                 "height": 32
               },
-              "source": "tests/demo.spec.ts:1114",
-              "duration": 141
+              "source": "tests/demo.spec.ts:1139",
+              "duration": 146
             }
           ]
         },
@@ -6111,14 +6111,14 @@
                 "width": 505,
                 "height": 59
               },
-              "source": "tests/demo.spec.ts:1115",
-              "duration": 182
+              "source": "tests/demo.spec.ts:1140",
+              "duration": 185
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:1116",
-              "duration": 128
+              "source": "tests/demo.spec.ts:1141",
+              "duration": 109
             }
           ]
         },
@@ -6132,12 +6132,12 @@
             {
               "type": "describe",
               "message": "A reload reproduces both columns from the history entry",
-              "source": "tests/demo.spec.ts:1118"
+              "source": "tests/demo.spec.ts:1143"
             },
             {
               "type": "page",
               "message": "reload",
-              "source": "tests/demo.spec.ts:1119"
+              "source": "tests/demo.spec.ts:1144"
             },
             {
               "type": "check",
@@ -6148,8 +6148,8 @@
                 "width": 503,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:1120",
-              "duration": 171
+              "source": "tests/demo.spec.ts:1145",
+              "duration": 174
             },
             {
               "type": "check",
@@ -6160,14 +6160,14 @@
                 "width": 505,
                 "height": 59
               },
-              "source": "tests/demo.spec.ts:1121",
-              "duration": 143
+              "source": "tests/demo.spec.ts:1146",
+              "duration": 138
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:1122",
-              "duration": 112
+              "source": "tests/demo.spec.ts:1147",
+              "duration": 116
             }
           ]
         },
@@ -6184,7 +6184,7 @@
             {
               "type": "describe",
               "message": "linkNavigation=replace: a bare link swaps the panel it sits in for its target",
-              "source": "tests/demo.spec.ts:1124"
+              "source": "tests/demo.spec.ts:1149"
             },
             {
               "type": "action",
@@ -6195,13 +6195,13 @@
                 "width": 48,
                 "height": 48
               },
-              "source": "tests/demo.spec.ts:1130",
-              "duration": 148
+              "source": "tests/demo.spec.ts:1155",
+              "duration": 145
             }
           ]
         },
         {
-          "image": "b59135d22326ddf3",
+          "image": "4edc98a2945520e4",
           "viewport": {
             "width": 1820,
             "height": 900
@@ -6216,18 +6216,9 @@
                 "width": 505,
                 "height": 59
               },
-              "source": "tests/demo.spec.ts:1132",
-              "duration": 140
-            }
-          ]
-        },
-        {
-          "image": "4edc98a2945520e4",
-          "viewport": {
-            "width": 1820,
-            "height": 900
-          },
-          "events": [
+              "source": "tests/demo.spec.ts:1157",
+              "duration": 131
+            },
             {
               "type": "assert",
               "message": "expect count 1",
@@ -6237,8 +6228,8 @@
                 "width": 540,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1133",
-              "duration": 134
+              "source": "tests/demo.spec.ts:1158",
+              "duration": 136
             }
           ]
         },
@@ -6252,12 +6243,12 @@
             {
               "type": "describe",
               "message": "linkNavigation=open: a bare link behaves like a nav item, deriving a fresh stack",
-              "source": "tests/demo.spec.ts:1135"
+              "source": "tests/demo.spec.ts:1160"
             },
             {
               "type": "page",
               "message": "goto ./icons",
-              "source": "tests/demo.spec.ts:1136"
+              "source": "tests/demo.spec.ts:1161"
             },
             {
               "type": "check",
@@ -6268,8 +6259,8 @@
                 "width": 503,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:1137",
-              "duration": 175
+              "source": "tests/demo.spec.ts:1162",
+              "duration": 193
             }
           ]
         },
@@ -6292,8 +6283,8 @@
                 "width": 48,
                 "height": 48
               },
-              "source": "tests/demo.spec.ts:1139",
-              "duration": 153
+              "source": "tests/demo.spec.ts:1164",
+              "duration": 147
             }
           ]
         },
@@ -6313,8 +6304,8 @@
                 "width": 505,
                 "height": 59
               },
-              "source": "tests/demo.spec.ts:1140",
-              "duration": 190
+              "source": "tests/demo.spec.ts:1165",
+              "duration": 182
             },
             {
               "type": "action",
@@ -6325,8 +6316,8 @@
                 "width": 48,
                 "height": 48
               },
-              "source": "tests/demo.spec.ts:1143",
-              "duration": 156
+              "source": "tests/demo.spec.ts:1168",
+              "duration": 141
             }
           ]
         },
@@ -6346,20 +6337,20 @@
                 "width": 505,
                 "height": 59
               },
-              "source": "tests/demo.spec.ts:1144",
-              "duration": 188
+              "source": "tests/demo.spec.ts:1169",
+              "duration": 187
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:1145",
-              "duration": 119
+              "source": "tests/demo.spec.ts:1170",
+              "duration": 120
             },
             {
               "type": "assert",
               "message": "expect text \"Icons\", \"star\" (locator('.s-crumb'))",
-              "source": "tests/demo.spec.ts:1146",
-              "duration": 135
+              "source": "tests/demo.spec.ts:1171",
+              "duration": 120
             }
           ]
         },
@@ -6373,12 +6364,12 @@
             {
               "type": "describe",
               "message": "columns=single shows only the current page, however much room there is",
-              "source": "tests/demo.spec.ts:1148"
+              "source": "tests/demo.spec.ts:1173"
             },
             {
               "type": "page",
               "message": "goto ./panels",
-              "source": "tests/demo.spec.ts:1149"
+              "source": "tests/demo.spec.ts:1174"
             },
             {
               "type": "check",
@@ -6389,8 +6380,8 @@
                 "width": 1043,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:1150",
-              "duration": 188
+              "source": "tests/demo.spec.ts:1175",
+              "duration": 199
             }
           ]
         },
@@ -6437,8 +6428,8 @@
                 "width": 540,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1153",
-              "duration": 152
+              "source": "tests/demo.spec.ts:1178",
+              "duration": 177
             },
             {
               "type": "assert",
@@ -6449,8 +6440,8 @@
                 "width": 540,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1154",
-              "duration": 148
+              "source": "tests/demo.spec.ts:1179",
+              "duration": 141
             }
           ]
         },
@@ -6464,12 +6455,12 @@
             {
               "type": "describe",
               "message": "Escape still pops the stack, at any width",
-              "source": "tests/demo.spec.ts:1158"
+              "source": "tests/demo.spec.ts:1183"
             },
             {
               "type": "page",
               "message": "setViewportSize 480×800",
-              "source": "tests/demo.spec.ts:1159"
+              "source": "tests/demo.spec.ts:1184"
             },
             {
               "type": "check",
@@ -6480,8 +6471,8 @@
                 "width": 480,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:1162",
-              "duration": 111
+              "source": "tests/demo.spec.ts:1187",
+              "duration": 107
             }
           ]
         },
@@ -6495,17 +6486,17 @@
             {
               "type": "describe",
               "message": "An [id=integer] route hands the handler a real number, not a look-alike string",
-              "source": "tests/demo.spec.ts:1164"
+              "source": "tests/demo.spec.ts:1189"
             },
             {
               "type": "page",
               "message": "setViewportSize 1280×900",
-              "source": "tests/demo.spec.ts:1165"
+              "source": "tests/demo.spec.ts:1190"
             },
             {
               "type": "page",
               "message": "goto ./panels/item/42",
-              "source": "tests/demo.spec.ts:1166"
+              "source": "tests/demo.spec.ts:1191"
             },
             {
               "type": "check",
@@ -6516,19 +6507,19 @@
                 "width": 468,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1167",
-              "duration": 159
+              "source": "tests/demo.spec.ts:1192",
+              "duration": 155
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:1168",
-              "duration": 87
+              "source": "tests/demo.spec.ts:1193",
+              "duration": 91
             },
             {
               "type": "describe",
               "message": "A data-panel=open link gives its target its own stack",
-              "source": "tests/demo.spec.ts:1170"
+              "source": "tests/demo.spec.ts:1195"
             },
             {
               "type": "action",
@@ -6539,8 +6530,8 @@
                 "width": 223,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1176",
-              "duration": 131
+              "source": "tests/demo.spec.ts:1201",
+              "duration": 133
             }
           ]
         },
@@ -6560,20 +6551,20 @@
                 "width": 505,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1178",
-              "duration": 153
+              "source": "tests/demo.spec.ts:1203",
+              "duration": 150
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:1179",
-              "duration": 90
+              "source": "tests/demo.spec.ts:1204",
+              "duration": 98
             },
             {
               "type": "assert",
               "message": "expect text \"Panels\", \"Thread 8\" (locator('.s-crumb'))",
-              "source": "tests/demo.spec.ts:1180",
-              "duration": 79
+              "source": "tests/demo.spec.ts:1205",
+              "duration": 93
             }
           ]
         },
@@ -6587,12 +6578,12 @@
             {
               "type": "describe",
               "message": "\"007\" would be a second URL for the same record, so no route claims it at all",
-              "source": "tests/demo.spec.ts:1182"
+              "source": "tests/demo.spec.ts:1207"
             },
             {
               "type": "page",
               "message": "goto ./panels/item/007",
-              "source": "tests/demo.spec.ts:1183"
+              "source": "tests/demo.spec.ts:1208"
             },
             {
               "type": "check",
@@ -6603,8 +6594,8 @@
                 "width": 1008,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1184",
-              "duration": 140
+              "source": "tests/demo.spec.ts:1209",
+              "duration": 146
             }
           ]
         },
@@ -6618,12 +6609,12 @@
             {
               "type": "describe",
               "message": "A cold flat URL gets the ancestors the app names for it",
-              "source": "tests/demo.spec.ts:1186"
+              "source": "tests/demo.spec.ts:1211"
             },
             {
               "type": "page",
               "message": "goto ./thread/7",
-              "source": "tests/demo.spec.ts:1189"
+              "source": "tests/demo.spec.ts:1214"
             },
             {
               "type": "check",
@@ -6634,14 +6625,14 @@
                 "width": 505,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1190",
-              "duration": 150
+              "source": "tests/demo.spec.ts:1215",
+              "duration": 147
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:1191",
-              "duration": 93
+              "source": "tests/demo.spec.ts:1216",
+              "duration": 95
             },
             {
               "type": "assert",
@@ -6652,8 +6643,8 @@
                 "width": 843,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1192",
-              "duration": 116
+              "source": "tests/demo.spec.ts:1217",
+              "duration": 111
             }
           ]
         },
@@ -6667,7 +6658,7 @@
             {
               "type": "describe",
               "message": "So Escape has somewhere to go, as if you had walked here",
-              "source": "tests/demo.spec.ts:1194"
+              "source": "tests/demo.spec.ts:1219"
             },
             {
               "type": "assert",
@@ -6678,8 +6669,8 @@
                 "width": 1080,
                 "height": 797
               },
-              "source": "tests/demo.spec.ts:1197",
-              "duration": 181
+              "source": "tests/demo.spec.ts:1222",
+              "duration": 178
             }
           ]
         },
@@ -6696,7 +6687,7 @@
             {
               "type": "describe",
               "message": "openPanelStack() builds the same arrangement from code",
-              "source": "tests/demo.spec.ts:1199"
+              "source": "tests/demo.spec.ts:1224"
             },
             {
               "type": "action",
@@ -6708,7 +6699,7 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:58",
-              "duration": 172
+              "duration": 168
             }
           ]
         },
@@ -6728,14 +6719,14 @@
                 "width": 505,
                 "height": 24
               },
-              "source": "tests/demo.spec.ts:1201",
-              "duration": 150
+              "source": "tests/demo.spec.ts:1226",
+              "duration": 147
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
-              "source": "tests/demo.spec.ts:1203",
-              "duration": 95
+              "source": "tests/demo.spec.ts:1228",
+              "duration": 84
             }
           ]
         }

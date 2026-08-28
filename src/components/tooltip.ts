@@ -141,6 +141,8 @@ export function addTooltip(opts: TooltipOptions): void {
 	A("focusout=", scheduleHide);
 
 	A.clean(() => {
-		if ($ttActive.value?.opts === opts) $ttActive.value = undefined;
+		// Compare raw: the proxy's getter wraps stored objects, so `$ttActive.value.opts`
+		// would be a Proxy that never equals our raw `opts`.
+		if (A.unproxy($ttActive).value?.opts === opts) $ttActive.value = undefined;
 	});
 }

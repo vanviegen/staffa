@@ -278,6 +278,31 @@ test("pages: buttons, prose, icons and surfaces — then the same in the dark", 
 	await page.getByText("Variants & sizes").waitFor();
 	await page.getByRole("link", { name: "Form" }).click();
 	await page.getByText("Account").waitFor();
+
+	// A torn-down anchor must take its tooltip along. Driven through the page's
+	// own module instances rather than the pointer: a real mouse hides the tip
+	// as a side effect (synthesized leave events, scrolls), masking the cleanup
+	// path this guards — it used to compare a proxied value to a raw one and
+	// never match, stranding the tip on screen.
+	const tip = await page.evaluate(async () => {
+		const A = (await import("aberdeen")).default;
+		const S = await import("staffa");
+		const host = document.body.appendChild(document.createElement("div"));
+		const $on = A.proxy(true);
+		let btn: HTMLElement;
+		A.mount(host, () => {
+			if ($on.value) btn = A("button", () => S.addTooltip({ tip: "probe" })) as HTMLElement;
+		});
+		btn!.dispatchEvent(new MouseEvent("mouseenter"));
+		A.runQueue();
+		const shown = !!document.querySelector(".s-tt-tip");
+		$on.value = false;
+		A.runQueue(); A.runQueue();
+		const stranded = !!document.querySelector(".s-tt-tip");
+		host.remove();
+		return { shown, stranded };
+	});
+	expect(tip).toEqual({ shown: true, stranded: false });
 });
 
 test("tabs: URL-linked and scrollable strip", async ({ page }) => {

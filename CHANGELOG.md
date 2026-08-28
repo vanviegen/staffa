@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.1
+
+- Fixed: a tooltip whose anchor was removed from the page could stay on screen until the next scroll or tooltip.
+
 ## 0.17.0
 
 - Menu items take a `tooltip` option, shown on hover or keyboard focus. A nav row (`S.main`'s sidebar, `S.menu`) now tells its `key` in that tooltip instead of beside its label; dropdown and context menus keep the hint at the row's end.
