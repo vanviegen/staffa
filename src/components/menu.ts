@@ -4,6 +4,7 @@ import { type Slot, type Attributes, drawSlot, mountPortal, focusFirst } from ".
 import { menu as menuIcon, chevronRight, externalLink as newTabIcon, link as linkIcon } from "../icons.js";
 import { button, type ButtonOptions } from "./button.js";
 import { toast } from "./toast.js";
+import { addTooltip } from "./tooltip.js";
 import { bindKey, formatKey } from "../keys.js";
 
 /**
@@ -35,12 +36,14 @@ export interface MenuItem {
 	/**
 	 * A keyboard shortcut that activates this item: `"mod+k"`, `"f2"`, a bare
 	 * `"?"`. The spelling, and which keystrokes are yours to take, are
-	 * documented on {@link bindKey}. The combination shows at the right end of
-	 * the row (not on a touch device) and reaches screen readers as
-	 * `aria-keyshortcuts`; the `?` overview ({@link showKeyHelp}) lists it
-	 * under the item's label. Activating runs `click` with the `KeyboardEvent`
-	 * and follows `href` as a fresh navigation to it — the target getting its
-	 * own panel stack, as a nav item's does.
+	 * documented on {@link bindKey}. In a dropdown or context menu the
+	 * combination shows at the right end of the row (not on a touch device); a
+	 * nav row — `S.main`'s sidebar, {@link menu} — keeps its label clean and
+	 * tells it in its {@link MenuItem.tooltip | tooltip} instead. Either way
+	 * it reaches screen readers as `aria-keyshortcuts`, and the `?` overview
+	 * ({@link showKeyHelp}) lists it under the item's label. Activating runs
+	 * `click` with the `KeyboardEvent` and follows `href` as a fresh navigation
+	 * to it — the target getting its own panel stack, as a nav item's does.
 	 *
 	 * The shortcut works with the menu shut — rather the point of one on a
 	 * dropdown or context menu — for as long as whatever owns the items is
@@ -50,6 +53,12 @@ export interface MenuItem {
 	 * not bound.
 	 */
 	key?: string;
+	/**
+	 * A tooltip for this item, shown on hover and keyboard focus. A string
+	 * renders as rich text. In a nav, the item's `key` is shown underneath it,
+	 * behind a subtle separator (see {@link MenuItem.key}).
+	 */
+	tooltip?: Slot;
 	/**
 	 * Pages this item claims *beyond* its own `href`: a string claims that path
 	 * and everything under it (`"/mail"` claims `/mail/…`, not `/mailbox`), a
@@ -229,6 +238,11 @@ A.insertGlobalCss({
 	"@media (hover: none) and (pointer: coarse)": {
 		".s-menu-key": "display:none",
 	},
+	// A nav row's key rides its tooltip instead (see `drawHints`): a quiet line of
+	// its own, under the item's tip content when it has one, split off by the
+	// menu's own fading hairline.
+	".s-menu-tt-key": "font-family:inherit font-size:0.85em opacity:0.7 white-space:nowrap",
+	".s-tt-tip hr.s-menu-sep": "margin: 0.35em 0;",
 	// A branch row's fold indicator: a › that turns downward while the branch is open.
 	".s-menu-chevron": "margin-left:auto flex-shrink:0 display:flex transition: transform 0.15s ease;",
 	// Two `margin-left:auto`s in one row would split the free space between them,
@@ -269,8 +283,11 @@ A.insertGlobalCss({
  * @param onLeafSelect Optional — run when a *leaf* item is activated (used by
  *   the floating menu to close itself on selection). A branch expanding is
  *   not a selection, so it doesn't run this.
+ * @param keyHints Print each row's `key` at its right end, as the floating
+ *   menus do. Off — any kind of nav — a row tells its key in its tooltip
+ *   instead, keeping the resting rows quiet.
  */
-export function drawMenu(items: MenuEntry[], onLeafSelect?: () => void): void {
+export function drawMenu(items: MenuEntry[], onLeafSelect?: () => void, keyHints?: boolean): void {
 	// Roving focus via the DOM: query the live item elements on each keypress.
 	A("keydown=", (e: KeyboardEvent) => {
 		// interceptLinks' own Enter handler preventDefault()s the activation, so no
@@ -296,23 +313,33 @@ export function drawMenu(items: MenuEntry[], onLeafSelect?: () => void): void {
 		els[next].focus();
 	});
 
-	// Whether the current page is in this menu *at all* — a fact no single branch can
-	// tell, and one the fold logic needs (see `drawBranch`). Derived, so branches
-	// re-run only when the answer flips.
-	const $menuHasCurrent = A.derive(() => anyCurrent(items));
-	drawEntries(items, onLeafSelect, $menuHasCurrent);
+	drawEntries(items, {
+		onLeafSelect,
+		keyHints,
+		// Whether the current page is in this menu *at all* — a fact no single
+		// branch can tell, and one the fold logic needs (see `drawBranch`).
+		// Derived, so branches re-run only when the answer flips.
+		$hasCurrent: A.derive(() => anyCurrent(items)),
+	});
 }
 
-function drawEntries(items: MenuEntry[], onLeafSelect?: () => void, $menuHasCurrent?: { value: boolean }): void {
+/** What one {@link drawMenu} rendering shares with every row it draws. */
+interface MenuCtx {
+	onLeafSelect?: () => void;
+	keyHints?: boolean;
+	$hasCurrent: { value: boolean };
+}
+
+function drawEntries(items: MenuEntry[], ctx: MenuCtx): void {
 	for (const entry of items) {
 		if (typeof entry === "string" || typeof entry === "function") { drawSlot(entry); continue; }
 		if ("separator" in entry) { A("hr.s-menu-sep"); continue; }
-		if (entry.items) drawBranch(entry, onLeafSelect, $menuHasCurrent);
-		else drawLeaf(entry, onLeafSelect);
+		if (entry.items) drawBranch(entry, ctx);
+		else drawLeaf(entry, ctx);
 	}
 }
 
-function drawLeaf(entry: MenuItem, onLeafSelect?: () => void): void {
+function drawLeaf(entry: MenuItem, ctx: MenuCtx): void {
 	// Whether the aria-current scope below has run before: only a *later* run
 	// should animate the reveal.
 	let drawn = false;
@@ -339,12 +366,12 @@ function drawLeaf(entry: MenuItem, onLeafSelect?: () => void): void {
 		if (entry.key) A("aria-keyshortcuts=", formatKey(entry.key, true));
 		A("click=", (e: Event) => {
 			if (entry.disabled) { e.preventDefault(); return; }
-			onLeafSelect?.();
+			ctx.onLeafSelect?.();
 			entry.click?.(e);
 		});
 		if (entry.icon) A("span.s-menu-icon", () => drawSlot(entry.icon));
 		drawSlot(entry.label);
-		drawKeyHint(entry);
+		drawHints(entry, ctx);
 	});
 }
 
@@ -371,7 +398,7 @@ function setFold(href: string, open: boolean): boolean {
  * exactly while it holds the current page. Only a branch with no link anywhere below
  * it keeps the native toggle.
  */
-function drawBranch(entry: MenuItem, onLeafSelect?: () => void, $menuHasCurrent?: { value: boolean }): void {
+function drawBranch(entry: MenuItem, ctx: MenuCtx): void {
 	const href = entry.href ?? firstLeafHref(entry.items!);
 	// Derived, so the attribute scope below re-runs only when the fold answer flips.
 	// When the current page is nowhere in the menu, nothing has an opinion and the fold
@@ -380,7 +407,7 @@ function drawBranch(entry: MenuItem, onLeafSelect?: () => void, $menuHasCurrent?
 	const $open = href != null
 		? A.derive(() => {
 			if (containsCurrent(entry)) return setFold(href, true);
-			if ($menuHasCurrent == null || $menuHasCurrent.value) return setFold(href, false);
+			if (ctx.$hasCurrent.value) return setFold(href, false);
 			return foldMemory.get(href) ?? false;
 		})
 		: null;
@@ -411,11 +438,11 @@ function drawBranch(entry: MenuItem, onLeafSelect?: () => void, $menuHasCurrent?
 			});
 			if (entry.icon) A("span.s-menu-icon", () => drawSlot(entry.icon));
 			drawSlot(entry.label);
-			drawKeyHint(entry);
+			drawHints(entry, ctx);
 			A("span.s-menu-chevron aria-hidden=true", () => chevronRight());
 		});
 
-		A("div.s-menu-sub", () => drawEntries(entry.items!, onLeafSelect, $menuHasCurrent));
+		A("div.s-menu-sub", () => drawEntries(entry.items!, ctx));
 	});
 }
 
@@ -482,11 +509,28 @@ function firstLeafHref(items: MenuEntry[]): string | undefined {
 
 // ─── Keyboard shortcuts ──────────────────────────────────────────────────────
 
-/** The quiet hint at the right end of a row. See {@link MenuItem.key}. */
-function drawKeyHint(entry: MenuItem): void {
+/**
+ * A row's shortcut hint and tooltip. In a floating menu the shortcut sits at
+ * the right end of the row; a nav row keeps its label clean and tells it in
+ * its tooltip instead — under the item's own `tooltip` content, when it has
+ * one, behind a subtle hairline. See {@link MenuItem.key}.
+ */
+function drawHints(entry: MenuItem, ctx: MenuCtx): void {
+	const tipKey = ctx.keyHints ? undefined : entry.key;
 	// `aria-hidden`: the row already carries the shortcut as `aria-keyshortcuts`,
-	// which is what a screen reader reads out — this is the sighted half.
-	if (entry.key) A("kbd.s-menu-key aria-hidden=true text=", formatKey(entry.key));
+	// which is what a screen reader reads out — the hint is the sighted half.
+	if (entry.key && !tipKey) A("kbd.s-menu-key aria-hidden=true text=", formatKey(entry.key));
+	if (entry.tooltip == null && !tipKey) return;
+	addTooltip({
+		placement: "right",
+		tip: () => {
+			drawSlot(entry.tooltip);
+			if (tipKey) {
+				if (entry.tooltip != null) A("hr.s-menu-sep");
+				A("kbd.s-menu-tt-key aria-hidden=true text=", formatKey(tipKey));
+			}
+		},
+	});
 }
 
 /**
@@ -649,7 +693,7 @@ mountPortal(() => {
 	const menuEl = A("div.s-menu-list.s-s.neutral.shadow create=hidden destroy=hidden", f.dropdownAttrs, () => {
 		// One drawMenu call, not one per section: it owns the container's roving
 		// keyboard focus, and two of them would move it twice per keypress.
-		drawMenu(f.link != null ? [...linkItems(f.link), { separator: true }, ...f.items] : f.items, closeFloating);
+		drawMenu(f.link != null ? [...linkItems(f.link), { separator: true }, ...f.items] : f.items, closeFloating, true);
 	}) as HTMLElement;
 
 	// Capture-phase document handlers replace an invisible backdrop element:

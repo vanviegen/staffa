@@ -133,7 +133,11 @@ export function addTooltip(opts: TooltipOptions): void {
 
 	A("mouseenter=", show);
 	A("mouseleave=", scheduleHide);
-	A("focusin=", show);
+	// Keyboard focus only: programmatic focus (a nav opening on its current row,
+	// say) would pop a tip over the very thing it describes.
+	A("focusin=", (e: Event) => {
+		if ((e.target as Element).matches?.(":focus-visible")) show(e);
+	});
 	A("focusout=", scheduleHide);
 
 	A.clean(() => {

@@ -179,9 +179,9 @@ export interface Panel<P = Record<string, string | number | string[]>> {
 	 * The widest this panel can usefully be — a ceiling the shell never
 	 * exceeds, so the draw function never has to look right past it. It is
 	 * counted in the shell's *columns*: the content area divides into the
-	 * narrowest whole number of columns of at least 360px each (three columns
-	 * of 360 in a 1080px area, four of 380 in 1520px), and a column is never
-	 * wider than 540 — where the area holds just one, a small centres in it
+	 * fewest whole number of columns of at most 540px each (two columns of 540
+	 * in a 1080px area, three of ~507 in 1520px), and a column is never
+	 * narrower than 360 — where the area holds just one, a small centres in it
 	 * rather than stretching. So an ask never exceeds its column count × 540:
 	 *
 	 * - `"small"` — one column, never above 540px: lists, detail forms.
@@ -421,10 +421,9 @@ const PAGE_MS = 250;
 /** How long a freshly pushed `loading` panel holds its enter animation. */
 const LOADING_HOLD_MS = 300;
 /**
- * The bounds of a column: at least 360px (about the narrowest phone in common
- * use, so where a panel's layout is aimed), at most 540. The multi-column
- * regime never reaches 540 on its own, so capping the lone column of a 540–720px
- * area to it as well makes every ask's ceiling uniformly column count × 540.
+ * The bounds of a column: at most 540px — the width columns aim for, the area
+ * dividing into the fewest of them that stay within it — and at least 360px,
+ * about the narrowest phone in common use, so where a panel's layout is aimed.
  */
 const SMALL_MIN_PX = 360;
 export const SMALL_MAX_PX = 540;
@@ -1696,10 +1695,13 @@ export class PanelStackController implements PanelStack {
 	 * up here that could drift from the bars above and below. Widths stay
 	 * fractional: a rounded column edge would drift a pixel away from that chrome.
 	 *
-	 * The area divides into the narrowest whole number of columns of at least
-	 * {@link SMALL_MIN_PX} — so 1080px is three of 360, 1520px four of 380 — each
-	 * capped at {@link SMALL_MAX_PX}. A width is therefore a pure function of the
-	 * window: a panel NEVER resizes because a neighbour came or went.
+	 * The area divides into the fewest whole number of columns of at most
+	 * {@link SMALL_MAX_PX} — so 1080px is two of 540, 1520px three of ~507 —
+	 * keeping columns as wide as the cap allows rather than as narrow as
+	 * {@link SMALL_MIN_PX} permits. Only below 720px can that division dip under
+	 * the minimum; there a single column, capped at 540, centres in the area
+	 * instead. A width is therefore a pure function of the window: a panel NEVER
+	 * resizes because a neighbour came or went.
 	 *
 	 * `undefined` while the shell has no width yet (not in a document, or
 	 * `display:none`); the next pass tries again.
@@ -1708,7 +1710,8 @@ export class PanelStackController implements PanelStack {
 		const el = this.containerEl;
 		const area = el ? el.getBoundingClientRect().width : 0;
 		if (!area) return undefined;
-		const small = Math.min(area / Math.max(1, Math.floor(area / SMALL_MIN_PX)), SMALL_MAX_PX);
+		const cols = Math.ceil(area / SMALL_MAX_PX);
+		const small = area / cols >= SMALL_MIN_PX ? area / cols : Math.min(area, SMALL_MAX_PX);
 		const units = (n: number) => Math.min(n * small, area);
 		return { area, size: { small, medium: units(2), large: units(3), none: area } };
 	}

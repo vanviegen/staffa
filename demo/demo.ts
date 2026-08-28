@@ -124,7 +124,9 @@ const $navItems = A.proxy<S.MenuEntry[]>([
 	{ label: "Form",     icon: icons.clipboardList,      href: "/demo/form"     },
 	{ label: "Buttons",  icon: icons.mousePointerClick,  href: "/demo/buttons"  },
 	{ label: "Tabs",     icon: icons.folders,            href: "/demo/tabs"     },
-	{ label: "Overlays", icon: icons.bell,               href: "/demo/overlays" },
+	// A nav row keeps its label clean: the `tooltip` — and the `key`, which a
+	// dropdown row would print beside its label — show on hover instead.
+	{ label: "Overlays", icon: icons.bell,               href: "/demo/overlays", key: "mod+k", tooltip: "Toasts, tooltips, menus and dialogs" },
 	// A collapsing submenu: only the branch holding the current page stays
 	// unfolded, and clicking the branch row selects its first leaf.
 	{ label: "Styling",  icon: icons.palette, items: [
@@ -231,19 +233,19 @@ A(() => {
 		get linkNavigation() { return $shell.linkNavigation; },
 		get navWidth() { return $shell.navWidth; },
 		get maxWidth() { return `${$shell.maxWidth}px`; },
-		// The demo pages spread over the sizes: the form is `"large"`, the icons
-		// gallery and the panels playground `"medium"`, the icon detail and the
-		// small panels pages `"small"` — so columns pair up and crowd each other
-		// out in every combination (or stack, on a phone).
+		// The demo pages spread over the sizes, each declaring its own `title`
+		// and `maxWidth`: the form is `"large"`, the panels playground `"medium"`,
+		// the icons pages and the small panels `"small"`. So columns pair up and
+		// crowd each other out in every combination (or stack, on a phone).
 		routes: {
-			"/demo/form":                    ($panel) => { $panel.title = "Form"; $panel.maxWidth = "large"; drawForm(); },
+			"/demo/form":                    drawForm,
 			"/demo/form/guard":              drawGuardDemo,
-			"/demo/buttons":                 ($panel) => { $panel.title = "Buttons";  drawButtons(); },
-			"/demo/tabs":                    ($panel) => { $panel.title = "Tabs";     drawTabsPage(); },
-			"/demo/overlays":                ($panel) => { $panel.title = "Overlays"; drawOverlays(); },
-			"/demo/surfaces":                ($panel) => { $panel.title = "Surfaces"; drawSurfaces(); },
-			"/demo/content":                 ($panel) => { $panel.title = "Content";  drawContent(); },
-			"/demo/icons":                   ($panel) => { $panel.title = "Icons"; $panel.maxWidth = "medium"; drawIcons(); },
+			"/demo/buttons":                 drawButtons,
+			"/demo/tabs":                    drawTabsPage,
+			"/demo/overlays":                drawOverlays,
+			"/demo/surfaces":                drawSurfaces,
+			"/demo/content":                 drawContent,
+			"/demo/icons":                   drawIcons,
 			"/demo/icons/[name]":            drawIconDetail,
 			"/demo/panels":                  drawPanelsPlayground,
 			"/demo/panels/live":             drawLivePanel,
@@ -324,7 +326,9 @@ A.insertGlobalCss({".s-s.brand-orange": "--s-bg:#ef6b00 --s-text:#fff"});
 
 // ─── Pages ───────────────────────────────────────────────────────────────────
 
-function drawForm() {
+function drawForm($panel: S.Panel) {
+	$panel.title = "Form";
+	$panel.maxWidth = "large";
 	const $layout = A.proxy("grid") as { value: "stacked" | "grid" };
 	S.box({
 		header: "Account",
@@ -852,7 +856,8 @@ function drawLongTitledPanel($panel: S.Panel, title: string, deeper?: string) {
 	else A("a href=/demo/panels #Back to the playground");
 }
 
-function drawButtons() {
+function drawButtons($panel: S.Panel) {
+	$panel.title = "Buttons";
 	// Accent roles carry the three variants; `.neutral` is the neutral button.
 	const roles = ["primary", "danger", "success", "warning", "link"];
 	const variants = ["filled", "tonal", "outlined"];
@@ -962,7 +967,8 @@ function drawButtons() {
 	});
 }
 
-function drawTabsPage() {
+function drawTabsPage($panel: S.Panel) {
+	$panel.title = "Tabs";
 	S.box({
 		header: "URL-linked tabs",
 		content: () => {
@@ -1023,7 +1029,8 @@ function drawTabsPage() {
 	});
 }
 
-function drawOverlays() {
+function drawOverlays($panel: S.Panel) {
+	$panel.title = "Overlays";
 
 	// ── Toast ──────────────────────────────────────────────────────────────
 	S.box({
@@ -1244,7 +1251,8 @@ function drawOverlays() {
 
 }
 
-function drawContent() {
+function drawContent($panel: S.Panel) {
+	$panel.title = "Content";
 
 	// A run of plain semantic elements — exactly what a markdown-to-HTML
 	// renderer emits, or what you'd reach for in your own UI. Staffa gives these
@@ -1367,7 +1375,8 @@ function drawContent() {
 
 }
 
-function drawSurfaces() {
+function drawSurfaces($panel: S.Panel) {
+	$panel.title = "Surfaces";
 	const accentRoles = ["primary", "danger", "success", "warning", "link"];
 
 	// A token sampler: every contextual foreground colour shown on the current surface.
@@ -1509,7 +1518,7 @@ function drawIconDetail($panel: S.Panel<{ name: string }>) {
 	const name = $panel.params.name;
 	const fn = iconByName[name];
 	$panel.title = name;
-	// A small column: on a wide enough screen it sits beside the (medium) gallery.
+	// A small column: on a wide enough screen it sits beside the gallery.
 	$panel.maxWidth = "small";
 
 	const list = showcaseIcons.includes(name) ? showcaseIcons : allIcons.map(([n]) => n);
@@ -1541,7 +1550,9 @@ function drawIconSample(label: string, draw: () => void) {
 	});
 }
 
-function drawIcons() {
+function drawIcons($panel: S.Panel) {
+	$panel.title = "Icons";
+	$panel.maxWidth = "small";
 	S.box({
 		header: "Gallery",
 		content: () => {

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.17.0
+
+- Menu items take a `tooltip` option, shown on hover or keyboard focus. A nav row (`S.main`'s sidebar, `S.menu`) now tells its `key` in that tooltip instead of beside its label; dropdown and context menus keep the hint at the row's end.
+- Columns are now as wide as the 540px cap allows: the content area divides into the *fewest* columns of at most 540px, rather than the most of at least 360px.
+
 ## 0.16.0
 
 - New: **keyboard shortcuts**. Menu items and buttons take a `key` option (`"mod+k"`, `"shift+f2"`, …) that works from anywhere, open menu or not; a menu row shows the combination, a button tells it in its tooltip. `S.bindKey` binds a key with no button to carry it, and `S.formatKey` spells one the way the platform does.

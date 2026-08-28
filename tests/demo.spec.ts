@@ -343,6 +343,18 @@ test("overlays: toasts, tooltips, menus, dialogs and an inline menu tree", async
 	await page.mouse.move(0, 0);
 	await page.waitForSelector(".s-tt-tip", { state: "detached" });
 
+	page.describe("A nav row's tooltip tells its key too, under its own tip");
+	await page.locator(".s-nav-panel").getByRole("link", { name: "Overlays" }).hover();
+	const navTip = page.locator(".s-tt-tip");
+	await expect(navTip).toContainText("Toasts, tooltips, menus and dialogs");
+	// The key a dropdown row would print beside its label, behind a hairline...
+	await expect(navTip.locator("kbd")).toHaveText("Ctrl+K");
+	await expect(navTip.locator("hr")).toHaveCount(1);
+	// ...leaving the resting row clean.
+	expect(await page.locator(".s-nav-panel .s-menu-key").count()).toBe(0);
+	await page.mouse.move(0, 0);
+	await page.waitForSelector(".s-tt-tip", { state: "detached" });
+
 	page.describe("Open the Actions menu, pick an item");
 	await page.getByRole("button", { name: "Actions" }).click();
 	// The hint is `aria-hidden`, so the row is still named by its label alone.
@@ -446,6 +458,12 @@ test("overlays: toasts, tooltips, menus, dialogs and an inline menu tree", async
 	await expect(page.locator(".s-menu-picked")).toHaveText("Picked: lemon");
 	await expect(tree.getByRole("link", { name: "Lime" })).toBeVisible();
 	await expect(tree.getByRole("link", { name: "Banana" })).toBeVisible();
+
+	page.describe("An inline row's key is told in a tooltip, not beside its label");
+	await tree.getByRole("link", { name: "Lemon" }).hover();
+	await expect(page.locator(".s-tt-tip")).toHaveText("L");
+	await page.mouse.move(0, 0);
+	await page.waitForSelector(".s-tt-tip", { state: "detached" });
 
 	page.describe("Pin the Overlays page, so navigating elsewhere parks it — alive");
 	// Narrow, so the lone open page still writes a crumb (to right-click below).
@@ -588,8 +606,8 @@ test("nav: the sidebar claims deep links, scrolls to them, and leads home", asyn
 // ─── Routed stack ────────────────────────────────────────────────────────────
 
 test("panels: columns tile the area, centre in it, and crowd one another out", async ({ page }) => {
-	// 1280 window − 200 sidebar = 1080 of content area, which divides into three
-	// columns of 360 — the narrowest whole number that keeps each one at 360+.
+	// 1280 window − 200 sidebar = 1080 of content area, which divides into two
+	// columns of 540 — the fewest that keeps each one within the 540 cap.
 	await page.setViewportSize({ width: 1280, height: 900 });
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
@@ -626,8 +644,8 @@ test("panels: columns tile the area, centre in it, and crowd one another out", a
 	await expect(page.locator(".s-nav-panel [aria-current=page]")).toHaveText("Panels");
 	await expect(page.locator("header .s-subtitle")).toHaveText("components for Aberdeen");
 	await expect(page.locator(".s-crumb")).toHaveCount(0);
-	// The medium playground: two thirds of the area, centred in it.
-	await expect.poll(run).toEqual({ gaps: [180, 180], widths: [720] });
+	// The medium playground: two columns, which here is the whole area.
+	await expect.poll(run).toEqual({ gaps: [0, 0], widths: [1080] });
 
 	page.describe("Push a page with actions: its column gets a quiet strip, and the stack takes the bar's line");
 	await stackNav(firstPanel(page), "Small A", "push");
@@ -641,15 +659,15 @@ test("panels: columns tile the area, centre in it, and crowd one another out", a
 	await expect(page.locator("header .s-title")).toHaveText("Staffa");
 	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small A"]);
 	await expect(page.locator("header .s-subtitle")).toHaveCount(0);
-	// A small column beside it fills the area exactly.
-	await expect.poll(run).toEqual({ gaps: [0, 0], widths: [720, 360] });
+	// The medium playground can't fit beside it, so the small centres alone.
+	await expect.poll(run).toEqual({ gaps: [270, 270], widths: [540] });
 
-	page.describe("Push B: a third crowds the playground out, and the two smalls recentre");
+	page.describe("Push B: the two smalls pair up and tile the area exactly");
 	await stackNav(topPanel(page), "Small B", "push");
 	await panelWith(page, /Small B is a/).waitFor();
 	await expect(page.locator(livePanels)).toHaveCount(3);
 	await expect(page.locator(visiblePanels)).toHaveCount(2);
-	await expect.poll(run).toEqual({ gaps: [180, 180], widths: [360, 360] });
+	await expect.poll(run).toEqual({ gaps: [0, 0], widths: [540, 540] });
 	// Everything in a column is the page's own content, and the bold crumbs are
 	// exactly the panels on screen: the crowded-out playground reads muted.
 	await expect(topPanel(page).locator(".s-box header").first()).toContainText("Small B");
@@ -728,6 +746,9 @@ test("panels: columns tile the area, centre in it, and crowd one another out", a
 });
 
 test("panels: the three navigations, pinning, and the crumb menu", async ({ page }) => {
+	// A three-column area (1820 − 200 sidebar = 1620 = 3 × 540), so the medium
+	// playground keeps its navigator on screen beside one small page.
+	await page.setViewportSize({ width: 1820, height: 900 });
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
 
@@ -813,9 +834,9 @@ test("panels: the three navigations, pinning, and the crumb menu", async ({ page
 });
 
 test("panels: closing splices a column out, reveals what it hid, and recycles what reopens", async ({ page }) => {
-	// At 1280 the area is 1080: the medium playground (720) plus one small (360)
+	// At 1820 the area is 1620: the medium playground (1080) plus one small (540)
 	// fill it exactly, so a third column crowds one out.
-	await page.setViewportSize({ width: 1280, height: 900 });
+	await page.setViewportSize({ width: 1820, height: 900 });
 	await page.goto("./panels");
 	await page.getByText("Push a panel").waitFor();
 
@@ -1068,10 +1089,11 @@ test("panels: a page is sized before it draws, and the shell resizes around it",
 });
 
 test("panels: deep links derive their columns, and the link default governs bare links", async ({ page }) => {
-	// The medium gallery and the small detail add up to exactly the content
-	// area, so they pair up as two columns on any ordinary desktop width.
+	// The medium gallery and the small detail need a three-column area (1820 −
+	// 200 sidebar = 1620 = 3 × 540) to pair up as two columns.
 	// /demo/icons matches a route, so it becomes the page beneath
 	// /demo/icons/heart (while /demo, which has no route, is skipped).
+	await page.setViewportSize({ width: 1820, height: 900 });
 	await page.goto("./icons/heart");
 	await page.getByText("Gallery").waitFor();
 	await page.getByText("import { heart }").waitFor();
@@ -1131,7 +1153,7 @@ test("panels: deep links derive their columns, and the link default governs bare
 	await panelWith(page, /Small A is a/).waitFor();
 	await expect(page.locator(visiblePanels)).toHaveCount(1);
 	// Its "small" ask still holds — the ceiling is a promise, single mode or not.
-	expect((await page.locator(visiblePanels).boundingBox())!.width).toBeCloseTo(360, 0);
+	expect((await page.locator(visiblePanels).boundingBox())!.width).toBeCloseTo(540, 0);
 
 	page.describe("Escape still pops the stack, at any width");
 	await page.setViewportSize({ width: 480, height: 800 });
