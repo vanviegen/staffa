@@ -919,10 +919,11 @@ test("panels: closing splices a column out, reveals what it hid, and recycles wh
 	await expect(page.locator(livePanels)).toHaveCount(1);
 	expect(await page.locator(livePanels).evaluate((el) => (el as HTMLElement).dataset.probe)).toBe("kept");
 
-	page.describe("Browser back restores the arrangement — Small B still the same element");
+	page.describe("A replace is a redirect: browser back skips the replaced arrangement");
+	// The replace took the [Panels, A, B] entry's place in the history, so back
+	// lands on the entry before it rather than restoring what was replaced.
 	await page.goBack();
-	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small A", "Small B"]);
-	expect(await panelWith(page, /Small B is a/).evaluate((el) => (el as HTMLElement).dataset.probe)).toBe("kept");
+	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small A"]);
 
 	page.describe("A closing page is torn down at once; only its element lingers, fading");
 	await page.setViewportSize({ width: 1280, height: 900 });

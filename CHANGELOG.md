@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.2
+
+- Fixed: a `replace` navigation (`replacePanel`, `$panel.open(href, "replace")`, `data-panel=replace`) now replaces the browser history entry as well, instead of pushing a new one. A route that only redirects — `/` settling on the app's real start screen, a just-saved record taking its form's place — no longer leaves an entry that traps the back button in a redirect loop.
+
 ## 0.17.1
 
 - Fixed: a tooltip whose anchor was removed from the page could stay on screen until the next scroll or tooltip.

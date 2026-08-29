@@ -285,7 +285,8 @@ export interface Panel<P = Record<string, string | number | string[]>> {
 	 * beneath the new panel, unsaved ones park), and a path that is already
 	 * open is returned to rather than opened twice. `how` plays the part of a
 	 * link's `data-panel` attribute: `"replace"` puts the target in this
-	 * panel's place, `"open"` leaves the panel behind and gives the target
+	 * panel's place — history entry included, so the back button skips the
+	 * replaced panel — `"open"` leaves the panel behind and gives the target
 	 * its own stack, and omitting it follows the shell's
 	 * {@link MainOptions.linkNavigation}, like a link without the attribute.
 	 *
@@ -718,7 +719,9 @@ export interface PanelStack {
 	pushPanel(path: string): Promise<boolean>;
 	/**
 	 * Opens `path` in place of the current panel, which closes. The panels
-	 * beneath it stay as they are. That's what a `data-panel=replace` link does.
+	 * beneath it stay as they are. The history entry is replaced too — a
+	 * redirect, so the back button skips the replaced panel. That's what a
+	 * `data-panel=replace` link does.
 	 */
 	replacePanel(path: string): Promise<boolean>;
 	/**
@@ -1335,7 +1338,25 @@ export class PanelStackController implements PanelStack {
 				&& url.search === location.search && (url.hash || "") === (location.hash || "")) {
 				return Promise.resolve(true);
 			}
-			return this.issue(target, () => route.go({ path, search, hash, state: this.stateFor(target) }));
+			const state = this.stateFor(target);
+			if (replace) {
+				// A replace is a redirect: writing the route in place makes the
+				// router replaceState rather than push, so the target takes the
+				// replaced panel's history entry too and the back button never
+				// returns to it. The router consults an app's guard as it applies
+				// this; the verdict read below sees a synchronous veto, while an
+				// async guard reports `false` here and re-applies on approval —
+				// the in-place trade-off `route.setGuard` documents.
+				return this.issue(target, () => {
+					route.current.path = path;
+					route.current.search = search;
+					route.current.hash = hash;
+					route.current.state = state;
+					A.runQueue();
+					return route.current.path === path;
+				});
+			}
+			return this.issue(target, () => route.go({ path, search, hash, state }));
 		});
 	}
 

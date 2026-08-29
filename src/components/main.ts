@@ -94,7 +94,8 @@ export interface MainOptions<R = Routes> {
 	 * also call Aberdeen's `interceptLinks()`. A link opens its target on top of
 	 * the panel it sits in, closing everything after that panel first. The
 	 * `data-panel` attribute keeps less of that context instead: `replace`
-	 * drops the link's own panel too, putting the target in its place, and
+	 * drops the link's own panel too, putting the target in its place (history
+	 * entry included — a redirect), and
 	 * `open` drops it all, giving the target its own stack, the way a nav item
 	 * does. A plain link to something already open goes back to it rather than
 	 * opening it twice, closing whatever was stacked on top — pinned panels
@@ -204,7 +205,7 @@ export interface MainOptions<R = Routes> {
 	 * What a link *without* a `data-panel` attribute does — the per-link
 	 * attribute always wins. The three keep less and less of the link's own
 	 * context: `"push"` (the default) builds on the panel the link sits in,
-	 * `"replace"` swaps that panel out, and `"open"` ignores it and gives the
+	 * `"replace"` swaps that panel out (history entry included), and `"open"` ignores it and gives the
 	 * target its own stack, the way a nav item does. So with `"open"` every
 	 * click replaces the content as a whole — which, with flat routes, is the
 	 * conventional sidebar-and-content app: one pane, swapped on every click,
