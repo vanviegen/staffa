@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.3
+
+- Fixed: long breadcrumb could still break some action button layouts.
+
 ## 0.17.2
 
 - Fixed: a `replace` navigation (`replacePanel`, `$panel.open(href, "replace")`, `data-panel=replace`) now replaces the browser history entry as well, instead of pushing a new one. A route that only redirects — `/` settling on the app's real start screen, a just-saved record taking its form's place — no longer leaves an entry that traps the back button in a redirect loop.

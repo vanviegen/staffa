@@ -291,9 +291,15 @@ A.insertGlobalCss({
 		"> footer": "border-top: 1px solid $s-faint; fg:$s-muted",
 		// The bar reads `[leading] [title] …spacer… [trailing]`, the spacer being the
 		// trailing slot's own growth (which is what lets a search box live there).
-		// Its near-zero shrink factor makes the titles give way first, but only to
-		// their floor — past that the trailing slot shrinks after all, since a
-		// zero-width crumb strip would spill its overlay buttons over the ☰.
+		// When the bar runs short, titles and trailing slot shrink in proportion —
+		// an honest factor of 1: a fractional one is not a slower shrink but a
+		// partial one, handing back that fraction of the shortfall and overflowing
+		// the rest. What keeps the slot's chrome from being crushed is its floor:
+		// no `min-width:0` here, so it stops at its content's own minimum — verbs
+		// promoted into the bar can never be squeezed into painting over the
+		// crumbs beside them, while a search box that declares `min-width:0` of
+		// its own still gives everything it has. Past the floor the titles do all
+		// the giving, down to their own 5rem.
 		"> header > .s-bar, > footer > .s-bar": "display:flex align-items:center width:100% margin-inline:auto gap:$3 padding: $2 $3;",
 		"> header .s-logo, > header .s-nav-trigger": "display:flex align-items:center flex-shrink:0",
 		// Pull back the ~6px of padding in the ☰'s 2rem hit area, so the glyph — not
@@ -309,7 +315,7 @@ A.insertGlobalCss({
 		// to what their own classes provide (`filter:none` keeps the global
 		// `a:hover` brighten off the gradient text).
 		"> header a.s-logo, > header a.s-title": "text-decoration:none filter:none cursor:pointer",
-		"> header .s-menu": "display:flex align-items:center justify-content:flex-end gap:$2 flex: 1 0.1 auto; min-width:0",
+		"> header .s-menu": "display:flex align-items:center justify-content:flex-end gap:$2 flex: 1 1 auto;",
 		// Body always wraps <main>, sidebar or not, so max-width centring and
 		// scrollbar alignment work the same either way. It is also the positioning
 		// and clipping context for the narrow-screen nav panel. `overflow:clip`, not
