@@ -451,7 +451,9 @@ A.insertGlobalCss({
 		// this one duration and ease-out, so panels travelling the same distance
 		// travel as one — a CREATED panel joins the strip beside the old position
 		// of the panels beneath it and rides their slide while fading in, and a
-		// CLOSED one fades out where it stood. Nothing else ever animates.
+		// CLOSED one keeps its seat beside the surviving panel beneath it and
+		// rides that panel's slide while fading out — its creation played
+		// backwards. Nothing else ever animates.
 		// A plain `left`, never a transform: a transformed element is
 		// composited, costing it subpixel text antialiasing. No `width`
 		// transition either — animating one reflows the column every frame. And
@@ -477,9 +479,10 @@ A.insertGlobalCss({
 		// whatever slides across its spot passes over it. Dropped once the fade
 		// is over (see `releaseEnter`).
 		"&.s-panel-new": "z-index:1",
-		// On its way out: it fades where it stood, beneath every live panel
-		// (declared after `.s-panel-new`, so closing mid-enter drops a panel to
-		// the bottom), and leaves the DOM when the fade ends (see `playExit`).
+		// On its way out: it fades, still riding the strip (see `layout`),
+		// beneath every live panel (declared after `.s-panel-new`, so closing
+		// mid-enter drops a panel to the bottom), and leaves the DOM when the
+		// fade ends (see `playExit`).
 		"&.s-panel-closing": "z-index:0 opacity:0 pointer-events:none",
 		// The fade-in's start state: a newcomer wears it from creation until its
 		// content is ready — usually the very pass that placed it, later for a
@@ -601,6 +604,12 @@ interface PanelEntry {
 	hash?: string;
 	/** Set once the panel is on its way out, playing its exit animation. */
 	closing?: boolean;
+	/**
+	 * The nearest surviving panel beneath this one when it closed. The exit
+	 * rides that panel's motion (see `layout`), the mirror of how a newcomer
+	 * rides the panels it opens over, so a close plays the open backwards.
+	 */
+	anchor?: string;
 	/** Set while the fade-in is still owed (a `loading` hold can owe it past placement). */
 	enter?: boolean;
 	/** Whether the panel has been through a full layout pass (and so may animate). */
@@ -813,6 +822,8 @@ export class PanelStackController implements PanelStack {
 	private lastGeom?: Geometry;
 	private layoutQueued = false;
 	private timers = new Set<ReturnType<typeof setTimeout>>();
+	/** Elements playing their exit fade, each riding its anchor's motion (see `layout`). */
+	private exiting = new Set<{ el: HTMLElement; anchor?: string }>();
 	/** The arrangement the navigation in flight is heading for; see {@link intended}. */
 	private intent: Arrangement | null = null;
 	/** The navigation the router hasn't settled yet, if any. */
@@ -1049,7 +1060,13 @@ export class PanelStackController implements PanelStack {
 			next.push(entry);
 			this.$open[path] = entry;
 		}
-		for (const entry of existing.values()) this.beginClose(entry);
+		// What remains in `existing` closes, each remembering the nearest
+		// surviving panel beneath it — the anchor its exit fade rides.
+		let anchor: string | undefined;
+		for (const entry of this.$state.live) {
+			if (existing.has(entry.path)) this.beginClose(entry, anchor);
+			else anchor = entry.path;
+		}
 		this.$state.live = next;
 		this.$state.focus = Math.min(target.focus, next.length - 1);
 		this.scheduleLayout();
@@ -1090,18 +1107,17 @@ export class PanelStackController implements PanelStack {
 	 * at the end of the animation. Only the element lingers to play that animation,
 	 * which is what `drawPanel`'s `destroy=` hook hands to {@link playExit}.
 	 */
-	private beginClose(entry: PanelEntry): void {
+	private beginClose(entry: PanelEntry, anchor?: string): void {
 		entry.closing = true;
+		entry.anchor = anchor;
 		entry.$panel.visible = false;
 		delete this.$open[entry.path];
 	}
 
 	/**
-	 * A closed panel's send-off, run by Aberdeen once its scope is gone: it fades
-	 * where it stands, inert, and leaves the DOM on `transitionend`. A fixed timer
-	 * would race the transition and pull the element a frame early, making the
-	 * panel appear to fade half-way and vanish; the timeout is only a fallback for
-	 * when no `transitionend` is coming (transitions off, element never placed).
+	 * A closed panel's send-off, run by Aberdeen once its scope is gone: it fades,
+	 * inert, riding its anchor's slide (see `layout`), and leaves the DOM once
+	 * the fade is over (see {@link afterFade}).
 	 */
 	private playExit(entry: PanelEntry, el: HTMLElement): void {
 		// A panel being *redrawn* replaces its element through here too; that one
@@ -1109,16 +1125,36 @@ export class PanelStackController implements PanelStack {
 		if (!entry.closing) { el.remove(); return; }
 		el.classList.add("s-panel-closing");
 		el.setAttribute("inert", "");
-		const drop = () => {
-			clearTimeout(timer);
-			this.timers.delete(timer);
+		// Only a placed panel has a seat on the strip to ride out from.
+		const exit = entry.placed ? { el, anchor: entry.anchor } : null;
+		if (exit) this.exiting.add(exit);
+		this.afterFade(el, () => {
+			if (exit) this.exiting.delete(exit);
 			el.remove();
-		};
-		el.addEventListener("transitionend", (e: TransitionEvent) => {
-			if (e.target === el && e.propertyName === "opacity") drop();
 		});
-		const timer = setTimeout(drop, PAGE_MS + 80);
+	}
+
+	/**
+	 * Run `done` once `el`'s opacity fade is over. The real signal is
+	 * `transitionend` — or `transitioncancel`, for a fade a resize snaps short —
+	 * so the fade's actual length rules, however long: DevTools' slowed
+	 * animations stretch it tenfold without touching any timer. The timer only
+	 * stands in for a fade that never starts at all (transitions off, element
+	 * never placed), which is why the fade proving real (`transitionrun`)
+	 * disarms it.
+	 */
+	private afterFade(el: HTMLElement, done: () => void): void {
+		let called = false;
+		const timer = setTimeout(() => finish(), PAGE_MS + 80);
 		this.timers.add(timer);
+		const disarm = () => { clearTimeout(timer); this.timers.delete(timer); };
+		const finish = () => { disarm(); if (!called) { called = true; done(); } };
+		const forOpacity = (fn: () => void) => (e: TransitionEvent) => {
+			if (e.target === el && e.propertyName === "opacity") fn();
+		};
+		el.addEventListener("transitionrun", forOpacity(disarm));
+		el.addEventListener("transitionend", forOpacity(finish));
+		el.addEventListener("transitioncancel", forOpacity(finish));
 	}
 
 	// ── Navigation ─────────────────────────────────────────────────────────
@@ -1829,6 +1865,7 @@ export class PanelStackController implements PanelStack {
 		// beneath them to come from — or nothing moving — that start is where
 		// they already stand, and they simply fade in.
 		const fresh: { entry: PanelEntry; x: number }[] = [];
+		const deltas = new Map<string, number>();
 		let x = left;
 		let delta = 0;
 		for (let i = 0; i < first; i++) x -= live[i].width;
@@ -1846,6 +1883,7 @@ export class PanelStackController implements PanelStack {
 			}
 			if (entry.placed) {
 				delta = parseFloat(el.style.left) - x;
+				deltas.set(entry.path, delta);
 				el.style.left = `${x}px`;
 				// A fade held back for content starts the moment its hold lifts.
 				if (entry.enter && !entry.$ui.holding) this.releaseEnter(entry);
@@ -1866,6 +1904,15 @@ export class PanelStackController implements PanelStack {
 			el.classList.toggle("s-panel-hidden", i < first);
 			el.classList.toggle("s-panel-parked", i > cur);
 			el.toggleAttribute("inert", !shown);
+		}
+
+		// Closing panels keep their seat on the strip while they fade: each
+		// travels exactly as far as its anchor — the surviving panel it stood
+		// on — so a close slides back out the way the open slid in, and one
+		// whose anchor stays put is the plain crossfade it should be.
+		for (const exit of this.exiting) {
+			const d = exit.anchor == null ? undefined : deltas.get(exit.anchor);
+			if (d) exit.el.style.left = `${parseFloat(exit.el.style.left) - d}px`;
 		}
 
 		// Phase 2 — reading a layout property forces the browser to adopt those
@@ -1890,14 +1937,8 @@ export class PanelStackController implements PanelStack {
 		const el = entry.el;
 		if (!el || !el.classList.contains("s-panel-enter")) return;
 		el.classList.remove("s-panel-enter");
-		// Keep it beneath its elders until the fade is over — by timer, a hair
-		// past it, since a resize can snap the fade short without ever firing a
-		// `transitionend`.
-		const timer = setTimeout(() => {
-			this.timers.delete(timer);
-			el.classList.remove("s-panel-new");
-		}, PAGE_MS + 80);
-		this.timers.add(timer);
+		// Keep it beneath its elders until the fade is over.
+		this.afterFade(el, () => el.classList.remove("s-panel-new"));
 	}
 
 	/** Let a `loading` panel's fade-in wait — but not indefinitely. */
