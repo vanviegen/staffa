@@ -193,7 +193,7 @@ export interface Panel<P = Record<string, string | number | string[]>> {
 	 * Every size is capped at the content area, so on a phone they all come to
 	 * the same thing: one screen at a time. And a width depends only on the
 	 * window, never on what else is open, so opening or closing a panel never
-	 * resizes another — the run of columns just recentres in the area.
+	 * resizes another — the run of columns just shifts over in the area.
 	 *
 	 * The ask is a ceiling only; there is no matching floor, since the window can
 	 * be any width. Aim your layout at 360px — about the narrowest phone still in
@@ -211,10 +211,11 @@ export interface Panel<P = Record<string, string | number | string[]>> {
 	maxWidth?: PanelSize;
 	/**
 	 * Set this while you're fetching what the panel needs, and back to `false`
-	 * when you're done. A new panel waits a moment before sliding in, so it can
-	 * arrive with real content instead of empty; if the wait drags on it slides
-	 * in anyway and shows a loading indicator until the flag clears. It only
-	 * affects the animation; the stack and the URL never wait for it.
+	 * when you're done. A new panel slides into place right away but waits a
+	 * moment before fading in, so it can appear with real content instead of
+	 * empty; if the wait drags on it fades in anyway and shows a loading
+	 * indicator until the flag clears. It only affects the animation; the
+	 * stack and the URL never wait for it.
 	 */
 	loading?: boolean;
 	/**
@@ -419,7 +420,7 @@ function matchRoute(r: { segs: Seg[] }, segments: string[]): Record<string, any>
  * `--s-panel-ms` custom property, so CSS and JS can't drift apart.
  */
 const PAGE_MS = 250;
-/** How long a freshly pushed `loading` panel holds its enter animation. */
+/** How long a freshly pushed `loading` panel holds its fade-in. */
 const LOADING_HOLD_MS = 300;
 /**
  * The bounds of a column: at most 540px — the width columns aim for, the area
@@ -428,13 +429,6 @@ const LOADING_HOLD_MS = 300;
  */
 const SMALL_MIN_PX = 360;
 export const SMALL_MAX_PX = 540;
-/**
- * Two `z-index` steps per panel: a panel sits on the odd layer for its depth in
- * the stack, a *closing* one on the even layer just below. So a replacement
- * comes in over the panel it replaces, while a closing panel fades out over
- * whatever it was covering.
- */
-const LAYER_STEP = 2;
 
 // ─── Module-level styling ────────────────────────────────────────────────────
 
@@ -442,9 +436,9 @@ A.insertGlobalCss({
 	":root": `--s-panel-ms:${PAGE_MS}ms`,
 	// The clipping viewport the columns slide through; panels are absolutely
 	// positioned inside it, sized and offset from JS (see `layout()`).
-	// `isolation` keeps their z-index layers (see LAYER_STEP) below the shell's
-	// own chrome. It paints the same PANEL_SHEEN as every panel, so columns and
-	// the ground beside them read as one surface.
+	// `isolation` keeps their z-index layers below the shell's own chrome. It
+	// paints the same PANEL_SHEEN as every panel, so columns and the ground
+	// beside them read as one surface.
 	// `overflow:clip`, not `hidden`: a hidden box is still a scroll container,
 	// and anything that scrolls it (find-in-page, an in-page anchor) shifts every
 	// column sideways permanently, with nothing to scroll it back.
@@ -452,43 +446,56 @@ A.insertGlobalCss({
 		"flex:1 min-width:0 min-height:0 position:relative overflow:clip isolation:isolate " +
 		PANEL_SHEEN,
 	".s-panel": {
-		// A panel rests at a plain `left` offset with no transform: a transformed
-		// element is composited, costing it subpixel text antialiasing. Transform
-		// is used only for the enter/exit slides. No `width` transition either —
-		// animating one reflows the column's content every frame.
-		// The fade is deliberately `linear` while the drift eases out: an eased
-		// opacity spends its last stretch near zero, reading as a vanish.
-		// Layering is set from JS (`layout()`, `beginClose`), not DOM order: a
-		// closing panel is no longer in the reactive list, so its element's
-		// position among the live ones is Aberdeen's business. See LAYER_STEP.
+		// The shell knows three motions, and this vocabulary is all of them:
+		// a panel that MOVES animates its `left` — every mover in a pass shares
+		// this one duration and ease-out, so panels travelling the same distance
+		// travel as one — a CREATED panel joins the strip beside the old position
+		// of the panels beneath it and rides their slide while fading in, and a
+		// CLOSED one fades out where it stood. Nothing else ever animates.
+		// A plain `left`, never a transform: a transformed element is
+		// composited, costing it subpixel text antialiasing. No `width`
+		// transition either — animating one reflows the column every frame. And
+		// the fade is `linear` while the moves ease out: an eased opacity spends
+		// its last stretch near zero, reading as a vanish.
+		// Layering is fixed per state, not per stack depth: live panels never
+		// overlap each other (the strip keeps them adjacent, see `layout()`), so
+		// only the fading ones need an order — below, in both directions, per
+		// the classes underneath.
 		// PANEL_SHEEN gives every panel an opaque ground (panels animate over one
 		// another, and two transparent ones mean text sliding over text).
 		"&":
 			"position:absolute top:0 bottom:0 left:0 display:flex flex-direction:column " +
 			PANEL_SHEEN + " " +
-			"visibility:visible transition: left var(--s-panel-ms) ease, transform var(--s-panel-ms) ease-out, opacity var(--s-panel-ms) linear, visibility 0s;",
+			"z-index:2 transition: left var(--s-panel-ms) ease-out, opacity var(--s-panel-ms) linear;",
 		// The hairline between two columns, fading at both ends (like the sidebar's
 		// `.s-nav-sep`). Columns tile with no gutter — each brings its own `$3` of
 		// padding — so this sits exactly on the boundary.
 		"&.s-panel-sep::before":
 			"content:'' position:absolute left:0 top:0.6rem bottom:0.6rem width:1px z-index:1 " +
 			"background: linear-gradient(to bottom, transparent, $s-faint 18%, $s-faint 82%, transparent);",
-		// Enter and exit share one vocabulary: a fade over a short 8cqw drift
-		// (`cqw`: `.s-main` is the container). This start state is applied with
-		// transitions off and then dropped, so the panel settles instead of jumping.
-		"&.s-panel-enter": "opacity:0 transition:none transform: translateX(8cqw);",
-		// On its way out; leaves the DOM when the fade ends (see `playExit`).
-		"&.s-panel-closing": "opacity:0 pointer-events:none transform: translateX(8cqw);",
-		// Off screen but open: crowded out at the left edge (`hidden`) or parked
-		// past the right one (`parked`). Both keep their DOM — and so their scroll
-		// position and half-typed forms — hence `visibility`, not `display:none`.
-		// Transitioning it counts as *visible* for the whole fade, flipping at the
-		// very end; the rule above (`visibility 0s`) reveals it again instantly.
+		// Still owed or playing its entry fade: beneath the settled panels, so
+		// whatever slides across its spot passes over it. Dropped once the fade
+		// is over (see `releaseEnter`).
+		"&.s-panel-new": "z-index:1",
+		// On its way out: it fades where it stood, beneath every live panel
+		// (declared after `.s-panel-new`, so closing mid-enter drops a panel to
+		// the bottom), and leaves the DOM when the fade ends (see `playExit`).
+		"&.s-panel-closing": "z-index:0 opacity:0 pointer-events:none",
+		// The fade-in's start state: a newcomer wears it from creation until its
+		// content is ready — usually the very pass that placed it, later for a
+		// `loading` panel holding out for data — sliding invisibly meanwhile.
+		// Dropping the class is what starts the fade (see `releaseEnter`).
+		"&.s-panel-enter": "opacity:0",
+		// Off screen but open: the strip simply continues past the viewport's
+		// edges, so these rest at their true positions, clipped — being crowded
+		// out or revealed is an ordinary move, not a fade. Both keep their DOM —
+		// and so their scroll position and half-typed forms — hence
+		// `visibility`, not `display:none`: it holds through the move out
+		// (flipping only at its end) and lifts instantly on the move back in
+		// (the base transition above doesn't list it).
 		"&.s-panel-hidden, &.s-panel-parked":
-			"opacity:0 visibility:hidden " +
-			"transition: left var(--s-panel-ms) ease, transform var(--s-panel-ms) ease-out, opacity var(--s-panel-ms) linear, visibility var(--s-panel-ms);",
-		"&.s-panel-hidden": "transform: translateX(-8cqw);",
-		"&.s-panel-parked": "transform: translateX(8cqw);",
+			"visibility:hidden " +
+			"transition: left var(--s-panel-ms) ease-out, opacity var(--s-panel-ms) linear, visibility var(--s-panel-ms);",
 	},
 	// The scroll container, with the column's own padding. Its scrollbar sits
 	// flush against the column edge (unlike content mode's inset one), so it meets
@@ -594,7 +601,7 @@ interface PanelEntry {
 	hash?: string;
 	/** Set once the panel is on its way out, playing its exit animation. */
 	closing?: boolean;
-	/** Set while an enter animation is still to be played. */
+	/** Set while the fade-in is still owed (a `loading` hold can owe it past placement). */
 	enter?: boolean;
 	/** Whether the panel has been through a full layout pass (and so may animate). */
 	placed?: boolean;
@@ -1035,9 +1042,10 @@ export class PanelStackController implements PanelStack {
 				continue;
 			}
 			const entry = this.createEntry(path, next.length <= target.focus, seedPins.has(path));
-			// An initial load just appears, and so do panels *revealed* by a back:
-			// they belong underneath the ones sliding away.
-			if (nav !== "load" && nav !== "back") entry.enter = true;
+			// An initial load just appears; any later navigation animates its new
+			// panels in — beneath what's already there, so a back that re-creates
+			// a panel plays out under the one it takes away.
+			if (nav !== "load") entry.enter = true;
 			next.push(entry);
 			this.$open[path] = entry;
 		}
@@ -1085,10 +1093,6 @@ export class PanelStackController implements PanelStack {
 	private beginClose(entry: PanelEntry): void {
 		entry.closing = true;
 		entry.$panel.visible = false;
-		// Frozen one layer below where it was, so it fades out over the panel it
-		// uncovers and under the one replacing it (see LAYER_STEP). Set here, while
-		// the element is still ours — a moment later `entry.el` is gone.
-		if (entry.el) entry.el.style.zIndex = String(LAYER_STEP * this.$state.live.indexOf(entry));
 		delete this.$open[entry.path];
 	}
 
@@ -1801,9 +1805,11 @@ export class PanelStackController implements PanelStack {
 			}
 		}
 
-		// The content area is a fixed width, so a run that doesn't fill it centres
-		// rather than hanging off the left edge — the chrome around it never moves.
-		const left = (geom.area - runSum) / 2;
+		// A run that doesn't fill the fixed-width area centres in it — unless
+		// panels sit crowded out on its left: then it hugs the left edge instead,
+		// so the strip crosses that edge with no gap and a reveal is a plain
+		// slide back in.
+		const left = first > 0 ? 0 : (geom.area - runSum) / 2;
 
 		for (let i = first; i <= cur; i++) live[i].width = width(live[i]);
 		// Never-visible panels get their would-be width, so a reveal doesn't start
@@ -1812,55 +1818,89 @@ export class PanelStackController implements PanelStack {
 			if (!entry.width) entry.width = width(entry);
 		}
 
-		// Phase 1 — every panel's *start* state for this frame. Panels on screen
-		// simply move; freshly mounted ones still have transitions off, so what is
-		// set here is adopted instantly and becomes the "before" of their enter.
-		const fresh: PanelEntry[] = [];
+		// Phase 1 — lay the strip out for this frame: each panel flush against
+		// its neighbours, the visible run [first..cur] in the viewport, earlier
+		// panels continuing off its left edge and parked ones held past its
+		// right. Placed panels get their new positions — their standing
+		// transitions carry them there. Newcomers, transitions still off, get
+		// their *start* state instead: their strip position anchored to the OLD
+		// position of the nearest placed panel beneath them (`delta`), so the
+		// slide in is one motion with the panels making room. With nothing
+		// beneath them to come from — or nothing moving — that start is where
+		// they already stand, and they simply fade in.
+		const fresh: { entry: PanelEntry; x: number }[] = [];
 		let x = left;
+		let delta = 0;
+		for (let i = 0; i < first; i++) x -= live[i].width;
 		for (let i = 0; i < n; i++) {
 			const entry = live[i];
 			const el = entry.el!;
 			const shown = i >= first && i <= cur;
-			// Visible columns tile the run left to right; crowded-out ones rest at
-			// its left edge and parked ones just past its right, both keeping their
-			// last width. Deeper panels layer over shallower (see LAYER_STEP).
-			place(el, shown ? x : i > cur ? left + runSum : left, entry.width, LAYER_STEP * i + 1);
+			// Parked panels never dip into the viewport, however short the run.
+			if (i === cur + 1) x = Math.max(x, geom.area);
+			// A panel that mounts while still fetching holds its fade for a
+			// moment, so it can appear with real content instead of empty.
+			if (entry.enter || !entry.placed) {
+				if (!entry.$panel.loading || entry.holdDone) entry.$ui.holding = false;
+				else if (!entry.$ui.holding) { entry.$ui.holding = true; this.holdEnter(entry); }
+			}
+			if (entry.placed) {
+				delta = parseFloat(el.style.left) - x;
+				el.style.left = `${x}px`;
+				// A fade held back for content starts the moment its hold lifts.
+				if (entry.enter && !entry.$ui.holding) this.releaseEnter(entry);
+			} else {
+				fresh.push({ entry, x });
+				const entering = entry.enter && shown;
+				el.style.left = `${entering ? x + delta : x}px`;
+				if (entering) el.classList.add("s-panel-enter", "s-panel-new");
+			}
+			el.style.width = `${entry.width}px`;
+			x += entry.width;
 			// Written only on a change, so per-panel UI hanging off `visible` or
 			// `width` isn't rebuilt by every pass.
 			if (entry.$panel.visible !== shown) entry.$panel.visible = shown;
 			if (entry.$panel.width !== entry.width) entry.$panel.width = entry.width;
-			if (shown) x += entry.width;
 			el.classList.toggle("s-panel-sep", shown && i > first);
-			// Off-screen panels fade out and stop rendering, keeping their DOM.
+			// Off-screen panels stop rendering, keeping their DOM.
 			el.classList.toggle("s-panel-hidden", i < first);
 			el.classList.toggle("s-panel-parked", i > cur);
 			el.toggleAttribute("inert", !shown);
-			if (entry.placed) continue;
-			fresh.push(entry);
-			// A panel that mounts while still fetching holds here for a moment, so
-			// it can enter with real content instead of an empty column.
-			if (!entry.$panel.loading || entry.holdDone) entry.$ui.holding = false;
-			else if (!entry.$ui.holding) { entry.$ui.holding = true; this.holdEnter(entry); }
-			// Already at its resting place; the enter is the offset and transparency
-			// it starts from, one edge to the right.
-			if (entry.enter && shown) el.classList.add("s-panel-enter");
 		}
 
 		// Phase 2 — reading a layout property forces the browser to adopt those
 		// start states (and a snap pass's transition-free geometry) to animate from.
 		if (fresh.length || snap) void container.offsetWidth;
 		if (snap) shell.classList.remove("s-shell-snap");
-		// Phase 3 — transitions back on, start state dropped, and off they go.
-		for (const entry of fresh) {
-			if (entry.$ui.holding) continue;
-			entry.el!.style.transition = "";
-			entry.el!.classList.remove("s-panel-enter");
-			entry.enter = false;
+		// Phase 3 — newcomers get their transitions and their resting place: the
+		// slide starts now, and the fade with it — unless the panel is holding
+		// for its content, which keeps the fade's start state on until then.
+		for (const { entry, x } of fresh) {
+			const el = entry.el!;
+			el.style.transition = "";
+			el.style.left = `${x}px`;
 			entry.placed = true;
+			if (!entry.$ui.holding) this.releaseEnter(entry);
 		}
 	}
 
-	/** Let a `loading` panel's enter animation wait — but not indefinitely. */
+	/** Start (or skip) a newcomer's fade-in; any slide is already underway. */
+	private releaseEnter(entry: PanelEntry): void {
+		entry.enter = false;
+		const el = entry.el;
+		if (!el || !el.classList.contains("s-panel-enter")) return;
+		el.classList.remove("s-panel-enter");
+		// Keep it beneath its elders until the fade is over — by timer, a hair
+		// past it, since a resize can snap the fade short without ever firing a
+		// `transitionend`.
+		const timer = setTimeout(() => {
+			this.timers.delete(timer);
+			el.classList.remove("s-panel-new");
+		}, PAGE_MS + 80);
+		this.timers.add(timer);
+	}
+
+	/** Let a `loading` panel's fade-in wait — but not indefinitely. */
 	private holdEnter(entry: PanelEntry): void {
 		const timer = setTimeout(() => {
 			this.timers.delete(timer);
@@ -1872,13 +1912,6 @@ export class PanelStackController implements PanelStack {
 		}, LOADING_HOLD_MS);
 		this.timers.add(timer);
 	}
-}
-
-/** Put a panel at rest: `x` from the region's left edge, `width` pixels wide, on layer `z`. */
-function place(el: HTMLElement, x: number, width: number, z: number): void {
-	el.style.left = `${x}px`;
-	el.style.width = `${width}px`;
-	el.style.zIndex = String(z);
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

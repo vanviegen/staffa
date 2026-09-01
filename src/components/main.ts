@@ -191,8 +191,8 @@ export interface MainOptions<R = Routes> {
 	 * How many panels are *shown* at a time. `"auto"` (the default) shows as
 	 * many columns, side by side, as comfortably fit, ending at the current
 	 * panel; `"single"` shows only the current panel, however wide the screen
-	 * — one screen at a time at every size, each still at its asked width,
-	 * centred (the nav sidebar still sits beside it). Only the display
+	 * — one screen at a time at every size, each still at its asked width
+	 * (the nav sidebar still sits beside it). Only the display
 	 * differs: the stack, the breadcrumbs, the URL, Escape and the back
 	 * button behave identically in both. Routed mode only.
 	 *

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.18.1
+
+- Panel transitions reworked: a new panel now slides in from beside the column it opens over, fading in as it arrives (or once its content stops `loading`); a closing one fades out where it stood, beneath the rest; and every sideways move shares one duration and easing, so columns travel as one.
+- Columns hug the content area's left edge while panels sit crowded out to the left, keeping neighbouring panels seamless as they move (a run with nothing to its left still centres).
+
 ## 0.17.3
 
 - Fixed: long breadcrumb could still break some action button layouts.

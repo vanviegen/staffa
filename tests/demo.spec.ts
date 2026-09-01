@@ -684,8 +684,9 @@ test("panels: columns tile the area, centre in it, and crowd one another out", a
 	await expect(page.locator("header .s-title")).toHaveText("Staffa");
 	await expect(page.locator(".s-crumb")).toHaveText(["Panels", "Small A"]);
 	await expect(page.locator("header .s-subtitle")).toHaveCount(0);
-	// The medium playground can't fit beside it, so the small centres alone.
-	await expect.poll(run).toEqual({ gaps: [270, 270], widths: [540] });
+	// The medium playground can't fit beside it. Crowded out, it holds the small
+	// against the left edge, so the two stay flush across the viewport's edge.
+	await expect.poll(run).toEqual({ gaps: [0, 540], widths: [540] });
 
 	page.describe("Push B: the two smalls pair up and tile the area exactly");
 	await stackNav(topPanel(page), "Small B", "push");
