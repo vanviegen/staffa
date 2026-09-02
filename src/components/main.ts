@@ -7,7 +7,7 @@ import { type MenuOptions, drawMenu, isFloatingMenuOpen, consumeBranchNav, anyCu
 import { menu as menuIcon, x as closeIcon } from "../icons.js";
 import { iconButton } from "./button.js";
 import { isDialogOpen } from "./dialog.js";
-import { PanelStackController, SMALL_MAX_PX, type PanelStack, type AncestorTable, type Panel, type RouteHandler, type RouteTable, type Routes } from "./panels.js";
+import { PAGE_MS, PanelStackController, SMALL_MAX_PX, type PanelStack, type AncestorTable, type Panel, type RouteHandler, type RouteTable, type Routes } from "./panels.js";
 
 /** Options for {@link main}. */
 export interface MainOptions<R = Routes> {
@@ -334,7 +334,7 @@ A.insertGlobalCss({
 		// incoming half of the nav-panel hand-off (see `slideContentIn`).
 		".s-body main":
 			"flex:1 min-width:0 min-height:0 overflow-x:hidden overflow-y:auto display:flex flex-direction:column " +
-			"transition: transform var(--s-panel-ms) ease;",
+			`transition: transform ${PAGE_MS}ms ease;`,
 		// A one-shot starting position: parked one screen to the right, with the
 		// transition off so it snaps there. Removing the class animates it home.
 		".s-body main.s-slide-in": "transform: translateX(100%); transition:none",
@@ -363,15 +363,17 @@ A.insertGlobalCss({
 			// Under the sticky header's 10: they never overlap, but the bar should win.
 			"position:absolute inset:0 z-index:5 display:flex flex-direction:column " +
 			"overflow-y:auto overscroll-behavior:contain border:0 r:0 padding:$2 gap:$1 " +
-			"transition: transform var(--s-panel-ms) ease, visibility 0s;",
+			`transition: transform ${PAGE_MS}ms ease, visibility 0s;`,
 		// Parked one screen left: what the `create=`/`destroy=` hooks transition out
 		// of and back into. On dismissal (this rule's transition) `visibility` flips
-		// only at the slide's end, so the dismissed page isn't reachable while it
-		// waits for Aberdeen's removal timer; on entry it flips instantly (the `0s`
-		// above), or the opening page would refuse the focus handed to it mid-slide.
+		// only at the slide's end — a delayed zero-length transition, whose constant
+		// start value costs nothing per frame — so the dismissed page isn't
+		// reachable while it waits for Aberdeen's removal timer; on entry it flips
+		// instantly (the `0s` above), or the opening page would refuse the focus
+		// handed to it mid-slide.
 		"&.s-nav-page-off":
 			"transform:translateX(-100%) pointer-events:none visibility:hidden " +
-			"transition: transform var(--s-panel-ms) ease, visibility var(--s-panel-ms);",
+			`transition: transform ${PAGE_MS}ms ease, visibility 0s ${PAGE_MS}ms;`,
 		// Roomier than the dropdown's: every row here is a thumb target.
 		".s-menu-item": "padding: $2 $3; min-height:3rem font-size:1.05em gap:$3",
 	},

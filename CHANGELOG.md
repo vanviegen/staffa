@@ -4,6 +4,7 @@
 
 - Closing a panel now plays its opening backwards: the column fades out while riding along beside the panel it stood on — sliding back off a phone screen, following the columns as they re-centre — instead of fading in place.
 - Fixed: a closing panel was removed by a fixed timer rather than at its fade's true end, cutting the animation short when slowed down (as with DevTools' slowed animations).
+- Panel slides are much lighter: they animate a GPU-composited transform instead of `left`, roughly halving the main-thread rendering work per transition even without a GPU, so transitions stay smooth with heavy panel content.
 
 ## 0.18.1
 

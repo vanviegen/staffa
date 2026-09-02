@@ -416,10 +416,11 @@ function matchRoute(r: { segs: Seg[] }, segments: string[]): Record<string, any>
 
 /**
  * The one duration every bit of shell motion shares: the enter/exit fades, the
- * sideways `left` moves, the narrow-screen nav slide. Published below as the
- * `--s-panel-ms` custom property, so CSS and JS can't drift apart.
+ * slides, the narrow-screen nav slide. Interpolated into every transition as a
+ * literal — the shared constant is what keeps CSS and JS in step — and also
+ * published as the `--s-panel-ms` custom property for app CSS.
  */
-const PAGE_MS = 250;
+export const PAGE_MS = 250;
 /** How long a freshly pushed `loading` panel holds its fade-in. */
 const LOADING_HOLD_MS = 300;
 /**
@@ -447,18 +448,23 @@ A.insertGlobalCss({
 		PANEL_SHEEN,
 	".s-panel": {
 		// The shell knows three motions, and this vocabulary is all of them:
-		// a panel that MOVES animates its `left` — every mover in a pass shares
-		// this one duration and ease-out, so panels travelling the same distance
-		// travel as one — a CREATED panel joins the strip beside the old position
-		// of the panels beneath it and rides their slide while fading in, and a
+		// a panel that MOVES slides — every mover in a pass shares this one
+		// duration and ease-out, so panels travelling the same distance travel
+		// as one — a CREATED panel joins the strip beside the old position of
+		// the panels beneath it and rides their slide while fading in, and a
 		// CLOSED one keeps its seat beside the surviving panel beneath it and
 		// rides that panel's slide while fading out — its creation played
 		// backwards. Nothing else ever animates.
-		// A plain `left`, never a transform: a transformed element is
-		// composited, costing it subpixel text antialiasing. No `width`
-		// transition either — animating one reflows the column every frame. And
-		// the fade is `linear` while the moves ease out: an eased opacity spends
-		// its last stretch near zero, reading as a vanish.
+		// A slide is a `transform` playing out to none (see `layout`), never an
+		// animated `left`: left is a layout property, so animating it would
+		// relayout and repaint every travelling column on every frame, where a
+		// transform moves composited layers. `left` always holds the resting
+		// position — it is not in the transition list — and the transform
+		// exists only while a panel travels, so text gets its subpixel
+		// antialiasing back the moment it settles. No `width` transition
+		// either — animating one reflows the column every frame. And the fade
+		// is `linear` while the moves ease out: an eased opacity spends its
+		// last stretch near zero, reading as a vanish.
 		// Layering is fixed per state, not per stack depth: live panels never
 		// overlap each other (the strip keeps them adjacent, see `layout()`), so
 		// only the fading ones need an order — below, in both directions, per
@@ -468,7 +474,7 @@ A.insertGlobalCss({
 		"&":
 			"position:absolute top:0 bottom:0 left:0 display:flex flex-direction:column " +
 			PANEL_SHEEN + " " +
-			"z-index:2 transition: left var(--s-panel-ms) ease-out, opacity var(--s-panel-ms) linear;",
+			`z-index:2 transition: transform ${PAGE_MS}ms ease-out, opacity ${PAGE_MS}ms linear;`,
 		// The hairline between two columns, fading at both ends (like the sidebar's
 		// `.s-nav-sep`). Columns tile with no gutter — each brings its own `$3` of
 		// padding — so this sits exactly on the boundary.
@@ -493,12 +499,13 @@ A.insertGlobalCss({
 		// edges, so these rest at their true positions, clipped — being crowded
 		// out or revealed is an ordinary move, not a fade. Both keep their DOM —
 		// and so their scroll position and half-typed forms — hence
-		// `visibility`, not `display:none`: it holds through the move out
-		// (flipping only at its end) and lifts instantly on the move back in
-		// (the base transition above doesn't list it).
-		"&.s-panel-hidden, &.s-panel-parked":
-			"visibility:hidden " +
-			"transition: left var(--s-panel-ms) ease-out, opacity var(--s-panel-ms) linear, visibility var(--s-panel-ms);",
+		// `visibility`, not `display:none`. The flip is timed by `layout()`,
+		// never transitioned: a panel sliding offstage gets the class once its
+		// slide ends and drops it the moment it is revealed. `visibility` is
+		// not compositable, and Chrome composites an element's transitions as
+		// a group, so listing it here would drag the slide itself onto the
+		// main thread — relaid out and repainted every frame.
+		"&.s-panel-hidden, &.s-panel-parked": "visibility:hidden",
 	},
 	// The scroll container, with the column's own padding. Its scrollbar sits
 	// flush against the column edge (unlike content mode's inset one), so it meets
@@ -616,6 +623,12 @@ interface PanelEntry {
 	placed?: boolean;
 	/** Whether its `loading` hold has already expired, so it can't hold again. */
 	holdDone?: boolean;
+	/**
+	 * Whether the last layout pass put this panel off screen. The deferred
+	 * visibility flip (see `layout`) consults it when it fires, so a panel
+	 * revealed again before its slide out ended is never hidden by mistake.
+	 */
+	offstage?: boolean;
 	/** What the panel asks for, kept in step with its `$panel.maxWidth`. */
 	maxWidth: PanelSize;
 	/**
@@ -823,7 +836,7 @@ export class PanelStackController implements PanelStack {
 	private layoutQueued = false;
 	private timers = new Set<ReturnType<typeof setTimeout>>();
 	/** Elements playing their exit fade, each riding its anchor's motion (see `layout`). */
-	private exiting = new Set<{ el: HTMLElement; anchor?: string }>();
+	private exiting = new Set<{ el: HTMLElement; anchor?: string; ride: number }>();
 	/** The arrangement the navigation in flight is heading for; see {@link intended}. */
 	private intent: Arrangement | null = null;
 	/** The navigation the router hasn't settled yet, if any. */
@@ -1126,35 +1139,35 @@ export class PanelStackController implements PanelStack {
 		el.classList.add("s-panel-closing");
 		el.setAttribute("inert", "");
 		// Only a placed panel has a seat on the strip to ride out from.
-		const exit = entry.placed ? { el, anchor: entry.anchor } : null;
+		const exit = entry.placed ? { el, anchor: entry.anchor, ride: 0 } : null;
 		if (exit) this.exiting.add(exit);
-		this.afterFade(el, () => {
+		this.afterTransition(el, "opacity", () => {
 			if (exit) this.exiting.delete(exit);
 			el.remove();
 		});
 	}
 
 	/**
-	 * Run `done` once `el`'s opacity fade is over. The real signal is
-	 * `transitionend` — or `transitioncancel`, for a fade a resize snaps short —
-	 * so the fade's actual length rules, however long: DevTools' slowed
+	 * Run `done` once `el`'s transition of `prop` is over. The real signal is
+	 * `transitionend` — or `transitioncancel`, for one a resize snaps short —
+	 * so the transition's actual length rules, however long: DevTools' slowed
 	 * animations stretch it tenfold without touching any timer. The timer only
-	 * stands in for a fade that never starts at all (transitions off, element
-	 * never placed), which is why the fade proving real (`transitionrun`)
-	 * disarms it.
+	 * stands in for a transition that never starts at all (transitions off,
+	 * element never placed, nothing to travel), which is why one proving real
+	 * (`transitionrun`) disarms it.
 	 */
-	private afterFade(el: HTMLElement, done: () => void): void {
+	private afterTransition(el: HTMLElement, prop: string, done: () => void): void {
 		let called = false;
 		const timer = setTimeout(() => finish(), PAGE_MS + 80);
 		this.timers.add(timer);
 		const disarm = () => { clearTimeout(timer); this.timers.delete(timer); };
 		const finish = () => { disarm(); if (!called) { called = true; done(); } };
-		const forOpacity = (fn: () => void) => (e: TransitionEvent) => {
-			if (e.target === el && e.propertyName === "opacity") fn();
+		const forProp = (fn: () => void) => (e: TransitionEvent) => {
+			if (e.target === el && e.propertyName === prop) fn();
 		};
-		el.addEventListener("transitionrun", forOpacity(disarm));
-		el.addEventListener("transitionend", forOpacity(finish));
-		el.addEventListener("transitioncancel", forOpacity(finish));
+		el.addEventListener("transitionrun", forProp(disarm));
+		el.addEventListener("transitionend", forProp(finish));
+		el.addEventListener("transitioncancel", forProp(finish));
 	}
 
 	// ── Navigation ─────────────────────────────────────────────────────────
@@ -1857,15 +1870,23 @@ export class PanelStackController implements PanelStack {
 		// Phase 1 — lay the strip out for this frame: each panel flush against
 		// its neighbours, the visible run [first..cur] in the viewport, earlier
 		// panels continuing off its left edge and parked ones held past its
-		// right. Placed panels get their new positions — their standing
-		// transitions carry them there. Newcomers, transitions still off, get
-		// their *start* state instead: their strip position anchored to the OLD
-		// position of the nearest placed panel beneath them (`delta`), so the
-		// slide in is one motion with the panels making room. With nothing
-		// beneath them to come from — or nothing moving — that start is where
-		// they already stand, and they simply fade in.
-		const fresh: { entry: PanelEntry; x: number }[] = [];
+		// right. `left` gets each new resting position outright — it never
+		// animates — and the slide to it is a FLIP: a mover is held at its
+		// current visual spot by a transform (its mid-slide offset plus the
+		// distance), a newcomer at its start beside the OLD position of the
+		// nearest placed panel beneath it (`delta`, so the slide in is one
+		// motion with the panels making room; with nothing beneath it to come
+		// from, it simply fades in place). Phase 3 plays every held transform
+		// out to none. A snap pass holds nothing: geometry must land, not
+		// travel.
+		const fresh: PanelEntry[] = [];
+		const movers: HTMLElement[] = [];
 		const deltas = new Map<string, number>();
+		// All reads before all writes: a mover may still be mid-slide, and its
+		// current offset must come out of the computed style before this pass
+		// dirties it (one style recalc, then cached).
+		const txs = new Map<PanelEntry, number>();
+		if (!snap) for (const entry of live) { if (entry.placed) txs.set(entry, transformX(entry.el!)); }
 		let x = left;
 		let delta = 0;
 		for (let i = 0; i < first; i++) x -= live[i].width;
@@ -1884,14 +1905,25 @@ export class PanelStackController implements PanelStack {
 			if (entry.placed) {
 				delta = parseFloat(el.style.left) - x;
 				deltas.set(entry.path, delta);
+				if (delta && !snap) {
+					// Hold the visual spot while `left` jumps beneath it. The
+					// inline transition keeps the transform still — and only it:
+					// running fades carry on, and one starting this pass (a
+					// release below) still gets its linear curve.
+					el.style.transition = `opacity ${PAGE_MS}ms linear`;
+					el.style.transform = `translateX(${(txs.get(entry) ?? 0) + delta}px)`;
+					movers.push(el);
+				}
 				el.style.left = `${x}px`;
 				// A fade held back for content starts the moment its hold lifts.
 				if (entry.enter && !entry.$ui.holding) this.releaseEnter(entry);
 			} else {
-				fresh.push({ entry, x });
-				const entering = entry.enter && shown;
-				el.style.left = `${entering ? x + delta : x}px`;
-				if (entering) el.classList.add("s-panel-enter", "s-panel-new");
+				fresh.push(entry);
+				el.style.left = `${x}px`;
+				if (entry.enter && shown) {
+					el.style.transform = `translateX(${delta}px)`;
+					el.classList.add("s-panel-enter", "s-panel-new");
+				}
 			}
 			el.style.width = `${entry.width}px`;
 			x += entry.width;
@@ -1900,32 +1932,58 @@ export class PanelStackController implements PanelStack {
 			if (entry.$panel.visible !== shown) entry.$panel.visible = shown;
 			if (entry.$panel.width !== entry.width) entry.$panel.width = entry.width;
 			el.classList.toggle("s-panel-sep", shown && i > first);
-			// Off-screen panels stop rendering, keeping their DOM.
-			el.classList.toggle("s-panel-hidden", i < first);
-			el.classList.toggle("s-panel-parked", i > cur);
+			// Off-screen panels stop rendering, keeping their DOM. A revealed
+			// panel is visible at once; one sliding offstage stays visible for
+			// the whole slide, its visibility class deferred to the slide's
+			// end — but applied outright when it is already invisible, about
+			// to be (a newcomer offstage from birth), or snapping.
+			const hidden = i < first;
+			const wasOff = el.classList.contains("s-panel-hidden") || el.classList.contains("s-panel-parked");
+			if (shown) {
+				el.classList.remove("s-panel-hidden", "s-panel-parked");
+			} else if (wasOff || !entry.placed || snap) {
+				el.classList.toggle("s-panel-hidden", hidden);
+				el.classList.toggle("s-panel-parked", !hidden);
+			} else {
+				this.afterTransition(el, "transform", () => {
+					if (entry.el !== el || !entry.offstage) return;
+					el.classList.toggle("s-panel-hidden", hidden);
+					el.classList.toggle("s-panel-parked", !hidden);
+				});
+			}
+			entry.offstage = !shown;
 			el.toggleAttribute("inert", !shown);
 		}
 
 		// Closing panels keep their seat on the strip while they fade: each
 		// travels exactly as far as its anchor — the surviving panel it stood
 		// on — so a close slides back out the way the open slid in, and one
-		// whose anchor stays put is the plain crossfade it should be.
+		// whose anchor stays put is the plain crossfade it should be. A plain
+		// retarget, no holding: the transition picks the slide up from wherever
+		// the element is now.
 		for (const exit of this.exiting) {
 			const d = exit.anchor == null ? undefined : deltas.get(exit.anchor);
-			if (d) exit.el.style.left = `${parseFloat(exit.el.style.left) - d}px`;
+			if (d) {
+				exit.ride -= d;
+				exit.el.style.transform = `translateX(${exit.ride}px)`;
+			}
 		}
 
 		// Phase 2 — reading a layout property forces the browser to adopt those
-		// start states (and a snap pass's transition-free geometry) to animate from.
-		if (fresh.length || snap) void container.offsetWidth;
+		// held spots (and a snap pass's transition-free geometry) to slide from.
+		if (fresh.length || movers.length || snap) void container.offsetWidth;
 		if (snap) shell.classList.remove("s-shell-snap");
-		// Phase 3 — newcomers get their transitions and their resting place: the
-		// slide starts now, and the fade with it — unless the panel is holding
+		// Phase 3 — every held transform plays out to none: the slides start
+		// now, and the newcomers' fades with them — unless a panel is holding
 		// for its content, which keeps the fade's start state on until then.
-		for (const { entry, x } of fresh) {
+		for (const el of movers) {
+			el.style.transition = "";
+			el.style.transform = "";
+		}
+		for (const entry of fresh) {
 			const el = entry.el!;
 			el.style.transition = "";
-			el.style.left = `${x}px`;
+			el.style.transform = "";
 			entry.placed = true;
 			if (!entry.$ui.holding) this.releaseEnter(entry);
 		}
@@ -1938,7 +1996,7 @@ export class PanelStackController implements PanelStack {
 		if (!el || !el.classList.contains("s-panel-enter")) return;
 		el.classList.remove("s-panel-enter");
 		// Keep it beneath its elders until the fade is over.
-		this.afterFade(el, () => el.classList.remove("s-panel-new"));
+		this.afterTransition(el, "opacity", () => el.classList.remove("s-panel-new"));
 	}
 
 	/** Let a `loading` panel's fade-in wait — but not indefinitely. */
@@ -1959,6 +2017,12 @@ export class PanelStackController implements PanelStack {
 
 function sameStack(a: string[], b: string[]): boolean {
 	return a.length === b.length && a.every((v, i) => v === b[i]);
+}
+
+/** The X offset of `el`'s computed transform — where a slide has it right now. */
+function transformX(el: HTMLElement): number {
+	const t = getComputedStyle(el).transform;
+	return t && t !== "none" ? new DOMMatrixReadOnly(t).m41 : 0;
 }
 
 /**
