@@ -32,9 +32,11 @@ import A from "aberdeen";
  * declaration, at the given angle. A shared constant rather than a `--s-sheen`
  * custom property: `var()`s inside a custom property resolve where it is
  * *defined*, so every surface would get the page's wash instead of its own.
+ * The shorthand names `$s-bg` as well as the gradient: a `background:` that
+ * gave only an image would reset the colour under it to transparent.
  */
 const sheen = (angle: string) =>
-	`background: linear-gradient(${angle}, color-mix(in oklab, $s-bg, white 9%), color-mix(in oklab, $s-bg, black 9%));`;
+	`background: $s-bg linear-gradient(${angle}, color-mix(in oklab, $s-bg, white 9%), color-mix(in oklab, $s-bg, black 9%));`;
 
 /** The surface sheen: the wash every surface (and the page) is painted with. */
 export const SURFACE_SHEEN = sheen("170deg");
@@ -120,7 +122,14 @@ A.insertGlobalCss({
 	// A lightweight reset: bare semantic HTML, with less ugly defaults.
 	"*, *::before, *::after": "box-sizing:border-box",
 	html: "text-size-adjust:100%",
-	body: "m:0 p:$3 line-height:1.5 font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing:antialiased background-color:$s-bg text:$s-text",
+	// The page wears the same wash as a surface, on a page at least as tall as
+	// what that wash is painted on: <body>'s background is propagated to the
+	// canvas, which covers the whole viewport, while the gradient is still
+	// *sized* from the root box. So a page shorter than the viewport — a bare
+	// spinner while an app boots — would tile its wash down the rest of the
+	// canvas in bands. `dvh`, not `vh`: a mobile viewport that grows as the URL
+	// bar retracts would open a band again.
+	body: "m:0 p:$3 min-height:100dvh line-height:1.5 font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing:antialiased text:$s-text " + SURFACE_SHEEN,
 	// The contextual link colour: `--s-link` on neutral surfaces, the ink on accent ones.
 	a: "color: $s-link-fg; text-decoration:underline text-underline-offset:2px; transition: color 0.12s, filter 0.12s;",
 	"a:hover": "filter: brightness(1.15)",
@@ -196,9 +205,9 @@ A.insertGlobalCss({
 		"--s-muted: color-mix(in oklab, $s-text, $s-bg 42%); " +
 		"--s-faint: color-mix(in oklab, $s-text, $s-bg 80%); " +
 		"color:$s-text accent-color:$s-accent scrollbar-width:thin scrollbar-color: $s-faint transparent;",
-	// Subtle single-colour gradient sheen, painted on every surface (and the page).
-	".s-s, body": SURFACE_SHEEN,
-	".s-s": "r:$s-radius",
+	// Subtle single-colour gradient sheen, painted on every surface (the page
+	// gets its own, up in the reset).
+	".s-s": SURFACE_SHEEN + " r:$s-radius",
 	// A neutral surface owns a hairline border, so a card reads as a card without
 	// any component help. `:where()` keeps it zero-specificity, so a bar that wants
 	// only a divider overrides it with a single plain rule.
