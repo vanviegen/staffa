@@ -2,6 +2,12 @@
 
 ## 0.18.3
 
+- `S.autocomplete`'s suggestion list now floats free of the field, so a dialog or a scrolling column can no longer clip it or grow a scrollbar around it. It hangs off whichever side has the room and follows the field as things move. **Breaking** for CSS overrides: the list is `.s-ac-menu`, no longer nested in `.s-ac`.
+- Floating menus and tooltips now follow their anchor when the page scrolls or the anchor moves (a dialog opening, a panel sliding in), instead of being left behind. A tooltip hides once its element scrolls out of view or its panel slides away.
+- Fixed: inline `code` and `pre` blocks on a `tonal` or `outlined` surface were tinted in the very colour they are written in, leaving them unreadable.
+
+## 0.18.2
+
 - Closing a panel now plays its opening backwards: the column fades out while riding along beside the panel it stood on — sliding back off a phone screen, following the columns as they re-centre — instead of fading in place.
 - Fixed: a closing panel was removed by a fixed timer rather than at its fade's true end, cutting the animation short when slowed down (as with DevTools' slowed animations).
 - Panel slides are much lighter: they animate a GPU-composited transform instead of `left`, roughly halving the main-thread rendering work per transition even without a GPU, so transitions stay smooth with heavy panel content.

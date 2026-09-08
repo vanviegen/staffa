@@ -1211,6 +1211,17 @@ function drawOverlays($panel: S.Panel) {
 						S.dialog({ header: "Title", content: () => A("#Content..."), attrs: ".warning" });
 					},
 				});
+				S.button({
+					content: "autocomplete in a dialog", attrs: ".neutral", click: () => {
+						S.dialog({
+							header: "Pick a language",
+							content: (close) => {
+								S.autocomplete({ label: "Language", options: knownLanguages, placeholder: "Type to search\u2026" });
+								S.button({ content: "Done", attrs: "align-self:flex-end", click: close });
+							},
+						});
+					},
+				});
 			});
 		},
 	});

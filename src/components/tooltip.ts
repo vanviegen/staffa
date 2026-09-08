@@ -1,5 +1,5 @@
 import A from "aberdeen";
-import { type Slot, type Attributes, drawSlot, mountPortal } from "../core.js";
+import { type Slot, type Attributes, drawSlot, followAnchor, mountPortal } from "../core.js";
 
 /** Options for {@link addTooltip}. */
 export interface TooltipOptions {
@@ -31,11 +31,6 @@ A.insertGlobalCss({
 // At most one tooltip at a time; the anchor is the element whose rect positions it.
 const $ttActive = A.proxy<{ opts: TooltipOptions; anchor: HTMLElement } | undefined>(undefined);
 let hideTimer: ReturnType<typeof setTimeout> | null = null;
-
-// Hide tooltip when the page scrolls (anchor has moved).
-if (typeof window !== "undefined") {
-	window.addEventListener("scroll", () => { $ttActive.value = undefined; }, { capture: true, passive: true });
-}
 
 function computePos(rect: DOMRect, tipW: number, tipH: number, placement: string): { x: number; y: number } {
 	const gap = 7;
@@ -84,7 +79,7 @@ mountPortal(() => {
 	const { opts, anchor } = active;
 	const placement = opts.placement ?? "top";
 
-	const tipEl = A("div.s-tt-tip.s-s.neutral.shadow role=tooltip visibility:hidden", opts.attrs, () => {
+	const tipEl = A("div.s-tt-tip.s-s.neutral.shadow role=tooltip", opts.attrs, () => {
 		A("mouseenter=", () => {
 			if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
 		});
@@ -92,13 +87,16 @@ mountPortal(() => {
 		drawSlot(opts.tip);
 	}) as HTMLElement;
 
-	requestAnimationFrame(() => {
-		if (!document.body.contains(tipEl)) return;
-		const rect = anchor.getBoundingClientRect();
+	followAnchor(anchor, (rect) => {
+		// Out of the viewport, or on a panel that slid off and went inert: nothing
+		// left to explain, and no `mouseleave` is coming to say so.
+		if (rect.bottom < 0 || rect.top > window.innerHeight || rect.right < 0 || rect.left > window.innerWidth || anchor.closest("[inert]")) {
+			$ttActive.value = undefined;
+			return;
+		}
 		const { x, y } = computePos(rect, tipEl.offsetWidth, tipEl.offsetHeight, placement);
 		tipEl.style.left = x + "px";
 		tipEl.style.top = y + "px";
-		tipEl.style.visibility = "";
 	});
 });
 

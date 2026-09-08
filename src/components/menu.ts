@@ -1,6 +1,6 @@
 import A from "aberdeen";
 import { matchCurrent, current as currentRoute, go } from "aberdeen/route";
-import { type Slot, type Attributes, drawSlot, mountPortal, focusFirst } from "../core.js";
+import { type Slot, type Attributes, drawSlot, followAnchor, mountPortal, focusFirst } from "../core.js";
 import { menu as menuIcon, chevronRight, externalLink as newTabIcon, link as linkIcon } from "../icons.js";
 import { button, type ButtonOptions } from "./button.js";
 import { toast } from "./toast.js";
@@ -647,7 +647,7 @@ export function closeFloatingMenu(anchor?: HTMLElement): void {
 	if (isFloatingMenuOpen(anchor)) closeFloating();
 }
 
-function positionMenu(menuEl: HTMLElement, rect: { left: number; right: number; top: number; bottom: number }): void {
+function positionMenu(menuEl: HTMLElement, rect: DOMRect): void {
 	const mw = menuEl.offsetWidth, mh = menuEl.offsetHeight;
 	const vw = window.innerWidth, vh = window.innerHeight;
 	const gap = 4;
@@ -717,16 +717,13 @@ mountPortal(() => {
 		document.removeEventListener("keydown", onKey, true);
 	});
 
-	// Position after layout, then focus the first enabled item.
+	// At the supplied point when given — the pointer location for a context menu
+	// — otherwise below the anchor.
+	followAnchor(f.at ? new DOMRect(f.at.x, f.at.y, 0, 0) : f.anchor, (rect) => positionMenu(menuEl, rect));
+	// Once it can take focus: the current-page item if there is one, else the
+	// first focusable element (covers custom slot content, not just `.s-menu-item`s).
 	requestAnimationFrame(() => {
-		if (!document.body.contains(menuEl)) return;
-		// Position at the supplied point (a zero-size rect) when given — e.g. the
-		// pointer location for a context menu — otherwise below the anchor.
-		const rect = f.at ? { left: f.at.x, right: f.at.x, top: f.at.y, bottom: f.at.y } : f.anchor.getBoundingClientRect();
-		positionMenu(menuEl, rect);
-		// Focus the current-page item if there is one, else the first focusable
-		// element (covers custom slot content, not just `.s-menu-item`s).
-		focusFirst(menuEl, ".s-menu-item[aria-current=page]");
+		if (document.body.contains(menuEl)) focusFirst(menuEl, ".s-menu-item[aria-current=page]");
 	});
 });
 

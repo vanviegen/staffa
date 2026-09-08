@@ -114,3 +114,36 @@ export function focusFirst(container: HTMLElement, prefer?: string): boolean {
 export function mountPortal(draw: () => void): void {
 	queueMicrotask(() => A(draw));
 }
+
+/** Something scrolled, the window resized, or an animation began: an anchor may be on the move. */
+const WAKE_EVENTS = ["scroll", "resize", "transitionstart", "animationstart"];
+
+/**
+ * Keep a `position:fixed` overlay glued to its anchor. `place` gets the anchor's
+ * viewport rect right away, and again whenever it changes: frame by frame while
+ * the anchor is on the move — riding a dialog's opening animation or a panel's
+ * slide, or scrolling — and not at all once it has been at rest for half a
+ * second, until one of the events that precede any movement wakes the loop. So
+ * an overlay left standing open doesn't keep the page awake. Stops with the
+ * current scope; a point (a `DOMRect` of no size) is followed like an element.
+ *
+ * Returns a function to call when the overlay's own size changed (its rows
+ * redrawn, say), so it gets placed again.
+ */
+export function followAnchor(anchor: Element | DOMRect, place: (rect: DOMRect) => void): () => void {
+	let placedAt = "", raf = 0, still = 0;
+	const track = () => {
+		const r = anchor instanceof Element ? anchor.getBoundingClientRect() : anchor;
+		const at = `${r.left} ${r.top} ${r.bottom} ${r.width}`;
+		if (at !== placedAt) { placedAt = at; place(r); still = 0; }
+		raf = ++still > 30 ? 0 : requestAnimationFrame(track);
+	};
+	const wake = () => { still = 0; if (!raf) track(); };
+	for (const ev of WAKE_EVENTS) window.addEventListener(ev, wake, true);
+	A.clean(() => {
+		cancelAnimationFrame(raf);
+		for (const ev of WAKE_EVENTS) window.removeEventListener(ev, wake, true);
+	});
+	track();
+	return () => { placedAt = ""; wake(); };
+}

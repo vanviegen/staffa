@@ -454,6 +454,20 @@ test("overlays: toasts, tooltips, menus, dialogs and an inline menu tree", async
 	await page.keyboard.press("Escape");
 	await page.waitForSelector('text="Primary dialog"', { state: "detached" });
 
+	page.describe("An autocomplete in a dialog: its list hangs outside, over the dialog's edge");
+	await page.getByRole("button", { name: "autocomplete in a dialog" }).click();
+	await page.getByLabel("Language").fill("a");
+	const list = page.locator("ul[role=listbox]");
+	await expect(list).toBeVisible();
+	// Portalled to <body>, so the dialog neither clips it nor grows a scrollbar
+	// around it — and it still commits the row that is clicked.
+	expect(await list.evaluate((el) => el.parentElement!.tagName)).toBe("BODY");
+	expect(await page.locator(".s-dialog > div").evaluate((el) => el.scrollHeight <= el.clientHeight)).toBe(true);
+	await page.getByRole("option", { name: "Java", exact: true }).click();
+	await expect(page.getByLabel("Language")).toHaveValue("Java");
+	await page.getByRole("button", { name: "Done" }).click();
+	await page.waitForSelector('text="Pick a language"', { state: "detached" });
+
 	page.describe("The inline menu's branches stay folded until something under them is current");
 	const tree = page.locator(".s-menu-inline");
 	// Branches are native <details>; their rows stay mounted but hidden while

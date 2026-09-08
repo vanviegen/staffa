@@ -1,5 +1,5 @@
 import A from "aberdeen";
-import { type Bindable, uniqueId } from "../core.js";
+import { type Bindable, followAnchor, mountPortal, uniqueId } from "../core.js";
 import { type FieldOptions, drawField } from "./field.js";
 
 /** A selectable option: a bare string, or a `{ value, label }` pair. */
@@ -34,7 +34,6 @@ export interface AutocompleteOptions extends FieldOptions {
 
 A.insertGlobalCss({
 	".s-ac": {
-		"&": "position:relative",
 		// Same light inset field as `.s-input` (see field.ts), derived from the surface.
 		"> .s-control": "display:flex flex-wrap:wrap align-items:center gap:$1 background: color-mix(in oklab, $s-bg, $s-text 4%); color:$s-text border: 1px solid $s-faint; r:$s-radius padding: 0.3em 0.4em; cursor:text; transition: border-color 0.15s, box-shadow 0.15s;",
 		"> .s-control:hover": "border-color: color-mix(in oklab, $s-text, $s-bg 55%);",
@@ -44,15 +43,71 @@ A.insertGlobalCss({
 		".s-chip > button": "cursor:pointer border:0 background:transparent fg:$s-muted font-size:1.1em line-height:1 padding: 0 0.2em; r:4px",
 		".s-chip > button:hover": "fg:$s-text background:$s-faint",
 		"input": "flex:1 min-width:6ch border:0 background:transparent color:inherit outline:none padding:0.25em",
-		// Background, border, radius and elevation come from the popup's
-		// `.s-s.neutral.shadow` surface (see below).
-		"> .s-menu": "position:absolute top:100% left:0 right:0 z-index:20 margin-top:4px max-height:15rem overflow-y:auto list-style:none p:$1 margin-bottom:0",
-		"> .s-menu li": "margin:0",
+	},
+	// Background, border, radius and elevation come from the `.s-s.neutral.shadow`
+	// surface it carries; `place()` below sizes and positions it. Both of its
+	// classes are named here: standing in `<body>` rather than inside the field,
+	// it would otherwise lose to theme.ts's flow margins on `ul` and `li`.
+	".s-ac-menu.s-s": {
+		"&": "position:fixed max-height:15rem overflow-y:auto list-style:none p:$1 margin:0",
+		li: "margin:0",
 		".s-option": "padding: 0.45em 0.6em; r:6px cursor:pointer transition: background 0.1s;",
 		".s-option[aria-selected=true]": "background: color-mix(in srgb, $s-text 10%, transparent);",
 		".s-add": "fg:$s-accent font-style:italic",
 		".s-empty": "padding: 0.45em 0.6em; fg:$s-muted",
 	},
+});
+
+/** The list one {@link autocomplete} currently has up. */
+interface AcPopup {
+	/** The `<ul>`'s id, which the field points `aria-controls` at — and its identity here. */
+	id: string;
+	/** The field's control box: the list matches its width and hangs off it. */
+	anchor: HTMLElement;
+	/** Over the dialog the field stands in, or under the dialog layer altogether. */
+	zIndex: number;
+	/** Draws the `<li>`s, reading the field's own state from its closure. */
+	draw: () => void;
+}
+
+// Only one list is up at a time — it belongs to whichever field has focus — so
+// one portal at the end of <body> serves them all. Drawn inside the field, the
+// list would be clipped by a dialog or a scrolling column, and would stretch
+// that scroller's bar to reach it.
+const $popup = A.proxy<{ cur: AcPopup | null }>({ cur: null });
+
+/** Hang the list under the field — or over it, when that's where the room is. */
+function place(el: HTMLElement, r: DOMRect): void {
+	const gap = 4, edge = 8;
+	// Measured at the stylesheet's own cap, so the flip is decided on the height
+	// the list wants, not on whatever the last placement clamped it to.
+	el.style.maxHeight = "";
+	const want = el.offsetHeight;
+	const below = window.innerHeight - r.bottom - gap - edge;
+	const above = r.top - gap - edge;
+	const up = want > below && above > below;
+	el.style.left = `${r.left}px`;
+	el.style.width = `${r.width}px`;
+	el.style.maxHeight = `${Math.min(want, Math.max(up ? above : below, 60))}px`;
+	el.style.top = up ? "auto" : `${r.bottom + gap}px`;
+	el.style.bottom = up ? `${window.innerHeight - r.top + gap}px` : "auto";
+}
+
+mountPortal(() => {
+	const p = $popup.cur;
+	if (!p) return;
+	let sizeChanged: (() => void) | undefined;
+
+	const el = A("ul.s-ac-menu.s-s.neutral.shadow role=listbox", `id=${p.id} z-index:${p.zIndex}`, () => {
+		// A press in the list must not blur the field: the click that follows is
+		// what commits, and dragging the scrollbar has to keep it open too.
+		A("mousedown=", (e: Event) => e.preventDefault());
+		p.draw();
+		// Re-run as you type, with the rows; the list's height changes with them.
+		sizeChanged?.();
+	}) as HTMLElement;
+
+	sizeChanged = followAnchor(p.anchor, (r) => place(el, r));
 });
 
 function normOption(o: AutocompleteOptionInput): AcOption {
@@ -63,6 +118,10 @@ function normOption(o: AutocompleteOptionInput): AcOption {
  * A combobox with type-ahead filtering. Supports single or multi-select (chips),
  * optional free-text entry, and full keyboard control (arrows, enter, escape,
  * backspace-to-remove). Implements the ARIA combobox/listbox pattern.
+ *
+ * The suggestion list is portalled to `document.body`, so a dialog or a
+ * scrolling column can neither clip it nor grow a scrollbar around it. It hangs
+ * off whichever side of the field has the room, and follows it as things move.
  *
  * @example
  * ```ts
@@ -133,13 +192,40 @@ export function autocomplete(opts: AutocompleteOptions): void {
 		opts.bind.value = arr.filter((v) => v !== value);
 	};
 
+	let inputEl: HTMLInputElement | undefined;
+
+	/** The list's rows. Runs in the body portal, on this field's state. */
+	const drawList = () => {
+		const list = filtered();
+		const q = $st.query.trim();
+		const showAdd = opts.allowCustom !== false && q !== "" && !list.some((o) => o.label.toLowerCase() === q.toLowerCase());
+
+		list.forEach((option, i) => {
+			A("li.s-option role=option", `id=${menuId}-opt-${i}`, () => {
+				A(() => A("aria-selected=", $st.active === i ? "true" : "false"));
+				A("#", option.label);
+				A("click=", () => commit(option.value, inputEl));
+				A("mousemove=", () => {
+					$st.active = i;
+				});
+			});
+		});
+		if (showAdd) {
+			A("li.s-option.s-add role=option", () => {
+				A("#", `Add "${q}"`);
+				A("click=", () => commit(q, inputEl));
+			});
+		}
+		if (list.length === 0 && !showAdd) {
+			A("li.s-empty #No matches");
+		}
+	};
+
 	drawField(opts, (id, isInvalid) => {
 		A("div.s-ac", opts.inputAttrs, () => {
 			A(() => A("aria-invalid=", isInvalid() ? "true" : "false"));
 
-			let inputEl: HTMLInputElement | undefined;
-
-			A("div.s-control", () => {
+			const controlEl = A("div.s-control", () => {
 				A("click=", () => inputEl?.focus());
 
 				// Chips for multi-select.
@@ -185,38 +271,16 @@ export function autocomplete(opts: AutocompleteOptions): void {
 					});
 					A("keydown=", (e: KeyboardEvent) => onKey(e, inputEl));
 				}) as HTMLInputElement;
-			});
+			}) as HTMLElement;
 
-			// The suggestions popup.
+			// Hand the list to the portal for as long as it is up. Its layer clears
+			// the dialog the field sits in, but stays under one that may open over
+			// it — a field on the page can't paint across a modal.
 			A(() => {
 				if (!$st.open) return;
-				const list = filtered();
-				const q = $st.query.trim();
-				const showAdd = opts.allowCustom !== false && q !== "" && !list.some((o) => o.label.toLowerCase() === q.toLowerCase());
-
-				A("ul.s-menu.s-s.neutral.shadow role=listbox", `id=${menuId}`, () => {
-					list.forEach((option, i) => {
-						A("li.s-option role=option", `id=${menuId}-opt-${i}`, () => {
-							A(() => A("aria-selected=", $st.active === i ? "true" : "false"));
-							A("#", option.label);
-							A("mousedown=", (e: Event) => e.preventDefault());
-							A("click=", () => commit(option.value, inputEl));
-							A("mousemove=", () => {
-								$st.active = i;
-							});
-						});
-					});
-					if (showAdd) {
-						A("li.s-option.s-add role=option", () => {
-							A("#", `Add "${q}"`);
-							A("mousedown=", (e: Event) => e.preventDefault());
-							A("click=", () => commit(q, inputEl));
-						});
-					}
-					if (list.length === 0 && !showAdd) {
-						A("li.s-empty #No matches");
-					}
-				});
+				const zIndex = controlEl.closest(".s-dialog") ? 350 : 150;
+				$popup.cur = { id: menuId, anchor: controlEl, zIndex, draw: drawList };
+				A.clean(() => { if ($popup.cur?.id === menuId) $popup.cur = null; });
 			});
 
 			// Hidden inputs so the selection participates in native FormData.

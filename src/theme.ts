@@ -229,8 +229,14 @@ A.insertGlobalCss({
 
 	// Accent variants: the fill colour becomes the ink, over a soft self-tint
 	// (`tonal`) or a transparent body with a colour edge (`outlined`).
-	".s-s:not(.neutral).tonal, .s-s:not(.neutral).outlined":
-		"--s-text:$s-bg --s-accent:$s-bg --s-link-fg:$s-bg --s-faint: color-mix(in srgb, $s-bg 30%, transparent); --s-muted: color-mix(in srgb, $s-bg 70%, transparent);",
+	".s-s:not(.neutral).tonal, .s-s:not(.neutral).outlined": {
+		"&": "--s-text:$s-bg --s-accent:$s-bg --s-link-fg:$s-bg --s-faint: color-mix(in srgb, $s-bg 30%, transparent); --s-muted: color-mix(in srgb, $s-bg 70%, transparent);",
+		// The ink *is* the surface colour here, so the fill `code` and `pre` mix
+		// from their text/background pair would land invisibly on itself. The
+		// monospace face carries inline code on its own; a block keeps a hairline.
+		code: "background:transparent padding:0",
+		pre: "background:transparent border: 1px solid $s-faint;",
+	},
 	".s-s:not(.neutral).tonal":
 		"background: color-mix(in srgb, $s-bg 15%, transparent); border: 1px solid $s-faint;",
 	".s-s:not(.neutral).outlined":
