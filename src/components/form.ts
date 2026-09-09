@@ -7,8 +7,12 @@ export interface FormOptions extends ContentOptions {
 	 * Submit handler. Called with collected form data (keyed by each field's
 	 * `name`) and the original event. `preventDefault()` is already called.
 	 * Multi-value fields (e.g. multi-select) produce a `string[]`.
+	 *
+	 * **Return a promise and the form goes *busy* until it settles**: its submit
+	 * buttons show a spinner and stop responding, and a second submit (Enter
+	 * included) is ignored — so a slow save runs once, however impatient the user.
 	 */
-	submit?: (data: Record<string, string | string[]>, event: SubmitEvent) => void;
+	submit?: (data: Record<string, string | string[]>, event: SubmitEvent) => unknown;
 	/**
 	 * Layout of fields. `"stacked"` (default) is a single column; `"grid"` packs
 	 * fields into a responsive multi-column grid. A field can span the full grid
@@ -53,22 +57,37 @@ A.insertGlobalCss({
 export function form(opts: FormOptions | Slot = {}): void {
 	const o: FormOptions = typeof opts === "string" || typeof opts === "function" ? { content: opts } : opts;
 
+	// Raised while an asynchronous `submit` is still running; the CSS in button.ts
+	// turns the form's submit buttons into spinners off it.
+	const $busy = A.proxy({ value: false });
+
 	A(`form.s-form`, o.attrs, () => {
 		// Own scope, so a layout change doesn't recreate the fields (losing focus/input state).
 		A(() => {
 			A(".grid=", o.layout === 'grid');
 		});
+		// Likewise: going busy must not redraw the fields being submitted.
+		A(() => {
+			if ($busy.value) A(".s-busy aria-busy=true");
+		});
 
 		A("submit=", (event: SubmitEvent) => {
 			event.preventDefault();
-			if (o.submit) {
+			if (o.submit && !$busy.value) {
 				const fd = new FormData(event.target as HTMLFormElement);
 				const data: Record<string, string | string[]> = {};
 				for (const key of new Set(fd.keys())) {
 					const vals = fd.getAll(key) as string[];
 					data[key] = vals.length === 1 ? vals[0]! : vals;
 				}
-				o.submit(data, event);
+				const result = o.submit(data, event) as PromiseLike<unknown> | undefined;
+				if (result && typeof result.then === "function") {
+					$busy.value = true;
+					const done = () => { $busy.value = false; };
+					// Rethrown from a promise nobody handles, so the error still
+					// reaches the console the way an unawaited one would.
+					Promise.resolve(result).then(done, (err) => { done(); throw err; });
+				}
 			}
 		});
 

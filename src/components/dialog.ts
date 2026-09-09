@@ -1,5 +1,5 @@
 import A from "aberdeen";
-import { type Slot, type Attributes, drawSlot, mountPortal, focusFirst } from "../core.js";
+import { type Slot, type Attributes, drawSlot, mountPortal, focusFirst, focusables } from "../core.js";
 import { button } from "./button.js";
 import { buttonGroup } from "./buttonGroup.js";
 import { textline } from "./textline.js";
@@ -113,11 +113,23 @@ mountPortal(() => {
 			if (opts.allowCancel !== false) close();
 		});
 
-		const dialogEl = A("div.s-dialog.neutral.s-s.extra-shadow create=hidden destroy=hidden", opts.attrs, () => {
+		// Derived from the dialog's own key rather than a second counter: there is
+		// exactly one of these per dialog, for as long as the dialog exists.
+		const labelId = `s-dialog-title-${dialogId}`;
+		const dialogEl = A("div.s-dialog.neutral.s-s.extra-shadow role=dialog create=hidden destroy=hidden", opts.attrs, () => {
 			// A modal owns the keyboard: claiming makes the shortcuts drawn inside
-			// (the content below included) register here and silences the rest. The
-			// `?` overview passes `keyboardTransparent` to leave them all working.
-			if (!opts.keyboardTransparent) A.clean(claimKeyboard());
+			// (the content below included) register here and silences the rest;
+			// `aria-modal` takes the page behind out of the screen reader's reading
+			// order, the way the backdrop takes it out of the pointer's reach; and
+			// Tab is held inside, so it can't wander off into what it is covering.
+			// The `?` overview passes `keyboardTransparent`: an overlay that informs
+			// rather than interrupts claims none of this.
+			if (!opts.keyboardTransparent) {
+				const el = A() as HTMLElement;
+				A.clean(claimKeyboard());
+				A("aria-modal=true");
+				A("keydown=", (event: KeyboardEvent) => trapTab(el, event));
+			}
 			// Esc closes the dialog — or, while `allowCancel` forbids it, is
 			// swallowed by the no-op press, so nothing below acts on it either.
 			// Anchored at whoever owned the keyboard as this dialog opened —
@@ -131,7 +143,13 @@ mountPortal(() => {
 
 			A(() => {
 				if (opts.header != null) {
-					A("header.s-s.neutral", opts.headerAttrs, () => drawSlot(opts.header));
+					// The header names the dialog to assistive tech as well as visually:
+					// it is what a screen reader reads out as focus enters, before the
+					// control it lands on. Set from this scope (so on the dialog, and
+					// withdrawn with the header), rather than pointing at an id that
+					// isn't there.
+					A("aria-labelledby=", labelId);
+					A("header.s-s.neutral id=", labelId, opts.headerAttrs, () => drawSlot(opts.header));
 				}
 			});
 
@@ -151,6 +169,22 @@ mountPortal(() => {
 		requestAnimationFrame(() => { if (document.body.contains(dialogEl)) focusFirst(dialogEl); });
 	});
 })
+
+/**
+ * Keep Tab inside a modal dialog: from its last focusable element Tab wraps
+ * around to the first, and Shift+Tab from the first to the last. Without this,
+ * a couple of Tabs walk out of the dialog and into the page it is covering —
+ * which the backdrop makes invisible but not unreachable, so a keyboard user
+ * ends up typing into something they can't see.
+ */
+function trapTab(dialogEl: HTMLElement, event: KeyboardEvent): void {
+	if (event.key !== "Tab" || event.altKey || event.ctrlKey || event.metaKey) return;
+	const items = focusables(dialogEl);
+	const edge = event.shiftKey ? items[0] : items[items.length - 1];
+	if (!edge || document.activeElement !== edge) return;
+	event.preventDefault();
+	(event.shiftKey ? items[items.length - 1] : items[0])!.focus();
+}
 
 /**
  * A dialog rendered into `document.body` via `A.mount`, with a dimming backdrop

@@ -9,8 +9,11 @@ export interface IconButtonOptions {
 	icon: Slot;
 	/** What it does, for screen readers. Required: there is no visible text to read. */
 	ariaLabel: string;
-	/** Click handler. */
-	click?: (event: Event) => void;
+	/**
+	 * Click handler. Return a promise and the glyph becomes a spinner until it
+	 * settles, with further clicks bouncing off — see {@link ButtonOptions.click}.
+	 */
+	click?: (event: Event) => unknown;
 	/**
 	 * A keyboard shortcut that presses this button — see {@link ButtonOptions.key}.
 	 * The tooltip shows it after the `ariaLabel` (a glyph is worth naming there
@@ -35,8 +38,18 @@ export interface ButtonOptions {
 	content?: Slot;
 	/** Leading icon/adornment, drawn before the label. */
 	icon?: Slot;
-	/** Click handler. */
-	click?: (event: Event) => void;
+	/**
+	 * Click handler.
+	 *
+	 * **Return a promise and the button goes *busy* until it settles**: a spinner
+	 * rides after the label, and clicks (and keypresses) bounce off, so a slow
+	 * save can't be started twice. Nothing to wire up — `click: () => save()` on
+	 * an async `save` is the whole thing, and a handler awaiting a
+	 * {@link confirm} counts: the button waits for the answer with everything
+	 * else. For a wait that isn't a promise, put the button in the same state
+	 * yourself with `attrs: ".s-busy"`.
+	 */
+	click?: (event: Event) => unknown;
 	/** Disables the button. */
 	disabled?: boolean;
 	/** Native button behaviour. Defaults to `"button"`. */
@@ -112,6 +125,21 @@ A.insertGlobalCss({
 		"&.small, .small > &": "width:1.6rem height:1.6rem font-size:0.8rem",
 		"&.large, .large > &": "width:2.4rem height:2.4rem font-size:1.2rem",
 	},
+
+	// ── Busy ──────────────────────────────────────────────────────────────────
+	// Raised by a promise-returning `click`, by a submitting `S.form` on its own
+	// submit buttons, or by a caller who has some other wait to show. The spinner
+	// is a pseudo-element, so nothing has to be redrawn to start or stop it, and
+	// the flex `gap` spaces it like any other child.
+	".s-btn.s-busy, .s-icon-btn.s-busy, .s-busy .s-btn[type=submit]": "pointer-events:none cursor:progress",
+	".s-btn.s-busy::after, .s-icon-btn.s-busy::after, .s-busy .s-btn[type=submit]::after":
+		"content:'' flex-shrink:0 width:1em height:1em r:50% " +
+		"border: 2px solid currentColor; border-top-color: transparent; " +
+		"animation: s-spin 0.7s linear infinite;",
+	// The glyph *is* an icon button, so the spinner takes its place rather than
+	// crowding in beside it.
+	".s-icon-btn.s-busy > svg": "display:none",
+	"@keyframes s-spin": { to: "transform: rotate(360deg)" },
 });
 
 /**
@@ -152,7 +180,7 @@ export function iconButton(opts: IconButtonOptions): void {
 function applyActionBehavior(o: {
 	href?: string;
 	disabled?: boolean;
-	click?: (event: Event) => void;
+	click?: (event: Event) => unknown;
 	type?: string;
 }): void {
 	if (o.href != null) {
@@ -163,7 +191,34 @@ function applyActionBehavior(o: {
 		A("type=", o.type ?? "button");
 		if (o.disabled) A("disabled=true");
 	}
-	if (o.click && !o.disabled) A("click=", o.click);
+	if (o.click && !o.disabled) applyClick(o.click);
+}
+
+/**
+ * Wire a click handler that may be asynchronous: while the promise it returned
+ * is pending, the element wears `.s-busy` (spinner, no pointer events) and
+ * further clicks are ignored — the double-submit guard every save button needs.
+ *
+ * The rejection is rethrown from a promise nobody handles, so an error in the
+ * handler still reaches the console exactly as it would without us.
+ */
+function applyClick(click: (event: Event) => unknown): void {
+	const $busy = A.proxy({ value: false });
+	// Own scope: raising and dropping the class must not recreate the element,
+	// which would drop keyboard focus mid-click.
+	A(() => {
+		if ($busy.value) A(".s-busy aria-busy=true");
+	});
+	A("click=", (event: Event) => {
+		// A keypress on a focused button still gets here while `pointer-events:none`
+		// holds the mouse off, so the guard is what actually stops the second call.
+		if ($busy.value) return;
+		const result = click(event) as PromiseLike<unknown> | undefined;
+		if (!result || typeof result.then !== "function") return;
+		$busy.value = true;
+		const done = () => { $busy.value = false; };
+		Promise.resolve(result).then(done, (err) => { done(); throw err; });
+	});
 }
 
 /**
@@ -198,16 +253,18 @@ function applyKey(key: string, label: string | undefined, content: Slot | undefi
  * content.
  *
  * **Tip:** pair `href` with Aberdeen's `interceptLinks()` (called once at app
- * startup) for SPA-style navigation without manual click handlers:
+ * startup) for SPA-style navigation without manual click handlers — a routed
+ * {@link main} already handles link clicks itself, so don't call it there:
  * ```ts
- * import {interceptLinks} from from "aberdeen/route";
+ * import {interceptLinks} from "aberdeen/route";
  * interceptLinks(); // once at root
  * S.button({ href: "/dashboard", content: "Dashboard" }); // navigates via router
  * ```
  *
  * @example
  * ```ts
- * S.button({ content: "Save", click: S.alert("Saved.") });
+ * S.button({ content: "Save", click: () => save() });     // async: spins while it saves
+ * S.button({ content: "About", click: () => S.alert("Staffa.") });
  * S.button({ content: "Cancel", attrs: ".neutral", click: cancel }); // neutral button
  * S.button({ content: "Delete", attrs: ".danger .outlined", click: del });
  * S.button("Cancel");                        // shorthand for { content: "Cancel" }

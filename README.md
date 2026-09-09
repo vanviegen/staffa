@@ -220,6 +220,17 @@ Return the paths shallowest first, or nothing to fall back to the parent-path wa
 - Aberdeen's own `route.go()` works, but builds the whole stack from the path; prefer the stack's methods. A guard your app registered with `route.setGuard` keeps working — Staffa registers none of its own.
 - Deep links need your static server to serve the app for unknown paths (the usual SPA fallback; `-P` for `http-server`, as in the demo command below).
 
+### Waiting
+
+A `click` handler — or a form's `submit` — that returns a promise puts its button to work until that promise settles: a spinner rides after the label, and clicks (and Enter) bounce off, so a slow save can't be started twice. There is nothing to wire up:
+
+```ts
+S.button({ content: "Save", click: () => api.save($user) });
+S.form({ submit: (data) => api.save(data), content: drawFields, actions: () => S.button({ content: "Save", type: "submit" }) });
+```
+
+A form marks its own submit buttons, wherever they sit, and a handler that awaits a `confirm()` waits with it. For a wait that isn't a promise, put a control in the same state yourself with `attrs: ".s-busy"`.
+
 ## Components
 
 Every option of every component is documented in TSDoc on its `…Options` interface. Options share naming conventions: `attrs` (outermost element), `contentAttrs` (the children-holding element), `inputAttrs` (the form control) and `<region>Attrs` (`headerAttrs`, `footerAttrs`, …) — all Aberdeen attr/style strings, applied last so they can override. Form components consistently support `label`, `help`, `error`, `disabled`, `required` and `name`, and two-way binding through `bind: A.ref($obj, "key")`.

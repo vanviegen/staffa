@@ -145,9 +145,17 @@ test("form: fields, submission, and the chrome moving around it", async ({ page 
 	await page.getByLabel("Bio").fill("Wrote the first program.");
 	await page.getByLabel("Subscribe to the newsletter").check();
 
-	page.describe("Submit, and check the echoed data");
+	page.describe("Submit: Save spins while the asynchronous handler runs");
 	await page.getByRole("button", { name: "Save" }).click();
+	await expect(page.locator(".s-form")).toHaveClass(/s-busy/);
+	// Enter on the button the click left focused would submit again — the busy
+	// form ignores it, which is what the single dialog below proves.
+	await page.keyboard.press("Enter");
+
+	page.describe("Then the echoed data arrives — once");
 	await page.getByText("Submitted data").waitFor();
+	await expect(page.locator(".s-dialog")).toHaveCount(1);
+	await expect(page.locator(".s-form")).not.toHaveClass(/s-busy/);
 	await expect(page.locator("pre")).toContainText("ada@example.com");
 	await page.getByRole("button", { name: "Close" }).click();
 
@@ -235,6 +243,19 @@ test("pages: buttons, prose, icons and surfaces — then the same in the dark", 
 	page.describe("The same combination again toggles it closed");
 	await field.press("Control+Shift+Slash");
 	await page.waitForSelector(".s-keyhelp", { state: "detached" });
+
+	page.describe("An async click spins its own button until the promise settles");
+	// Scoped to its box: the grouped-buttons demo below has a plain Save too.
+	const save = page.locator(".s-box", { hasText: "Waiting on a promise" }).getByRole("button", { name: "Save" });
+	await save.scrollIntoViewIfNeeded();
+	await save.click();
+	await expect(save).toHaveClass(/s-busy/);
+	// The busy button is out of reach for the pointer, so the second press has to
+	// come from the keyboard — where the handler's own guard turns it away.
+	await page.keyboard.press("Enter");
+	await page.getByText("Saved.").waitFor();
+	await expect(page.locator(".s-toast", { hasText: "Saved." })).toHaveCount(1);
+	await expect(save).not.toHaveClass(/s-busy/);
 
 	page.describe("Prose rhythm and heading scale");
 	await page.goto("./content");
@@ -412,6 +433,9 @@ test("overlays: toasts, tooltips, menus, dialogs and an inline menu tree", async
 	page.describe("Run the alert(), confirm() and prompt() shortcuts");
 	await page.getByRole("button", { name: "alert()" }).click();
 	await page.getByText("File saved successfully.").waitFor();
+	// It is a modal to assistive tech too, named by its header.
+	await expect(page.getByRole("dialog")).toHaveAttribute("aria-modal", "true");
+	await expect(page.getByRole("dialog")).toHaveAccessibleName("Alert");
 	await page.getByRole("button", { name: "OK" }).click();
 	// Wait out the dialog's fade-out: its OK button lingers in the DOM during
 	// the destroy transition and would make the next "OK" locator ambiguous.
@@ -426,6 +450,11 @@ test("overlays: toasts, tooltips, menus, dialogs and an inline menu tree", async
 
 	await page.getByRole("button", { name: "prompt()" }).click();
 	await page.getByRole("textbox").last().fill("Grace");
+	// Tab off the dialog's last button wraps back to its own first control,
+	// rather than walking into the page behind the backdrop.
+	await page.getByRole("button", { name: "OK" }).focus();
+	await page.keyboard.press("Tab");
+	await expect(page.getByRole("textbox").last()).toBeFocused();
 	await page.getByRole("button", { name: "OK" }).click();
 	await expect(page.getByText('prompt → "Grace"')).toBeVisible();
 

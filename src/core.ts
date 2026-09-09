@@ -80,6 +80,22 @@ export function drawSlot<Args extends unknown[] = []>(slot: Slot<Args> | undefin
 /** Selector matching the natively focusable elements we care about. */
 const FOCUSABLE_SELECTOR = "a[href], button, input, select, textarea, [tabindex]";
 
+/** Whether this element can actually take focus right now. */
+const isFocusable = (el: Element): el is HTMLElement =>
+	el instanceof HTMLElement &&
+	!el.hasAttribute("disabled") &&
+	el.getAttribute("aria-disabled") !== "true" &&
+	el.tabIndex >= 0 &&
+	el.getClientRects().length > 0;
+
+/**
+ * The focusable elements inside `container`, in tab order — disabled,
+ * `aria-disabled`, `tabindex=-1` and hidden ones left out.
+ */
+export function focusables(container: HTMLElement): HTMLElement[] {
+	return [...container.querySelectorAll(FOCUSABLE_SELECTOR)].filter(isFocusable);
+}
+
 /**
  * Move keyboard focus to the first focusable element inside `container`, skipping
  * disabled, `aria-disabled`, `tabindex=-1` and hidden ones. A `prefer` selector,
@@ -90,15 +106,9 @@ const FOCUSABLE_SELECTOR = "a[href], button, input, select, textarea, [tabindex]
  * the DOM and laid out — typically inside a `requestAnimationFrame`.
  */
 export function focusFirst(container: HTMLElement, prefer?: string): boolean {
-	const ok = (el: Element): el is HTMLElement =>
-		el instanceof HTMLElement &&
-		!el.hasAttribute("disabled") &&
-		el.getAttribute("aria-disabled") !== "true" &&
-		el.tabIndex >= 0 &&
-		el.getClientRects().length > 0;
 	const target =
-		(prefer ? [...container.querySelectorAll(prefer)].find(ok) : undefined) ??
-		[...container.querySelectorAll(FOCUSABLE_SELECTOR)].find(ok);
+		(prefer ? [...container.querySelectorAll(prefer)].find(isFocusable) : undefined) ??
+		focusables(container)[0];
 	target?.focus();
 	return target != null;
 }

@@ -89,6 +89,9 @@ const showcaseIcons = [
 	"pencil", "trash2", "filter", "eye",
 ];
 
+/** Stands in for the slow server the demo hasn't got. */
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 // ─── Shell ───────────────────────────────────────────────────────────────────
 
 const $navPosition = A.proxy("left") as {value: "left" | "right"};
@@ -386,7 +389,10 @@ function drawForm($panel: S.Panel) {
 					S.button({ content: "Cancel", attrs: ".neutral" });
 					S.button({ content: "Save", type: "submit" });
 				},
-				submit: (data) => {
+				// Asynchronous, so Save spins and refuses a second press until the
+				// (pretend) server answers.
+				submit: async (data) => {
+					await sleep(1500);
 					S.dialog({
 						header: "Submitted data",
 						allowCancel: true,
@@ -962,6 +968,31 @@ function drawButtons($panel: S.Panel) {
 				// Disabled, and deliberately claiming the same combination: it is never
 				// bound, so the key stays the working button's.
 				S.iconButton({ icon: icons.trash2, ariaLabel: "Delete", key: "mod+b", disabled: true, attrs: "fg:$s-danger" });
+			});
+		},
+	});
+	S.box({
+		header: "Waiting on a promise",
+		contentAttrs: "display:flex flex-direction:column gap:$3",
+		content: () => {
+			A("p mt:0 rich='A `click` that returns a promise puts its button to work: a spinner rides after the label and clicks bounce off until the promise settles, so a slow save can only run once. `S.form` does the same to its submit buttons while an asynchronous `submit` is running.'");
+			A("div display:flex gap:$2 flex-wrap:wrap align-items:center", () => {
+				// The whole thing: an async handler. Nothing else to wire up.
+				S.button({
+					content: "Save",
+					icon: icons.save,
+					click: async () => {
+						await sleep(2000);
+						S.toast({ message: "Saved.", type: "success" });
+					},
+				});
+				S.iconButton({
+					icon: icons.refreshCw,
+					ariaLabel: "Refresh",
+					click: () => sleep(2000),
+				});
+				// For a wait that isn't a promise, the class is the same one.
+				S.button({ content: "Busy by hand", attrs: ".neutral .s-busy" });
 			});
 		},
 	});

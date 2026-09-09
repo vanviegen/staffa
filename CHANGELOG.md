@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.18.4
+- A `click` handler or an `S.form`'s `submit` that returns a promise now puts its button to work while that promise is pending: a spinner after the label, and clicks and Enter bouncing off, so a slow save can't be started twice. Add `.s-busy` yourself for a wait that isn't a promise.
+- Dialogs are now announced as dialogs to screen readers, and named by their header.
+- Fixed: Tab could walk out of an open dialog into the page behind it.
+
+
 ## 0.18.3
 
 - `S.autocomplete`'s suggestion list now floats free of the field, so a dialog or a scrolling column can no longer clip it or grow a scrollbar around it. It hangs off whichever side has the room and follows the field as things move. **Breaking** for CSS overrides: the list is `.s-ac-menu`, no longer nested in `.s-ac`.

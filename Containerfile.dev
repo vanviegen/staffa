@@ -1,0 +1,36 @@
+# Dev container image for Staffa.
+#
+# The base is the very image ShoTest runs its browser in —
+# `mcr.microsoft.com/playwright:v<@playwright/test version>-noble` — so
+# screenshots taken here are comparable to the accepted baselines in
+# `test-accepted/`, instead of drifting on fonts and rasterization. Keep the tag
+# in step with the `@playwright/test` that `package.json` resolves to (ShoTest
+# derives it the same way, and says so when they disagree).
+#
+# Because the container already *is* that image, ShoTest must not start another
+# one: `SHOTEST_NO_CONTAINER` makes it run Playwright natively, which is exactly
+# what it asks for when the job itself runs inside the pinned image.
+
+FROM mcr.microsoft.com/playwright:v1.62.1-noble
+ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+ENV SHOTEST_NO_CONTAINER=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ca-certificates curl git sudo bash procps psmisc ripgrep less nano \
+      openssh-client unzip zip xz-utils build-essential pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# The task runs as uid 1000, which needs a home directory it owns. Noble already
+# carries a uid-1000 user (`ubuntu`); the useradd is only there in case a future
+# base image doesn't.
+RUN set -eux; \
+    if ! id -u 1000 >/dev/null 2>&1; then useradd -m -u 1000 -s /bin/bash dev; fi; \
+    user="$(id -nu 1000)"; home="$(getent passwd 1000 | cut -d: -f6)"; \
+    usermod -s /bin/bash "$user"; \
+    mkdir -p "$home"; chown -R 1000:"$(id -g 1000)" "$home"; \
+    echo "$user ALL=(ALL) NOPASSWD:ALL" >/etc/sudoers.d/tps-dev; \
+    chmod 0440 /etc/sudoers.d/tps-dev
+
+USER 1000
+WORKDIR /work
