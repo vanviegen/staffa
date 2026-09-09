@@ -485,7 +485,9 @@ test("overlays: toasts, tooltips, menus, dialogs and an inline menu tree", async
 
 	page.describe("An autocomplete in a dialog: its list hangs outside, over the dialog's edge");
 	await page.getByRole("button", { name: "autocomplete in a dialog" }).click();
-	await page.getByLabel("Language").fill("a");
+	// Exact, so it can't also catch the dialog itself: its accessible name,
+	// "Pick a language", contains the field's label.
+	await page.getByLabel("Language", { exact: true }).fill("a");
 	const list = page.locator("ul[role=listbox]");
 	await expect(list).toBeVisible();
 	// Portalled to <body>, so the dialog neither clips it nor grows a scrollbar
@@ -493,7 +495,7 @@ test("overlays: toasts, tooltips, menus, dialogs and an inline menu tree", async
 	expect(await list.evaluate((el) => el.parentElement!.tagName)).toBe("BODY");
 	expect(await page.locator(".s-dialog > div").evaluate((el) => el.scrollHeight <= el.clientHeight)).toBe(true);
 	await page.getByRole("option", { name: "Java", exact: true }).click();
-	await expect(page.getByLabel("Language")).toHaveValue("Java");
+	await expect(page.getByLabel("Language", { exact: true })).toHaveValue("Java");
 	await page.getByRole("button", { name: "Done" }).click();
 	await page.waitForSelector('text="Pick a language"', { state: "detached" });
 
