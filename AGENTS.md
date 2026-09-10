@@ -7,3 +7,7 @@ Add anything a user of the library would notice — a new component or option, c
 ## Commit messages
 
 One short line. Prefix a release commit with its version: `v0.9.0: Panel navigation improvements`.
+
+## Before merge/done
+
+Run the full test suite `npm test` and if there are visual changes ask the user to run `npx run shotest` and accept them, before declaring done.

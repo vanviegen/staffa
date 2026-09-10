@@ -389,6 +389,26 @@ test("overlays: toasts, tooltips, menus, dialogs and an inline menu tree", async
 	await page.mouse.move(0, 0);
 	await page.waitForSelector(".s-tt-tip", { state: "detached" });
 
+	page.describe("A button's own `tooltip` option, with its key after it");
+	await page.getByRole("button", { name: "Archive" }).hover();
+	await expect(page.locator(".s-tt-tip")).toHaveText("Out of the way, not gone \u00b7 F4");
+	await page.mouse.move(0, 0);
+	await page.waitForSelector(".s-tt-tip", { state: "detached" });
+
+	page.describe("A disabled button gets to say why: no hover events natively, so it is aria-disabled");
+	const publish = page.getByRole("button", { name: "Publish" });
+	await expect(publish).toHaveAttribute("aria-disabled", "true");
+	await publish.hover();
+	await expect(page.locator(".s-tt-tip")).toContainText("Not until the draft validates");
+	await page.mouse.move(0, 0);
+	await page.waitForSelector(".s-tt-tip", { state: "detached" });
+
+	page.describe("An icon button says its aria-label unless given a tooltip of its own");
+	await page.getByRole("button", { name: "Share" }).hover();
+	await expect(page.locator(".s-tt-tip")).toHaveText("Share");
+	await page.mouse.move(0, 0);
+	await page.waitForSelector(".s-tt-tip", { state: "detached" });
+
 	page.describe("A nav row's tooltip tells its key too, under its own tip");
 	await page.locator(".s-nav-panel").getByRole("link", { name: "Overlays" }).hover();
 	const navTip = page.locator(".s-tt-tip");

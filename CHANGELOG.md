@@ -1,10 +1,14 @@
 # Changelog
 
+## 0.19.0
+
+- `S.button` and `S.iconButton` take a `tooltip`, so a tip no longer needs a wrapper element and an `S.addTooltip` call. An icon button shows its `ariaLabel` on hover unless told otherwise (`tooltip: false` for none), and a `key` is appended to the tip.
+- A disabled button now shows its tooltip — the one place there is to say why it is disabled.
+
 ## 0.18.4
 - A `click` handler or an `S.form`'s `submit` that returns a promise now puts its button to work while that promise is pending: a spinner after the label, and clicks and Enter bouncing off, so a slow save can't be started twice. Add `.s-busy` yourself for a wait that isn't a promise.
 - Dialogs are now announced as dialogs to screen readers, and named by their header.
 - Fixed: Tab could walk out of an open dialog into the page behind it.
-
 
 ## 0.18.3
 

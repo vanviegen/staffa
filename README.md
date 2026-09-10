@@ -240,6 +240,15 @@ Every option of every component is documented in TSDoc on its `…Options` inter
 - **Actions**: `button`, `iconButton`, `buttonGroup`, `buttonChooser`.
 - **Overlays & feedback**: `dialog` (+ `alert`, `confirm`, `prompt`), `menu`, `menuButton`, `showFloatingMenu`, `addContextMenu`, `toast`, `addTooltip`.
 
+Buttons, icon buttons and menu items carry a `tooltip` option of their own, so most tips need no `addTooltip` call:
+
+```ts
+S.button({ content: "Publish", tooltip: "Not until the draft validates", disabled: true });
+S.iconButton({ icon: trash2, ariaLabel: "Delete" });   // says "Delete" on hover
+```
+
+An icon button tips its `ariaLabel` unless given a `tooltip` of its own (`tooltip: false` for neither), a `key` is appended to whatever the tip says, and — unlike a tooltip on a plain disabled `<button>`, which the browser gives no hover events — these show while disabled, which is where a tooltip earns its keep.
+
 `src/index.ts` is the authoritative list of exports.
 
 ### Keyboard shortcuts

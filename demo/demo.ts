@@ -1110,8 +1110,17 @@ function drawOverlays($panel: S.Panel) {
 	S.box({
 		header: "Tooltips",
 		content: () => {
-			A("p m:0 fg:$s-muted font-size:0.9em #Portal-rendered — never clipped. Hover or focus the buttons to see the tips.");
+			A("p m:0 fg:$s-muted font-size:0.9em rich='Portal-rendered — never clipped. Hover or focus the buttons to see the tips. Buttons and icon buttons take a `tooltip` of their own; `S.addTooltip` tips any other element.'");
 			A("div display:flex gap:$4 flex-wrap:wrap align-items:center mt:$2", () => {
+				// The button's own option — no wrapper, and it survives being disabled.
+				S.button({ content: "Save", tooltip: "Writes your work to the cloud", attrs: ".neutral" });
+				S.button({ content: "Publish", tooltip: "Not until the draft **validates**", disabled: true });
+				S.button({ content: "Archive", tooltip: "Out of the way, not gone", key: "f4", attrs: ".neutral" });
+				// An icon button says its `ariaLabel` unless told otherwise.
+				S.iconButton({ icon: icons.share2, ariaLabel: "Share" });
+				S.iconButton({ icon: icons.trash2, ariaLabel: "Delete", tooltip: "Delete for everyone, forever", attrs: "fg:$s-danger" });
+			});
+			A("div display:flex gap:$4 flex-wrap:wrap align-items:center mt:$3", () => {
 				A("span display:inline-flex", () => { S.addTooltip({ tip: "Appears above (default)" });            S.button({ content: "Top",      attrs: ".neutral" }); });
 				A("span display:inline-flex", () => { S.addTooltip({ placement: "bottom", tip: "Appears below" }); S.button({ content: "Bottom",   attrs: ".neutral" }); });
 				A("span display:inline-flex", () => { S.addTooltip({ placement: "left",   tip: "Appears to the left" }); S.button({ content: "Left", attrs: ".neutral" }); });

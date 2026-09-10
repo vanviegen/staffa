@@ -16,10 +16,21 @@ export interface IconButtonOptions {
 	click?: (event: Event) => unknown;
 	/**
 	 * A keyboard shortcut that presses this button — see {@link ButtonOptions.key}.
-	 * The tooltip shows it after the `ariaLabel` (a glyph is worth naming there
-	 * anyway), and the `?` overview lists it under that label too.
+	 * The tooltip shows it after the button's `tooltip` (or, failing that, its
+	 * `ariaLabel` — a glyph is worth naming there anyway), and the `?` overview
+	 * lists it under that label too.
 	 */
 	key?: string;
+	/**
+	 * A tooltip, shown on hover and keyboard focus; a string renders as rich
+	 * text. Defaults to the `ariaLabel`, so an icon button says what it does
+	 * without being told twice — pass this only to say something longer or
+	 * different, or `false` for no tooltip at all. A `key` is appended to it.
+	 *
+	 * Works on a disabled button too, which is where a tooltip earns its keep:
+	 * it is the only room there is to say why.
+	 */
+	tooltip?: Slot | false;
 	/** Render as a link (`<a role=button>`) pointing here instead of a `<button>`. */
 	href?: string;
 	/** Disables it. */
@@ -69,6 +80,16 @@ export interface ButtonOptions {
 	 */
 	key?: string;
 	/**
+	 * A tooltip, shown on hover and keyboard focus. A string renders as rich
+	 * text, a function draws its own markup. A `key` is appended to it, behind
+	 * a `·`. Defaults to the `ariaLabel` of a button that has one (an icon-only
+	 * button, that is); pass `false` for no tooltip at all.
+	 *
+	 * Works on a disabled button too, which is where a tooltip earns its keep:
+	 * it is the only room there is to say why.
+	 */
+	tooltip?: Slot | false;
+	/**
 	 * Aberdeen attr/style string applied to the button. A button is a surface, so
 	 * pass surface modifier classes here to restyle it, e.g. `".danger"`,
 	 * `".danger .outlined"`, or `".neutral"` for a neutral button. Defaults to a
@@ -92,15 +113,19 @@ A.insertGlobalCss({
 			"transition: background 0.15s, border-color 0.15s, color 0.15s, filter 0.15s, box-shadow 0.15s, transform 0.08s;",
 		// Focus ring via `outline`, not box-shadow: `.no-shadow` hard-clears box-shadow.
 		"&:focus-visible": "outline: 3px solid $s-focus; outline-offset: 1px;",
-		"&:hover": "filter: brightness(1.06)",
-		"&.tonal:hover, &.outlined:hover": "background: color-mix(in srgb, $s-bg 24%, transparent);",
+		"&:hover:not([aria-disabled=true])": "filter: brightness(1.06)",
+		"&.tonal:hover:not([aria-disabled=true]), &.outlined:hover:not([aria-disabled=true])":
+			"background: color-mix(in srgb, $s-bg 24%, transparent);",
 		// A `.neutral` button is already near-white, so it darkens toward its ink
 		// instead of brightening.
-		"&.neutral:hover": "filter:none background: color-mix(in srgb, $s-text 8%, $s-bg);",
+		"&.neutral:hover:not([aria-disabled=true])": "filter:none background: color-mix(in srgb, $s-text 8%, $s-bg);",
 		// The button sizes its glyph rather than trusting the caller: only a rule here
 		// makes every icon in a row match. In `em`, so `.small`/`.large` scale it.
 		"> svg": "width:1.25em height:1.25em",
-		"&:active:not(:disabled)": "transform: translateY(1px)",
+		"&:active:not(:disabled):not([aria-disabled=true])": "transform: translateY(1px)",
+		// A disabled button that has something to say still takes hover, so its
+		// tooltip can say it (see `applyActionBehavior`); theme.ts stops the rest.
+		"&[aria-disabled=true]": "pointer-events:auto cursor:not-allowed",
 		// Also inherited from a `.small`/`.large` parent (e.g. a buttonGroup), so a
 		// container can size all its buttons at once.
 		"&.small, .small > &": "padding: $m1 $m2; font-size:0.85em border-radius:$s-radius-sm",
@@ -121,6 +146,9 @@ A.insertGlobalCss({
 		"&:hover:not(:disabled):not([aria-disabled=true])":
 			"fg:$s-text background: color-mix(in srgb, $s-text 10%, transparent);",
 		"&:focus-visible": "outline: 3px solid $s-focus; outline-offset:1px",
+		// A disabled button that has something to say still takes hover, so its
+		// tooltip can say it (see `applyActionBehavior`); theme.ts stops the rest.
+		"&[aria-disabled=true]": "pointer-events:auto cursor:not-allowed",
 		// The glyph rides the font size, so it scales with the hit area.
 		"&.small, .small > &": "width:1.6rem height:1.6rem font-size:0.8rem",
 		"&.large, .large > &": "width:2.4rem height:2.4rem font-size:1.2rem",
@@ -163,10 +191,15 @@ A.insertGlobalCss({
  */
 export function iconButton(opts: IconButtonOptions): void {
 	const tag = opts.href != null ? "a" : "button";
+	// A glyph says nothing on its own, so the name it carries for screen readers is
+	// the tip too, unless the caller has something better (or `false`) to say.
+	const tip = opts.tooltip === false ? undefined : opts.tooltip ?? opts.ariaLabel;
 	A(`${tag}.s-icon-btn`, opts.attrs, () => {
-		applyActionBehavior(opts);
+		applyActionBehavior(opts, tip != null);
 		A("aria-label=", opts.ariaLabel);
-		if (opts.key) applyKey(opts.key, opts.ariaLabel, undefined, opts.disabled);
+		// Before the glyph, so a tooltip the caller adds in there is the later of
+		// the two and wins the hover.
+		applyTooltipAndKey(tip, opts.key, opts.ariaLabel, opts.disabled);
 		drawSlot(opts.icon);
 	});
 }
@@ -182,11 +215,22 @@ function applyActionBehavior(o: {
 	disabled?: boolean;
 	click?: (event: Event) => unknown;
 	type?: string;
-}): void {
+}, hasTooltip = false): void {
 	if (o.href != null) {
 		A("role=button");
 		if (o.disabled) A("aria-disabled=true");
 		else A("href=", o.href);
+	} else if (o.disabled && hasTooltip) {
+		// A natively `disabled` button fires no mouse events at all, so a tooltip on
+		// one — usually the one saying *why* it is disabled — would never show. Say
+		// it the ARIA way instead: the same dimmed, unclickable, out-of-the-tab-order
+		// button (theme.ts dims it, the CSS above keeps only hover alive), but one
+		// the pointer can still reach. Nothing can activate it: the `click` handler
+		// is skipped below, and this one stops a `type=submit` from reaching its form
+		// through a stray click or Enter.
+		A("type=", o.type ?? "button");
+		A("aria-disabled=true tabindex=-1");
+		A("click=", (event: Event) => { event.preventDefault(); event.stopPropagation(); });
 	} else {
 		A("type=", o.type ?? "button");
 		if (o.disabled) A("disabled=true");
@@ -222,26 +266,33 @@ function applyClick(click: (event: Event) => unknown): void {
 }
 
 /**
- * The shortcut plumbing {@link button} and {@link iconButton} share: bind it,
- * announce it as `aria-keyshortcuts`, and hint at it in a tooltip — the only
- * place a button can say what its key is without shouting it beside the label.
+ * The tooltip and shortcut plumbing {@link button} and {@link iconButton} share:
+ * show the tip, with the key appended — the only place a button can say what its
+ * key is without shouting it beside the label — then bind that key and announce
+ * it as `aria-keyshortcuts`.
  *
  * Pressing it clicks the element rather than calling `click` directly, so a
  * `type=submit` still submits its form and an `href` still navigates. Call this
  * inside the button's own element scope, whose element it takes and whose life
  * the binding follows.
  */
-function applyKey(key: string, label: string | undefined, content: Slot | undefined, disabled?: boolean): void {
-	const el = A() as HTMLElement;
-	const tip = label ? `${label} · ${formatKey(key)}` : formatKey(key);
-	// A draw function, not a string: a key like `*` is markup to rich text.
-	addTooltip({ tip: () => A("#", tip) });
+function applyTooltipAndKey(tip: Slot | undefined, key: string | undefined, label: string | undefined, disabled?: boolean): void {
+	if (tip != null || key) {
+		addTooltip({
+			tip: () => {
+				drawSlot(tip);
+				// A draw function, not a string: a key like `*` is markup to rich text.
+				if (key) A("#", tip == null ? formatKey(key) : ` · ${formatKey(key)}`);
+			},
+		});
+	}
 	// Bound only while it can be pressed — a disabled button would otherwise
 	// swallow the combination rather than leave it to whoever else wants it. The
 	// overview names it by its visible text, or its aria label failing that.
-	if (!disabled) {
+	if (key && !disabled) {
+		const el = A() as HTMLElement;
 		A("aria-keyshortcuts=", formatKey(key, true));
-		bindKey(key, typeof content === "string" ? content : label, () => el.click());
+		bindKey(key, label, () => el.click());
 	}
 }
 
@@ -275,15 +326,18 @@ export function button(opts: ButtonOptions | Slot = {}): void {
 	const o: ButtonOptions = typeof opts === "string" || typeof opts === "function" ? { content: opts } : opts;
 
 	const tag = o.href != null ? "a" : "button";
+	// An `ariaLabel` means an icon-only button, whose name is worth showing to the
+	// sighted too; anything else says nothing until asked.
+	const tip = o.tooltip === false ? undefined : o.tooltip ?? o.ariaLabel;
 
 	// A bare `.s-s` is a filled `.primary` surface (see theme.ts), so no role
 	// detection here: `attrs` just names another role or variant.
 	A(`${tag}.s-btn.s-s.shadow`, o.attrs, () => {
-		applyActionBehavior(o);
+		applyActionBehavior(o, tip != null);
 		if (o.ariaLabel) A("aria-label=", o.ariaLabel);
 		// Before the content, so a tooltip the caller adds in there is the later of
 		// the two and wins the hover.
-		if (o.key) applyKey(o.key, o.ariaLabel, o.content, o.disabled);
+		applyTooltipAndKey(tip, o.key, typeof o.content === "string" ? o.content : o.ariaLabel, o.disabled);
 
 		drawSlot(o.icon);
 		drawSlot(o.content);
