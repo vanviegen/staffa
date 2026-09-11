@@ -193,7 +193,7 @@ test("pages: buttons, prose, icons and surfaces — then the same in the dark", 
 	page.describe("A button's key: shown in its tooltip, pressed from anywhere");
 	await page.getByRole("button", { name: "Bookmark" }).scrollIntoViewIfNeeded();
 	await page.getByRole("button", { name: "Send" }).hover();
-	// An icon button's tip names it as well as its key; a labelled one just the key.
+	// A tooltip with the key behind it; a button without one tips the bare key.
 	await page.getByText("Send · Ctrl+Enter").waitFor();
 	await page.mouse.move(0, 0);
 	await page.waitForSelector(".s-tt-tip", { state: "detached" });
@@ -403,11 +403,18 @@ test("overlays: toasts, tooltips, menus, dialogs and an inline menu tree", async
 	await page.mouse.move(0, 0);
 	await page.waitForSelector(".s-tt-tip", { state: "detached" });
 
-	page.describe("An icon button says its aria-label unless given a tooltip of its own");
+	page.describe("An icon button's string tooltip names it for screen readers too");
 	await page.getByRole("button", { name: "Share" }).hover();
 	await expect(page.locator(".s-tt-tip")).toHaveText("Share");
 	await page.mouse.move(0, 0);
 	await page.waitForSelector(".s-tt-tip", { state: "detached" });
+
+	// The other way around, an `ariaLabel` is a name and nothing more: naming a
+	// button for assistive tech must not saddle everyone else with a hover popup.
+	await page.getByRole("button", { name: "Display settings" }).hover();
+	await page.waitForTimeout(300);
+	await expect(page.locator(".s-tt-tip")).toHaveCount(0);
+	await page.mouse.move(0, 0);
 
 	page.describe("A nav row's tooltip tells its key too, under its own tip");
 	await page.locator(".s-nav-panel").getByRole("link", { name: "Overlays" }).hover();

@@ -244,10 +244,10 @@ Buttons, icon buttons and menu items carry a `tooltip` option of their own, so m
 
 ```ts
 S.button({ content: "Publish", tooltip: "Not until the draft validates", disabled: true });
-S.iconButton({ icon: trash2, ariaLabel: "Delete" });   // says "Delete" on hover
+S.iconButton({ icon: trash2, tooltip: "Delete" });   // says "Delete" on hover, and to screen readers
 ```
 
-An icon button tips its `ariaLabel` unless given a `tooltip` of its own (`tooltip: false` for neither), a `key` is appended to whatever the tip says, and — unlike a tooltip on a plain disabled `<button>`, which the browser gives no hover events — these show while disabled, which is where a tooltip earns its keep.
+A tooltip appears only where one is asked for; on an icon button, a string `tooltip` doubles as the `ariaLabel` when that is left out, so naming a glyph takes one option rather than two. A `key` is appended to whatever the tip says (`tooltip: false` keeps even that quiet), and — unlike a tooltip on a plain disabled `<button>`, which the browser gives no hover events — these show while disabled, which is where a tooltip earns its keep.
 
 `src/index.ts` is the authoritative list of exports.
 

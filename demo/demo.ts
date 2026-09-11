@@ -958,7 +958,9 @@ function drawButtons($panel: S.Panel) {
 				});
 				S.iconButton({
 					icon: icons.send,
-					ariaLabel: "Send",
+					// Naming it here rather than in an `ariaLabel`: the tip says what the
+					// button is, and the key joins it behind a `·`.
+					tooltip: "Send",
 					key: "mod+enter",
 					click: () => S.toast({ message: () => A("#", `Sent: ${$draft.text || "(nothing)"}`), type: "success" }),
 				});
@@ -1116,8 +1118,9 @@ function drawOverlays($panel: S.Panel) {
 				S.button({ content: "Save", tooltip: "Writes your work to the cloud", attrs: ".neutral" });
 				S.button({ content: "Publish", tooltip: "Not until the draft **validates**", disabled: true });
 				S.button({ content: "Archive", tooltip: "Out of the way, not gone", key: "f4", attrs: ".neutral" });
-				// An icon button says its `ariaLabel` unless told otherwise.
-				S.iconButton({ icon: icons.share2, ariaLabel: "Share" });
+				// A string `tooltip` names the glyph for screen readers too, so an icon
+				// button that wants a tip needs no `ariaLabel` beside it.
+				S.iconButton({ icon: icons.share2, tooltip: "Share" });
 				S.iconButton({ icon: icons.trash2, ariaLabel: "Delete", tooltip: "Delete for everyone, forever", attrs: "fg:$s-danger" });
 			});
 			A("div display:flex gap:$4 flex-wrap:wrap align-items:center mt:$3", () => {

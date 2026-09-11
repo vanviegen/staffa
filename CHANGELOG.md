@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.20.0
+
+- **Breaking**: a button only shows a tooltip when given a `tooltip`; an `ariaLabel` is no longer shown on hover.
+- An icon button's `tooltip` doubles as its `ariaLabel`, so naming a glyph takes one option instead of two.
+
 ## 0.19.0
 
 - `S.button` and `S.iconButton` take a `tooltip`, so a tip no longer needs a wrapper element and an `S.addTooltip` call. An icon button shows its `ariaLabel` on hover unless told otherwise (`tooltip: false` for none), and a `key` is appended to the tip.

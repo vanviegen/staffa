@@ -7,8 +7,12 @@ import { addTooltip } from "./tooltip.js";
 export interface IconButtonOptions {
 	/** The glyph, usually one of the `staffa/icons` draw functions. */
 	icon: Slot;
-	/** What it does, for screen readers. Required: there is no visible text to read. */
-	ariaLabel: string;
+	/**
+	 * What it does, for screen readers: there is no visible text to read. Required,
+	 * unless the `tooltip` is a string — that names the button just as well, and is
+	 * taken as the label when this is left out.
+	 */
+	ariaLabel?: string;
 	/**
 	 * Click handler. Return a promise and the glyph becomes a spinner until it
 	 * settles, with further clicks bouncing off — see {@link ButtonOptions.click}.
@@ -16,16 +20,17 @@ export interface IconButtonOptions {
 	click?: (event: Event) => unknown;
 	/**
 	 * A keyboard shortcut that presses this button — see {@link ButtonOptions.key}.
-	 * The tooltip shows it after the button's `tooltip` (or, failing that, its
-	 * `ariaLabel` — a glyph is worth naming there anyway), and the `?` overview
-	 * lists it under that label too.
+	 * It is shown after the button's `tooltip`, or alone in a tooltip of its own
+	 * when there is none, and the `?` overview lists it under the button's label.
 	 */
 	key?: string;
 	/**
 	 * A tooltip, shown on hover and keyboard focus; a string renders as rich
-	 * text. Defaults to the `ariaLabel`, so an icon button says what it does
-	 * without being told twice — pass this only to say something longer or
-	 * different, or `false` for no tooltip at all. A `key` is appended to it.
+	 * text. There is none unless you ask for one — but do consider it here, as
+	 * a glyph says nothing to whoever cannot guess it. A string doubles as the
+	 * `ariaLabel` when that is left out, so an icon button usually needs one
+	 * option, not two. A `key` is appended to the tip, behind a `·`; pass
+	 * `false` to suppress even that.
 	 *
 	 * Works on a disabled button too, which is where a tooltip earns its keep:
 	 * it is the only room there is to say why.
@@ -67,7 +72,10 @@ export interface ButtonOptions {
 	type?: "button" | "submit" | "reset";
 	/** Render as a link (`<a role=button>`) pointing here instead of a `<button>`. */
 	href?: string;
-	/** Accessible label, when the button has only an icon. */
+	/**
+	 * Accessible label, when the button has only an icon. A string `tooltip` is
+	 * taken as the label of such a button when this is left out.
+	 */
 	ariaLabel?: string;
 	/**
 	 * A keyboard shortcut that presses this button: `"mod+s"`, `"f2"` — see
@@ -81,9 +89,10 @@ export interface ButtonOptions {
 	key?: string;
 	/**
 	 * A tooltip, shown on hover and keyboard focus. A string renders as rich
-	 * text, a function draws its own markup. A `key` is appended to it, behind
-	 * a `·`. Defaults to the `ariaLabel` of a button that has one (an icon-only
-	 * button, that is); pass `false` for no tooltip at all.
+	 * text, a function draws its own markup. There is none unless you ask for
+	 * one. A `key` is appended to it, behind a `·`; pass `false` to suppress
+	 * even that. On an icon-only button, a string tooltip doubles as the
+	 * `ariaLabel` when that is left out.
 	 *
 	 * Works on a disabled button too, which is where a tooltip earns its keep:
 	 * it is the only room there is to say why.
@@ -184,22 +193,25 @@ A.insertGlobalCss({
  * import { trash2, share2 } from "staffa/icons";
  *
  * $panel.actions = () => {
- *   S.iconButton({ icon: share2, ariaLabel: "Share", click: share });
+ *   // A string `tooltip` names the button for screen readers too, so one option does.
+ *   S.iconButton({ icon: share2, tooltip: "Share", click: share });
+ *   // Named, but silent on hover: `ariaLabel` alone raises no tooltip.
  *   S.iconButton({ icon: trash2, ariaLabel: "Delete", click: del, attrs: "fg:$s-danger" });
  * };
  * ```
  */
 export function iconButton(opts: IconButtonOptions): void {
 	const tag = opts.href != null ? "a" : "button";
-	// A glyph says nothing on its own, so the name it carries for screen readers is
-	// the tip too, unless the caller has something better (or `false`) to say.
-	const tip = opts.tooltip === false ? undefined : opts.tooltip ?? opts.ariaLabel;
+	const tip = opts.tooltip === false ? undefined : opts.tooltip;
+	// A glyph says nothing on its own, so the button needs a name — and a tooltip
+	// written as a string already is one. Said once, it serves both.
+	const label = opts.ariaLabel ?? (typeof tip === "string" ? plainText(tip) : undefined);
 	A(`${tag}.s-icon-btn`, opts.attrs, () => {
 		applyActionBehavior(opts, tip != null);
-		A("aria-label=", opts.ariaLabel);
+		A("aria-label=", label);
 		// Before the glyph, so a tooltip the caller adds in there is the later of
 		// the two and wins the hover.
-		applyTooltipAndKey(tip, opts.key, opts.ariaLabel, opts.disabled);
+		applyTooltipAndKey(opts.tooltip, opts.key, label, opts.disabled);
 		drawSlot(opts.icon);
 	});
 }
@@ -266,23 +278,40 @@ function applyClick(click: (event: Event) => unknown): void {
 }
 
 /**
+ * A rich-text string as a screen reader should hear it. Same pattern Aberdeen's
+ * `rich=` draws with, so a tooltip standing in as the accessible name says the
+ * words it shows, and not its own asterisks and brackets.
+ */
+function plainText(rich: string): string {
+	return rich.replace(/\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`|\[(.+?)\]\((.+?)\)/g,
+		(_m, bold, italic, code, link) => bold ?? italic ?? code ?? link);
+}
+
+/**
  * The tooltip and shortcut plumbing {@link button} and {@link iconButton} share:
  * show the tip, with the key appended — the only place a button can say what its
  * key is without shouting it beside the label — then bind that key and announce
- * it as `aria-keyshortcuts`.
+ * it as `aria-keyshortcuts`. A key with no tooltip to join gets a tip of its
+ * own, saying the combination and no more.
  *
- * Pressing it clicks the element rather than calling `click` directly, so a
+ * Pressing the key clicks the element rather than calling `click` directly, so a
  * `type=submit` still submits its form and an `href` still navigates. Call this
  * inside the button's own element scope, whose element it takes and whose life
- * the binding follows.
+ * the binding follows. `keyLabel` is how the `?` overview names the shortcut.
  */
-function applyTooltipAndKey(tip: Slot | undefined, key: string | undefined, label: string | undefined, disabled?: boolean): void {
-	if (tip != null || key) {
+function applyTooltipAndKey(
+	tooltip: Slot | false | undefined,
+	key: string | undefined,
+	keyLabel: string | undefined,
+	disabled?: boolean,
+): void {
+	// `false` is a vow of silence: not even a key raises a tip on this one.
+	if (tooltip !== false && (tooltip != null || key)) {
 		addTooltip({
 			tip: () => {
-				drawSlot(tip);
+				drawSlot(tooltip);
 				// A draw function, not a string: a key like `*` is markup to rich text.
-				if (key) A("#", tip == null ? formatKey(key) : ` · ${formatKey(key)}`);
+				if (key) A("#", tooltip == null ? formatKey(key) : ` · ${formatKey(key)}`);
 			},
 		});
 	}
@@ -292,7 +321,7 @@ function applyTooltipAndKey(tip: Slot | undefined, key: string | undefined, labe
 	if (key && !disabled) {
 		const el = A() as HTMLElement;
 		A("aria-keyshortcuts=", formatKey(key, true));
-		bindKey(key, label, () => el.click());
+		bindKey(key, keyLabel, () => el.click());
 	}
 }
 
@@ -326,18 +355,19 @@ export function button(opts: ButtonOptions | Slot = {}): void {
 	const o: ButtonOptions = typeof opts === "string" || typeof opts === "function" ? { content: opts } : opts;
 
 	const tag = o.href != null ? "a" : "button";
-	// An `ariaLabel` means an icon-only button, whose name is worth showing to the
-	// sighted too; anything else says nothing until asked.
-	const tip = o.tooltip === false ? undefined : o.tooltip ?? o.ariaLabel;
+	const tip = o.tooltip === false ? undefined : o.tooltip;
+	// Only a button without visible text needs naming, and a string tooltip is a
+	// name: on one that has text, an aria-label would *hide* that text from AT.
+	const label = o.ariaLabel ?? (o.content == null && typeof tip === "string" ? plainText(tip) : undefined);
 
 	// A bare `.s-s` is a filled `.primary` surface (see theme.ts), so no role
 	// detection here: `attrs` just names another role or variant.
 	A(`${tag}.s-btn.s-s.shadow`, o.attrs, () => {
 		applyActionBehavior(o, tip != null);
-		if (o.ariaLabel) A("aria-label=", o.ariaLabel);
+		if (label) A("aria-label=", label);
 		// Before the content, so a tooltip the caller adds in there is the later of
 		// the two and wins the hover.
-		applyTooltipAndKey(tip, o.key, typeof o.content === "string" ? o.content : o.ariaLabel, o.disabled);
+		applyTooltipAndKey(o.tooltip, o.key, typeof o.content === "string" ? o.content : label, o.disabled);
 
 		drawSlot(o.icon);
 		drawSlot(o.content);
