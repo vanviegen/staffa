@@ -10,4 +10,4 @@ One short line. Prefix a release commit with its version: `v0.9.0: Panel navigat
 
 ## Before merge/done
 
-Run the full test suite `npm test` and if there are visual changes ask the user to run `npx run shotest` and accept them, before declaring done.
+Run the full test suite `npm test` and if there are visual changes ask the user to run `npx run shotest` and accept them, before declaring done. When running in TPS (you'll know if that's the case): use `/tps/bin/tps-service-manager` to run these predefined services: `test` (npm test), `review` (shotest review --close-on-accept; when you want the user to review and accept visual changes; it exits when/if the user has accepted), `app` (the demo; when you want the user to look at the demo app).
