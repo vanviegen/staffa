@@ -1,6 +1,6 @@
 import A from "aberdeen";
 import type { Bindable } from "../core.js";
-import { type FieldOptions, applyControlAttrs, drawField } from "./field.js";
+import { type FieldOptions, type InsetOptions, applyControlAttrs, drawField, drawInsets } from "./field.js";
 
 /**
  * The `<input>` types {@link textline} supports. Deliberately excludes types
@@ -22,7 +22,7 @@ export type TextlineType =
 	| "week";
 
 /** Options for {@link textline}. */
-export interface TextlineOptions extends FieldOptions {
+export interface TextlineOptions extends FieldOptions, InsetOptions {
 	/** Input type. Defaults to `"text"`. */
 	type?: TextlineType;
 	/** Placeholder text. */
@@ -48,18 +48,23 @@ export interface TextlineOptions extends FieldOptions {
  * ```ts
  * const $user = A.proxy({email: "test@example.com"});
  * S.textline({ label: "Email", type: "email", required: true, bind: A.ref($user, "email") });
+ *
+ * // Content inside the field: a glyph against its left edge, a button against its right.
+ * S.textline({ placeholder: "Search…", prefix: search, suffix: () => S.iconButton({ icon: x, tooltip: "Clear" }) });
  * ```
  */
 export function textline(opts: TextlineOptions = {}): void {
 	drawField(opts, (id, isInvalid) => {
-		A("input.s-input", opts.inputAttrs, () => {
-			A("type=", opts.type ?? "text");
-			if (opts.placeholder != null) A("placeholder=", opts.placeholder);
-			if (opts.autocomplete != null) A("autocomplete=", opts.autocomplete);
-			if (opts.value != null && !opts.bind) A("value=", opts.value);
-			if (opts.input) A("input=", opts.input);
-			if (opts.change) A("change=", opts.change);
-			applyControlAttrs(opts, id, isInvalid, opts.bind);
+		drawInsets(opts, false, () => {
+			A("input.s-input", opts.inputAttrs, () => {
+				A("type=", opts.type ?? "text");
+				if (opts.placeholder != null) A("placeholder=", opts.placeholder);
+				if (opts.autocomplete != null) A("autocomplete=", opts.autocomplete);
+				if (opts.value != null && !opts.bind) A("value=", opts.value);
+				if (opts.input) A("input=", opts.input);
+				if (opts.change) A("change=", opts.change);
+				applyControlAttrs(opts, id, isInvalid, opts.bind);
+			});
 		});
 	});
 }

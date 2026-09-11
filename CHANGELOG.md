@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.21.0
+
+- `S.textline` and `S.textarea` take a `prefix` and a `suffix` slot, drawing content inside the control — a search glyph, a unit, a clear or send button. On a textarea they sit against the bottom edge.
+
 ## 0.20.0
 
 - **Breaking**: a button only shows a tooltip when given a `tooltip`; an `ariaLabel` is no longer shown on hover.

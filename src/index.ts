@@ -51,7 +51,7 @@ export { textarea, type TextareaOptions } from "./components/textarea.js";
 export { textline, type TextlineOptions, type TextlineType } from "./components/textline.js";
 export { toast, type ToastOptions } from "./components/toast.js";
 export { addTooltip, type TooltipOptions } from "./components/tooltip.js";
-export type { FieldOptions } from "./components/field.js";
+export type { FieldOptions, InsetOptions } from "./components/field.js";
 
 // Re-export theming and shared types for advanced use.
 export type {ContentOptions, Bindable, Slot, Attributes} from "./core.js";

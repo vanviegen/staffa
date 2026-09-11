@@ -249,6 +249,16 @@ S.iconButton({ icon: trash2, tooltip: "Delete" });   // says "Delete" on hover, 
 
 A tooltip appears only where one is asked for; on an icon button, a string `tooltip` doubles as the `ariaLabel` when that is left out, so naming a glyph takes one option rather than two. A `key` is appended to whatever the tip says (`tooltip: false` keeps even that quiet), and — unlike a tooltip on a plain disabled `<button>`, which the browser gives no hover events — these show while disabled, which is where a tooltip earns its keep.
 
+`S.textline` and `S.textarea` take a `prefix` and a `suffix` slot that put content *inside* the control — a search glyph, a unit, a clear or send button. The control's text keeps clear of whatever they hold, and on a textarea they ride the bottom edge, which is where a send button belongs:
+
+```ts
+S.textline({ placeholder: "Search…", prefix: search, suffix: () => S.iconButton({ icon: x, tooltip: "Clear" }) });
+S.textarea({ placeholder: "Message…", bind: A.ref($chat, "text"),
+  suffix: () => S.iconButton({ icon: send, tooltip: "Send", click: post }) });
+```
+
+A plain glyph there lets the click through to the field it decorates; a button or a link takes it.
+
 `src/index.ts` is the authoritative list of exports.
 
 ### Keyboard shortcuts

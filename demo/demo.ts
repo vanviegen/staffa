@@ -21,6 +21,8 @@ const $user = A.proxy({
 	tags: ["aberdeen", "ui"],
 });
 
+const $inset = A.proxy({ search: "", amount: 12, message: "" });
+
 const knownTags = ["aberdeen", "ui", "ux", "reactive", "typescript", "css"];
 const knownLanguages = ["TypeScript", "JavaScript", "Python", "Rust", "Go", "Java", "C#", "C++"];
 
@@ -404,6 +406,44 @@ function drawForm($panel: S.Panel) {
 						},
 					});
 				},
+			});
+		},
+	});
+
+	S.box({
+		header: "Inside the field",
+		content: () => {
+			A("p mt:0 rich='A `prefix` and a `suffix` slot put content *inside* the control — a glyph, a unit, a button. The text keeps clear of whatever they hold, and on a textarea they ride the bottom edge, which is where a *send* button belongs.'");
+			// Plain fields in a column: the page already has one S.form, and the
+			// insets are what this box is about.
+			A("div display:flex flex-direction:column gap:$3", () => {
+				S.textline({
+					label: "Search",
+					placeholder: "Type to search…",
+					bind: A.ref($inset, "search"),
+					prefix: icons.search,
+					// A button inside the field: it clears what's there.
+					suffix: () => A(() => {
+						if ($inset.search) S.iconButton({ icon: icons.x, tooltip: "Clear", click: () => { $inset.search = ""; } });
+					}),
+				});
+				S.textline({
+					label: "Amount",
+					type: "number",
+					bind: A.ref($inset, "amount"),
+					prefix: icons.euro,
+					suffix: () => A("span font-size:0.85em #per month"),
+				});
+				S.textarea({
+					label: "Message",
+					placeholder: "Write a message…",
+					bind: A.ref($inset, "message"),
+					suffix: () => S.iconButton({
+						icon: icons.send,
+						tooltip: "Send",
+						click: () => { S.toast({ message: `Sent: ${$inset.message || "(nothing)"}`, type: "success" }); $inset.message = ""; },
+					}),
+				});
 			});
 		},
 	});

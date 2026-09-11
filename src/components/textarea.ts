@@ -1,9 +1,9 @@
 import A from "aberdeen";
 import type { Bindable } from "../core.js";
-import { type FieldOptions, applyControlAttrs, drawField } from "./field.js";
+import { type FieldOptions, type InsetOptions, applyControlAttrs, drawField, drawInsets } from "./field.js";
 
 /** Options for {@link textarea}. */
-export interface TextareaOptions extends FieldOptions {
+export interface TextareaOptions extends FieldOptions, InsetOptions {
 	/** Placeholder text. */
 	placeholder?: string;
 	/** Two-way binding target. */
@@ -12,7 +12,12 @@ export interface TextareaOptions extends FieldOptions {
 	value?: string;
 	/** Visible number of text rows. Defaults to `4`. Ignored when `autoGrow` is enabled. */
 	rows?: number;
-	/** Whether the textarea may be resized by the user. Defaults to `"vertical"`. Ignored when `autoGrow` is enabled. */
+	/**
+	 * Whether the textarea may be resized by the user. Defaults to `"vertical"`,
+	 * or to `"none"` when a {@link InsetOptions.suffix | suffix} is given — the
+	 * resize grip and the inset both want the bottom-right corner. Ignored when
+	 * `autoGrow` is enabled.
+	 */
 	resize?: "none" | "vertical" | "horizontal" | "both";
 	/** Auto-grow the textarea to fit its content. Defaults to `true`. */
 	autoGrow?: boolean;
@@ -35,31 +40,43 @@ A.insertGlobalCss({
  * ```ts
  * const $user = A.proxy({bio: ""});
  * S.textarea({ label: "Bio", bind: A.ref($user, "bio") });
+ *
+ * // A chat box: the send button sits in the bottom-right corner, inside the field.
+ * const $chat = A.proxy({text: ""});
+ * S.textarea({
+ *   placeholder: "Message…",
+ *   bind: A.ref($chat, "text"),
+ *   suffix: () => S.iconButton({ icon: send, tooltip: "Send", click: () => post($chat.text) }),
+ * });
  * ```
  */
 export function textarea(opts: TextareaOptions = {}): void {
 	const grow = opts.autoGrow !== false;
 
 	drawField(opts, (id, isInvalid) => {
-		const el = A("textarea.s-input", opts.inputAttrs, () => {
-			if (grow) {
-				A(".s-autoGrow");
-				A("input=", (e: Event) => {
-					fitToContent(e.currentTarget as HTMLTextAreaElement);
-					if (opts.input) opts.input(e);
-				});
-			} else {
-				A("rows=", opts.rows ?? 4);
-				A("resize:", opts.resize ?? "vertical");
-				if (opts.input) A("input=", opts.input);
-			}
-			if (opts.placeholder != null) A("placeholder=", opts.placeholder);
-			if (opts.value != null && !opts.bind) A("value=", opts.value);
-			if (opts.change) A("change=", opts.change);
-			applyControlAttrs(opts, id, isInvalid, opts.bind);
-		}) as HTMLTextAreaElement;
+		// Insets ride the bottom edge here: on a growing box that keeps a send
+		// button beside the caret rather than floating it mid-paragraph.
+		drawInsets(opts, true, () => {
+			const el = A("textarea.s-input", opts.inputAttrs, () => {
+				if (grow) {
+					A(".s-autoGrow");
+					A("input=", (e: Event) => {
+						fitToContent(e.currentTarget as HTMLTextAreaElement);
+						if (opts.input) opts.input(e);
+					});
+				} else {
+					A("rows=", opts.rows ?? 4);
+					A("resize:", opts.resize ?? (opts.suffix ? "none" : "vertical"));
+					if (opts.input) A("input=", opts.input);
+				}
+				if (opts.placeholder != null) A("placeholder=", opts.placeholder);
+				if (opts.value != null && !opts.bind) A("value=", opts.value);
+				if (opts.change) A("change=", opts.change);
+				applyControlAttrs(opts, id, isInvalid, opts.bind);
+			}) as HTMLTextAreaElement;
 
-		if (grow) requestAnimationFrame(() => fitToContent(el));
+			if (grow) requestAnimationFrame(() => fitToContent(el));
+		});
 	});
 }
 

@@ -31,6 +31,28 @@ export interface FieldOptions {
 	inputAttrs?: Attributes;
 }
 
+/**
+ * Options for a field that can carry content *inside* its control box — an
+ * icon against the leading edge, a button against the trailing one. Added by
+ * {@link import("./textline").textline} and
+ * {@link import("./textarea").textarea}.
+ */
+export interface InsetOptions {
+	/**
+	 * Content drawn inside the control, against its leading edge — typically a
+	 * unit, a currency sign or a search glyph. The control's text is indented to
+	 * keep clear of it, however wide it turns out to be.
+	 */
+	prefix?: Slot;
+	/**
+	 * Content drawn inside the control, against its trailing edge: a *send*
+	 * button on a chat box, a clear or reveal button, a character count. Sits
+	 * against the bottom on a (growing) textarea, and vertically centred on a
+	 * single-line input.
+	 */
+	suffix?: Slot;
+}
+
 A.insertGlobalCss({
 	".s-field": {
 		"&": "display:flex flex-direction:column gap:$1",
@@ -47,6 +69,29 @@ A.insertGlobalCss({
 		"&:focus-visible": "border-color:$s-accent box-shadow: 0 0 0 3px $s-focus; outline:none",
 "&[aria-invalid=true]": "border-color:$s-danger",
 	},
+	// Insets sit *over* the control rather than beside it, so the control keeps its
+	// own border, focus ring and full width; only its text padding gets out of the
+	// way, by however much each inset measures (see `drawInsets`).
+	".s-inset": {
+		"&": "position:relative display:grid --s-inset-start:0px --s-inset-end:0px",
+		"> .s-input": "padding-inline-start: calc(0.7em + var(--s-inset-start)); padding-inline-end: calc(0.7em + var(--s-inset-end));",
+		"> .s-inset_start, > .s-inset_end": "position:absolute top:0 bottom:0 display:flex align-items:center gap:$1 fg:$s-muted",
+		"> .s-inset_start": "left:0.35em",
+		"> .s-inset_end": "right:0.35em",
+		// On a textarea the insets ride the bottom edge, so a growing box keeps its
+		// send button where the caret is rather than floating it mid-paragraph.
+		"&.s-inset-bottom > .s-inset_start, &.s-inset-bottom > .s-inset_end": "top:auto padding-bottom:0.35em",
+		"> .s-inset_start > svg, > .s-inset_end > svg": "width:1.15em height:1.15em",
+		// A number input's spinner wants the very corner a trailing inset is in, and
+		// it is the inset that was asked for. (Firefox's is `appearance`-controlled.)
+		"&:has(> .s-inset_end) > input[type=number]": "appearance:textfield",
+		"&:has(> .s-inset_end) > input[type=number]::-webkit-inner-spin-button": "appearance:none margin:0",
+	},
+	// A plain glyph or a counter shouldn't eat the click that focuses the field;
+	// anything the user can actually operate does.
+	".s-inset_start, .s-inset_end": "pointer-events:none",
+	".s-inset_start :where(button, a, input, select, textarea, label, [tabindex])": "pointer-events:auto",
+	".s-inset_end :where(button, a, input, select, textarea, label, [tabindex])": "pointer-events:auto",
 });
 
 /**
@@ -110,4 +155,46 @@ export function applyControlAttrs(
 	});
 	A(() => A("aria-invalid=", isInvalid() ? "true" : "false"));
 	if (bind) A("bind=", bind);
+}
+
+/**
+ * Wrap a control in the {@link InsetOptions} box: the control as drawn by
+ * `drawControl`, plus the `prefix`/`suffix` slots laid over its leading and
+ * trailing edges.
+ *
+ * Each inset is measured (it may hold anything) and its width published to the
+ * wrapper as a CSS variable, from which the control takes its text padding — so
+ * the text never runs under the inset, whatever is in it. Each slot gets its own
+ * reactive scope, so appearing, changing or going away never touches the control
+ * element (which would lose focus and selection).
+ *
+ * @param opts The inset slots.
+ * @param bottom Align the insets with the control's bottom edge instead of
+ *   centring them — what a growing textarea wants.
+ * @param drawControl Draws the control element itself, marked `s-input`.
+ */
+export function drawInsets(opts: InsetOptions, bottom: boolean, drawControl: () => void): void {
+	A("div.s-inset", () => {
+		if (bottom) A(".s-inset-bottom");
+		drawControl();
+		drawInset(() => opts.prefix, "s-inset_start", "--s-inset-start");
+		drawInset(() => opts.suffix, "s-inset_end", "--s-inset-end");
+	});
+}
+
+function drawInset(get: () => Slot | undefined, cls: string, cssVar: string): void {
+	A(() => {
+		const slot = get();
+		if (slot == null) return;
+		// `.small` sizes the buttons inside (as a buttonGroup does), so something
+		// inset into a field can never stretch the field.
+		const box = A(`div.${cls}.small`, () => drawSlot(slot)) as HTMLElement;
+		const wrap = box.parentElement;
+		const ro = new ResizeObserver(() => wrap?.style.setProperty(cssVar, `${box.offsetWidth}px`));
+		ro.observe(box);
+		A.clean(() => {
+			ro.disconnect();
+			wrap?.style.setProperty(cssVar, "0px");
+		});
+	});
 }

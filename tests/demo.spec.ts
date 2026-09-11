@@ -159,6 +159,22 @@ test("form: fields, submission, and the chrome moving around it", async ({ page 
 	await expect(page.locator("pre")).toContainText("ada@example.com");
 	await page.getByRole("button", { name: "Close" }).click();
 
+	page.describe("Insets: a glyph against the field's leading edge, a button against its trailing one");
+	const search = page.getByLabel("Search");
+	await search.fill("aberdeen");
+	// The clear button only exists while there is something to clear, and the
+	// field's padding follows it in and out.
+	await page.getByRole("button", { name: "Clear" }).click();
+	await expect(search).toHaveValue("");
+	await expect(page.getByRole("button", { name: "Clear" })).toHaveCount(0);
+
+	page.describe("A textarea's inset rides its bottom edge, where a send button belongs");
+	await page.getByLabel("Message").fill("Hello from inside the field.");
+	await page.getByRole("button", { name: "Send" }).click();
+	await expect(page.locator(".s-toast")).toContainText("Hello from inside the field.");
+	await page.locator(".s-toast").getByRole("button", { name: "Dismiss" }).click();
+	await expect(page.locator(".s-toast")).toHaveCount(0);
+
 	page.describe("Switch the form to the stacked layout");
 	await page.getByLabel("Form layout").selectOption("stacked");
 
