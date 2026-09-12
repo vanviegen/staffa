@@ -26,8 +26,22 @@ export interface AutocompleteOptions extends FieldOptions {
 	bind?: Bindable<string | string[]>;
 	/** Allow selecting several values, shown as removable chips. */
 	multi?: boolean;
-	/** Allow committing free text that isn't in the options list. Defaults to `true`. */
+	/**
+	 * Allow committing free text that isn't in the options list. Defaults to
+	 * `true`, and includes no text at all: emptying a single-select field clears
+	 * its selection (`required` is what makes that an error). With
+	 * `allowCustom: false` only the options can be committed, so anything else
+	 * springs back to the current selection when the field loses focus.
+	 */
 	allowCustom?: boolean;
+	/**
+	 * The type-ahead test, run for each option against what has been typed.
+	 * Defaults to {@link matchWords}. Pass your own to filter differently — say
+	 * `(label, q) => label.toLowerCase().includes(q.toLowerCase())` for plain
+	 * substring matching, or something that also looks at an option's other
+	 * fields. Matching never reorders: options are shown as given.
+	 */
+	match?: (label: string, query: string) => boolean;
 	/** Placeholder for the text input. */
 	placeholder?: string;
 }
@@ -110,6 +124,41 @@ mountPortal(() => {
 	sizeChanged = followAnchor(p.anchor, (r) => place(el, r));
 });
 
+/**
+ * Where each word of a label begins: runs of letters or digits, split again at
+ * camelCase humps — "TypeScript" starts a word at `T` and at `S`.
+ */
+function wordStarts(label: string): number[] {
+	const starts: number[] = [];
+	for (const m of label.matchAll(/\p{N}+|\p{Lu}+(?=\p{Lu}\p{Ll})|\p{Lu}?\p{Ll}+|\p{Lu}+/gu)) starts.push(m.index);
+	return starts;
+}
+
+/**
+ * The default type-ahead test: every whitespace-separated term of the query has
+ * to match the label from a word start on, and no two terms may claim the same
+ * word. Order doesn't matter, so "se pal" finds "Palette search" just as
+ * "pal se" does — but "ette" finds nothing, as you type the beginnings of
+ * words. A term may run past its word's end ("typescript" finds "TypeScript",
+ * "c++" finds "C++"), so typing a label out in full always finds it.
+ *
+ * Pass it to {@link AutocompleteOptions.match} to compose with it.
+ */
+export function matchWords(label: string, query: string): boolean {
+	// Longest term first: it is the most constrained, so the greedy claim below
+	// doesn't let a short term take the word a long one needed.
+	const terms = query.toLowerCase().split(/\s+/).filter(Boolean).sort((a, b) => b.length - a.length);
+	if (!terms.length) return true;
+	const starts = wordStarts(label);
+	const used: boolean[] = [];
+	return terms.every((t) => {
+		const i = starts.findIndex((s, i) => !used[i] && label.slice(s, s + t.length).toLowerCase() === t);
+		if (i < 0) return false;
+		used[i] = true;
+		return true;
+	});
+}
+
 function normOption(o: AutocompleteOptionInput): AcOption {
 	return typeof o === "string" ? { value: o, label: o } : { value: o.value, label: o.label ?? o.value };
 }
@@ -118,6 +167,10 @@ function normOption(o: AutocompleteOptionInput): AcOption {
  * A combobox with type-ahead filtering. Supports single or multi-select (chips),
  * optional free-text entry, and full keyboard control (arrows, enter, escape,
  * backspace-to-remove). Implements the ARIA combobox/listbox pattern.
+ *
+ * What you type is matched against the start of the label's words, a term at a
+ * time and in any order — "pal se" finds "Palette search" — see
+ * {@link matchWords}, or {@link AutocompleteOptions.match} to filter your own way.
  *
  * The suggestion list is portalled to `document.body`, so a dialog or a
  * scrolling column can neither clip it nor grow a scrollbar around it. It hangs
@@ -154,6 +207,10 @@ export function autocomplete(opts: AutocompleteOptions): void {
 		return Array.isArray(v) ? v : [v];
 	};
 	const labelFor = (value: string): string => getOptions().find((o) => o.value === value)?.label ?? value;
+	// What committing free text means: the option the text names, or the text itself.
+	// Typing a label out in full is picking that option, not inventing a value.
+	const valueForText = (text: string): string =>
+		text ? getOptions().find((o) => o.label.toLowerCase() === text.toLowerCase())?.value ?? text : "";
 
 	// Seed the input with the current single-selection's label.
 	if (!opts.multi) {
@@ -165,8 +222,9 @@ export function autocomplete(opts: AutocompleteOptions): void {
 		const sel = new Set(selectedValues());
 		let list = getOptions();
 		if (opts.multi) list = list.filter((o) => !sel.has(o.value));
-		const q = $st.query.trim().toLowerCase();
-		if (q) list = list.filter((o) => o.label.toLowerCase().includes(q));
+		// Cased as typed: the matcher splits on camelCase humps, and lowercases itself.
+		const q = $st.query.trim();
+		if (q) list = list.filter((o) => (opts.match ?? matchWords)(o.label, q));
 		return list;
 	};
 
@@ -316,21 +374,27 @@ export function autocomplete(opts: AutocompleteOptions): void {
 		} else if (e.key === "Enter") {
 			// Always prevent default to avoid accidental form submission.
 			e.preventDefault();
-			const chosen = list[$st.active];
+			const q = $st.query.trim();
+			// Only a row of a list that is up: with it hidden there is no highlight to
+			// be seen, so Enter takes what has been typed instead.
+			const chosen = $st.open ? list[$st.active] : undefined;
 			if (chosen) {
 				commit(chosen.value, inputEl);
-			} else if (opts.allowCustom !== false && $st.query.trim()) {
-				commit($st.query.trim(), inputEl);
+			} else if (opts.allowCustom !== false && (q || !opts.multi)) {
+				// No text is a commit too, in single mode: it clears the selection.
+				// (In multi mode there is nothing to clear, and no chip to make.)
+				commit(valueForText(q), inputEl);
 			} else if ($st.open) {
+				// Nothing to commit (the options are all there is, and none match).
 				$st.open = false;
 			}
 		} else if (e.key === "Escape") {
-			// Only consume Escape while the list is showing: it dismisses the innermost
-			// layer, so a surrounding dialog closes on the next press, not this one.
+			// Escape hides the list and leaves what was typed standing — it dismisses
+			// a layer, it doesn't undo an edit. Only consumed while the list is up, so
+			// a surrounding dialog closes on the next press, not this one.
 			if ($st.open) {
 				e.preventDefault();
 				$st.open = false;
-				if (!opts.multi) $st.query = labelFor(selectedValues()[0] ?? "");
 			}
 		} else if (e.key === "Backspace" && opts.multi && $st.query === "") {
 			const sel = selectedValues();
@@ -342,10 +406,12 @@ export function autocomplete(opts: AutocompleteOptions): void {
 		$st.open = false;
 		if (opts.multi) {
 			$st.query = "";
-		} else if (opts.allowCustom !== false && $st.query.trim()) {
-			commit($st.query.trim());
+		} else if (opts.allowCustom !== false) {
+			// Free text stands as typed — nothing at all included, which is how a
+			// single selection is cleared. (`required` is what makes empty an error.)
+			commit(valueForText($st.query.trim()));
 		} else {
-			// Revert to the committed selection's label.
+			// Only the options exist, so anything else reverts to the selected one.
 			$st.query = labelFor(selectedValues()[0] ?? "");
 		}
 	}

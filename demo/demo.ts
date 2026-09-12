@@ -24,7 +24,7 @@ const $user = A.proxy({
 const $inset = A.proxy({ search: "", amount: 12, message: "" });
 
 const knownTags = ["aberdeen", "ui", "ux", "reactive", "typescript", "css"];
-const knownLanguages = ["TypeScript", "JavaScript", "Python", "Rust", "Go", "Java", "C#", "C++"];
+const knownLanguages = ["TypeScript", "JavaScript", "Python", "Rust", "Go", "Java", "C#", "C++", "Visual Basic"];
 
 
 // Default brand palette for the demo. A.cssVars writes a `:root` custom-property
@@ -364,7 +364,7 @@ function drawForm($panel: S.Panel) {
 						options: knownLanguages,
 						bind: A.ref($user, "language"),
 						placeholder: "Type to search…",
-						help: "Filtered by what you type.",
+						help: "Type word beginnings, in any order: `ba vis`.",
 					});
 					S.autocomplete({
 						label: "Tags",

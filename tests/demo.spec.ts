@@ -129,12 +129,34 @@ test("form: fields, submission, and the chrome moving around it", async ({ page 
 	await page.keyboard.press("Escape");
 	await page.waitForSelector("ul[role=listbox]", { state: "detached" });
 	await expect(language).toBeFocused();
+	// Escape hides the list, it doesn't undo the typing.
+	await expect(language).toHaveValue("Type");
 	// With no list left to dismiss, a second Escape falls through to the nav
 	// jump, landing on the sidebar's current (active) item.
 	await page.keyboard.press("Escape");
 	await expect(page.getByRole("link", { name: "Form" })).toBeFocused();
 
+	page.describe("Terms match the start of a word, in any order — and no word's middle");
+	await language.fill("ba vis");
+	await expect(page.getByRole("option", { name: "Visual Basic" })).toBeVisible();
+	await language.fill("isual");
+	// A word's middle matches nothing: all the list has left is the free-text row.
+	// (Scoped to the list: the Country <select>'s <option>s carry the role too.)
+	const options = page.locator("ul[role=listbox]").getByRole("option");
+	await expect(options).toHaveCount(1);
+	await expect(options).toHaveText('Add "isual"');
+
 	page.describe("Type ahead again, and pick from the dropdown");
+	await language.fill("Type");
+	await page.getByRole("option", { name: "TypeScript" }).click();
+
+	page.describe("Emptying the field clears the selection: free text may be no text");
+	await language.fill("");
+	await page.getByLabel("Bio").click();
+	await expect(language).toHaveValue("");
+	await expect(page.locator("input[name=language]")).toHaveValue("");
+
+	page.describe("Pick it again, so the form has a language to submit");
 	await language.fill("Type");
 	await page.getByRole("option", { name: "TypeScript" }).click();
 
@@ -530,7 +552,7 @@ test("overlays: toasts, tooltips, menus, dialogs and an inline menu tree", async
 	await page.getByRole("button", { name: "autocomplete in a dialog" }).click();
 	// Exact, so it can't also catch the dialog itself: its accessible name,
 	// "Pick a language", contains the field's label.
-	await page.getByLabel("Language", { exact: true }).fill("a");
+	await page.getByLabel("Language", { exact: true }).fill("ja");
 	const list = page.locator("ul[role=listbox]");
 	await expect(list).toBeVisible();
 	// Portalled to <body>, so the dialog neither clips it nor grows a scrollbar

@@ -38,8 +38,10 @@ WORKDIR /work
 # Services, both forwarded to the browser.
 #
 # 'app' (the CMD) builds and serves the demo statically: `-P` is the SPA fallback
-# the demo's routed URLs need, and the build first so a fresh container serves
-# the current source rather than whatever dist/ happens to hold.
+# the demo's routed URLs need, `-c-1` turns off http-server's hour of caching (the
+# demo loads /dist as ES modules, so a cached one hides every rebuild behind it),
+# and the build comes first so a fresh container serves the current source rather
+# than whatever dist/ happens to hold.
 #
 # 'review' is ShoTest's review app, where visual changes are compared against the
 # baselines in test-accepted/ and accepted. It picks its port from SHOTEST_PORT,
@@ -48,4 +50,4 @@ ENV SHOTEST_PORT=8081
 EXPOSE 8080 8081
 LABEL tps.service.review="npx shotest review --close-on-accept"
 LABEL tps.service.test="npm test"
-CMD ["sh", "-c", "npm install && npm run build && npx http-server -p 8080 -a 0.0.0.0 -P 'http://localhost:8080/demo/index.html?'"]
+CMD ["sh", "-c", "npm install && npm run build && npx http-server -p 8080 -a 0.0.0.0 -c-1 -P 'http://localhost:8080/demo/index.html?'"]

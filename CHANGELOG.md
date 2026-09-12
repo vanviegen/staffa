@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.22.0
+
+- **Breaking**: `S.autocomplete` now filters on word beginnings instead of substrings: every whitespace-separated term has to start a word of the label, in any order — `pal se` finds "Palette search", `ette` finds nothing. Pass `match` for a filter of your own (`S.matchWords` is the default, to compose with).
+- Emptying an `S.autocomplete` now clears its selection instead of springing back to the last one, as free text may be no text. Mark the field `required` to forbid that; `allowCustom: false` keeps reverting, as only the options can be committed there.
+- Escape in an `S.autocomplete` now only hides the suggestion list, leaving what you typed alone.
+- Fixed: committing free text that spells out an option's label now selects that option, rather than storing the label as a custom value.
+
 ## 0.21.0
 
 - `S.textline` and `S.textarea` take a `prefix` and a `suffix` slot, drawing content inside the control — a search glyph, a unit, a clear or send button. On a textarea they sit against the bottom edge.
