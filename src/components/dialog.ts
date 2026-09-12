@@ -51,6 +51,9 @@ export interface DialogOptions {
 	onClose?: () => void;
 }
 
+/** The layer the bottom dialog's backdrop is painted on; each dialog adds two. */
+const BASE_Z = 200;
+
 A.insertGlobalCss({
 	".s-backdrop": {
 		"&": "position:fixed inset:0 z-index:200 display:block background: rgba(0,0,0,0.55); transition: opacity 0.4s ease-in-out;",
@@ -80,6 +83,8 @@ A.insertGlobalCss({
 const dialogs = A.proxy({} as Record<string,{resolve: (value: void | PromiseLike<void>) => void, opts: DialogOptions}>);
 let dialogCount = 0;
 
+// `Object.keys` orders integer-like keys numerically, so the last one is the
+// newest dialog — the one on top.
 const topDialogId = A.derive(() => {
 	const keys = Object.keys(dialogs);
 	if (keys.length) return keys[keys.length-1];
@@ -91,6 +96,9 @@ export function isDialogOpen(): boolean {
 }
 
 mountPortal(() => {
+	// Sorted numerically: the keys are numbers, and left to `onEach`'s default
+	// string ordering "10" would sort before "2", putting the tenth dialog
+	// before (hence behind) a still-open second one.
 	A.onEach(dialogs, ({resolve, opts}, dialogId) => {
 		const close = () => { delete dialogs[dialogId]; };
 
@@ -109,9 +117,9 @@ mountPortal(() => {
 
 		// Backdrop - hide when not the top dialog
 		const overlaid = A.derive(() => topDialogId.value != dialogId);
-		A("div.s-backdrop create=hidden destroy=hidden .hidden=", overlaid, "click=", () => {
+		const backdropEl = A("div.s-backdrop create=hidden destroy=hidden .hidden=", overlaid, "click=", () => {
 			if (opts.allowCancel !== false) close();
-		});
+		}) as HTMLElement;
 
 		// Derived from the dialog's own key rather than a second counter: there is
 		// exactly one of these per dialog, for as long as the dialog exists.
@@ -164,10 +172,28 @@ mountPortal(() => {
 			});
 		}) as HTMLElement;
 
+		// Stacking is stated, not left to the order the elements happen to sit in
+		// the DOM: a dialog sits a layer above its own backdrop, and that pair a
+		// layer above the dialog it covers. (A closing dialog has left the stack
+		// already; it keeps the layer it had while it fades out.)
+		let depth = 0;
+		A(() => {
+			const index = Object.keys(dialogs).indexOf(dialogId);
+			if (index >= 0) depth = index;
+			backdropEl.style.zIndex = `${BASE_Z + 2*depth}`;
+			dialogEl.style.zIndex = `${BASE_Z + 2*depth + 1}`;
+		});
+
 		// Once laid out, move focus into the dialog so it's keyboard-ready and focus
 		// doesn't linger on whatever opened it.
-		requestAnimationFrame(() => { if (document.body.contains(dialogEl)) focusFirst(dialogEl); });
-	});
+		requestAnimationFrame(() => {
+			// Only the top dialog claims focus: one opened *under* another (the
+			// covering dialog opened straight after it) must not pull focus into
+			// fields the user can't see.
+			if (A.peek(() => topDialogId.value) !== dialogId) return;
+			if (document.body.contains(dialogEl)) focusFirst(dialogEl);
+		});
+	}, (_value, dialogId) => +dialogId);
 })
 
 /**
@@ -192,8 +218,9 @@ function trapTab(dialogEl: HTMLElement, event: KeyboardEvent): void {
  * closes. Lifecycle is also tied to the parent reactive scope — when that scope
  * is cleaned up the dialog disappears and the promise resolves.
  *
- * Multiple dialogs stack correctly: each new pair (backdrop + dialog) has a
- * higher z-index, while older dialogs are pushed behind their covering backdrop.
+ * Multiple dialogs stack: each new pair (backdrop + dialog) gets a higher
+ * z-index than the one it covers, while older dialogs are pushed behind their
+ * covering backdrop.
  *
  * @example
  * ```ts

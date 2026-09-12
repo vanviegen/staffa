@@ -540,6 +540,14 @@ test("overlays: toasts, tooltips, menus, dialogs and an inline menu tree", async
 	await page.keyboard.press("Control+o");
 	await page.waitForSelector(".s-keyhelp", { state: "detached" });
 	await page.getByText("Smaller than primary.").waitFor();
+	// The secondary states its layer rather than relying on the order the
+	// dialogs happen to sit in the DOM — which used to be a string sort of their
+	// numbers, landing the tenth dialog of a session behind the ninth. Focus is
+	// in the top dialog, the one that is actually on screen.
+	const zOf = (name: string) =>
+		page.locator(".s-dialog", { hasText: name }).evaluate((el) => +getComputedStyle(el).zIndex);
+	expect(await zOf("Secondary dialog")).toBeGreaterThan(await zOf("Primary dialog"));
+	await expect(page.locator(".s-dialog", { hasText: "Secondary dialog" }).getByRole("button", { name: "Close" })).toBeFocused();
 	// Escape dismisses only the top-most dialog; the primary one stays up.
 	await page.keyboard.press("Escape");
 	await page.waitForSelector('text="Smaller than primary."', { state: "detached" });

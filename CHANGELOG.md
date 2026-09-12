@@ -6,6 +6,7 @@
 - Emptying an `S.autocomplete` now clears its selection instead of springing back to the last one, as free text may be no text. Mark the field `required` to forbid that; `allowCustom: false` keeps reverting, as only the options can be committed there.
 - Escape in an `S.autocomplete` now only hides the suggestion list, leaving what you typed alone.
 - Fixed: committing free text that spells out an option's label now selects that option, rather than storing the label as a custom value.
+- Fixed: a dialog opened on top of another could render behind it, leaving focus (and typing) in a dialog that wasn't on screen. Dialogs now state their stacking layer instead of leaving it to the order they were drawn in, and only the top one takes focus.
 
 ## 0.21.0
 
