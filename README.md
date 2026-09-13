@@ -257,7 +257,7 @@ S.textarea({ placeholder: "Message…", bind: A.ref($chat, "text"),
   suffix: () => S.iconButton({ icon: send, tooltip: "Send", click: post }) });
 ```
 
-A plain glyph there lets the click through to the field it decorates; a button or a link takes it.
+A plain glyph there lets the click through to the field it decorates; a button or a link takes it. Tell the field how tall to be (`attrs: "h:20rem"`) and the textarea fills it, insets and all — a composer that fills its panel needs nothing else.
 
 `src/index.ts` is the authoritative list of exports.
 

@@ -6,7 +6,7 @@
       "title": "form: fields, submission, and the chrome moving around it",
       "steps": [
         {
-          "image": "94c58b3ba1a78c34",
+          "image": "1e0419b2e6634b7b",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -27,7 +27,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:109",
-              "duration": 200
+              "duration": 184
             },
             {
               "type": "assert",
@@ -39,7 +39,7 @@
                 "height": 21
               },
               "source": "tests/demo.spec.ts:113",
-              "duration": 137
+              "duration": 136
             },
             {
               "type": "assert",
@@ -51,7 +51,7 @@
                 "height": 20
               },
               "source": "tests/demo.spec.ts:114",
-              "duration": 151
+              "duration": 148
             },
             {
               "type": "describe",
@@ -68,12 +68,12 @@
                 "height": 44
               },
               "source": "tests/demo.spec.ts:118",
-              "duration": 150
+              "duration": 165
             }
           ]
         },
         {
-          "image": "adffc94cf236950f",
+          "image": "062ac42756de0ccf",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -89,12 +89,12 @@
                 "height": 44
               },
               "source": "tests/demo.spec.ts:119",
-              "duration": 143
+              "duration": 184
             }
           ]
         },
         {
-          "image": "ff86c04e915b9db4",
+          "image": "260243d83a62c550",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -110,12 +110,12 @@
                 "height": 44
               },
               "source": "tests/demo.spec.ts:120",
-              "duration": 151
+              "duration": 190
             }
           ]
         },
         {
-          "image": "7d01b0f8e4b55257",
+          "image": "461849d6b68bc0f4",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -136,12 +136,12 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:124",
-              "duration": 144
+              "duration": 177
             }
           ]
         },
         {
-          "image": "69ef8e32dc5ca2d9",
+          "image": "8c22a94d2669b521",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -157,12 +157,12 @@
                 "height": 38
               },
               "source": "tests/demo.spec.ts:125",
-              "duration": 141
+              "duration": 144
             }
           ]
         },
         {
-          "image": "5d65f93a07ba73fb",
+          "image": "10edf0953b4e1515",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -178,7 +178,7 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:131",
-              "duration": 142
+              "duration": 143
             },
             {
               "type": "assert",
@@ -190,12 +190,12 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:133",
-              "duration": 151
+              "duration": 144
             }
           ]
         },
         {
-          "image": "f61c08f25ec3e0a4",
+          "image": "3ac2a8fe4b3027ba",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -211,7 +211,7 @@
                 "height": 45
               },
               "source": "tests/demo.spec.ts:137",
-              "duration": 149
+              "duration": 138
             },
             {
               "type": "describe",
@@ -228,12 +228,12 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:140",
-              "duration": 140
+              "duration": 198
             }
           ]
         },
         {
-          "image": "4458d0894178cc0f",
+          "image": "be69e647e2e3f745",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -249,7 +249,7 @@
                 "height": 38
               },
               "source": "tests/demo.spec.ts:141",
-              "duration": 149
+              "duration": 148
             },
             {
               "type": "action",
@@ -261,12 +261,12 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:142",
-              "duration": 148
+              "duration": 176
             }
           ]
         },
         {
-          "image": "7512af9a40432b72",
+          "image": "e2e5506a479a90ad",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -282,7 +282,7 @@
                 "height": 38
               },
               "source": "tests/demo.spec.ts:146",
-              "duration": 156
+              "duration": 151
             },
             {
               "type": "assert",
@@ -294,7 +294,7 @@
                 "height": 38
               },
               "source": "tests/demo.spec.ts:147",
-              "duration": 133
+              "duration": 145
             },
             {
               "type": "describe",
@@ -311,12 +311,12 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:150",
-              "duration": 135
+              "duration": 162
             }
           ]
         },
         {
-          "image": "69ef8e32dc5ca2d9",
+          "image": "8c22a94d2669b521",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -332,12 +332,12 @@
                 "height": 38
               },
               "source": "tests/demo.spec.ts:151",
-              "duration": 143
+              "duration": 184
             }
           ]
         },
         {
-          "image": "29f103026cd0e15c",
+          "image": "3f704314c826bfac",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -358,12 +358,12 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:154",
-              "duration": 142
+              "duration": 183
             }
           ]
         },
         {
-          "image": "c5764613a117cbec",
+          "image": "bb1ccffc57f7dc80",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -376,15 +376,15 @@
                 "x": 236,
                 "y": 499,
                 "width": 1008,
-                "height": 64
+                "height": 66
               },
               "source": "tests/demo.spec.ts:155",
-              "duration": 146
+              "duration": 173
             }
           ]
         },
         {
-          "image": "30bac1d32788c87d",
+          "image": "94d9343f50347923",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -400,12 +400,12 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:156",
-              "duration": 160
+              "duration": 164
             }
           ]
         },
         {
-          "image": "41dd2754faa6bd85",
+          "image": "b35a3f95d81882c3",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -415,7 +415,7 @@
               "type": "assert",
               "message": "expect value \"\" (locator('input[name=language]'))",
               "source": "tests/demo.spec.ts:157",
-              "duration": 1139
+              "duration": 1134
             },
             {
               "type": "describe",
@@ -432,12 +432,12 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:160",
-              "duration": 156
+              "duration": 193
             }
           ]
         },
         {
-          "image": "69ef8e32dc5ca2d9",
+          "image": "8c22a94d2669b521",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -453,12 +453,12 @@
                 "height": 38
               },
               "source": "tests/demo.spec.ts:161",
-              "duration": 162
+              "duration": 209
             }
           ]
         },
         {
-          "image": "29f103026cd0e15c",
+          "image": "3f704314c826bfac",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -479,12 +479,12 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:164",
-              "duration": 159
+              "duration": 195
             }
           ]
         },
         {
-          "image": "8b3d3a999d6100e3",
+          "image": "fe00f767af673b74",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -500,12 +500,12 @@
                 "height": 38
               },
               "source": "tests/demo.spec.ts:165",
-              "duration": 165
+              "duration": 212
             }
           ]
         },
         {
-          "image": "ca6c8d9935164239",
+          "image": "09d88857df7c939d",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -518,15 +518,15 @@
                 "x": 236,
                 "y": 499,
                 "width": 1008,
-                "height": 64
+                "height": 66
               },
               "source": "tests/demo.spec.ts:167",
-              "duration": 166
+              "duration": 216
             }
           ]
         },
         {
-          "image": "28d08fee88a9b3d4",
+          "image": "ebbce1f7b5f97083",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -537,17 +537,17 @@
               "message": "check",
               "box": {
                 "x": 578,
-                "y": 583,
+                "y": 585,
                 "width": 18,
                 "height": 18
               },
               "source": "tests/demo.spec.ts:168",
-              "duration": 161
+              "duration": 214
             }
           ]
         },
         {
-          "image": "647f7128deaa9b50",
+          "image": "9686e8d844d3f861",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -563,17 +563,17 @@
               "message": "click",
               "box": {
                 "x": 1174,
-                "y": 627,
+                "y": 629,
                 "width": 69,
                 "height": 35
               },
               "source": "tests/demo.spec.ts:171",
-              "duration": 159
+              "duration": 212
             }
           ]
         },
         {
-          "image": "28204a3dbbbebb50",
+          "image": "72d7a330b44938c3",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -586,15 +586,15 @@
                 "x": 236,
                 "y": 139,
                 "width": 1008,
-                "height": 525
+                "height": 527
               },
               "source": "tests/demo.spec.ts:172",
-              "duration": 158
+              "duration": 163
             }
           ]
         },
         {
-          "image": "b7ed8d3bc96401f6",
+          "image": "631fbe6a6097a29d",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -615,7 +615,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:178",
-              "duration": 1947
+              "duration": 1958
             },
             {
               "type": "assert",
@@ -636,10 +636,10 @@
                 "x": 236,
                 "y": 139,
                 "width": 1008,
-                "height": 525
+                "height": 527
               },
               "source": "tests/demo.spec.ts:180",
-              "duration": 166
+              "duration": 149
             },
             {
               "type": "assert",
@@ -651,7 +651,7 @@
                 "height": 371
               },
               "source": "tests/demo.spec.ts:181",
-              "duration": 168
+              "duration": 169
             },
             {
               "type": "action",
@@ -663,12 +663,12 @@
                 "height": 35
               },
               "source": "tests/demo.spec.ts:182",
-              "duration": 165
+              "duration": 183
             }
           ]
         },
         {
-          "image": "5c42c8197844f6bb",
+          "image": "1dfb4d5149d31dee",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -689,12 +689,12 @@
                 "height": 44
               },
               "source": "tests/demo.spec.ts:186",
-              "duration": 166
+              "duration": 236
             }
           ]
         },
         {
-          "image": "08ccae00ba72acab",
+          "image": "cb9d9713dfe58eb2",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -710,12 +710,12 @@
                 "height": 26
               },
               "source": "tests/demo.spec.ts:189",
-              "duration": 156
+              "duration": 209
             }
           ]
         },
         {
-          "image": "15e3c558e43a0280",
+          "image": "a4abd3efed35715d",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -731,18 +731,18 @@
                 "height": 44
               },
               "source": "tests/demo.spec.ts:190",
-              "duration": 159
+              "duration": 168
             },
             {
               "type": "assert",
               "message": "expect count 0 (getByRole('button', { name: 'Clear' }))",
               "source": "tests/demo.spec.ts:191",
-              "duration": 2131
+              "duration": 2118
             }
           ]
         },
         {
-          "image": "15af14e683730724",
+          "image": "91372284792ff537",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -763,12 +763,12 @@
                 "height": 64
               },
               "source": "tests/demo.spec.ts:194",
-              "duration": 175
+              "duration": 206
             }
           ]
         },
         {
-          "image": "6895790b27f4e580",
+          "image": "eec66d7960f90f4c",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -784,12 +784,12 @@
                 "height": 26
               },
               "source": "tests/demo.spec.ts:195",
-              "duration": 159
+              "duration": 209
             }
           ]
         },
         {
-          "image": "9119adb0ceee1c90",
+          "image": "b48eb757fe66f5b9",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -817,12 +817,12 @@
                 "height": 18
               },
               "source": "tests/demo.spec.ts:197",
-              "duration": 175
+              "duration": 190
             }
           ]
         },
         {
-          "image": "15af14e683730724",
+          "image": "91372284792ff537",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -832,12 +832,12 @@
               "type": "assert",
               "message": "expect count 0 (locator('.s-toast'))",
               "source": "tests/demo.spec.ts:198",
-              "duration": 2909
+              "duration": 2908
             }
           ]
         },
         {
-          "image": "e0b45f066df025c9",
+          "image": "429f1b9c92acecb0",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -858,12 +858,12 @@
                 "height": 44
               },
               "source": "tests/demo.spec.ts:201",
-              "duration": 171
+              "duration": 205
             }
           ]
         },
         {
-          "image": "bd88160155eaadd7",
+          "image": "8109ea2e267fba1b",
           "viewport": {
             "width": 480,
             "height": 800
@@ -889,7 +889,7 @@
                 "height": 21
               },
               "source": "tests/demo.spec.ts:210",
-              "duration": 128
+              "duration": 114
             },
             {
               "type": "assert",
@@ -901,13 +901,13 @@
                 "height": 20
               },
               "source": "tests/demo.spec.ts:211",
-              "duration": 115
+              "duration": 108
             },
             {
               "type": "assert",
               "message": "expect count 0 (locator('header .s-subtitle'))",
               "source": "tests/demo.spec.ts:212",
-              "duration": 2064
+              "duration": 2066
             },
             {
               "type": "assert",
@@ -916,15 +916,15 @@
                 "x": 18,
                 "y": 631,
                 "width": 445,
-                "height": 64
+                "height": 66
               },
               "source": "tests/demo.spec.ts:215",
-              "duration": 107
+              "duration": 112
             }
           ]
         },
         {
-          "image": "f56648c8d10bfca1",
+          "image": "ad44acec588b358e",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -950,7 +950,7 @@
                 "height": 20
               },
               "source": "tests/demo.spec.ts:219",
-              "duration": 163
+              "duration": 162
             },
             {
               "type": "assert",
@@ -959,10 +959,10 @@
                 "x": 236,
                 "y": 640,
                 "width": 1008,
-                "height": 64
+                "height": 66
               },
               "source": "tests/demo.spec.ts:221",
-              "duration": 156
+              "duration": 151
             }
           ]
         }
@@ -1417,7 +1417,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:692",
-              "duration": 155
+              "duration": 143
             }
           ]
         },
@@ -1448,7 +1448,7 @@
                 "height": 37
               },
               "source": "tests/demo.spec.ts:707",
-              "duration": 129
+              "duration": 168
             }
           ]
         },
@@ -1469,7 +1469,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:708",
-              "duration": 123
+              "duration": 124
             },
             {
               "type": "assert",
@@ -1481,7 +1481,7 @@
                 "height": 45
               },
               "source": "tests/demo.spec.ts:709",
-              "duration": 109
+              "duration": 123
             },
             {
               "type": "describe",
@@ -1498,7 +1498,7 @@
                 "height": 21
               },
               "source": "tests/demo.spec.ts:714",
-              "duration": 109
+              "duration": 141
             }
           ]
         },
@@ -1517,7 +1517,7 @@
             {
               "type": "console",
               "consoleType": "debug",
-              "message": "Aberdeen queue took 12ms",
+              "message": "Aberdeen queue took 10ms",
               "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
             },
             {
@@ -1535,7 +1535,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:720",
-              "duration": 132
+              "duration": 131
             }
           ]
         },
@@ -1577,13 +1577,13 @@
                 "height": 59
               },
               "source": "tests/demo.spec.ts:728",
-              "duration": 181
+              "duration": 195
             },
             {
               "type": "assert",
               "message": "expect text \"Icons\", \"heart\" (locator('.s-crumb'))",
               "source": "tests/demo.spec.ts:729",
-              "duration": 121
+              "duration": 159
             },
             {
               "type": "assert",
@@ -1595,7 +1595,7 @@
                 "height": 45
               },
               "source": "tests/demo.spec.ts:730",
-              "duration": 135
+              "duration": 153
             },
             {
               "type": "describe",
@@ -1612,12 +1612,12 @@
                 "height": 21
               },
               "source": "tests/demo.spec.ts:733",
-              "duration": 137
+              "duration": 184
             }
           ]
         },
         {
-          "image": "94c58b3ba1a78c34",
+          "image": "1e0419b2e6634b7b",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -1633,13 +1633,13 @@
                 "height": 797
               },
               "source": "tests/demo.spec.ts:735",
-              "duration": 151
+              "duration": 147
             },
             {
               "type": "assert",
               "message": "expect count 0 (locator('.s-crumb'))",
               "source": "tests/demo.spec.ts:737",
-              "duration": 2130
+              "duration": 2117
             },
             {
               "type": "assert",
@@ -1670,7 +1670,7 @@
             {
               "type": "console",
               "consoleType": "debug",
-              "message": "Aberdeen queue took 11ms",
+              "message": "Aberdeen queue took 13ms",
               "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
             },
             {
@@ -1688,7 +1688,7 @@
                 "height": 48
               },
               "source": "tests/demo.spec.ts:742",
-              "duration": 175
+              "duration": 174
             },
             {
               "type": "action",
@@ -1700,12 +1700,12 @@
                 "height": 24
               },
               "source": "tests/demo.spec.ts:743",
-              "duration": 143
+              "duration": 175
             }
           ]
         },
         {
-          "image": "94c58b3ba1a78c34",
+          "image": "1e0419b2e6634b7b",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -1721,7 +1721,7 @@
                 "height": 797
               },
               "source": "tests/demo.spec.ts:745",
-              "duration": 192
+              "duration": 186
             },
             {
               "type": "assert",
@@ -1733,7 +1733,7 @@
                 "height": 20
               },
               "source": "tests/demo.spec.ts:746",
-              "duration": 160
+              "duration": 168
             }
           ]
         }
@@ -3369,7 +3369,7 @@
             {
               "type": "console",
               "consoleType": "debug",
-              "message": "Aberdeen queue took 11ms",
+              "message": "Aberdeen queue took 10ms",
               "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
             },
             {
@@ -3387,7 +3387,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:226",
-              "duration": 241
+              "duration": 234
             },
             {
               "type": "action",
@@ -3399,7 +3399,7 @@
                 "height": 35
               },
               "source": "tests/demo.spec.ts:228",
-              "duration": 178
+              "duration": 209
             }
           ]
         },
@@ -3420,7 +3420,7 @@
                 "height": 37
               },
               "source": "tests/demo.spec.ts:229",
-              "duration": 181
+              "duration": 219
             }
           ]
         },
@@ -3446,7 +3446,7 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:233",
-              "duration": 176
+              "duration": 226
             }
           ]
         },
@@ -3467,7 +3467,7 @@
                 "height": 29
               },
               "source": "tests/demo.spec.ts:235",
-              "duration": 174
+              "duration": 178
             }
           ]
         },
@@ -3493,7 +3493,7 @@
                 "height": 45
               },
               "source": "tests/demo.spec.ts:240",
-              "duration": 177
+              "duration": 202
             }
           ]
         },
@@ -3514,7 +3514,7 @@
                 "height": 45
               },
               "source": "tests/demo.spec.ts:242",
-              "duration": 171
+              "duration": 162
             }
           ]
         },
@@ -3540,7 +3540,7 @@
                 "height": 24
               },
               "source": "tests/demo.spec.ts:252",
-              "duration": 165
+              "duration": 189
             }
           ]
         },
@@ -3566,7 +3566,7 @@
                 "height": 44
               },
               "source": "tests/demo.spec.ts:258",
-              "duration": 152
+              "duration": 189
             }
           ]
         },
@@ -3587,7 +3587,7 @@
                 "height": 24
               },
               "source": "tests/demo.spec.ts:260",
-              "duration": 166
+              "duration": 164
             }
           ]
         },
@@ -3608,13 +3608,13 @@
                 "height": 24
               },
               "source": "tests/demo.spec.ts:263",
-              "duration": 168
+              "duration": 183
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-toast'))",
               "source": "tests/demo.spec.ts:265",
-              "duration": 134
+              "duration": 130
             },
             {
               "type": "describe",
@@ -3631,7 +3631,7 @@
                 "height": 44
               },
               "source": "tests/demo.spec.ts:269",
-              "duration": 150
+              "duration": 218
             }
           ]
         },
@@ -3652,7 +3652,7 @@
                 "height": 44
               },
               "source": "tests/demo.spec.ts:270",
-              "duration": 153
+              "duration": 161
             },
             {
               "type": "describe",
@@ -3669,7 +3669,7 @@
                 "height": 44
               },
               "source": "tests/demo.spec.ts:274",
-              "duration": 158
+              "duration": 173
             }
           ]
         },
@@ -3690,7 +3690,7 @@
                 "height": 22
               },
               "source": "tests/demo.spec.ts:276",
-              "duration": 150
+              "duration": 164
             },
             {
               "type": "assert",
@@ -3702,7 +3702,7 @@
                 "height": 22
               },
               "source": "tests/demo.spec.ts:277",
-              "duration": 155
+              "duration": 148
             },
             {
               "type": "assert",
@@ -3714,7 +3714,7 @@
                 "height": 22
               },
               "source": "tests/demo.spec.ts:279",
-              "duration": 151
+              "duration": 163
             },
             {
               "type": "describe",
@@ -3731,7 +3731,7 @@
                 "height": 44
               },
               "source": "tests/demo.spec.ts:282",
-              "duration": 153
+              "duration": 185
             }
           ]
         },
@@ -3757,7 +3757,7 @@
                 "height": 38
               },
               "source": "tests/demo.spec.ts:289",
-              "duration": 153
+              "duration": 187
             }
           ]
         },
@@ -3778,7 +3778,7 @@
                 "height": 38
               },
               "source": "tests/demo.spec.ts:290",
-              "duration": 160
+              "duration": 158
             }
           ]
         },
@@ -3799,7 +3799,7 @@
                 "height": 24
               },
               "source": "tests/demo.spec.ts:294",
-              "duration": 2473
+              "duration": 2482
             },
             {
               "type": "assert",
@@ -3811,7 +3811,7 @@
                 "height": 59
               },
               "source": "tests/demo.spec.ts:295",
-              "duration": 176
+              "duration": 189
             },
             {
               "type": "assert",
@@ -3823,7 +3823,7 @@
                 "height": 38
               },
               "source": "tests/demo.spec.ts:296",
-              "duration": 183
+              "duration": 187
             }
           ]
         },
@@ -3860,7 +3860,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:300",
-              "duration": 210
+              "duration": 217
             }
           ]
         },
@@ -3877,6 +3877,12 @@
               "source": "tests/demo.spec.ts:303"
             },
             {
+              "type": "console",
+              "consoleType": "debug",
+              "message": "Aberdeen queue took 11ms",
+              "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
+            },
+            {
               "type": "page",
               "message": "goto ./icons",
               "source": "tests/demo.spec.ts:304"
@@ -3891,7 +3897,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:305",
-              "duration": 181
+              "duration": 190
             }
           ]
         },
@@ -3912,7 +3918,7 @@
                 "height": 44
               },
               "source": "tests/demo.spec.ts:306",
-              "duration": 141
+              "duration": 210
             }
           ]
         },
@@ -3933,7 +3939,7 @@
                 "height": 20
               },
               "source": "tests/demo.spec.ts:307",
-              "duration": 139
+              "duration": 148
             }
           ]
         },
@@ -3964,7 +3970,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:311",
-              "duration": 195
+              "duration": 188
             },
             {
               "type": "assert",
@@ -3976,7 +3982,7 @@
                 "height": 33
               },
               "source": "tests/demo.spec.ts:315",
-              "duration": 161
+              "duration": 163
             },
             {
               "type": "assert",
@@ -3988,13 +3994,13 @@
                 "height": 20
               },
               "source": "tests/demo.spec.ts:316",
-              "duration": 162
+              "duration": 176
             },
             {
               "type": "assert",
               "message": "expect count 0 (locator('.s-crumb'))",
               "source": "tests/demo.spec.ts:317",
-              "duration": 2140
+              "duration": 2152
             }
           ]
         },
@@ -4020,7 +4026,7 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:321",
-              "duration": 163
+              "duration": 225
             }
           ]
         },
@@ -4041,7 +4047,7 @@
                 "height": 22
               },
               "source": "tests/demo.spec.ts:322",
-              "duration": 170
+              "duration": 166
             },
             {
               "type": "check",
@@ -4053,7 +4059,7 @@
                 "height": 22
               },
               "source": "tests/demo.spec.ts:323",
-              "duration": 171
+              "duration": 174
             },
             {
               "type": "check",
@@ -4065,7 +4071,7 @@
                 "height": 22
               },
               "source": "tests/demo.spec.ts:324",
-              "duration": 164
+              "duration": 166
             },
             {
               "type": "assert",
@@ -4077,7 +4083,7 @@
                 "height": 28
               },
               "source": "tests/demo.spec.ts:328",
-              "duration": 165
+              "duration": 160
             },
             {
               "type": "describe",
@@ -4094,7 +4100,7 @@
                 "height": 28
               },
               "source": "tests/demo.spec.ts:331",
-              "duration": 160
+              "duration": 201
             }
           ]
         },
@@ -4120,7 +4126,7 @@
                 "height": 45
               },
               "source": "tests/demo.spec.ts:336",
-              "duration": 168
+              "duration": 212
             }
           ]
         },
@@ -4141,7 +4147,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:337",
-              "duration": 187
+              "duration": 192
             },
             {
               "type": "action",
@@ -4153,12 +4159,12 @@
                 "height": 45
               },
               "source": "tests/demo.spec.ts:338",
-              "duration": 192
+              "duration": 211
             }
           ]
         },
         {
-          "image": "49fad58277fae03c",
+          "image": "1e381f1eecf431af",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -4174,7 +4180,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:339",
-              "duration": 180
+              "duration": 171
             }
           ]
         }
@@ -5252,13 +5258,13 @@
                 "height": 48
               },
               "source": "tests/demo.spec.ts:1072",
-              "duration": 152
+              "duration": 141
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
               "source": "tests/demo.spec.ts:1073",
-              "duration": 102
+              "duration": 106
             },
             {
               "type": "describe",
@@ -5275,7 +5281,7 @@
                 "height": 44
               },
               "source": "tests/demo.spec.ts:1076",
-              "duration": 130
+              "duration": 160
             }
           ]
         },
@@ -5296,12 +5302,12 @@
                 "height": 6
               },
               "source": "tests/demo.spec.ts:1077",
-              "duration": 127
+              "duration": 132
             }
           ]
         },
         {
-          "image": "0e9b1d3248617d7e",
+          "image": "c5000cbb50c1b4b6",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -5316,7 +5322,7 @@
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
               "source": "tests/demo.spec.ts:1083",
-              "duration": 142
+              "duration": 138
             },
             {
               "type": "assert",
@@ -5328,7 +5334,7 @@
                 "height": 797
               },
               "source": "tests/demo.spec.ts:1084",
-              "duration": 160
+              "duration": 130
             },
             {
               "type": "describe",
@@ -5345,12 +5351,12 @@
                 "height": 20
               },
               "source": "tests/demo.spec.ts:1088",
-              "duration": 134
+              "duration": 162
             }
           ]
         },
         {
-          "image": "5558f24efc46e3fd",
+          "image": "1697784e0efc85ba",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -5366,7 +5372,7 @@
                 "height": 36
               },
               "source": "tests/demo.spec.ts:1089",
-              "duration": 147
+              "duration": 145
             }
           ]
         },
@@ -5397,7 +5403,7 @@
                 "height": 44
               },
               "source": "tests/demo.spec.ts:1100",
-              "duration": 141
+              "duration": 133
             },
             {
               "type": "action",
@@ -5409,12 +5415,12 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:1101",
-              "duration": 126
+              "duration": 160
             }
           ]
         },
         {
-          "image": "8827b31b93054cf9",
+          "image": "d3b43abb58f42d20",
           "viewport": {
             "width": 1280,
             "height": 900
@@ -5430,7 +5436,7 @@
                 "height": 797
               },
               "source": "tests/demo.spec.ts:1103",
-              "duration": 179
+              "duration": 182
             }
           ]
         },
@@ -5461,7 +5467,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:1109",
-              "duration": 175
+              "duration": 171
             }
           ]
         },
@@ -5485,7 +5491,7 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:58",
-              "duration": 154
+              "duration": 193
             }
           ]
         },
@@ -5506,7 +5512,7 @@
                 "height": 44
               },
               "source": "tests/demo.spec.ts:1111",
-              "duration": 168
+              "duration": 198
             }
           ]
         },
@@ -5532,13 +5538,13 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:1114",
-              "duration": 177
+              "duration": 165
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
               "source": "tests/demo.spec.ts:1115",
-              "duration": 125
+              "duration": 118
             },
             {
               "type": "assert",
@@ -5550,7 +5556,7 @@
                 "height": 797
               },
               "source": "tests/demo.spec.ts:1116",
-              "duration": 147
+              "duration": 152
             },
             {
               "type": "assert",
@@ -5562,7 +5568,7 @@
                 "height": 6
               },
               "source": "tests/demo.spec.ts:1117",
-              "duration": 150
+              "duration": 148
             },
             {
               "type": "describe",
@@ -5579,7 +5585,7 @@
                 "height": 20
               },
               "source": "tests/demo.spec.ts:1120",
-              "duration": 149
+              "duration": 187
             }
           ]
         },
@@ -5626,7 +5632,7 @@
                 "height": 24
               },
               "source": "tests/demo.spec.ts:1136",
-              "duration": 131
+              "duration": 164
             }
           ]
         },
@@ -5647,13 +5653,13 @@
                 "height": 24
               },
               "source": "tests/demo.spec.ts:1138",
-              "duration": 164
+              "duration": 155
             },
             {
               "type": "assert",
               "message": "expect count 4 (locator('.s-panel:not(.s-panel-closing)'))",
               "source": "tests/demo.spec.ts:1139",
-              "duration": 88
+              "duration": 92
             },
             {
               "type": "assert",
@@ -5665,7 +5671,7 @@
                 "height": 797
               },
               "source": "tests/demo.spec.ts:1140",
-              "duration": 128
+              "duration": 116
             },
             {
               "type": "assert",
@@ -5677,7 +5683,7 @@
                 "height": 6
               },
               "source": "tests/demo.spec.ts:1141",
-              "duration": 124
+              "duration": 114
             }
           ]
         }
@@ -6354,7 +6360,7 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:756",
-              "duration": 203
+              "duration": 197
             },
             {
               "type": "describe",
@@ -6365,7 +6371,7 @@
               "type": "assert",
               "message": "expect count 0 (locator('.s-panel-actions'))",
               "source": "tests/demo.spec.ts:781",
-              "duration": 2143
+              "duration": 2140
             },
             {
               "type": "assert",
@@ -6377,7 +6383,7 @@
                 "height": 24
               },
               "source": "tests/demo.spec.ts:782",
-              "duration": 184
+              "duration": 183
             },
             {
               "type": "assert",
@@ -6389,7 +6395,7 @@
                 "height": 21
               },
               "source": "tests/demo.spec.ts:783",
-              "duration": 186
+              "duration": 184
             },
             {
               "type": "assert",
@@ -6401,7 +6407,7 @@
                 "height": 45
               },
               "source": "tests/demo.spec.ts:787",
-              "duration": 189
+              "duration": 183
             },
             {
               "type": "assert",
@@ -6413,13 +6419,13 @@
                 "height": 20
               },
               "source": "tests/demo.spec.ts:788",
-              "duration": 179
+              "duration": 180
             },
             {
               "type": "assert",
               "message": "expect count 0 (locator('.s-crumb'))",
               "source": "tests/demo.spec.ts:789",
-              "duration": 2142
+              "duration": 2134
             }
           ]
         },
@@ -6448,7 +6454,7 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:58",
-              "duration": 173
+              "duration": 206
             }
           ]
         },
@@ -6469,7 +6475,7 @@
                 "height": 797
               },
               "source": "tests/demo.spec.ts:795",
-              "duration": 183
+              "duration": 167
             },
             {
               "type": "assert",
@@ -6481,7 +6487,7 @@
                 "height": 50
               },
               "source": "tests/demo.spec.ts:797",
-              "duration": 157
+              "duration": 159
             },
             {
               "type": "assert",
@@ -6493,7 +6499,7 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:798",
-              "duration": 149
+              "duration": 147
             },
             {
               "type": "assert",
@@ -6505,7 +6511,7 @@
                 "height": 50
               },
               "source": "tests/demo.spec.ts:800",
-              "duration": 150
+              "duration": 152
             },
             {
               "type": "assert",
@@ -6523,13 +6529,13 @@
               "type": "assert",
               "message": "expect text \"Panels\", \"Small A\" (locator('.s-crumb'))",
               "source": "tests/demo.spec.ts:803",
-              "duration": 138
+              "duration": 131
             },
             {
               "type": "assert",
               "message": "expect count 0 (locator('header .s-subtitle'))",
               "source": "tests/demo.spec.ts:804",
-              "duration": 2110
+              "duration": 2116
             }
           ]
         },
@@ -6558,7 +6564,7 @@
                 "height": 32
               },
               "source": "tests/demo.spec.ts:58",
-              "duration": 156
+              "duration": 189
             }
           ]
         },
@@ -6585,13 +6591,13 @@
               "type": "assert",
               "message": "expect count 3 (locator('.s-panel:not(.s-panel-closing)'))",
               "source": "tests/demo.spec.ts:812",
-              "duration": 122
+              "duration": 125
             },
             {
               "type": "assert",
               "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing):not([inert])'))",
               "source": "tests/demo.spec.ts:813",
-              "duration": 118
+              "duration": 129
             },
             {
               "type": "assert",
@@ -6603,30 +6609,30 @@
                 "height": 43
               },
               "source": "tests/demo.spec.ts:817",
-              "duration": 166
+              "duration": 161
             },
             {
               "type": "assert",
               "message": "expect text \"Panels\", \"Small A\", \"Small B\" (locator('.s-crumb'))",
               "source": "tests/demo.spec.ts:818",
-              "duration": 122
+              "duration": 136
             },
             {
               "type": "assert",
               "message": "expect text \"Small A\", \"Small B\" (locator('.s-crumb.s-crumb-on'))",
               "source": "tests/demo.spec.ts:819",
-              "duration": 103
+              "duration": 125
             },
             {
               "type": "assert",
               "message": "expect text \"/demo/panels\", \"/demo/panels/a\", \"/demo/panels/b ← current\" (getByTestId('stack-list').first().locator('li'))",
               "source": "tests/demo.spec.ts:823",
-              "duration": 113
+              "duration": 123
             }
           ]
         },
         {
-          "image": "bbfdb0e2be06f3a8",
+          "image": "5cfb1cb675f399f9",
           "viewport": {
             "width": 1600,
             "height": 900
@@ -6657,7 +6663,7 @@
                 "height": 797
               },
               "source": "tests/demo.spec.ts:842",
-              "duration": 167
+              "duration": 190
             },
             {
               "type": "assert",
@@ -6669,13 +6675,13 @@
                 "height": 24
               },
               "source": "tests/demo.spec.ts:843",
-              "duration": 156
+              "duration": 159
             },
             {
               "type": "assert",
               "message": "expect count 0 (locator('.s-crumb'))",
               "source": "tests/demo.spec.ts:845",
-              "duration": 2144
+              "duration": 2139
             },
             {
               "type": "assert",
@@ -6687,7 +6693,7 @@
                 "height": 20
               },
               "source": "tests/demo.spec.ts:846",
-              "duration": 182
+              "duration": 178
             }
           ]
         },
@@ -6724,13 +6730,13 @@
                 "height": 24
               },
               "source": "tests/demo.spec.ts:851",
-              "duration": 181
+              "duration": 184
             },
             {
               "type": "screenshot",
               "message": "large-panel-fills-area",
               "source": "tests/demo.spec.ts:857",
-              "duration": 111
+              "duration": 113
             }
           ]
         },
@@ -6754,7 +6760,7 @@
             {
               "type": "console",
               "consoleType": "debug",
-              "message": "Aberdeen queue took 11ms",
+              "message": "Aberdeen queue took 10ms",
               "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
             },
             {
@@ -6772,13 +6778,13 @@
                 "height": 20
               },
               "source": "tests/demo.spec.ts:864",
-              "duration": 166
+              "duration": 169
             },
             {
               "type": "assert",
               "message": "expect count 4 (locator('.s-crumb'))",
               "source": "tests/demo.spec.ts:869",
-              "duration": 104
+              "duration": 117
             },
             {
               "type": "assert",
@@ -6790,13 +6796,13 @@
                 "height": 20
               },
               "source": "tests/demo.spec.ts:870",
-              "duration": 133
+              "duration": 132
             },
             {
               "type": "screenshot",
               "message": "crumbs-roomy",
               "source": "tests/demo.spec.ts:872",
-              "duration": 95
+              "duration": 94
             }
           ]
         },
@@ -6821,7 +6827,7 @@
               "type": "screenshot",
               "message": "crumbs-equalised",
               "source": "tests/demo.spec.ts:880",
-              "duration": 119
+              "duration": 124
             }
           ]
         },
@@ -6852,13 +6858,13 @@
                 "height": 20
               },
               "source": "tests/demo.spec.ts:884",
-              "duration": 127
+              "duration": 105
             },
             {
               "type": "screenshot",
               "message": "crumbs-floored-scrolling",
               "source": "tests/demo.spec.ts:889",
-              "duration": 56
+              "duration": 58
             }
           ]
         }

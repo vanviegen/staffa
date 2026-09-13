@@ -73,7 +73,12 @@ A.insertGlobalCss({
 	// own border, focus ring and full width; only its text padding gets out of the
 	// way, by however much each inset measures (see `drawInsets`).
 	".s-inset": {
-		"&": "position:relative display:grid --s-inset-start:0px --s-inset-end:0px",
+		// `display:contents` until an inset is actually there: the wrapper then has
+		// no box of its own, leaving the control the direct flex/grid child of the
+		// field that it was before insets existed — so a caller stretching the field
+		// (`attrs: "h:100%"` with `inputAttrs: "flex:1"`) still reaches the control.
+		"&": "display:contents --s-inset-start:0px --s-inset-end:0px",
+		"&:has(> .s-inset_start), &:has(> .s-inset_end)": "position:relative display:grid",
 		"> .s-input": "padding-inline-start: calc(0.7em + var(--s-inset-start)); padding-inline-end: calc(0.7em + var(--s-inset-end));",
 		"> .s-inset_start, > .s-inset_end": "position:absolute top:0 bottom:0 display:flex align-items:center gap:$1 fg:$s-muted",
 		"> .s-inset_start": "left:0.35em",

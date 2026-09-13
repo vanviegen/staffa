@@ -19,7 +19,11 @@ export interface TextareaOptions extends FieldOptions, InsetOptions {
 	 * `autoGrow` is enabled.
 	 */
 	resize?: "none" | "vertical" | "horizontal" | "both";
-	/** Auto-grow the textarea to fit its content. Defaults to `true`. */
+	/**
+	 * Auto-grow the textarea to fit its content. Defaults to `true`. Ignored when
+	 * the field is told how tall to be ({@link FieldOptions.attrs | attrs}
+	 * `"h:20rem"`), as that height wins over the one the text asks for.
+	 */
 	autoGrow?: boolean;
 	/** Fired on every `input` event. */
 	input?: (event: Event) => void;
@@ -28,6 +32,14 @@ export interface TextareaOptions extends FieldOptions, InsetOptions {
 }
 
 A.insertGlobalCss({
+	// `flex-basis:100%` with nothing to stop it shrinking means "take the field's
+	// height, then give back whatever the label and help need" — so a field told
+	// how tall to be (`attrs: "h:8rem"`) hands that height to the textarea, while a
+	// field left to size itself (every ordinary one) has no definite height for the
+	// basis to resolve against and the textarea is content-sized exactly as before.
+	// The same rule rides the inset box below, which stands in for the control once
+	// a prefix/suffix gives it one.
+	"textarea.s-input, .s-inset.s-inset-bottom": "flex: 0 1 100%; min-height:0",
 	"textarea.s-input": "resize:vertical min-height:3em line-height:1.45",
 	"textarea.s-input.s-autoGrow": "resize:none min-height:2.5em overflow-y:hidden",
 });
@@ -35,6 +47,11 @@ A.insertGlobalCss({
 /**
  * A multi-line text input. Shares the field chrome and styling of
  * {@link textline}.
+ *
+ * It sizes itself to its text by default. Give the *field* a height instead
+ * ({@link FieldOptions.attrs | attrs} `"h:20rem"`, or `"h:100%"` inside a column
+ * that has one) and the textarea fills it, whatever else the field holds — a
+ * label, help text, a `prefix`/`suffix` inset.
  *
  * @example
  * ```ts
@@ -48,6 +65,11 @@ A.insertGlobalCss({
  *   bind: A.ref($chat, "text"),
  *   suffix: () => S.iconButton({ icon: send, tooltip: "Send", click: () => post($chat.text) }),
  * });
+ *
+ * // Told how tall to be, the textarea fills the field instead of growing with
+ * // its text — `h:100%` in a column that has a height makes a composer that
+ * // fills whatever room it is given.
+ * S.textarea({ label: "Notes", attrs: "h:20rem", bind: A.ref($chat, "text") });
  * ```
  */
 export function textarea(opts: TextareaOptions = {}): void {

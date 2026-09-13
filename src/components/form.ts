@@ -30,6 +30,11 @@ A.insertGlobalCss({
 		"&": "display:flex flex-direction:column gap:$3",
 		"&.grid": "display:grid grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap:$3",
 		"&.grid > .s-wide, &.grid > footer": "grid-column: 1 / -1;",
+		// Fields hug their content rather than being stretched to the tallest in
+		// their row. Invisible either way — a field has no fill of its own — but it
+		// keeps "this field has a height" meaning "the caller asked for one", which
+		// is what a textarea reads to decide whether to fill it.
+		"&.grid > .s-field": "align-self: start",
 		"> footer": "display:flex align-items:center justify-content:flex-end gap:$2 flex-wrap:wrap margin-top:$1",
 	},
 });

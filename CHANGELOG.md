@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.22.1
+
+- An `S.textarea` now fills a field it is told the height of (`attrs: "h:20rem"`), with or without a `prefix`/`suffix` — what a chat composer filling its panel wants. A field left to size itself is unchanged.
+- Fixed: a `S.textline` or `S.textarea` without a `prefix`/`suffix` gained an extra layout box in 0.21, which swallowed a height set on the field. It lays out as it did before again.
+
 ## 0.22.0
 
 - **Breaking**: `S.autocomplete` now filters on word beginnings instead of substrings: every whitespace-separated term has to start a word of the label, in any order — `pal se` finds "Palette search", `ette` finds nothing. Pass `match` for a filter of your own (`S.matchWords` is the default, to compose with).
