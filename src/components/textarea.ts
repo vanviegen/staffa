@@ -41,7 +41,9 @@ A.insertGlobalCss({
 	// a prefix/suffix gives it one.
 	"textarea.s-input, .s-inset.s-inset-bottom": "flex: 0 1 100%; min-height:0",
 	"textarea.s-input": "resize:vertical min-height:3em line-height:1.45",
-	"textarea.s-input.s-autoGrow": "resize:none min-height:2.5em overflow-y:hidden",
+	// Sized to its text there is nothing to scroll, so `auto` shows no bar — until
+	// a caller caps the height (`inputAttrs: "max-height:12em"`), when it should.
+	"textarea.s-input.s-autoGrow": "resize:none min-height:2.5em overflow-y:auto",
 });
 
 /**
@@ -104,5 +106,8 @@ export function textarea(opts: TextareaOptions = {}): void {
 
 function fitToContent(el: HTMLTextAreaElement): void {
 	el.style.height = "auto";
-	el.style.height = `${el.scrollHeight}px`;
+	// `scrollHeight` measures the padding box, while the height we set sizes the
+	// border box: add the borders back, or the text ends up two pixels too tall
+	// for its box and the textarea scrolls by that much.
+	el.style.height = `${el.scrollHeight + el.offsetHeight - el.clientHeight}px`;
 }

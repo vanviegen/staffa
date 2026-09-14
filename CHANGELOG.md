@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.22.2
+
+- Fixed: an auto-growing `S.textarea` came out two pixels short of its text, so it could scroll by that much, showing a scrollbar or nudging the text when the caret reached the last line. It now grows to exactly its text, and scrolls only once a `max-height` caps it.
+
 ## 0.22.1
 
 - An `S.textarea` now fills a field it is told the height of (`attrs: "h:20rem"`), with or without a `prefix`/`suffix` — what a chat composer filling its panel wants. A field left to size itself is unchanged.
