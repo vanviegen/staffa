@@ -574,8 +574,15 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): PanelS
 					// falling back to the app's chrome. Promoted actions are marked
 					// `.s-panel-origin`, so a link among them still builds on the
 					// current panel — see `interceptLinks` in panels.ts.
+					//
+					// Which slot wins is derived, so a panel swap that doesn't change
+					// the answer — neither screen declaring actions, the app's `menu`
+					// standing on both sides — leaves the slot's DOM alone. This is
+					// where an app puts its stateful chrome (`menu`'s search box), and
+					// rebuilding it would drop focus, caret and IME composition.
+					const $promoted = A.derive(() => ($shell.narrow ? ctl?.currentPanel?.actions : undefined));
 					A(() => {
-						const actions = $shell.narrow ? ctl?.currentPanel?.actions : undefined;
+						const actions = $promoted.value;
 						const slot = actions ?? opts.menu;
 						if (slot != null) A(`div.s-menu${actions != null ? ".s-panel-origin" : ""}`, () => drawSlot(slot));
 					});

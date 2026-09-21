@@ -4728,12 +4728,12 @@
             {
               "type": "page",
               "message": "setViewportSize 480×800",
-              "source": "tests/demo.spec.ts:1352"
+              "source": "tests/demo.spec.ts:1387"
             },
             {
               "type": "page",
               "message": "goto ./icons",
-              "source": "tests/demo.spec.ts:1353"
+              "source": "tests/demo.spec.ts:1388"
             },
             {
               "type": "check",
@@ -4744,13 +4744,13 @@
                 "width": 480,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:1354",
-              "duration": 141
+              "source": "tests/demo.spec.ts:1389",
+              "duration": 145
             },
             {
               "type": "describe",
               "message": "Tap an icon: its detail pushes over the gallery, which stays mounted off-canvas",
-              "source": "tests/demo.spec.ts:1356"
+              "source": "tests/demo.spec.ts:1391"
             },
             {
               "type": "action",
@@ -4761,8 +4761,8 @@
                 "width": 52,
                 "height": 52
               },
-              "source": "tests/demo.spec.ts:1357",
-              "duration": 107
+              "source": "tests/demo.spec.ts:1392",
+              "duration": 109
             }
           ]
         },
@@ -4782,8 +4782,8 @@
                 "width": 445,
                 "height": 59
               },
-              "source": "tests/demo.spec.ts:1359",
-              "duration": 132
+              "source": "tests/demo.spec.ts:1394",
+              "duration": 127
             },
             {
               "type": "assert",
@@ -4794,14 +4794,14 @@
                 "width": 480,
                 "height": 706
               },
-              "source": "tests/demo.spec.ts:1360",
-              "duration": 107
+              "source": "tests/demo.spec.ts:1395",
+              "duration": 99
             },
             {
               "type": "assert",
               "message": "expect count 0 (locator('.s-panel-actions'))",
-              "source": "tests/demo.spec.ts:1364",
-              "duration": 2069
+              "source": "tests/demo.spec.ts:1399",
+              "duration": 2062
             },
             {
               "type": "assert",
@@ -4812,8 +4812,8 @@
                 "width": 31,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:1365",
-              "duration": 98
+              "source": "tests/demo.spec.ts:1400",
+              "duration": 99
             },
             {
               "type": "assert",
@@ -4824,13 +4824,13 @@
                 "width": 32,
                 "height": 32
               },
-              "source": "tests/demo.spec.ts:1366",
-              "duration": 100
+              "source": "tests/demo.spec.ts:1401",
+              "duration": 99
             },
             {
               "type": "assert",
               "message": "expect count 0 (getByRole('button', { name: 'Back' }))",
-              "source": "tests/demo.spec.ts:1367",
+              "source": "tests/demo.spec.ts:1402",
               "duration": 2065
             },
             {
@@ -4842,13 +4842,13 @@
                 "width": 32,
                 "height": 32
               },
-              "source": "tests/demo.spec.ts:1368",
-              "duration": 100
+              "source": "tests/demo.spec.ts:1403",
+              "duration": 98
             },
             {
               "type": "describe",
               "message": "A crumb goes back to the gallery",
-              "source": "tests/demo.spec.ts:1370"
+              "source": "tests/demo.spec.ts:1405"
             },
             {
               "type": "action",
@@ -4859,8 +4859,8 @@
                 "width": 32,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:1371",
-              "duration": 101
+              "source": "tests/demo.spec.ts:1406",
+              "duration": 100
             }
           ]
         },
@@ -4880,8 +4880,8 @@
                 "width": 480,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:1373",
-              "duration": 140
+              "source": "tests/demo.spec.ts:1408",
+              "duration": 138
             },
             {
               "type": "assert",
@@ -4892,13 +4892,13 @@
                 "width": 32,
                 "height": 32
               },
-              "source": "tests/demo.spec.ts:1374",
-              "duration": 117
+              "source": "tests/demo.spec.ts:1409",
+              "duration": 115
             },
             {
               "type": "describe",
               "message": "The browser's back button does exactly the same",
-              "source": "tests/demo.spec.ts:1376"
+              "source": "tests/demo.spec.ts:1411"
             },
             {
               "type": "action",
@@ -4909,8 +4909,8 @@
                 "width": 52,
                 "height": 52
               },
-              "source": "tests/demo.spec.ts:1377",
-              "duration": 118
+              "source": "tests/demo.spec.ts:1412",
+              "duration": 119
             }
           ]
         },
@@ -4930,7 +4930,7 @@
                 "width": 445,
                 "height": 59
               },
-              "source": "tests/demo.spec.ts:1378",
+              "source": "tests/demo.spec.ts:1413",
               "duration": 136
             }
           ]
@@ -4945,7 +4945,7 @@
             {
               "type": "page",
               "message": "goBack",
-              "source": "tests/demo.spec.ts:1379"
+              "source": "tests/demo.spec.ts:1414"
             },
             {
               "type": "check",
@@ -4956,8 +4956,8 @@
                 "width": 480,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:1385",
-              "duration": 158
+              "source": "tests/demo.spec.ts:1420",
+              "duration": 123
             },
             {
               "type": "assert",
@@ -4968,8 +4968,8 @@
                 "width": 480,
                 "height": 706
               },
-              "source": "tests/demo.spec.ts:1386",
-              "duration": 108
+              "source": "tests/demo.spec.ts:1421",
+              "duration": 107
             }
           ]
         },
@@ -4983,18 +4983,18 @@
             {
               "type": "describe",
               "message": "Escape pops a page, and only then opens the nav",
-              "source": "tests/demo.spec.ts:1388"
+              "source": "tests/demo.spec.ts:1423"
             },
             {
               "type": "console",
               "consoleType": "debug",
-              "message": "Aberdeen queue took 10ms",
+              "message": "Aberdeen queue took 11ms",
               "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
             },
             {
               "type": "page",
               "message": "goto ./icons/heart",
-              "source": "tests/demo.spec.ts:1391"
+              "source": "tests/demo.spec.ts:1426"
             },
             {
               "type": "check",
@@ -5005,8 +5005,8 @@
                 "width": 445,
                 "height": 59
               },
-              "source": "tests/demo.spec.ts:1392",
-              "duration": 124
+              "source": "tests/demo.spec.ts:1427",
+              "duration": 122
             }
           ]
         },
@@ -5026,8 +5026,8 @@
                 "width": 480,
                 "height": 43
               },
-              "source": "tests/demo.spec.ts:1395",
-              "duration": 140
+              "source": "tests/demo.spec.ts:1430",
+              "duration": 141
             }
           ]
         },
@@ -5047,8 +5047,8 @@
                 "width": 480,
                 "height": 706
               },
-              "source": "tests/demo.spec.ts:1399",
-              "duration": 127
+              "source": "tests/demo.spec.ts:1434",
+              "duration": 110
             }
           ]
         },
@@ -5062,7 +5062,7 @@
             {
               "type": "describe",
               "message": "One bar holds it all: ☰, the stack, and the screen's actions",
-              "source": "tests/demo.spec.ts:1401"
+              "source": "tests/demo.spec.ts:1436"
             },
             {
               "type": "console",
@@ -5073,7 +5073,7 @@
             {
               "type": "page",
               "message": "goto ./panels/b",
-              "source": "tests/demo.spec.ts:1402"
+              "source": "tests/demo.spec.ts:1437"
             },
             {
               "type": "check",
@@ -5084,14 +5084,14 @@
                 "width": 480,
                 "height": 706
               },
-              "source": "tests/demo.spec.ts:1403",
-              "duration": 134
+              "source": "tests/demo.spec.ts:1438",
+              "duration": 137
             },
             {
               "type": "assert",
               "message": "expect count 0 (locator('.s-panel-actions'))",
-              "source": "tests/demo.spec.ts:1404",
-              "duration": 2079
+              "source": "tests/demo.spec.ts:1439",
+              "duration": 2076
             },
             {
               "type": "assert",
@@ -5102,8 +5102,8 @@
                 "width": 32,
                 "height": 32
               },
-              "source": "tests/demo.spec.ts:1405",
-              "duration": 114
+              "source": "tests/demo.spec.ts:1440",
+              "duration": 121
             },
             {
               "type": "assert",
@@ -5114,8 +5114,8 @@
                 "width": 46,
                 "height": 20
               },
-              "source": "tests/demo.spec.ts:1406",
-              "duration": 118
+              "source": "tests/demo.spec.ts:1441",
+              "duration": 110
             },
             {
               "type": "assert",
@@ -5126,8 +5126,8 @@
                 "width": 32,
                 "height": 32
               },
-              "source": "tests/demo.spec.ts:1407",
-              "duration": 112
+              "source": "tests/demo.spec.ts:1442",
+              "duration": 115
             },
             {
               "type": "assert",
@@ -5138,14 +5138,253 @@
                 "width": 45,
                 "height": 21
               },
-              "source": "tests/demo.spec.ts:1410",
-              "duration": 115
+              "source": "tests/demo.spec.ts:1445",
+              "duration": 117
             },
             {
               "type": "assert",
               "message": "expect count 0 (locator('header .s-logo'))",
-              "source": "tests/demo.spec.ts:1411",
-              "duration": 2083
+              "source": "tests/demo.spec.ts:1446",
+              "duration": 2085
+            }
+          ]
+        },
+        {
+          "image": "38dbcbd050b8b396",
+          "viewport": {
+            "width": 480,
+            "height": 800
+          },
+          "events": [
+            {
+              "type": "describe",
+              "message": "The page's top-level box goes full-bleed, as boxes do on a phone",
+              "source": "tests/demo.spec.ts:1448"
+            },
+            {
+              "type": "describe",
+              "message": "A swap that doesn't change the bar's trailing slot leaves it standing",
+              "source": "tests/demo.spec.ts:1456"
+            },
+            {
+              "type": "console",
+              "consoleType": "debug",
+              "message": "Aberdeen queue took 10ms",
+              "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
+            },
+            {
+              "type": "page",
+              "message": "goto ./panels",
+              "source": "tests/demo.spec.ts:1457"
+            },
+            {
+              "type": "check",
+              "message": "waitFor",
+              "box": {
+                "x": 0,
+                "y": 70,
+                "width": 480,
+                "height": 43
+              },
+              "source": "tests/demo.spec.ts:1458",
+              "duration": 147
+            }
+          ]
+        },
+        {
+          "gap": "Aim the navigator at Untitled — push, from this panel"
+        },
+        {
+          "image": "c5c23785e9cae52e",
+          "viewport": {
+            "width": 480,
+            "height": 800
+          },
+          "events": [
+            {
+              "type": "action",
+              "message": "click",
+              "box": {
+                "x": 430,
+                "y": 556,
+                "width": 32,
+                "height": 32
+              },
+              "source": "tests/demo.spec.ts:58",
+              "duration": 123
+            }
+          ]
+        },
+        {
+          "image": "c1a15dbb1c94ab26",
+          "viewport": {
+            "width": 480,
+            "height": 800
+          },
+          "events": [
+            {
+              "type": "check",
+              "message": "waitFor",
+              "box": {
+                "x": 0,
+                "y": 51,
+                "width": 480,
+                "height": 706
+              },
+              "source": "tests/demo.spec.ts:1460",
+              "duration": 135
+            }
+          ]
+        },
+        {
+          "image": "e7e26aba15bab390",
+          "viewport": {
+            "width": 480,
+            "height": 800
+          },
+          "events": [
+            {
+              "type": "check",
+              "message": "waitFor",
+              "box": {
+                "x": 0,
+                "y": 70,
+                "width": 480,
+                "height": 43
+              },
+              "source": "tests/demo.spec.ts:1468",
+              "duration": 188
+            },
+            {
+              "type": "assert",
+              "message": "expect focused",
+              "box": {
+                "x": 439,
+                "y": 9,
+                "width": 32,
+                "height": 32
+              },
+              "source": "tests/demo.spec.ts:1472",
+              "duration": 108
+            }
+          ]
+        },
+        {
+          "gap": "Aim the navigator at Small A — push, from this panel"
+        },
+        {
+          "image": "c26a0c123e4ef96f",
+          "viewport": {
+            "width": 480,
+            "height": 800
+          },
+          "events": [
+            {
+              "type": "describe",
+              "message": "A screen that does declare actions takes the slot, and hands it back",
+              "source": "tests/demo.spec.ts:1474"
+            },
+            {
+              "type": "action",
+              "message": "click",
+              "box": {
+                "x": 430,
+                "y": 556,
+                "width": 32,
+                "height": 32
+              },
+              "source": "tests/demo.spec.ts:58",
+              "duration": 117
+            }
+          ]
+        },
+        {
+          "image": "ba41bbcf06a6d99e",
+          "viewport": {
+            "width": 480,
+            "height": 800
+          },
+          "events": [
+            {
+              "type": "check",
+              "message": "waitFor",
+              "box": {
+                "x": 0,
+                "y": 51,
+                "width": 480,
+                "height": 706
+              },
+              "source": "tests/demo.spec.ts:1476",
+              "duration": 143
+            },
+            {
+              "type": "assert",
+              "message": "expect class /s-panel-origin/",
+              "box": {
+                "x": 151,
+                "y": 9,
+                "width": 320,
+                "height": 32
+              },
+              "source": "tests/demo.spec.ts:1477",
+              "duration": 110
+            },
+            {
+              "type": "assert",
+              "message": "expect visible",
+              "box": {
+                "x": 398,
+                "y": 9,
+                "width": 32,
+                "height": 32
+              },
+              "source": "tests/demo.spec.ts:1478",
+              "duration": 115
+            }
+          ]
+        },
+        {
+          "image": "4f5715ad7a08e186",
+          "viewport": {
+            "width": 480,
+            "height": 800
+          },
+          "events": [
+            {
+              "type": "check",
+              "message": "waitFor",
+              "box": {
+                "x": 0,
+                "y": 70,
+                "width": 480,
+                "height": 43
+              },
+              "source": "tests/demo.spec.ts:1480",
+              "duration": 146
+            },
+            {
+              "type": "assert",
+              "message": "expect not class /s-panel-origin/",
+              "box": {
+                "x": 124,
+                "y": 9,
+                "width": 348,
+                "height": 32
+              },
+              "source": "tests/demo.spec.ts:1481",
+              "duration": 108
+            },
+            {
+              "type": "assert",
+              "message": "expect visible",
+              "box": {
+                "x": 439,
+                "y": 9,
+                "width": 32,
+                "height": 32
+              },
+              "source": "tests/demo.spec.ts:1482",
+              "duration": 115
             }
           ]
         },
@@ -5158,24 +5397,19 @@
           "events": [
             {
               "type": "describe",
-              "message": "The page's top-level box goes full-bleed, as boxes do on a phone",
-              "source": "tests/demo.spec.ts:1413"
-            },
-            {
-              "type": "describe",
               "message": "An action link promoted into the bar still builds on its own panel",
-              "source": "tests/demo.spec.ts:1421"
+              "source": "tests/demo.spec.ts:1484"
             },
             {
               "type": "console",
               "consoleType": "debug",
-              "message": "Aberdeen queue took 12ms",
+              "message": "Aberdeen queue took 10ms",
               "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
             },
             {
               "type": "page",
               "message": "goto ./thread/8",
-              "source": "tests/demo.spec.ts:1425"
+              "source": "tests/demo.spec.ts:1488"
             },
             {
               "type": "check",
@@ -5186,8 +5420,8 @@
                 "width": 480,
                 "height": 706
               },
-              "source": "tests/demo.spec.ts:1426",
-              "duration": 129
+              "source": "tests/demo.spec.ts:1489",
+              "duration": 130
             },
             {
               "type": "action",
@@ -5198,8 +5432,8 @@
                 "width": 32,
                 "height": 32
               },
-              "source": "tests/demo.spec.ts:1427",
-              "duration": 97
+              "source": "tests/demo.spec.ts:1490",
+              "duration": 94
             }
           ]
         },
@@ -5213,8 +5447,8 @@
             {
               "type": "assert",
               "message": "expect text \"Panels\", \"Thread 8\", \"Thread 9\" (locator('.s-crumb'))",
-              "source": "tests/demo.spec.ts:1429",
-              "duration": 96
+              "source": "tests/demo.spec.ts:1492",
+              "duration": 95
             }
           ]
         }

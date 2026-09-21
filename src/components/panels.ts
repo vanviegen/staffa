@@ -159,6 +159,10 @@ export interface Panel<P = Record<string, string | number | string[]>> {
 	 * They are drawn in exactly one of those places at a time, so crossing the
 	 * threshold redraws them; anything stateful inside (the focus in a search
 	 * box) is lost. Buttons and menus are fine.
+	 *
+	 * Assign one function and keep it: a fresh closure on every redraw of your
+	 * handler is a new slot, so the shell redraws the actions — and on a narrow
+	 * shell, where they sit in the top bar, the app's own chrome with them.
 	 */
 	actions?: Slot;
 	/**

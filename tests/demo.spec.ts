@@ -1453,6 +1453,34 @@ test("panels: a phone shows one screen at a time, its chrome all in the bar", as
 	});
 	expect(box).toEqual({ radius: "0px", flush: true });
 
+	page.describe("A swap that doesn't change the bar's trailing slot leaves it standing");
+	await page.goto("./panels");
+	await page.getByText("Push a panel").waitFor();
+	await stackNav(topPanel(page), "Untitled", "push");
+	await panelWith(page, /An untitled panel/).waitFor();
+	// Neither this screen nor the one under it declares actions, so the app's own
+	// `menu` holds the slot on both sides of the pop. Mark its node and put the
+	// focus in it — what an app draws here is its stateful chrome, a search box.
+	const menu = page.locator("header .s-menu");
+	await menu.evaluate((el) => { el.dataset.probe = "same-node"; });
+	await menu.getByRole("button", { name: "Display settings" }).focus();
+	await page.keyboard.press("Escape");
+	await page.getByText("Push a panel").waitFor();
+	// The same node, still focused: a search box would have kept its caret (and,
+	// on a phone, the keyboard) instead of losing them mid-word.
+	expect(await menu.evaluate((el) => el.dataset.probe)).toBe("same-node");
+	await expect(menu.getByRole("button", { name: "Display settings" })).toBeFocused();
+
+	page.describe("A screen that does declare actions takes the slot, and hands it back");
+	await stackNav(topPanel(page), "Small A", "push");
+	await panelWith(page, /Small A is a/).waitFor();
+	await expect(menu).toHaveClass(/s-panel-origin/);
+	await expect(menu.getByRole("button", { name: "Share" })).toBeVisible();
+	await page.keyboard.press("Escape");
+	await page.getByText("Push a panel").waitFor();
+	await expect(menu).not.toHaveClass(/s-panel-origin/);
+	await expect(menu.getByRole("button", { name: "Display settings" })).toBeVisible();
+
 	page.describe("An action link promoted into the bar still builds on its own panel");
 	// The panel's actions move into the top bar, outside its own column — but a
 	// link among them is still that panel's chrome, so it opens its target on top
