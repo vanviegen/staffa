@@ -103,6 +103,12 @@ export type AncestorTable<R> = {
 export type PanelSize = "small" | "medium" | "large" | "none";
 
 /**
+ * Where the open columns sit when they don't fill the content area; see
+ * {@link MainOptions.alignment}.
+ */
+export type PanelAlignment = "left" | "right" | "center" | "spaced";
+
+/**
  * What a route handler gets: the params from its route, plus everything the
  * shell needs to know about the panel it is drawing. It's an Aberdeen proxy, so
  * you can set things later, such as a `title` that arrives with your data or
@@ -477,7 +483,8 @@ A.insertGlobalCss({
 			`z-index:2 transition: transform ${PAGE_MS}ms ease-out, opacity ${PAGE_MS}ms linear;`,
 		// The hairline between two columns, fading at both ends (like the sidebar's
 		// `.s-nav-sep`). Columns tile with no gutter — each brings its own `$3` of
-		// padding — so this sits exactly on the boundary.
+		// padding — so this sits exactly on the boundary. A `"spaced"` alignment,
+		// which does put a gutter between them, leaves it off (see `layout`).
 		"&.s-panel-sep::before":
 			"content:'' position:absolute left:0 top:0.6rem bottom:0.6rem width:1px z-index:1 " +
 			"background: linear-gradient(to bottom, transparent, $s-faint 18%, $s-faint 82%, transparent);",
@@ -672,6 +679,8 @@ export interface PanelStackOptions {
 	ancestors?: Record<string, AncestorsHandler | undefined>;
 	/** How many panels are shown at a time. See {@link MainOptions.columns}. */
 	columns?: "auto" | "single";
+	/** Where a short run of columns sits in the area. See {@link MainOptions.alignment}. */
+	alignment?: PanelAlignment;
 	/** What a bare link does. See {@link MainOptions.linkNavigation}. */
 	linkNavigation?: "push" | "replace" | "open";
 	/** The shell's own title, used as the suffix of `document.title`. */
@@ -1505,6 +1514,13 @@ export class PanelStackController implements PanelStack {
 		this.scheduleLayout();
 	}
 
+	/** Adopt a changed `alignment`: one layout pass, nothing redrawn. */
+	setAlignment(alignment: PanelAlignment | undefined): void {
+		if (this.opts.alignment === alignment) return;
+		this.opts.alignment = alignment;
+		this.scheduleLayout();
+	}
+
 	/** Adopt a changed `linkNavigation` default; the next click reads it. */
 	setLinkNavigation(mode: "push" | "replace" | "open" | undefined): void {
 		this.opts.linkNavigation = mode;
@@ -1854,11 +1870,16 @@ export class PanelStackController implements PanelStack {
 			}
 		}
 
-		// A run that doesn't fill the fixed-width area centres in it — unless
-		// panels sit crowded out on its left: then it hugs the left edge instead,
-		// so the strip crosses that edge with no gap and a reveal is a plain
-		// slide back in.
-		const left = first > 0 ? 0 : (geom.area - runSum) / 2;
+		// A run that doesn't fill the fixed-width area is placed in it by the
+		// shell's `alignment`, `"spaced"` sharing the slack out over the gutters
+		// around and between the columns. Unless panels sit crowded out on the
+		// run's left: then it hugs the left edge, so the strip crosses that edge
+		// with no gap, a reveal is a plain slide back in, and no gutter lets a
+		// crowded-out panel peek through.
+		const slack = first > 0 ? 0 : geom.area - runSum;
+		const align = this.opts.alignment ?? "center";
+		const gap = align === "spaced" ? slack / (cur - first + 2) : 0;
+		const left = align === "left" ? 0 : align === "right" ? slack : align === "spaced" ? gap : slack / 2;
 
 		for (let i = first; i <= cur; i++) live[i].width = width(live[i]);
 		// Never-visible panels get their would-be width, so a reveal doesn't start
@@ -1926,12 +1947,12 @@ export class PanelStackController implements PanelStack {
 				}
 			}
 			el.style.width = `${entry.width}px`;
-			x += entry.width;
+			x += entry.width + gap;
 			// Written only on a change, so per-panel UI hanging off `visible` or
 			// `width` isn't rebuilt by every pass.
 			if (entry.$panel.visible !== shown) entry.$panel.visible = shown;
 			if (entry.$panel.width !== entry.width) entry.$panel.width = entry.width;
-			el.classList.toggle("s-panel-sep", shown && i > first);
+			el.classList.toggle("s-panel-sep", shown && i > first && !gap);
 			// Off-screen panels stop rendering, keeping their DOM. A revealed
 			// panel is visible at once; one sliding offstage stays visible for
 			// the whole slide, its visibility class deferred to the slide's

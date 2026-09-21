@@ -104,6 +104,7 @@ const $navPosition = A.proxy("left") as {value: "left" | "right"};
 // mutates the item list below instead — deliberately *not* the whole shell.
 const $shell = A.proxy({
 	columns: "auto" as "auto" | "single" | undefined,
+	alignment: "center" as S.PanelAlignment | undefined,
 	linkNavigation: "push" as "push" | "replace" | "open" | undefined,
 	extraNavItem: false,
 	// The sidebar's width, and the cap on the whole layout. The shell fills the
@@ -206,6 +207,13 @@ A(() => {
 						bind: A.ref($shell, "columns"),
 						attrs: ".small",
 					}));
+					// Only tells while the open columns leave room to spare:
+					// with the area full, every alignment lands in one place.
+					row("Alignment", () => S.buttonChooser({
+						options: { left: "left", center: "center", right: "right", spaced: "spaced" },
+						bind: A.ref($shell, "alignment"),
+						attrs: ".small",
+					}));
 					row("Links", () => S.buttonChooser({
 						options: { push: "push", replace: "replace", open: "open" },
 						bind: A.ref($shell, "linkNavigation"),
@@ -235,6 +243,7 @@ A(() => {
 		// place and the next click picks up the link default — the stack is not
 		// rebuilt, and the open panels keep their state.
 		get columns() { return $shell.columns; },
+		get alignment() { return $shell.alignment; },
 		get linkNavigation() { return $shell.linkNavigation; },
 		get navWidth() { return $shell.navWidth; },
 		get maxWidth() { return `${$shell.maxWidth}px`; },
@@ -591,7 +600,7 @@ function drawPanelsPlayground($panel: S.Panel) {
 	S.box({
 		header: "Shell options",
 		content: () => {
-			A("p mt:0 rich='The shell-wide knobs live in the display-settings popover, up in the top bar: `columns: \"single\"` shows only the current panel however wide the screen, and `linkNavigation` sets what a link without a `data-panel` attribute does — try the links above with `replace` or `open`.'");
+			A("p mt:0 rich='The shell-wide knobs live in the display-settings popover, up in the top bar: `columns: \"single\"` shows only the current panel however wide the screen, `alignment` says where a run of columns that doesn’t fill the area sits in it, and `linkNavigation` sets what a link without a `data-panel` attribute does — try the links above with `replace` or `open`.'");
 			A("p m:0 rich='The two sliders there are `navWidth` and `maxWidth`. The shell fills the window by default; `maxWidth` caps it — sidebar, columns and the bars above and below alike — and centres what is left, which is what a very wide screen wants.'");
 		},
 	});

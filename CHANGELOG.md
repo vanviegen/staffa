@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.23.0
+
+- `S.main({ alignment })` says where the open columns sit when they don't fill the content area: `"center"` (the default, as before), `"left"`, `"right"` or `"spaced"` — the leftover room shared out evenly beside and between the columns.
+
 ## 0.22.2
 
 - Fixed: an auto-growing `S.textarea` came out two pixels short of its text, so it could scroll by that much, showing a scrollbar or nudging the text when the caret reached the last line. It now grows to exactly its text, and scrolls only once a `max-height` caps it.

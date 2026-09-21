@@ -7,7 +7,7 @@ import { type MenuOptions, drawMenu, isFloatingMenuOpen, consumeBranchNav, anyCu
 import { menu as menuIcon, x as closeIcon } from "../icons.js";
 import { iconButton } from "./button.js";
 import { isDialogOpen } from "./dialog.js";
-import { PAGE_MS, PanelStackController, SMALL_MAX_PX, type PanelStack, type AncestorTable, type Panel, type RouteHandler, type RouteTable, type Routes } from "./panels.js";
+import { PAGE_MS, PanelStackController, SMALL_MAX_PX, type PanelStack, type PanelAlignment, type AncestorTable, type Panel, type RouteHandler, type RouteTable, type Routes } from "./panels.js";
 
 /** Options for {@link main}. */
 export interface MainOptions<R = Routes> {
@@ -201,6 +201,19 @@ export interface MainOptions<R = Routes> {
 	 * state.
 	 */
 	columns?: "auto" | "single";
+	/**
+	 * Where the open columns sit when they don't fill the content area — on a
+	 * wide screen with a single small panel open, say. `"center"` (the default)
+	 * splits the leftover room between both sides, `"left"` and `"right"` put it
+	 * all on one side, and `"spaced"` shares it out evenly over the gutters
+	 * beside *and between* the columns. Columns crowded out on the left take
+	 * precedence: while there are any, the run hugs the left edge whatever this
+	 * says. Routed mode only.
+	 *
+	 * Live, like {@link MainOptions.columns}: a change is adopted in one layout
+	 * pass, every panel keeping its state.
+	 */
+	alignment?: PanelAlignment;
 	/**
 	 * What a link *without* a `data-panel` attribute does — the per-link
 	 * attribute always wins. The three keep less and less of the link's own
@@ -486,6 +499,7 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): PanelS
 		// Live: each in its own scope, so a change on a proxied options object
 		// re-runs only that scope — the columns relayout in place, panels intact.
 		A(() => ctl.setColumns(opts.columns));
+		A(() => ctl.setAlignment(opts.alignment));
 		A(() => ctl.setLinkNavigation(opts.linkNavigation));
 	}
 	// Where the brand mark and the app's name link; nowhere under `home: null`.

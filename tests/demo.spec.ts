@@ -68,7 +68,7 @@ function chooseSetting(page: Page, row: string, option: string) {
 		await page.getByRole("button", { name: "Display settings" }).click();
 		await settleMenu(page);
 		await page.locator(".s-menu-list:not(.hidden) label", { hasText: row })
-			.getByRole("button", { name: option, exact: true }).click();
+			.locator("button", { hasText: new RegExp(`^${option}$`) }).click();
 		await page.keyboard.press("Escape");
 	});
 }
@@ -887,6 +887,41 @@ test("panels: columns tile the area, centre in it, and crowd one another out", a
 		expect.closeTo(64, 0), expect.closeTo(64, 0), expect.closeTo(64, 0), // the 4rem floor
 	]);
 	await screenshot(page, "crumbs-floored-scrolling");
+});
+
+test("panels: alignment places a run of columns that doesn't fill the area", async ({ page }) => {
+	// The demo caps the shell at 1920, so the area is 1720 — four columns of 430.
+	// The playground (medium) and a small page come to 1290, leaving 430 of slack
+	// for `alignment` to place, with both columns still on screen.
+	await page.setViewportSize({ width: 1920, height: 900 });
+	await page.goto("./panels");
+	await page.getByText("Push a panel").waitFor();
+	await stackNav(firstPanel(page), "Small A", "push");
+	await panelWith(page, /Small A is a/).waitFor();
+	/** The room left of the run, between its two columns, and right of it. */
+	const gaps = async () => {
+		const area = (await page.locator(".s-panels").boundingBox())!;
+		const [a, b] = await Promise.all(
+			(await page.locator(visiblePanels).all()).map(async (panel) => (await panel.boundingBox())!));
+		return [a.x - area.x, b.x - (a.x + a.width), area.x + area.width - (b.x + b.width)]
+			.map((gap) => Math.round(gap));
+	};
+
+	page.describe("By default the slack is split between the two edges");
+	expect(await gaps()).toEqual([215, 0, 215]);
+
+	page.describe("alignment=left hands it all to the right edge, =right the other way round");
+	await chooseSetting(page, "Alignment", "left");
+	await screenshot(page, "alignment-left");
+	expect(await gaps()).toEqual([0, 0, 430]);
+	await chooseSetting(page, "Alignment", "right");
+	await screenshot(page, "alignment-right");
+	expect(await gaps()).toEqual([430, 0, 0]);
+
+	page.describe("alignment=spaced shares it out evenly beside and between the columns");
+	await chooseSetting(page, "Alignment", "spaced");
+	await screenshot(page, "alignment-spaced");
+	expect(await gaps()).toEqual([143, 143, 143]);
 });
 
 test("panels: the three navigations, pinning, and the crumb menu", async ({ page }) => {
