@@ -367,10 +367,10 @@ export function autocomplete(opts: AutocompleteOptions): void {
 		if (e.key === "ArrowDown") {
 			e.preventDefault();
 			$st.open = true;
-			$st.active = Math.min(max, $st.active + 1);
+			moveTo(Math.min(max, $st.active + 1));
 		} else if (e.key === "ArrowUp") {
 			e.preventDefault();
-			$st.active = Math.max(0, $st.active - 1);
+			moveTo(Math.max(0, $st.active - 1));
 		} else if (e.key === "Enter") {
 			// Always prevent default to avoid accidental form submission.
 			e.preventDefault();
@@ -400,6 +400,12 @@ export function autocomplete(opts: AutocompleteOptions): void {
 			const sel = selectedValues();
 			if (sel.length) remove(sel[sel.length - 1]!);
 		}
+	}
+
+	/** Highlight row `i`, scrolling the list to keep it in view. */
+	function moveTo(i: number) {
+		$st.active = i;
+		document.getElementById(`${menuId}-opt-${i}`)?.scrollIntoView({ block: "nearest" });
 	}
 
 	function onBlur() {

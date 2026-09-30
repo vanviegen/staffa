@@ -569,6 +569,16 @@ test("overlays: toasts, tooltips, menus, dialogs and an inline menu tree", async
 	expect(await page.locator(".s-dialog > div").evaluate((el) => el.scrollHeight <= el.clientHeight)).toBe(true);
 	await page.getByRole("option", { name: "Java", exact: true }).click();
 	await expect(page.getByLabel("Language", { exact: true })).toHaveValue("Java");
+
+	page.describe("Arrowing down the list scrolls the highlighted row into view");
+	await page.getByLabel("Language", { exact: true }).fill("");
+	for (let i = 0; i < 8; i++) await page.keyboard.press("ArrowDown");
+	// Measured in the page: a locator assertion would scroll the row into view itself.
+	expect(await list.evaluate((el) => {
+		const row = el.querySelector("[aria-selected=true]")!, r = row.getBoundingClientRect(), box = el.getBoundingClientRect();
+		return [row.textContent, r.top >= box.top && r.bottom <= box.bottom];
+	})).toEqual(["Visual Basic", true]);
+	await page.keyboard.press("Escape");
 	await page.getByRole("button", { name: "Done" }).click();
 	await page.waitForSelector('text="Pick a language"', { state: "detached" });
 

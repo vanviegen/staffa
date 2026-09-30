@@ -1,9 +1,13 @@
 # Changelog
 
-## 0.23.0
+## 0.23.1
 
 - `S.main({ navResizable: true })` lets the user resize the nav sidebar by dragging the hairline beside it, or with the arrow keys.
+- Fixed: arrowing through an `S.autocomplete` list didn't scroll it, so the highlighted row could move out of sight.
 - Fixed: on a narrow shell, navigating between screens rebuilt the top bar's trailing slot even when the same content stayed in it, so a stateful `menu` — a search box, say — lost its focus and caret mid-navigation.
+
+## 0.23.0
+
 - `S.main({ alignment })` says where the open columns sit when they don't fill the content area: `"center"` (the default, as before), `"left"`, `"right"` or `"spaced"` — the leftover room shared out evenly beside and between the columns.
 
 ## 0.22.2
