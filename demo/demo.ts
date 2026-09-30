@@ -180,6 +180,8 @@ A(() => {
 		home: "/demo/form",
 		nav: { items: $navItems },
 		navPosition: $navPosition.value,
+		// Drag the hairline beside the sidebar (or focus it and press ←/→).
+		navResizable: true,
 		// Keep the header uncluttered by tucking the display controls behind a
 		// single configure button. The popover lays them out as labelled rows.
 		menu: () => S.iconButton({

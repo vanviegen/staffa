@@ -1233,6 +1233,21 @@ test("panels: a page is sized before it draws, and the shell resizes around it",
 	await expect(page.getByTestId("live-draws")).toHaveText("1");
 	await page.keyboard.press("Escape"); // dismiss the popover
 
+	page.describe("Dragging the hairline beside the sidebar resizes it, the columns reflowing in place");
+	const sep = (await page.locator(".s-nav-sep").boundingBox())!;
+	await page.mouse.move(sep.x + sep.width / 2, sep.y + sep.height / 2);
+	await page.mouse.down();
+	await page.mouse.move(sep.x + sep.width / 2 - 100, sep.y + sep.height / 2);
+	await page.mouse.up();
+	await expect.poll(async () => (await shell()).nav).toBe(220);
+	expect(await shell()).toEqual({ nav: 220, area: 980, bar: 1200, left: 200 });
+	await expect(page.getByTestId("live-draws")).toHaveText("1");
+
+	page.describe("Focused, the hairline takes the arrow keys too");
+	await page.locator(".s-nav-sep").focus();
+	await page.keyboard.press("ArrowRight");
+	await expect.poll(async () => (await shell()).nav).toBe(230);
+
 	page.describe("A nav item arriving redraws the sidebar, not the columns");
 	// The shell's item list is a proxy array; adding to (or removing from) it
 	// must not resubscribe — and so rebuild — the shell around the open columns.

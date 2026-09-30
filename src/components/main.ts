@@ -281,6 +281,15 @@ export interface MainOptions<R = Routes> {
 	 * Live, like {@link MainOptions.maxWidth}.
 	 */
 	navWidth?: number;
+	/**
+	 * Lets the user resize the nav sidebar by dragging the hairline between it
+	 * and the content area, or with the arrow keys once it has focus. Defaults
+	 * to `false`.
+	 *
+	 * A dragged width stands until {@link MainOptions.navWidth} changes, and
+	 * stays between 120 px and half the shell.
+	 */
+	navResizable?: boolean;
 	/** Aberdeen attr/style string applied to the sidebar nav panel. */
 	navAttrs?: Attributes;
 	/** Aberdeen attr/style string applied to the narrow-screen full-page nav. */
@@ -289,6 +298,8 @@ export interface MainOptions<R = Routes> {
 
 /** The default nav column, hairline included — see {@link MainOptions.navWidth}. */
 const NAV_W = 200;
+/** The narrowest a user can drag the nav column — see {@link MainOptions.navResizable}. */
+const NAV_MIN_W = 120;
 
 A.insertGlobalCss({
 	".s-main": {
@@ -341,6 +352,12 @@ A.insertGlobalCss({
 		// A vertical hairline between sidebar and content, fading out at both ends —
 		// the vertical sibling of the menu's `hr.s-menu-sep`.
 		".s-nav-sep": "width:1px flex-shrink:0 align-self:stretch margin: 0.6rem 0; border:0 background: linear-gradient(to bottom, transparent, $s-faint 18%, $s-faint 82%, transparent);",
+		// A resizable one is a handle, its hit area widened beyond the hairline.
+		".s-nav-sep[role=separator]": {
+			"&": "cursor:col-resize position:relative z-index:1 touch-action:none",
+			"&::before": "content:'' position:absolute inset: -0.6rem -4px;",
+			"&:hover, &:active, &:focus-visible": "background:$s-accent",
+		},
 		// min-height/min-width:0 override flex's `auto`, so <main> can shrink to its
 		// container instead of letting wide content push the body — and any sidebar
 		// — past the viewport edge. The transition is dormant except for the
@@ -470,6 +487,9 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): PanelS
 	// Whether the narrow-screen full-page nav is showing. Per shell, so nested or
 	// sibling `main()`s can't fight over it.
 	const $nav = A.proxy({ open: false });
+	// The sidebar column's width: `navWidth`, until the user drags it elsewhere.
+	const $navW = A.proxy({ px: NAV_W });
+	A(() => { $navW.px = opts.navWidth ?? NAV_W; });
 	// Whether the shell is narrow, at the same NARROW_PX the `@container` queries
 	// above use. One boolean for everything that must agree on the regime — the
 	// bar's layout, what the ☰ does, where a panel's chrome goes — so they can't
@@ -515,7 +535,7 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): PanelS
 		// here subscribes this scope alone, never the shell entire (see `nav`).
 		A(() => {
 			if (nav == null || !nav.items.length) A("--s-nav-w: 0px");
-			else A(`.s-nav-${navPos}`, `--s-nav-w: ${opts.navWidth ?? NAV_W}px`);
+			else A(`.s-nav-${navPos}`, `--s-nav-w: ${$navW.px}px`);
 		});
 
 		// Top bar: `[leading] [identity] …spacer… [trailing]`, each slot's contents
@@ -602,7 +622,8 @@ export function main<R extends RouteTable<R>>(opts: MainOptions<R> = {}): PanelS
 					A(`nav.s-nav-panel.s-nav-${navPos}`, opts.navAttrs, () => {
 						drawMenu(nav.items);
 					});
-					A("div.s-nav-sep aria-hidden=true");
+					if (opts.navResizable) drawNavHandle(navPos, $navW);
+					else A("div.s-nav-sep aria-hidden=true");
 				});
 				drawMainContent(opts, ctl);
 			});
@@ -780,6 +801,39 @@ function drawNavTrigger(nav: MenuOptions, $nav: { open: boolean }): void {
 		ariaLabel: nav.button?.ariaLabel ?? "Open navigation",
 		attrs: nav.button?.attrs,
 		click: () => { $nav.open = !$nav.open; },
+	});
+}
+
+/**
+ * The hairline between sidebar and content as a window splitter: dragging it, or
+ * pressing ←/→ while it has focus, sets `$navW.px` — the sidebar's whole column.
+ */
+function drawNavHandle(navPos: "left" | "right", $navW: { px: number }): void {
+	// Which way the sidebar grows: away from the shell edge it sits against.
+	const dir = navPos === "right" ? -1 : 1;
+	A("div.s-nav-sep role=separator aria-orientation=vertical aria-label='Resize navigation' tabindex=0", () => {
+		A(() => A("aria-valuenow=", $navW.px));
+		const handle = A() as HTMLElement;
+		const resize = (px: number) => {
+			const max = handle.parentElement!.clientWidth / 2;
+			$navW.px = Math.round(Math.max(NAV_MIN_W, Math.min(max, px)));
+		};
+		A("pointerdown=", (e: PointerEvent) => {
+			if (e.button !== 0) return;
+			e.preventDefault();
+			const x0 = e.clientX;
+			const w0 = $navW.px;
+			const move = (e: PointerEvent) => resize(w0 + dir * (e.clientX - x0));
+			handle.setPointerCapture(e.pointerId);
+			handle.addEventListener("pointermove", move);
+			handle.addEventListener("lostpointercapture", () => handle.removeEventListener("pointermove", move), { once: true });
+		});
+		A("keydown=", (e: KeyboardEvent) => {
+			const step = e.key === "ArrowRight" ? 10 : e.key === "ArrowLeft" ? -10 : 0;
+			if (!step) return;
+			e.preventDefault();
+			resize($navW.px + dir * step);
+		});
 	});
 }
 
