@@ -2,6 +2,7 @@
 
 ## 0.23.1
 
+- Fixed: an auto-growing `S.textarea` could jump between line counts while typing near a line's end, or show a scrollbar it didn't need.
 - `S.main({ navResizable: true })` lets the user resize the nav sidebar by dragging the hairline beside it, or with the arrow keys.
 - Fixed: arrowing through an `S.autocomplete` list didn't scroll it, so the highlighted row could move out of sight.
 - Fixed: on a narrow shell, navigating between screens rebuilt the top bar's trailing slot even when the same content stayed in it, so a stateful `menu` — a search box, say — lost its focus and caret mid-navigation.

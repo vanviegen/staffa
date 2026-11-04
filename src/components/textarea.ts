@@ -41,9 +41,9 @@ A.insertGlobalCss({
 	// a prefix/suffix gives it one.
 	"textarea.s-input, .s-inset.s-inset-bottom": "flex: 0 1 100%; min-height:0",
 	"textarea.s-input": "resize:vertical min-height:3em line-height:1.45",
-	// Sized to its text there is nothing to scroll, so `auto` shows no bar — until
-	// a caller caps the height (`inputAttrs: "max-height:12em"`), when it should.
-	"textarea.s-input.s-autoGrow": "resize:none min-height:2.5em overflow-y:auto",
+	// Sized to its text there is nothing to scroll; `fitToContent` turns scrolling
+	// on once a caller caps the height (`inputAttrs: "max-height:12em"`).
+	"textarea.s-input.s-autoGrow": "resize:none min-height:2.5em overflow-y:hidden",
 });
 
 /**
@@ -106,8 +106,14 @@ export function textarea(opts: TextareaOptions = {}): void {
 
 function fitToContent(el: HTMLTextAreaElement): void {
 	el.style.height = "auto";
+	// Measure without a scrollbar: one would narrow the text and wrap it early.
+	el.style.overflowY = "";
 	// `scrollHeight` measures the padding box, while the height we set sizes the
 	// border box: add the borders back, or the text ends up two pixels too tall
 	// for its box and the textarea scrolls by that much.
-	el.style.height = `${el.scrollHeight + el.offsetHeight - el.clientHeight}px`;
+	const height = el.scrollHeight + el.offsetHeight - el.clientHeight;
+	el.style.height = `${height}px`;
+	// Scroll only once a `max-height` caps the box: `scrollHeight` is rounded, so
+	// an uncapped box can fall a fraction of a pixel short and show a bar.
+	if (el.offsetHeight < height) el.style.overflowY = "auto";
 }
