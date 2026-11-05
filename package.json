@@ -29,6 +29,7 @@
     "build:skill": "rm -rf skill ; mkdir skill && readme-tsdoc --create src/index.ts --file skill/REFERENCE.md --split && awk '/^@@include /{while((getline line < $2)>0) print line; close($2); next} 1' skill-template.md > skill/SKILL.md && rm skill/REFERENCE.md",
     "typecheck": "tsc --noEmit && tsc -p demo --noEmit",
     "prepack": "npm run build && npm run build:skill && npx shotest test && npx shotest collect",
+    "postpublish": "git update-ref refs/tps/deployed HEAD",
     "test": "shotest test"
   },
   "peerDependencies": {
