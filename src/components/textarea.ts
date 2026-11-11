@@ -32,14 +32,13 @@ export interface TextareaOptions extends FieldOptions, InsetOptions {
 }
 
 A.insertGlobalCss({
-	// `flex-basis:100%` with nothing to stop it shrinking means "take the field's
-	// height, then give back whatever the label and help need" — so a field told
-	// how tall to be (`attrs: "h:8rem"`) hands that height to the textarea, while a
-	// field left to size itself (every ordinary one) has no definite height for the
-	// basis to resolve against and the textarea is content-sized exactly as before.
-	// The same rule rides the inset box below, which stands in for the control once
-	// a prefix/suffix gives it one.
-	"textarea.s-input, .s-inset.s-inset-bottom": "flex: 0 1 100%; min-height:0",
+	// Start from the height the textarea asks for (its rows, or its text when
+	// growing), then grow or shrink to whatever room the field has left: a field
+	// told how tall to be (`attrs: "h:8rem"`) hands its height to the textarea,
+	// while a field left to size itself has no room to share out, so the textarea
+	// keeps its own height. The same rule rides the inset box below, which stands
+	// in for the control once a prefix/suffix gives it one.
+	"textarea.s-input, .s-inset.s-inset-bottom": "flex: 1 1 auto; min-height:0",
 	"textarea.s-input": "resize:vertical min-height:3em line-height:1.45",
 	// Sized to its text there is nothing to scroll; `fitToContent` turns scrolling
 	// on once a caller caps the height (`inputAttrs: "max-height:12em"`).
@@ -105,15 +104,27 @@ export function textarea(opts: TextareaOptions = {}): void {
 }
 
 function fitToContent(el: HTMLTextAreaElement): void {
-	el.style.height = "auto";
-	// Measure without a scrollbar: one would narrow the text and wrap it early.
-	el.style.overflowY = "";
+	// Measure a copy taken out of the flow: collapsing the textarea itself would
+	// scroll its caret into view of the collapsed box and shrink the page under
+	// it, so a capped textarea, or the page, would jump on every keystroke.
+	const probe = el.cloneNode() as HTMLTextAreaElement;
+	probe.value = el.value;
+	Object.assign(probe.style, {
+		position: "absolute",
+		visibility: "hidden",
+		width: `${el.offsetWidth}px`,
+		height: "auto",
+		// Measure without a scrollbar: one would narrow the text and wrap it early.
+		overflowY: "",
+	});
+	el.after(probe);
 	// `scrollHeight` measures the padding box, while the height we set sizes the
 	// border box: add the borders back, or the text ends up two pixels too tall
 	// for its box and the textarea scrolls by that much.
-	const height = el.scrollHeight + el.offsetHeight - el.clientHeight;
+	const height = probe.scrollHeight + probe.offsetHeight - probe.clientHeight;
+	probe.remove();
 	el.style.height = `${height}px`;
 	// Scroll only once a `max-height` caps the box: `scrollHeight` is rounded, so
 	// an uncapped box can fall a fraction of a pixel short and show a bar.
-	if (el.offsetHeight < height) el.style.overflowY = "auto";
+	el.style.overflowY = el.offsetHeight < height ? "auto" : "";
 }

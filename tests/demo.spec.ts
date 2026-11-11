@@ -164,7 +164,16 @@ test("form: fields, submission, and the chrome moving around it", async ({ page 
 	await page.getByLabel("Tags").fill("css");
 	await page.getByRole("option", { name: "css", exact: true }).click();
 
-	await page.getByLabel("Bio").fill("Wrote the first program.");
+	// The Bio textarea grows to its text, and shrinks back, without scrolling.
+	const bio = page.getByLabel("Bio");
+	const fits = () => bio.evaluate((el) => [el.offsetHeight, el.scrollHeight <= el.clientHeight] as const);
+	const [oneLine] = await fits();
+	await bio.fill("Wrote\nthe\nfirst\nprogram.");
+	const [fourLines, noScroll] = await fits();
+	expect(fourLines).toBeGreaterThan(oneLine);
+	expect(noScroll).toBe(true);
+	await bio.fill("Wrote the first program.");
+	expect(await fits()).toEqual([oneLine, true]);
 	await page.getByLabel("Subscribe to the newsletter").check();
 
 	page.describe("Submit: Save spins while the asynchronous handler runs");

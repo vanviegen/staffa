@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.23.2
+
+- Fixed: typing in an auto-growing `S.textarea` capped by a `max-height` could scroll its text, moving the caret's line up on every keystroke, and could make the page around it jump.
+- Fixed: an auto-growing `S.textarea` without a `prefix`/`suffix` didn't grow with its text, but stayed a few rows tall and scrolled.
+
 ## 0.23.1
 
 - Fixed: an auto-growing `S.textarea` could jump between line counts while typing near a line's end, or show a scrollbar it didn't need.

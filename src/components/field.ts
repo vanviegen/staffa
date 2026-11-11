@@ -86,6 +86,9 @@ A.insertGlobalCss({
 		// On a textarea the insets ride the bottom edge, so a growing box keeps its
 		// send button where the caret is rather than floating it mid-paragraph.
 		"&.s-inset-bottom > .s-inset_start, &.s-inset-bottom > .s-inset_end": "top:auto padding-bottom:0.35em",
+		// A column rather than a grid, so the textarea flexes within the box as it
+		// would directly in the field.
+		"&.s-inset-bottom:has(> .s-inset_start), &.s-inset-bottom:has(> .s-inset_end)": "display:flex flex-direction:column",
 		"> .s-inset_start > svg, > .s-inset_end > svg": "width:1.15em height:1.15em",
 		// A number input's spinner wants the very corner a trailing inset is in, and
 		// it is the inset that was asked for. (Firefox's is `appearance`-controlled.)
