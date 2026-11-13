@@ -1,0 +1,635 @@
+{
+  "version": 4,
+  "file": "tests/demo.spec.ts",
+  "title": "panels: closing splices a column out, reveals what it hid, and recycles what reopens",
+  "steps": [
+    {
+      "image": "d05fb5a406e960dc",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "page",
+          "message": "setViewportSize 1820×900",
+          "source": "tests/demo.spec.ts:1037"
+        },
+        {
+          "type": "page",
+          "message": "goto ./panels",
+          "source": "tests/demo.spec.ts:1038"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 489,
+            "y": 79,
+            "width": 1043,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:1039",
+          "duration": 270
+        }
+      ]
+    },
+    {
+      "gap": "Aim the navigator at Small A — push, from this panel"
+    },
+    {
+      "image": "d05fb5a406e960dc",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Stack playground → A → B; the playground is crowded out",
+          "source": "tests/demo.spec.ts:1041"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1482,
+            "y": 421,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:58",
+          "duration": 202
+        }
+      ]
+    },
+    {
+      "image": "348c9df00e51c760",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 1280,
+            "y": 60,
+            "width": 540,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:1043",
+          "duration": 253
+        }
+      ]
+    },
+    {
+      "gap": "Aim the navigator at Small B — push, from this panel"
+    },
+    {
+      "image": "4114519ade08e0c1",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1752,
+            "y": 547,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:58",
+          "duration": 249
+        }
+      ]
+    },
+    {
+      "image": "b9eaf4eb6c854989",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 740,
+            "y": 60,
+            "width": 540,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:1045",
+          "duration": 218
+        },
+        {
+          "type": "assert",
+          "message": "expect count 3 (locator('.s-panel:not(.s-panel-closing)'))",
+          "source": "tests/demo.spec.ts:1046",
+          "duration": 128
+        },
+        {
+          "type": "assert",
+          "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing):not([inert])'))",
+          "source": "tests/demo.spec.ts:1047",
+          "duration": 127
+        },
+        {
+          "type": "describe",
+          "message": "Delete A — not the top page — and it is spliced out from under B",
+          "source": "tests/demo.spec.ts:1049"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 690,
+            "y": 78,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:1052",
+          "duration": 190
+        }
+      ]
+    },
+    {
+      "image": "0ecf05a13cdd51f2",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 219,
+            "y": 79,
+            "width": 1043,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:1054",
+          "duration": 251
+        },
+        {
+          "type": "assert",
+          "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing):not([inert])'))",
+          "source": "tests/demo.spec.ts:1055",
+          "duration": 178
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1769,
+            "y": 841,
+            "width": 16,
+            "height": 18
+          },
+          "source": "tests/demo.spec.ts:1060",
+          "duration": 221
+        }
+      ]
+    },
+    {
+      "image": "f45d982c3c12918b",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect count 0 (locator('.s-toast'))",
+          "source": "tests/demo.spec.ts:1061",
+          "duration": 2988
+        }
+      ]
+    },
+    {
+      "image": "4a817242087d733e",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "The splice is a history entry, so browser back undoes it",
+          "source": "tests/demo.spec.ts:1063"
+        },
+        {
+          "type": "page",
+          "message": "goBack",
+          "source": "tests/demo.spec.ts:1064"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 200,
+            "y": 60,
+            "width": 540,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:1065",
+          "duration": 173
+        },
+        {
+          "type": "assert",
+          "message": "expect count 3 (locator('.s-panel:not(.s-panel-closing)'))",
+          "source": "tests/demo.spec.ts:1066",
+          "duration": 129
+        },
+        {
+          "type": "describe",
+          "message": "Closing the *top* column frees the room the crowded-out one needs",
+          "source": "tests/demo.spec.ts:1068"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1230,
+            "y": 78,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:1071",
+          "duration": 186
+        }
+      ]
+    },
+    {
+      "image": "d39f3674df359664",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 219,
+            "y": 79,
+            "width": 1043,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:1073",
+          "duration": 244
+        },
+        {
+          "type": "assert",
+          "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
+          "source": "tests/demo.spec.ts:1074",
+          "duration": 164
+        },
+        {
+          "type": "assert",
+          "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing):not([inert])'))",
+          "source": "tests/demo.spec.ts:1075",
+          "duration": 161
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1769,
+            "y": 841,
+            "width": 16,
+            "height": 18
+          },
+          "source": "tests/demo.spec.ts:1076",
+          "duration": 211
+        }
+      ]
+    },
+    {
+      "image": "348c9df00e51c760",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect count 0 (locator('.s-toast'))",
+          "source": "tests/demo.spec.ts:1077",
+          "duration": 3051
+        }
+      ]
+    },
+    {
+      "gap": "Aim the navigator at Small B — push, from this panel"
+    },
+    {
+      "image": "ed3a39c47ba9d194",
+      "viewport": {
+        "width": 1920,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Widen past all three columns, so the playground's navigator stays usable",
+          "source": "tests/demo.spec.ts:1079"
+        },
+        {
+          "type": "page",
+          "message": "setViewportSize 1920×900",
+          "source": "tests/demo.spec.ts:1080"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1470,
+            "y": 643,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:58",
+          "duration": 270
+        }
+      ]
+    },
+    {
+      "image": "49776df30cabc668",
+      "viewport": {
+        "width": 1920,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 1490,
+            "y": 60,
+            "width": 430,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:1082",
+          "duration": 247
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Panels\", \"Small A\", \"Small B\" (locator('.s-crumb'))",
+          "source": "tests/demo.spec.ts:1083",
+          "duration": 167
+        }
+      ]
+    },
+    {
+      "gap": "Aim the navigator at Small B — replace, from this panel"
+    },
+    {
+      "image": "6ed652afe35b5a0b",
+      "viewport": {
+        "width": 1920,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Replace from the playground, aiming at the already-open Small B",
+          "source": "tests/demo.spec.ts:1087"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 992,
+            "y": 502,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:58",
+          "duration": 226
+        }
+      ]
+    },
+    {
+      "image": "6228a6e47842b164",
+      "viewport": {
+        "width": 1920,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect text \"Small B\"",
+          "box": {
+            "x": 59,
+            "y": 30,
+            "width": 46,
+            "height": 20
+          },
+          "source": "tests/demo.spec.ts:1091",
+          "duration": 217
+        },
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 845,
+            "y": 60,
+            "width": 430,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:1092",
+          "duration": 168
+        }
+      ]
+    },
+    {
+      "image": "24854f1ef975016b",
+      "viewport": {
+        "width": 1920,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "A replace is a redirect: browser back skips the replaced arrangement",
+          "source": "tests/demo.spec.ts:1095"
+        },
+        {
+          "type": "page",
+          "message": "goBack",
+          "source": "tests/demo.spec.ts:1098"
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Panels\", \"Small A\" (locator('.s-crumb'))",
+          "source": "tests/demo.spec.ts:1099",
+          "duration": 205
+        }
+      ]
+    },
+    {
+      "image": "58a120652b634865",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "A closing page is torn down at once; only its element lingers, fading",
+          "source": "tests/demo.spec.ts:1101"
+        },
+        {
+          "type": "page",
+          "message": "setViewportSize 1280×900",
+          "source": "tests/demo.spec.ts:1102"
+        },
+        {
+          "type": "page",
+          "message": "goto ./panels",
+          "source": "tests/demo.spec.ts:1103"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 219,
+            "y": 79,
+            "width": 1043,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:1104",
+          "duration": 201
+        }
+      ]
+    },
+    {
+      "gap": "Aim the navigator at Sizing & lifecycle — push, from this panel"
+    },
+    {
+      "image": "ff1c83dcbd856373",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1212,
+            "y": 421,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:58",
+          "duration": 201
+        }
+      ]
+    },
+    {
+      "image": "a3ab2859089038b4",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 200,
+            "y": 60,
+            "width": 1080,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:1106",
+          "duration": 206
+        }
+      ]
+    },
+    {
+      "image": "b0a3c19548352edb",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 257,
+            "y": 606,
+            "width": 987,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:1110",
+          "duration": 212
+        }
+      ]
+    },
+    {
+      "image": "e3d235deaf62285c",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "A page that sets no title lends its first line to the crumb, and closes itself",
+          "source": "tests/demo.spec.ts:1112"
+        },
+        {
+          "type": "page",
+          "message": "goto ./panels/untitled",
+          "source": "tests/demo.spec.ts:1113"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 218,
+            "y": 78,
+            "width": 505,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:1114",
+          "duration": 164
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"An untitled panel\"",
+          "box": {
+            "x": 121,
+            "y": 30,
+            "width": 100,
+            "height": 20
+          },
+          "source": "tests/demo.spec.ts:1117",
+          "duration": 137
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 218,
+            "y": 201,
+            "width": 51,
+            "height": 26
+          },
+          "source": "tests/demo.spec.ts:1120",
+          "duration": 146
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,548 @@
+{
+  "version": 4,
+  "file": "tests/demo.spec.ts",
+  "title": "panels: columns tile the area, centre in it, and crowd one another out",
+  "steps": [
+    {
+      "image": "58a120652b634865",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "page",
+          "message": "setViewportSize 1280×900",
+          "source": "tests/demo.spec.ts:773"
+        },
+        {
+          "type": "console",
+          "consoleType": "debug",
+          "message": "Aberdeen queue took 15ms",
+          "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
+        },
+        {
+          "type": "page",
+          "message": "goto ./panels",
+          "source": "tests/demo.spec.ts:774"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 219,
+            "y": 79,
+            "width": 1043,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:775",
+          "duration": 257
+        },
+        {
+          "type": "describe",
+          "message": "A lone actions-less page: the bar is all the app's, and no strip is drawn",
+          "source": "tests/demo.spec.ts:799"
+        },
+        {
+          "type": "assert",
+          "message": "expect count 0 (locator('.s-panel-actions'))",
+          "source": "tests/demo.spec.ts:800",
+          "duration": 2182
+        },
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 18,
+            "y": 18,
+            "width": 24,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:801",
+          "duration": 164
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Staffa\"",
+          "box": {
+            "x": 59,
+            "y": 9,
+            "width": 45,
+            "height": 21
+          },
+          "source": "tests/demo.spec.ts:802",
+          "duration": 166
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Panels\"",
+          "box": {
+            "x": 18,
+            "y": 377,
+            "width": 164,
+            "height": 45
+          },
+          "source": "tests/demo.spec.ts:806",
+          "duration": 170
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"components for Aberdeen\"",
+          "box": {
+            "x": 59,
+            "y": 30,
+            "width": 153,
+            "height": 20
+          },
+          "source": "tests/demo.spec.ts:807",
+          "duration": 166
+        },
+        {
+          "type": "assert",
+          "message": "expect count 0 (locator('.s-crumb'))",
+          "source": "tests/demo.spec.ts:808",
+          "duration": 2177
+        }
+      ]
+    },
+    {
+      "gap": "Aim the navigator at Small A — push, from this panel"
+    },
+    {
+      "image": "58a120652b634865",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Push a page with actions: its column gets a quiet strip, and the stack takes the bar's line",
+          "source": "tests/demo.spec.ts:812"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1212,
+            "y": 421,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:58",
+          "duration": 230
+        }
+      ]
+    },
+    {
+      "image": "8a83d6a73aaf5d64",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 200,
+            "y": 60,
+            "width": 540,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:814",
+          "duration": 252
+        },
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 200,
+            "y": 60,
+            "width": 540,
+            "height": 50
+          },
+          "source": "tests/demo.spec.ts:816",
+          "duration": 183
+        },
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 654,
+            "y": 78,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:817",
+          "duration": 180
+        },
+        {
+          "type": "assert",
+          "message": "expect not text \"Small A\"",
+          "box": {
+            "x": 200,
+            "y": 60,
+            "width": 540,
+            "height": 50
+          },
+          "source": "tests/demo.spec.ts:819",
+          "duration": 184
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Staffa\"",
+          "box": {
+            "x": 59,
+            "y": 9,
+            "width": 45,
+            "height": 21
+          },
+          "source": "tests/demo.spec.ts:821",
+          "duration": 188
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Panels\", \"Small A\" (locator('.s-crumb'))",
+          "source": "tests/demo.spec.ts:822",
+          "duration": 160
+        },
+        {
+          "type": "assert",
+          "message": "expect count 0 (locator('header .s-subtitle'))",
+          "source": "tests/demo.spec.ts:823",
+          "duration": 2158
+        }
+      ]
+    },
+    {
+      "gap": "Aim the navigator at Small B — push, from this panel"
+    },
+    {
+      "image": "759bbe152fce4a4b",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Push B: the two smalls pair up and tile the area exactly",
+          "source": "tests/demo.spec.ts:828"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 672,
+            "y": 547,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:58",
+          "duration": 212
+        }
+      ]
+    },
+    {
+      "image": "b5607531826158a9",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 740,
+            "y": 60,
+            "width": 540,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:830",
+          "duration": 250
+        },
+        {
+          "type": "assert",
+          "message": "expect count 3 (locator('.s-panel:not(.s-panel-closing)'))",
+          "source": "tests/demo.spec.ts:831",
+          "duration": 167
+        },
+        {
+          "type": "assert",
+          "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing):not([inert])'))",
+          "source": "tests/demo.spec.ts:832",
+          "duration": 158
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Small B\"",
+          "box": {
+            "x": 759,
+            "y": 128,
+            "width": 503,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:836",
+          "duration": 193
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Panels\", \"Small A\", \"Small B\" (locator('.s-crumb'))",
+          "source": "tests/demo.spec.ts:837",
+          "duration": 178
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Small A\", \"Small B\" (locator('.s-crumb.s-crumb-on'))",
+          "source": "tests/demo.spec.ts:838",
+          "duration": 149
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"/demo/panels\", \"/demo/panels/a\", \"/demo/panels/b ← current\" (getByTestId('stack-list').first().locator('li'))",
+          "source": "tests/demo.spec.ts:842",
+          "duration": 186
+        }
+      ]
+    },
+    {
+      "image": "c6bb7a9efe48085f",
+      "viewport": {
+        "width": 1600,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Widen the window: the sidebar, its hairline and the content area tile it exactly",
+          "source": "tests/demo.spec.ts:846"
+        },
+        {
+          "type": "page",
+          "message": "setViewportSize 1600×900",
+          "source": "tests/demo.spec.ts:847"
+        },
+        {
+          "type": "describe",
+          "message": "Two quick Escapes peel two columns — and not one of those figures moves",
+          "source": "tests/demo.spec.ts:850"
+        },
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 433,
+            "y": 60,
+            "width": 933,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:861",
+          "duration": 187
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"/demo/panels ← current\"",
+          "box": {
+            "x": 490,
+            "y": 398,
+            "width": 840,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:862",
+          "duration": 189
+        },
+        {
+          "type": "assert",
+          "message": "expect count 0 (locator('.s-crumb'))",
+          "source": "tests/demo.spec.ts:864",
+          "duration": 2172
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"components for Aberdeen\"",
+          "box": {
+            "x": 59,
+            "y": 30,
+            "width": 153,
+            "height": 20
+          },
+          "source": "tests/demo.spec.ts:865",
+          "duration": 216
+        }
+      ]
+    },
+    {
+      "image": "9f5f0712f5ef05bd",
+      "viewport": {
+        "width": 1600,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "A large page takes three columns; the bars are the shell's, as ever",
+          "source": "tests/demo.spec.ts:868"
+        },
+        {
+          "type": "console",
+          "consoleType": "debug",
+          "message": "Aberdeen queue took 14ms",
+          "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
+        },
+        {
+          "type": "page",
+          "message": "goto ./panels/large",
+          "source": "tests/demo.spec.ts:869"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 218,
+            "y": 127,
+            "width": 1365,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:870",
+          "duration": 221
+        },
+        {
+          "type": "screenshot",
+          "message": "large-panel-fills-area",
+          "source": "tests/demo.spec.ts:876",
+          "duration": 138
+        }
+      ]
+    },
+    {
+      "image": "e259f2f73035d772",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Crumbs, with room to spare: every title shows in full, however long",
+          "source": "tests/demo.spec.ts:878"
+        },
+        {
+          "type": "page",
+          "message": "setViewportSize 1280×900",
+          "source": "tests/demo.spec.ts:881"
+        },
+        {
+          "type": "console",
+          "consoleType": "debug",
+          "message": "Aberdeen queue took 14ms",
+          "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
+        },
+        {
+          "type": "page",
+          "message": "goto ./panels/long/detail/deeper",
+          "source": "tests/demo.spec.ts:882"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 758,
+            "y": 152,
+            "width": 160,
+            "height": 20
+          },
+          "source": "tests/demo.spec.ts:883",
+          "duration": 206
+        },
+        {
+          "type": "assert",
+          "message": "expect count 4 (locator('.s-crumb'))",
+          "source": "tests/demo.spec.ts:888",
+          "duration": 137
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Appendix C: methodology, data sources and the small print\"",
+          "box": {
+            "x": 757,
+            "y": 30,
+            "width": 351,
+            "height": 20
+          },
+          "source": "tests/demo.spec.ts:889",
+          "duration": 167
+        },
+        {
+          "type": "screenshot",
+          "message": "crumbs-roomy",
+          "source": "tests/demo.spec.ts:891",
+          "duration": 123
+        }
+      ]
+    },
+    {
+      "image": "fe64361088a8e122",
+      "viewport": {
+        "width": 800,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "A narrower window: the long crumbs equalise; 'Panels' keeps every character",
+          "source": "tests/demo.spec.ts:893"
+        },
+        {
+          "type": "page",
+          "message": "setViewportSize 800×900",
+          "source": "tests/demo.spec.ts:894"
+        },
+        {
+          "type": "screenshot",
+          "message": "crumbs-equalised",
+          "source": "tests/demo.spec.ts:899",
+          "duration": 137
+        }
+      ]
+    },
+    {
+      "image": "12a509810f334abc",
+      "viewport": {
+        "width": 360,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Narrower still: long crumbs bottom out at 4rem, and the strip scrolls",
+          "source": "tests/demo.spec.ts:901"
+        },
+        {
+          "type": "page",
+          "message": "setViewportSize 360×800",
+          "source": "tests/demo.spec.ts:902"
+        },
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 39,
+            "y": 26,
+            "width": 276,
+            "height": 20
+          },
+          "source": "tests/demo.spec.ts:903",
+          "duration": 119
+        },
+        {
+          "type": "screenshot",
+          "message": "crumbs-floored-scrolling",
+          "source": "tests/demo.spec.ts:908",
+          "duration": 64
+        }
+      ]
+    }
+  ]
+}

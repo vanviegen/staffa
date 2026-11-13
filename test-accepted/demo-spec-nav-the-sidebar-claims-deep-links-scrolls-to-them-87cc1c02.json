@@ -1,0 +1,360 @@
+{
+  "version": 4,
+  "file": "tests/demo.spec.ts",
+  "title": "nav: the sidebar claims deep links, scrolls to them, and leads home",
+  "steps": [
+    {
+      "image": "38472d9c6455ca61",
+      "viewport": {
+        "width": 900,
+        "height": 320
+      },
+      "events": [
+        {
+          "type": "page",
+          "message": "setViewportSize 900×320",
+          "source": "tests/demo.spec.ts:700"
+        },
+        {
+          "type": "console",
+          "consoleType": "debug",
+          "message": "Aberdeen queue took 11ms",
+          "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
+        },
+        {
+          "type": "page",
+          "message": "goto ./buttons",
+          "source": "tests/demo.spec.ts:701"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 219,
+            "y": 79,
+            "width": 663,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:702",
+          "duration": 155
+        }
+      ]
+    },
+    {
+      "image": "cda5326f496212ae",
+      "viewport": {
+        "width": 900,
+        "height": 320
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "The Panels row starts out below the sidebar's fold",
+          "source": "tests/demo.spec.ts:707"
+        },
+        {
+          "type": "describe",
+          "message": "Navigate there from the page's own content; the sidebar scrolls the row into view",
+          "source": "tests/demo.spec.ts:716"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 325,
+            "y": 150,
+            "width": 196,
+            "height": 37
+          },
+          "source": "tests/demo.spec.ts:717",
+          "duration": 123
+        }
+      ]
+    },
+    {
+      "image": "dc7825cc38db6122",
+      "viewport": {
+        "width": 900,
+        "height": 320
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 219,
+            "y": 79,
+            "width": 663,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:718",
+          "duration": 126
+        },
+        {
+          "type": "assert",
+          "message": "expect attribute value \"aria-current\" \"page\"",
+          "box": {
+            "x": 18,
+            "y": 224,
+            "width": 164,
+            "height": 45
+          },
+          "source": "tests/demo.spec.ts:719",
+          "duration": 122
+        },
+        {
+          "type": "describe",
+          "message": "The app's name leads home: the highlight and the scroll follow back up",
+          "source": "tests/demo.spec.ts:723"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 59,
+            "y": 9,
+            "width": 45,
+            "height": 21
+          },
+          "source": "tests/demo.spec.ts:724",
+          "duration": 107
+        }
+      ]
+    },
+    {
+      "image": "3f47306862150669",
+      "viewport": {
+        "width": 900,
+        "height": 320
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "A cold deep link arrives with the sidebar already scrolled to its row",
+          "source": "tests/demo.spec.ts:728"
+        },
+        {
+          "type": "console",
+          "consoleType": "debug",
+          "message": "Aberdeen queue took 11ms",
+          "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
+        },
+        {
+          "type": "page",
+          "message": "goto ./panels",
+          "source": "tests/demo.spec.ts:729"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 219,
+            "y": 79,
+            "width": 663,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:730",
+          "duration": 133
+        }
+      ]
+    },
+    {
+      "image": "b4cb9683e572a536",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "An icon detail has no row of its own; the gallery's `match` claims it",
+          "source": "tests/demo.spec.ts:734"
+        },
+        {
+          "type": "page",
+          "message": "setViewportSize 1280×900",
+          "source": "tests/demo.spec.ts:736"
+        },
+        {
+          "type": "console",
+          "consoleType": "debug",
+          "message": "Aberdeen queue took 10ms",
+          "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
+        },
+        {
+          "type": "page",
+          "message": "goto ./icons/heart",
+          "source": "tests/demo.spec.ts:737"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 758,
+            "y": 289,
+            "width": 505,
+            "height": 59
+          },
+          "source": "tests/demo.spec.ts:738",
+          "duration": 201
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Icons\", \"heart\" (locator('.s-crumb'))",
+          "source": "tests/demo.spec.ts:739",
+          "duration": 160
+        },
+        {
+          "type": "assert",
+          "message": "expect attribute value \"aria-current\" \"page\"",
+          "box": {
+            "x": 18,
+            "y": 327,
+            "width": 164,
+            "height": 45
+          },
+          "source": "tests/demo.spec.ts:740",
+          "duration": 146
+        },
+        {
+          "type": "describe",
+          "message": "From a stack without home, the app's name opens it like a nav item would",
+          "source": "tests/demo.spec.ts:742"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 59,
+            "y": 9,
+            "width": 45,
+            "height": 21
+          },
+          "source": "tests/demo.spec.ts:743",
+          "duration": 146
+        }
+      ]
+    },
+    {
+      "image": "669a8956a45cddc0",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 200,
+            "y": 60,
+            "width": 1080,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:745",
+          "duration": 146
+        },
+        {
+          "type": "assert",
+          "message": "expect count 0 (locator('.s-crumb'))",
+          "source": "tests/demo.spec.ts:747",
+          "duration": 2134
+        },
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 59,
+            "y": 30,
+            "width": 153,
+            "height": 20
+          },
+          "source": "tests/demo.spec.ts:748",
+          "duration": 164
+        }
+      ]
+    },
+    {
+      "image": "9bd407300f134c8c",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "With home already in the stack, the logo goes back to it, closing what sat on top",
+          "source": "tests/demo.spec.ts:750"
+        },
+        {
+          "type": "console",
+          "consoleType": "debug",
+          "message": "Aberdeen queue took 13ms",
+          "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
+        },
+        {
+          "type": "page",
+          "message": "goto ./form/guard",
+          "source": "tests/demo.spec.ts:751"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 236,
+            "y": 188,
+            "width": 1008,
+            "height": 48
+          },
+          "source": "tests/demo.spec.ts:752",
+          "duration": 167
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 18,
+            "y": 18,
+            "width": 24,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:753",
+          "duration": 142
+        }
+      ]
+    },
+    {
+      "image": "669a8956a45cddc0",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 200,
+            "y": 60,
+            "width": 1080,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:755",
+          "duration": 194
+        },
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 59,
+            "y": 30,
+            "width": 153,
+            "height": 20
+          },
+          "source": "tests/demo.spec.ts:756",
+          "duration": 164
+        }
+      ]
+    }
+  ]
+}

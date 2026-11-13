@@ -4,6 +4,10 @@
   "description": "An opinionated component library for the Aberdeen reactive UI library.",
   "license": "ISC",
   "author": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vanviegen/staffa.git"
+  },
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -28,8 +32,7 @@
     "build": "npm run build:icons && tsc && tsc -p demo && esbuild src/index.ts --bundle --external:aberdeen --minify --format=esm --outfile=dist/staffa.esm.js",
     "build:skill": "rm -rf skill ; mkdir skill && readme-tsdoc --create src/index.ts --file skill/REFERENCE.md --split && awk '/^@@include /{while((getline line < $2)>0) print line; close($2); next} 1' skill-template.md > skill/SKILL.md && rm skill/REFERENCE.md",
     "typecheck": "tsc --noEmit && tsc -p demo --noEmit",
-    "prepack": "npm run build && npm run build:skill && npx shotest test && npx shotest collect",
-    "postpublish": "git update-ref refs/tps/deployed HEAD",
+    "prepack": "npm run build && npm run build:skill",
     "test": "shotest test"
   },
   "peerDependencies": {
@@ -42,7 +45,7 @@
     "jsdom": "^29.1.1",
     "lucide-static": "^1.17.0",
     "readme-tsdoc": "^1.2.1",
-    "shotest": "^2.7.0",
+    "shotest": "^2.10.0",
     "typescript": "^5.9.3"
   },
   "allowScripts": {

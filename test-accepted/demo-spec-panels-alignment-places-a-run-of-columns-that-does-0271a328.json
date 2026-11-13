@@ -1,0 +1,158 @@
+{
+  "version": 4,
+  "file": "tests/demo.spec.ts",
+  "title": "panels: alignment places a run of columns that doesn't fill the area",
+  "steps": [
+    {
+      "image": "1319cec0bad1601b",
+      "viewport": {
+        "width": 1920,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "page",
+          "message": "setViewportSize 1920×900",
+          "source": "tests/demo.spec.ts:906"
+        },
+        {
+          "type": "console",
+          "consoleType": "debug",
+          "message": "Aberdeen queue took 10ms",
+          "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
+        },
+        {
+          "type": "page",
+          "message": "goto ./panels",
+          "source": "tests/demo.spec.ts:907"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 649,
+            "y": 79,
+            "width": 823,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:908",
+          "duration": 203
+        }
+      ]
+    },
+    {
+      "gap": "Aim the navigator at Small A — push, from this panel"
+    },
+    {
+      "image": "1319cec0bad1601b",
+      "viewport": {
+        "width": 1920,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1422,
+            "y": 445,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:58",
+          "duration": 160
+        }
+      ]
+    },
+    {
+      "image": "24854f1ef975016b",
+      "viewport": {
+        "width": 1920,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 1275,
+            "y": 60,
+            "width": 430,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:910",
+          "duration": 185
+        }
+      ]
+    },
+    {
+      "gap": "Set Alignment to left in the display settings"
+    },
+    {
+      "image": "fdda2d544577d1f9",
+      "viewport": {
+        "width": 1920,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "By default the slack is split between the two edges",
+          "source": "tests/demo.spec.ts:920"
+        },
+        {
+          "type": "describe",
+          "message": "alignment=left hands it all to the right edge, =right the other way round",
+          "source": "tests/demo.spec.ts:923"
+        },
+        {
+          "type": "screenshot",
+          "message": "alignment-left",
+          "source": "tests/demo.spec.ts:925",
+          "duration": 175
+        }
+      ]
+    },
+    {
+      "gap": "Set Alignment to right in the display settings"
+    },
+    {
+      "image": "f50a881f34aa1f1a",
+      "viewport": {
+        "width": 1920,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "screenshot",
+          "message": "alignment-right",
+          "source": "tests/demo.spec.ts:928",
+          "duration": 174
+        }
+      ]
+    },
+    {
+      "gap": "Set Alignment to spaced in the display settings"
+    },
+    {
+      "image": "1a99e7ba9ec131fd",
+      "viewport": {
+        "width": 1920,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "alignment=spaced shares it out evenly beside and between the columns",
+          "source": "tests/demo.spec.ts:931"
+        },
+        {
+          "type": "screenshot",
+          "message": "alignment-spaced",
+          "source": "tests/demo.spec.ts:933",
+          "duration": 173
+        }
+      ]
+    }
+  ]
+}

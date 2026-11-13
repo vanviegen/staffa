@@ -1,55 +1,38 @@
-# Dev container image for Staffa.
-#
-# The base is the very image ShoTest runs its browser in —
-# `mcr.microsoft.com/playwright:v<@playwright/test version>-noble` — so
-# screenshots taken here are comparable to the accepted baselines in
-# `test-accepted/`, instead of drifting on fonts and rasterization. Keep the tag
-# in step with the `@playwright/test` that `package.json` resolves to (ShoTest
-# derives it the same way, and says so when they disagree).
-#
-# Because the container already *is* that image, ShoTest must not start another
-# one: `SHOTEST_NO_CONTAINER` makes it run Playwright natively, which is exactly
-# what it asks for when the job itself runs inside the pinned image.
+# Dev container image for Staffa: Node for building the library and serving its
+# demo. The tests run in ShoTest's pinned Playwright image, so that screenshots
+# render like the accepted baselines in test-accepted/.
 
-FROM mcr.microsoft.com/playwright:v1.62.1-noble
+FROM docker.io/library/node:24-bookworm-slim
 ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-ENV SHOTEST_NO_CONTAINER=1
-
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates curl git sudo bash procps psmisc ripgrep less nano \
       openssh-client unzip zip xz-utils build-essential pkg-config \
     && rm -rf /var/lib/apt/lists/*
-
-# The task runs as uid 1000, which needs a home directory it owns. Noble already
-# carries a uid-1000 user (`ubuntu`); the useradd is only there in case a future
-# base image doesn't.
-RUN set -eux; \
-    if ! id -u 1000 >/dev/null 2>&1; then useradd -m -u 1000 -s /bin/bash dev; fi; \
-    user="$(id -nu 1000)"; home="$(getent passwd 1000 | cut -d: -f6)"; \
-    usermod -s /bin/bash "$user"; \
-    mkdir -p "$home"; chown -R 1000:"$(id -g 1000)" "$home"; \
-    echo "$user ALL=(ALL) NOPASSWD:ALL" >/etc/sudoers.d/tps-dev; \
-    chmod 0440 /etc/sudoers.d/tps-dev
-
-USER 1000
+# The docker CLI, talking to the socket TPS serves at $DOCKER_HOST: with it,
+# `shotest test` runs in the pinned Playwright image.
+RUN curl -fsSL https://download.docker.com/linux/static/stable/$(uname -m)/docker-29.9.1.tgz \
+      | tar xz -C /usr/local/bin --strip-components=1 docker/docker
+# node's image already has a uid 1000 user named 'node', who owns its home.
+RUN echo 'node ALL=(ALL) NOPASSWD:ALL' >/etc/sudoers.d/node
+USER node
 WORKDIR /work
 
-# Services, both forwarded to the browser.
-#
 # 'app' (the CMD) builds and serves the demo statically: `-P` is the SPA fallback
 # the demo's routed URLs need, `-c-1` turns off http-server's hour of caching (the
 # demo loads /dist as ES modules, so a cached one hides every rebuild behind it),
 # and the build comes first so a fresh container serves the current source rather
-# than whatever dist/ happens to hold.
-#
-# 'review' is ShoTest's review app, where visual changes are compared against the
-# baselines in test-accepted/ and accepted. It picks its port from SHOTEST_PORT,
-# so a `npx shotest review` typed by hand lands on the forwarded one too.
-ENV SHOTEST_PORT=8081
-EXPOSE 8080 8081
-LABEL tps.service.review="npx shotest review --close-on-accept"
-LABEL tps.service.test="npm test"
-LABEL tps.check="npm ci && npm run build && npm test"
-LABEL tps.cache="/home/ubuntu/.npm"
+# than whatever dist/ happens to hold. 3847 is ShoTest's review app.
+EXPOSE 8080 3847
 CMD ["sh", "-c", "npm install && npm run build && npx http-server -p 8080 -a 0.0.0.0 -c-1 -P 'http://localhost:8080/demo/index.html?'"]
+
+# Passes once the tests do (they load the demo from dist/) and the user has
+# accepted every visual change, telling the user where to find the review app
+# for as long as it runs.
+LABEL tps.test="npm install && npm run build && npx shotest test && /tps/guest-tool show-user-text 'Visual changes await your review in the **3847** tab: accept them or comment on them, then press **Apply**.' && trap '/tps/guest-tool show-user-text' EXIT && npx shotest review"
+# Pushing is the release: GitHub Actions publishes to npm what is pushed.
+LABEL tps.deploy="git push origin HEAD:main"
+# ShoTest's result cache, shared by all tasks and the test that merging runs:
+# no test runs twice on the same source tree, which the commit message TPS
+# asks for is no part of.
+ENV SHOTEST_CACHE_DIR=/home/node/.shotest-cache SHOTEST_IGNORE=.tps-commit-message
+LABEL tps.cache="/home/node/.npm /home/node/.shotest-cache"

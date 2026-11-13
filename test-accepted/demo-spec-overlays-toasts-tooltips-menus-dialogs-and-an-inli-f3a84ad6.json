@@ -1,0 +1,1643 @@
+{
+  "version": 4,
+  "file": "tests/demo.spec.ts",
+  "title": "overlays: toasts, tooltips, menus, dialogs and an inline menu tree",
+  "steps": [
+    {
+      "image": "bec8956a1a72ef62",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "page",
+          "message": "goto ./overlays",
+          "source": "tests/demo.spec.ts:413"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 219,
+            "y": 79,
+            "width": 1043,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:414",
+          "duration": 228
+        },
+        {
+          "type": "describe",
+          "message": "Fire two toasts; they stack at the bottom",
+          "source": "tests/demo.spec.ts:416"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 333,
+            "y": 169,
+            "width": 96,
+            "height": 37
+          },
+          "source": "tests/demo.spec.ts:417",
+          "duration": 195
+        }
+      ]
+    },
+    {
+      "image": "2cf8786d40648fee",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 896,
+            "y": 841,
+            "width": 324,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:418",
+          "duration": 173
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 540,
+            "y": 169,
+            "width": 87,
+            "height": 37
+          },
+          "source": "tests/demo.spec.ts:419",
+          "duration": 204
+        }
+      ]
+    },
+    {
+      "image": "7c535a3a7cce89ac",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 896,
+            "y": 841,
+            "width": 324,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:420",
+          "duration": 208
+        },
+        {
+          "type": "describe",
+          "message": "Each × dismisses its toast",
+          "source": "tests/demo.spec.ts:425"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1229,
+            "y": 722,
+            "width": 16,
+            "height": 18
+          },
+          "source": "tests/demo.spec.ts:426",
+          "duration": 209
+        }
+      ]
+    },
+    {
+      "image": "68a8a4b86fe79499",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1229,
+            "y": 816,
+            "width": 16,
+            "height": 18
+          },
+          "source": "tests/demo.spec.ts:427",
+          "duration": 267
+        }
+      ]
+    },
+    {
+      "image": "bec8956a1a72ef62",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect count 0 (locator('.s-toast'))",
+          "source": "tests/demo.spec.ts:428",
+          "duration": 3005
+        },
+        {
+          "type": "describe",
+          "message": "Show a tooltip on hover",
+          "source": "tests/demo.spec.ts:430"
+        },
+        {
+          "type": "action",
+          "message": "hover",
+          "box": {
+            "x": 663,
+            "y": 411,
+            "width": 90,
+            "height": 37
+          },
+          "source": "tests/demo.spec.ts:431",
+          "duration": 238
+        }
+      ]
+    },
+    {
+      "image": "0ccfd3fb3c6b10d0",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 605,
+            "y": 375,
+            "width": 206,
+            "height": 29
+          },
+          "source": "tests/demo.spec.ts:432",
+          "duration": 211
+        }
+      ]
+    },
+    {
+      "image": "bec8956a1a72ef62",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "A button's own `tooltip` option, with its key after it",
+          "source": "tests/demo.spec.ts:439"
+        },
+        {
+          "type": "action",
+          "message": "hover",
+          "box": {
+            "x": 464,
+            "y": 356,
+            "width": 87,
+            "height": 37
+          },
+          "source": "tests/demo.spec.ts:440",
+          "duration": 192
+        }
+      ]
+    },
+    {
+      "image": "b9f8102bc26c612d",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect text \"Out of the way, not gone · F4\"",
+          "box": {
+            "x": 412,
+            "y": 320,
+            "width": 191,
+            "height": 29
+          },
+          "source": "tests/demo.spec.ts:441",
+          "duration": 185
+        }
+      ]
+    },
+    {
+      "image": "bec8956a1a72ef62",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "A disabled button gets to say why: no hover events natively, so it is aria-disabled",
+          "source": "tests/demo.spec.ts:445"
+        },
+        {
+          "type": "assert",
+          "message": "expect attribute value \"aria-disabled\" \"true\"",
+          "box": {
+            "x": 343,
+            "y": 357,
+            "width": 86,
+            "height": 35
+          },
+          "source": "tests/demo.spec.ts:447",
+          "duration": 181
+        },
+        {
+          "type": "action",
+          "message": "hover",
+          "box": {
+            "x": 343,
+            "y": 357,
+            "width": 86,
+            "height": 35
+          },
+          "source": "tests/demo.spec.ts:448",
+          "duration": 206
+        }
+      ]
+    },
+    {
+      "image": "e40af710d3c17b48",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect text \"Not until the draft validates\"",
+          "box": {
+            "x": 295,
+            "y": 321,
+            "width": 182,
+            "height": 29
+          },
+          "source": "tests/demo.spec.ts:449",
+          "duration": 176
+        }
+      ]
+    },
+    {
+      "image": "bec8956a1a72ef62",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "An icon button's string tooltip names it for screen readers too",
+          "source": "tests/demo.spec.ts:453"
+        },
+        {
+          "type": "action",
+          "message": "hover",
+          "box": {
+            "x": 586,
+            "y": 358,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:454",
+          "duration": 200
+        }
+      ]
+    },
+    {
+      "image": "818888b2a26356c6",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect text \"Share\"",
+          "box": {
+            "x": 575,
+            "y": 322,
+            "width": 54,
+            "height": 29
+          },
+          "source": "tests/demo.spec.ts:455",
+          "duration": 167
+        }
+      ]
+    },
+    {
+      "image": "bec8956a1a72ef62",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "hover",
+          "box": {
+            "x": 1230,
+            "y": 14,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:461",
+          "duration": 203
+        }
+      ]
+    },
+    {
+      "image": "c5369c8ebf8a5550",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "wait",
+          "message": "waitForTimeout 300ms",
+          "source": "tests/demo.spec.ts:462",
+          "duration": 445
+        },
+        {
+          "type": "assert",
+          "message": "expect count 0 (locator('.s-tt-tip'))",
+          "source": "tests/demo.spec.ts:463",
+          "duration": 2132
+        }
+      ]
+    },
+    {
+      "image": "bec8956a1a72ef62",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "A nav row's tooltip tells its key too, under its own tip",
+          "source": "tests/demo.spec.ts:466"
+        },
+        {
+          "type": "action",
+          "message": "hover",
+          "box": {
+            "x": 18,
+            "y": 227,
+            "width": 164,
+            "height": 45
+          },
+          "source": "tests/demo.spec.ts:467",
+          "duration": 199
+        }
+      ]
+    },
+    {
+      "image": "d73e59d2b016d3fa",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect text \"Toasts, tooltips, menus and dialogs\"",
+          "box": {
+            "x": 188,
+            "y": 220,
+            "width": 233,
+            "height": 59
+          },
+          "source": "tests/demo.spec.ts:469",
+          "duration": 163
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Ctrl+K\"",
+          "box": {
+            "x": 198,
+            "y": 258,
+            "width": 31,
+            "height": 14
+          },
+          "source": "tests/demo.spec.ts:471",
+          "duration": 169
+        },
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 198,
+            "y": 249,
+            "width": 213,
+            "height": 1
+          },
+          "source": "tests/demo.spec.ts:472",
+          "duration": 157
+        }
+      ]
+    },
+    {
+      "image": "bec8956a1a72ef62",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Open the Actions menu, pick an item",
+          "source": "tests/demo.spec.ts:478"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 236,
+            "y": 597,
+            "width": 117,
+            "height": 40
+          },
+          "source": "tests/demo.spec.ts:479",
+          "duration": 192
+        }
+      ]
+    },
+    {
+      "image": "9e2a032bbf26acb8",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect text \"Ctrl+E\"",
+          "box": {
+            "x": 361,
+            "y": 658,
+            "width": 39,
+            "height": 13
+          },
+          "source": "tests/demo.spec.ts:481",
+          "duration": 179
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 242,
+            "y": 646,
+            "width": 168,
+            "height": 36
+          },
+          "source": "tests/demo.spec.ts:482",
+          "duration": 222
+        }
+      ]
+    },
+    {
+      "image": "fc3cc1fed4792f94",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 896,
+            "y": 841,
+            "width": 324,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:483",
+          "duration": 258
+        }
+      ]
+    },
+    {
+      "image": "87316cd2415f7b11",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "The same rows answer their keys with the menu shut",
+          "source": "tests/demo.spec.ts:485"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 897,
+            "y": 840,
+            "width": 322,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:487",
+          "duration": 211
+        }
+      ]
+    },
+    {
+      "image": "30ac6ea3dc8400ec",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 896,
+            "y": 841,
+            "width": 324,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:489",
+          "duration": 228
+        }
+      ]
+    },
+    {
+      "image": "fecfd20558a58002",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "So does a context menu's, without the right-click that shows it",
+          "source": "tests/demo.spec.ts:491"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 897,
+            "y": 840,
+            "width": 322,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:493",
+          "duration": 214
+        },
+        {
+          "type": "describe",
+          "message": "Right-click the box for its context menu",
+          "source": "tests/demo.spec.ts:495"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 236,
+            "y": 654,
+            "width": 1008,
+            "height": 61
+          },
+          "source": "tests/demo.spec.ts:496",
+          "duration": 224
+        }
+      ]
+    },
+    {
+      "image": "d2d49f401dddcf1d",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 745,
+            "y": 605,
+            "width": 149,
+            "height": 36
+          },
+          "source": "tests/demo.spec.ts:497",
+          "duration": 229
+        }
+      ]
+    },
+    {
+      "image": "e48e1d61392efb88",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 896,
+            "y": 841,
+            "width": 324,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:498",
+          "duration": 268
+        }
+      ]
+    },
+    {
+      "image": "bec8956a1a72ef62",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "page",
+          "message": "reload",
+          "source": "tests/demo.spec.ts:504"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 219,
+            "y": 79,
+            "width": 1043,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:505",
+          "duration": 222
+        },
+        {
+          "type": "describe",
+          "message": "Run the alert(), confirm() and prompt() shortcuts",
+          "source": "tests/demo.spec.ts:507"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 236,
+            "y": 814,
+            "width": 76,
+            "height": 35
+          },
+          "source": "tests/demo.spec.ts:508",
+          "duration": 188
+        }
+      ]
+    },
+    {
+      "image": "226fd8488d34ab87",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 499,
+            "y": 433,
+            "width": 283,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:509",
+          "duration": 224
+        },
+        {
+          "type": "assert",
+          "message": "expect attribute value \"aria-modal\" \"true\"",
+          "box": {
+            "x": 480,
+            "y": 372,
+            "width": 320,
+            "height": 157
+          },
+          "source": "tests/demo.spec.ts:511",
+          "duration": 161
+        },
+        {
+          "type": "assert",
+          "message": "expect accessible name \"Alert\"",
+          "box": {
+            "x": 480,
+            "y": 372,
+            "width": 320,
+            "height": 157
+          },
+          "source": "tests/demo.spec.ts:512",
+          "duration": 159
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 726,
+            "y": 475,
+            "width": 56,
+            "height": 35
+          },
+          "source": "tests/demo.spec.ts:513",
+          "duration": 186
+        }
+      ]
+    },
+    {
+      "image": "e1ad59e9b07c0839",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 321,
+            "y": 813,
+            "width": 99,
+            "height": 37
+          },
+          "source": "tests/demo.spec.ts:519",
+          "duration": 253
+        }
+      ]
+    },
+    {
+      "image": "164693b4f8c8bffe",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 499,
+            "y": 432,
+            "width": 283,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:520",
+          "duration": 208
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 726,
+            "y": 474,
+            "width": 56,
+            "height": 37
+          },
+          "source": "tests/demo.spec.ts:521",
+          "duration": 196
+        }
+      ]
+    },
+    {
+      "image": "14a3c35ffa8b76fe",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 533,
+            "y": 819,
+            "width": 118,
+            "height": 25
+          },
+          "source": "tests/demo.spec.ts:522",
+          "duration": 234
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 428,
+            "y": 813,
+            "width": 96,
+            "height": 37
+          },
+          "source": "tests/demo.spec.ts:525",
+          "duration": 212
+        }
+      ]
+    },
+    {
+      "image": "e5d075966e2c9dab",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "fill \"Grace\"",
+          "box": {
+            "x": 499,
+            "y": 443,
+            "width": 283,
+            "height": 44
+          },
+          "source": "tests/demo.spec.ts:526",
+          "duration": 278
+        }
+      ]
+    },
+    {
+      "image": "1d3895c1139b9040",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect focused",
+          "box": {
+            "x": 499,
+            "y": 443,
+            "width": 283,
+            "height": 44
+          },
+          "source": "tests/demo.spec.ts:531",
+          "duration": 164
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 726,
+            "y": 504,
+            "width": 56,
+            "height": 37
+          },
+          "source": "tests/demo.spec.ts:532",
+          "duration": 192
+        }
+      ]
+    },
+    {
+      "image": "55c8def89a947918",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 533,
+            "y": 819,
+            "width": 132,
+            "height": 25
+          },
+          "source": "tests/demo.spec.ts:533",
+          "duration": 226
+        }
+      ]
+    },
+    {
+      "image": "3d3c194de80b387d",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Stack a dialog inside a dialog; Escape peels them inside-out",
+          "source": "tests/demo.spec.ts:535"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 236,
+            "y": 495,
+            "width": 142,
+            "height": 37
+          },
+          "source": "tests/demo.spec.ts:536",
+          "duration": 220
+        }
+      ]
+    },
+    {
+      "image": "fad100b9f07f9237",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 483,
+            "y": 364,
+            "width": 315,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:537",
+          "duration": 209
+        }
+      ]
+    },
+    {
+      "image": "dbc5d23b1831d584",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "? over a modal lists only what works right now",
+          "source": "tests/demo.spec.ts:542"
+        },
+        {
+          "type": "assert",
+          "message": "expect text /Close this dialog/, /Open secondary/, /This overview/ (locator('.s-keyhelp > div'))",
+          "source": "tests/demo.spec.ts:546",
+          "duration": 151
+        }
+      ]
+    },
+    {
+      "image": "a1c07ab394d82713",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "A key pressed on the open overview closes it and still lands",
+          "source": "tests/demo.spec.ts:548"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 499,
+            "y": 399,
+            "width": 283,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:551",
+          "duration": 161
+        },
+        {
+          "type": "assert",
+          "message": "expect focused",
+          "box": {
+            "x": 499,
+            "y": 441,
+            "width": 283,
+            "height": 35
+          },
+          "source": "tests/demo.spec.ts:559",
+          "duration": 163
+        }
+      ]
+    },
+    {
+      "image": "2658a9da2b04b382",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 464,
+            "y": 303,
+            "width": 352,
+            "height": 295
+          },
+          "source": "tests/demo.spec.ts:563",
+          "duration": 182
+        }
+      ]
+    },
+    {
+      "image": "6dd93e719a5fbbba",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "An autocomplete in a dialog: its list hangs outside, over the dialog's edge",
+          "source": "tests/demo.spec.ts:568"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 600,
+            "y": 495,
+            "width": 209,
+            "height": 37
+          },
+          "source": "tests/demo.spec.ts:569",
+          "duration": 188
+        }
+      ]
+    },
+    {
+      "image": "cdcb9fbeed1f760c",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "fill \"ja\"",
+          "box": {
+            "x": 506,
+            "y": 442,
+            "width": 268,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:572",
+          "duration": 267
+        }
+      ]
+    },
+    {
+      "image": "212733c79c88985f",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 499,
+            "y": 484,
+            "width": 283,
+            "height": 126
+          },
+          "source": "tests/demo.spec.ts:574",
+          "duration": 167
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 504,
+            "y": 527,
+            "width": 272,
+            "height": 38
+          },
+          "source": "tests/demo.spec.ts:579",
+          "duration": 193
+        }
+      ]
+    },
+    {
+      "image": "2e771898208ea57e",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect value \"Java\"",
+          "box": {
+            "x": 506,
+            "y": 442,
+            "width": 268,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:580",
+          "duration": 216
+        },
+        {
+          "type": "describe",
+          "message": "Arrowing down the list scrolls the highlighted row into view",
+          "source": "tests/demo.spec.ts:582"
+        },
+        {
+          "type": "action",
+          "message": "fill \"\"",
+          "box": {
+            "x": 506,
+            "y": 442,
+            "width": 268,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:583",
+          "duration": 179
+        }
+      ]
+    },
+    {
+      "image": "8dd364c05a3b2840",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 710,
+            "y": 497,
+            "width": 72,
+            "height": 35
+          },
+          "source": "tests/demo.spec.ts:591",
+          "duration": 187
+        }
+      ]
+    },
+    {
+      "image": "3d3c194de80b387d",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "The inline menu's branches stay folded until something under them is current",
+          "source": "tests/demo.spec.ts:594"
+        },
+        {
+          "type": "assert",
+          "message": "expect hidden (locator('.s-menu-inline').getByRole('link', { name: 'Apple' }))",
+          "source": "tests/demo.spec.ts:598",
+          "duration": 2237
+        }
+      ]
+    },
+    {
+      "image": "a1f69ff9180bd5cf",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Lemon's key picks it from two folds down, unfolding the branches above it",
+          "source": "tests/demo.spec.ts:600"
+        },
+        {
+          "type": "assert",
+          "message": "expect attribute value \"aria-current\" \"page\"",
+          "box": {
+            "x": 271,
+            "y": 815,
+            "width": 221,
+            "height": 33
+          },
+          "source": "tests/demo.spec.ts:603",
+          "duration": 224
+        },
+        {
+          "type": "describe",
+          "message": "Click the Fruit branch: it selects its first leaf, which unfolds it",
+          "source": "tests/demo.spec.ts:605"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 236,
+            "y": 672,
+            "width": 256,
+            "height": 33
+          },
+          "source": "tests/demo.spec.ts:606",
+          "duration": 222
+        }
+      ]
+    },
+    {
+      "image": "c079e8d770e35055",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect text \"Picked: apple\"",
+          "box": {
+            "x": 236,
+            "y": 800,
+            "width": 1008,
+            "height": 22
+          },
+          "source": "tests/demo.spec.ts:608",
+          "duration": 204
+        },
+        {
+          "type": "assert",
+          "message": "expect attribute value \"aria-current\" \"page\"",
+          "box": {
+            "x": 254,
+            "y": 644,
+            "width": 238,
+            "height": 33
+          },
+          "source": "tests/demo.spec.ts:609",
+          "duration": 159
+        },
+        {
+          "type": "describe",
+          "message": "Pick under Vegetables: the Fruit branch folds back up",
+          "source": "tests/demo.spec.ts:611"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 236,
+            "y": 757,
+            "width": 256,
+            "height": 33
+          },
+          "source": "tests/demo.spec.ts:612",
+          "duration": 172
+        }
+      ]
+    },
+    {
+      "image": "b2e0fc21efc98529",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect text \"Picked: carrot\"",
+          "box": {
+            "x": 236,
+            "y": 800,
+            "width": 1008,
+            "height": 22
+          },
+          "source": "tests/demo.spec.ts:613",
+          "duration": 160
+        },
+        {
+          "type": "assert",
+          "message": "expect hidden (locator('.s-menu-inline').getByRole('link', { name: 'Apple' }))",
+          "source": "tests/demo.spec.ts:614",
+          "duration": 2169
+        },
+        {
+          "type": "assert",
+          "message": "expect attribute value \"aria-current\" \"page\"",
+          "box": {
+            "x": 254,
+            "y": 720,
+            "width": 238,
+            "height": 33
+          },
+          "source": "tests/demo.spec.ts:615",
+          "duration": 212
+        },
+        {
+          "type": "describe",
+          "message": "Unfold Fruit again, then nested Citrus: both levels stay unfolded",
+          "source": "tests/demo.spec.ts:617"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 236,
+            "y": 648,
+            "width": 256,
+            "height": 33
+          },
+          "source": "tests/demo.spec.ts:618",
+          "duration": 232
+        }
+      ]
+    },
+    {
+      "image": "63af3dca3da6d8b0",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 254,
+            "y": 757,
+            "width": 238,
+            "height": 33
+          },
+          "source": "tests/demo.spec.ts:619",
+          "duration": 262
+        }
+      ]
+    },
+    {
+      "image": "ba5bdc5a093e42b2",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect text \"Picked: lemon\"",
+          "box": {
+            "x": 236,
+            "y": 800,
+            "width": 1008,
+            "height": 22
+          },
+          "source": "tests/demo.spec.ts:620",
+          "duration": 268
+        },
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 271,
+            "y": 720,
+            "width": 221,
+            "height": 33
+          },
+          "source": "tests/demo.spec.ts:621",
+          "duration": 179
+        },
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 254,
+            "y": 611,
+            "width": 238,
+            "height": 33
+          },
+          "source": "tests/demo.spec.ts:622",
+          "duration": 181
+        },
+        {
+          "type": "describe",
+          "message": "An inline row's key is told in a tooltip, not beside its label",
+          "source": "tests/demo.spec.ts:624"
+        },
+        {
+          "type": "action",
+          "message": "hover",
+          "box": {
+            "x": 271,
+            "y": 682,
+            "width": 221,
+            "height": 33
+          },
+          "source": "tests/demo.spec.ts:625",
+          "duration": 201
+        }
+      ]
+    },
+    {
+      "image": "e2827a9087ec9bf3",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect text \"L\"",
+          "box": {
+            "x": 499,
+            "y": 684,
+            "width": 25,
+            "height": 29
+          },
+          "source": "tests/demo.spec.ts:626",
+          "duration": 160
+        }
+      ]
+    },
+    {
+      "image": "a20bf6a3815a58d0",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Pin the Overlays page, so navigating elsewhere parks it — alive",
+          "source": "tests/demo.spec.ts:630"
+        },
+        {
+          "type": "page",
+          "message": "setViewportSize 480×800",
+          "source": "tests/demo.spec.ts:632"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 39,
+            "y": 26,
+            "width": 50,
+            "height": 20
+          },
+          "source": "tests/demo.spec.ts:633",
+          "duration": 189
+        }
+      ]
+    },
+    {
+      "image": "d1b3dfe1d162fb34",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 69,
+            "y": 125,
+            "width": 149,
+            "height": 36
+          },
+          "source": "tests/demo.spec.ts:634",
+          "duration": 171
+        }
+      ]
+    },
+    {
+      "image": "285897d56bf5d175",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Navigate to Surfaces through the phone nav",
+          "source": "tests/demo.spec.ts:636"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 3,
+            "y": 9,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:637",
+          "duration": 219
+        }
+      ]
+    },
+    {
+      "image": "3412c9d75ac46e1f",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 9,
+            "y": 270,
+            "width": 462,
+            "height": 48
+          },
+          "source": "tests/demo.spec.ts:641",
+          "duration": 155
+        }
+      ]
+    },
+    {
+      "image": "92b06189ec1e82e7",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 26,
+            "y": 318,
+            "width": 445,
+            "height": 48
+          },
+          "source": "tests/demo.spec.ts:642",
+          "duration": 164
+        }
+      ]
+    },
+    {
+      "image": "32f0b6fff32bbd69",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "No page in the tree is current now — the folds must stay as they were",
+          "source": "tests/demo.spec.ts:645"
+        },
+        {
+          "type": "assert",
+          "message": "expect attribute value \"open\" /./",
+          "box": {
+            "x": -462,
+            "y": 544,
+            "width": 256,
+            "height": 214
+          },
+          "source": "tests/demo.spec.ts:646",
+          "duration": 192
+        },
+        {
+          "type": "assert",
+          "message": "expect attribute value \"open\" /./",
+          "box": {
+            "x": -445,
+            "y": 653,
+            "width": 238,
+            "height": 105
+          },
+          "source": "tests/demo.spec.ts:647",
+          "duration": 121
+        },
+        {
+          "type": "assert",
+          "message": "expect not attribute value \"open\" /./",
+          "box": {
+            "x": -462,
+            "y": 658,
+            "width": 256,
+            "height": 33
+          },
+          "source": "tests/demo.spec.ts:648",
+          "duration": 137
+        }
+      ]
+    }
+  ]
+}

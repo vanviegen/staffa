@@ -1,0 +1,749 @@
+{
+  "version": 4,
+  "file": "tests/demo.spec.ts",
+  "title": "panels: deep links derive their columns, and the link default governs bare links",
+  "steps": [
+    {
+      "image": "99d590afae3aae50",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "page",
+          "message": "setViewportSize 1820×900",
+          "source": "tests/demo.spec.ts:1310"
+        },
+        {
+          "type": "console",
+          "consoleType": "debug",
+          "message": "Aberdeen queue took 15ms",
+          "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
+        },
+        {
+          "type": "page",
+          "message": "goto ./icons/heart",
+          "source": "tests/demo.spec.ts:1311"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 489,
+            "y": 79,
+            "width": 503,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:1312",
+          "duration": 230
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 1028,
+            "y": 289,
+            "width": 505,
+            "height": 59
+          },
+          "source": "tests/demo.spec.ts:1313",
+          "duration": 161
+        },
+        {
+          "type": "assert",
+          "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
+          "source": "tests/demo.spec.ts:1314",
+          "duration": 132
+        },
+        {
+          "type": "describe",
+          "message": "A click in the gallery replaces the detail rather than stacking a third",
+          "source": "tests/demo.spec.ts:1318"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 559,
+            "y": 265,
+            "width": 48,
+            "height": 48
+          },
+          "source": "tests/demo.spec.ts:1319",
+          "duration": 189
+        }
+      ]
+    },
+    {
+      "image": "37262d2941e1bbb5",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 1028,
+            "y": 289,
+            "width": 505,
+            "height": 59
+          },
+          "source": "tests/demo.spec.ts:1321",
+          "duration": 179
+        },
+        {
+          "type": "assert",
+          "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
+          "source": "tests/demo.spec.ts:1322",
+          "duration": 131
+        },
+        {
+          "type": "describe",
+          "message": "The Next pager (data-panel=replace) swaps the detail in place",
+          "source": "tests/demo.spec.ts:1324"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1500,
+            "y": 78,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:1328",
+          "duration": 183
+        }
+      ]
+    },
+    {
+      "image": "57c9eb6cb46522d8",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 1028,
+            "y": 289,
+            "width": 505,
+            "height": 59
+          },
+          "source": "tests/demo.spec.ts:1329",
+          "duration": 248
+        },
+        {
+          "type": "assert",
+          "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
+          "source": "tests/demo.spec.ts:1330",
+          "duration": 137
+        },
+        {
+          "type": "describe",
+          "message": "A reload reproduces both columns from the history entry",
+          "source": "tests/demo.spec.ts:1332"
+        },
+        {
+          "type": "page",
+          "message": "reload",
+          "source": "tests/demo.spec.ts:1333"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 489,
+            "y": 79,
+            "width": 503,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:1334",
+          "duration": 189
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 1028,
+            "y": 289,
+            "width": 505,
+            "height": 59
+          },
+          "source": "tests/demo.spec.ts:1335",
+          "duration": 162
+        },
+        {
+          "type": "assert",
+          "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
+          "source": "tests/demo.spec.ts:1336",
+          "duration": 132
+        }
+      ]
+    },
+    {
+      "gap": "Set Links to replace in the display settings"
+    },
+    {
+      "image": "4f53a06662f56d98",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "linkNavigation=replace: a bare link swaps the panel it sits in for its target",
+          "source": "tests/demo.spec.ts:1338"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 506,
+            "y": 265,
+            "width": 48,
+            "height": 48
+          },
+          "source": "tests/demo.spec.ts:1344",
+          "duration": 257
+        }
+      ]
+    },
+    {
+      "image": "4edc98a2945520e4",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 758,
+            "y": 289,
+            "width": 505,
+            "height": 59
+          },
+          "source": "tests/demo.spec.ts:1346",
+          "duration": 204
+        },
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 740,
+            "y": 60,
+            "width": 540,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:1347",
+          "duration": 128
+        }
+      ]
+    },
+    {
+      "image": "2912cac39ba1d0de",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "linkNavigation=open: a bare link behaves like a nav item, deriving a fresh stack",
+          "source": "tests/demo.spec.ts:1349"
+        },
+        {
+          "type": "page",
+          "message": "goto ./icons",
+          "source": "tests/demo.spec.ts:1350"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 759,
+            "y": 79,
+            "width": 503,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:1351",
+          "duration": 227
+        }
+      ]
+    },
+    {
+      "gap": "Set Links to open in the display settings"
+    },
+    {
+      "image": "779c35fd150083e9",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 776,
+            "y": 265,
+            "width": 48,
+            "height": 48
+          },
+          "source": "tests/demo.spec.ts:1353",
+          "duration": 260
+        }
+      ]
+    },
+    {
+      "image": "95734c805a24bf66",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 1028,
+            "y": 289,
+            "width": 505,
+            "height": 59
+          },
+          "source": "tests/demo.spec.ts:1354",
+          "duration": 230
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 559,
+            "y": 265,
+            "width": 48,
+            "height": 48
+          },
+          "source": "tests/demo.spec.ts:1357",
+          "duration": 200
+        }
+      ]
+    },
+    {
+      "image": "37262d2941e1bbb5",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 1028,
+            "y": 289,
+            "width": 505,
+            "height": 59
+          },
+          "source": "tests/demo.spec.ts:1358",
+          "duration": 168
+        },
+        {
+          "type": "assert",
+          "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
+          "source": "tests/demo.spec.ts:1359",
+          "duration": 128
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Icons\", \"star\" (locator('.s-crumb'))",
+          "source": "tests/demo.spec.ts:1360",
+          "duration": 150
+        }
+      ]
+    },
+    {
+      "image": "d05fb5a406e960dc",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "columns=single shows only the current page, however much room there is",
+          "source": "tests/demo.spec.ts:1362"
+        },
+        {
+          "type": "page",
+          "message": "goto ./panels",
+          "source": "tests/demo.spec.ts:1363"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 489,
+            "y": 79,
+            "width": 1043,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:1364",
+          "duration": 249
+        }
+      ]
+    },
+    {
+      "gap": "Set Columns to single in the display settings"
+    },
+    {
+      "gap": "Aim the navigator at Small A — push, from this panel"
+    },
+    {
+      "image": "29a9b0a079cbbcfe",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1482,
+            "y": 421,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:58",
+          "duration": 245
+        }
+      ]
+    },
+    {
+      "image": "ad28e70be8033dec",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 200,
+            "y": 60,
+            "width": 540,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:1367",
+          "duration": 215
+        },
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 200,
+            "y": 60,
+            "width": 540,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:1368",
+          "duration": 169
+        }
+      ]
+    },
+    {
+      "image": "38dbcbd050b8b396",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Escape still pops the stack, at any width",
+          "source": "tests/demo.spec.ts:1372"
+        },
+        {
+          "type": "page",
+          "message": "setViewportSize 480×800",
+          "source": "tests/demo.spec.ts:1373"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 0,
+            "y": 70,
+            "width": 480,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:1376",
+          "duration": 126
+        }
+      ]
+    },
+    {
+      "image": "2c6dd761751c39d9",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "An [id=integer] route hands the handler a real number, not a look-alike string",
+          "source": "tests/demo.spec.ts:1378"
+        },
+        {
+          "type": "page",
+          "message": "setViewportSize 1280×900",
+          "source": "tests/demo.spec.ts:1379"
+        },
+        {
+          "type": "page",
+          "message": "goto ./panels/item/42",
+          "source": "tests/demo.spec.ts:1380"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 236,
+            "y": 139,
+            "width": 468,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:1381",
+          "duration": 181
+        },
+        {
+          "type": "assert",
+          "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
+          "source": "tests/demo.spec.ts:1382",
+          "duration": 130
+        },
+        {
+          "type": "describe",
+          "message": "A data-panel=open link gives its target its own stack",
+          "source": "tests/demo.spec.ts:1384"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 236,
+            "y": 276,
+            "width": 223,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:1390",
+          "duration": 168
+        }
+      ]
+    },
+    {
+      "image": "9fc660a3b6c829de",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 218,
+            "y": 127,
+            "width": 505,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:1392",
+          "duration": 186
+        },
+        {
+          "type": "assert",
+          "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
+          "source": "tests/demo.spec.ts:1393",
+          "duration": 91
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Panels\", \"Thread 8\" (locator('.s-crumb'))",
+          "source": "tests/demo.spec.ts:1394",
+          "duration": 102
+        }
+      ]
+    },
+    {
+      "image": "93e2240d2d543ae4",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "\"007\" would be a second URL for the same record, so no route claims it at all",
+          "source": "tests/demo.spec.ts:1396"
+        },
+        {
+          "type": "page",
+          "message": "goto ./panels/item/007",
+          "source": "tests/demo.spec.ts:1397"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 236,
+            "y": 139,
+            "width": 1008,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:1398",
+          "duration": 161
+        }
+      ]
+    },
+    {
+      "image": "6127e76d009c6a53",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "A cold flat URL gets the ancestors the app names for it",
+          "source": "tests/demo.spec.ts:1400"
+        },
+        {
+          "type": "page",
+          "message": "goto ./thread/7",
+          "source": "tests/demo.spec.ts:1403"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 218,
+            "y": 127,
+            "width": 505,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:1404",
+          "duration": 172
+        },
+        {
+          "type": "assert",
+          "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
+          "source": "tests/demo.spec.ts:1405",
+          "duration": 107
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Push a panel\"",
+          "box": {
+            "x": -643,
+            "y": 60,
+            "width": 843,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:1406",
+          "duration": 130
+        }
+      ]
+    },
+    {
+      "image": "58a120652b634865",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "So Escape has somewhere to go, as if you had walked here",
+          "source": "tests/demo.spec.ts:1408"
+        },
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 200,
+            "y": 60,
+            "width": 1080,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:1411",
+          "duration": 173
+        }
+      ]
+    },
+    {
+      "gap": "Aim the navigator at Thread 8 — open, via the stack"
+    },
+    {
+      "image": "0f5b8d6d4cbda301",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "openPanelStack() builds the same arrangement from code",
+          "source": "tests/demo.spec.ts:1413"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1212,
+            "y": 421,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:58",
+          "duration": 199
+        }
+      ]
+    },
+    {
+      "image": "9fc660a3b6c829de",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 218,
+            "y": 127,
+            "width": 505,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:1415",
+          "duration": 203
+        },
+        {
+          "type": "assert",
+          "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
+          "source": "tests/demo.spec.ts:1417",
+          "duration": 91
+        }
+      ]
+    }
+  ]
+}

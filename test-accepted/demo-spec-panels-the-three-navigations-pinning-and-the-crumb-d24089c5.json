@@ -1,0 +1,690 @@
+{
+  "version": 4,
+  "file": "tests/demo.spec.ts",
+  "title": "panels: the three navigations, pinning, and the crumb menu",
+  "steps": [
+    {
+      "image": "d05fb5a406e960dc",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "page",
+          "message": "setViewportSize 1820×900",
+          "source": "tests/demo.spec.ts:949"
+        },
+        {
+          "type": "page",
+          "message": "goto ./panels",
+          "source": "tests/demo.spec.ts:950"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 489,
+            "y": 79,
+            "width": 1043,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:951",
+          "duration": 236
+        }
+      ]
+    },
+    {
+      "gap": "Aim the navigator at Small A — push, from this panel"
+    },
+    {
+      "image": "d05fb5a406e960dc",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "A push from the playground opens Small A on top of it",
+          "source": "tests/demo.spec.ts:953"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1482,
+            "y": 421,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:58",
+          "duration": 192
+        }
+      ]
+    },
+    {
+      "image": "348c9df00e51c760",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 1280,
+            "y": 60,
+            "width": 540,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:955",
+          "duration": 261
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Panels\", \"Small A\" (locator('.s-crumb'))",
+          "source": "tests/demo.spec.ts:956",
+          "duration": 157
+        }
+      ]
+    },
+    {
+      "gap": "Aim the navigator at Small B — push, from this panel"
+    },
+    {
+      "image": "964c3a7b86f9113b",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "A from-here push in the playground replaces Small A instead of stacking on it",
+          "source": "tests/demo.spec.ts:958"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1212,
+            "y": 450,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:58",
+          "duration": 214
+        }
+      ]
+    },
+    {
+      "image": "bc7ed3f2bdf9c222",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 1280,
+            "y": 60,
+            "width": 540,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:962",
+          "duration": 203
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Panels\", \"Small B\" (locator('.s-crumb'))",
+          "source": "tests/demo.spec.ts:963",
+          "duration": 164
+        }
+      ]
+    },
+    {
+      "gap": "Aim the navigator at Small A — push, from this panel"
+    },
+    {
+      "image": "54a4fec273ce1067",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "The stack-method cell builds on the current panel instead",
+          "source": "tests/demo.spec.ts:965"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1212,
+            "y": 450,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:58",
+          "duration": 227
+        }
+      ]
+    },
+    {
+      "image": "bc12c333639db3bd",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 1280,
+            "y": 60,
+            "width": 540,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:968",
+          "duration": 196
+        }
+      ]
+    },
+    {
+      "gap": "Aim the navigator at Small B — push, via the stack"
+    },
+    {
+      "image": "8fc619823ca3e053",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1212,
+            "y": 450,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:58",
+          "duration": 218
+        }
+      ]
+    },
+    {
+      "image": "4a817242087d733e",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 740,
+            "y": 60,
+            "width": 540,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:973",
+          "duration": 220
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Panels\", \"Small A\", \"Small B\" (locator('.s-crumb'))",
+          "source": "tests/demo.spec.ts:974",
+          "duration": 119
+        },
+        {
+          "type": "describe",
+          "message": "Right-click Small A's crumb: a real link, so the browser's own entries lead the menu",
+          "source": "tests/demo.spec.ts:976"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 121,
+            "y": 30,
+            "width": 45,
+            "height": 20
+          },
+          "source": "tests/demo.spec.ts:977",
+          "duration": 181
+        }
+      ]
+    },
+    {
+      "image": "3856fc4ba2bd7e25",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 149,
+            "y": 49,
+            "width": 149,
+            "height": 36
+          },
+          "source": "tests/demo.spec.ts:978",
+          "duration": 172
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 149,
+            "y": 130,
+            "width": 149,
+            "height": 36
+          },
+          "source": "tests/demo.spec.ts:979",
+          "duration": 189
+        }
+      ]
+    },
+    {
+      "image": "157629e052113a49",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 121,
+            "y": 34,
+            "width": 12,
+            "height": 12
+          },
+          "source": "tests/demo.spec.ts:980",
+          "duration": 231
+        },
+        {
+          "type": "describe",
+          "message": "Click the first crumb: B closes, and the pinned A parks past the page you land on",
+          "source": "tests/demo.spec.ts:982"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 59,
+            "y": 30,
+            "width": 40,
+            "height": 20
+          },
+          "source": "tests/demo.spec.ts:983",
+          "duration": 177
+        }
+      ]
+    },
+    {
+      "image": "81be945f00fb6c2d",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect text \"Panels\", \"Small A\" (locator('.s-crumb'))",
+          "source": "tests/demo.spec.ts:985",
+          "duration": 215
+        },
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 1820,
+            "y": 60,
+            "width": 540,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:986",
+          "duration": 170
+        },
+        {
+          "type": "describe",
+          "message": "Its crumb brings it back",
+          "source": "tests/demo.spec.ts:988"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 121,
+            "y": 30,
+            "width": 61,
+            "height": 20
+          },
+          "source": "tests/demo.spec.ts:989",
+          "duration": 206
+        }
+      ]
+    },
+    {
+      "image": "b0c770d7758bef8a",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect count 0 (locator('.s-panel-parked'))",
+          "source": "tests/demo.spec.ts:991",
+          "duration": 2278
+        }
+      ]
+    },
+    {
+      "gap": "Aim the navigator at Medium — push, from this panel"
+    },
+    {
+      "image": "ee19d87e2d585acc",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Open a page elsewhere: the pinned panel rides along beneath it",
+          "source": "tests/demo.spec.ts:993"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1212,
+            "y": 450,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:58",
+          "duration": 286
+        }
+      ]
+    },
+    {
+      "image": "49c4b221592579b0",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 758,
+            "y": 127,
+            "width": 1045,
+            "height": 48
+          },
+          "source": "tests/demo.spec.ts:996",
+          "duration": 226
+        },
+        {
+          "type": "assert",
+          "message": "expect count 3 (locator('.s-panel:not(.s-panel-closing)'))",
+          "source": "tests/demo.spec.ts:997",
+          "duration": 132
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Panels\", \"Small A\", \"Medium\" (locator('.s-crumb'))",
+          "source": "tests/demo.spec.ts:998",
+          "duration": 134
+        },
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 121,
+            "y": 34,
+            "width": 12,
+            "height": 12
+          },
+          "source": "tests/demo.spec.ts:999",
+          "duration": 168
+        },
+        {
+          "type": "describe",
+          "message": "A reload restores the whole arrangement, pin and all",
+          "source": "tests/demo.spec.ts:1001"
+        },
+        {
+          "type": "page",
+          "message": "reload",
+          "source": "tests/demo.spec.ts:1002"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 758,
+            "y": 127,
+            "width": 1045,
+            "height": 48
+          },
+          "source": "tests/demo.spec.ts:1003",
+          "duration": 208
+        },
+        {
+          "type": "assert",
+          "message": "expect count 3 (locator('.s-panel:not(.s-panel-closing)'))",
+          "source": "tests/demo.spec.ts:1004",
+          "duration": 140
+        },
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 121,
+            "y": 34,
+            "width": 12,
+            "height": 12
+          },
+          "source": "tests/demo.spec.ts:1005",
+          "duration": 176
+        },
+        {
+          "type": "describe",
+          "message": "An explicit Close from the crumb menu still takes the pinned page out — a splice",
+          "source": "tests/demo.spec.ts:1007"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 121,
+            "y": 30,
+            "width": 61,
+            "height": 20
+          },
+          "source": "tests/demo.spec.ts:1008",
+          "duration": 188
+        }
+      ]
+    },
+    {
+      "image": "f5899dfe250cdb53",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 156,
+            "y": 166,
+            "width": 149,
+            "height": 36
+          },
+          "source": "tests/demo.spec.ts:1009",
+          "duration": 212
+        }
+      ]
+    },
+    {
+      "image": "0efd5303aa08efee",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect text \"Panels\", \"Medium\" (locator('.s-crumb'))",
+          "source": "tests/demo.spec.ts:1010",
+          "duration": 188
+        },
+        {
+          "type": "assert",
+          "message": "expect count 0 (locator('.s-crumb-pin'))",
+          "source": "tests/demo.spec.ts:1011",
+          "duration": 2143
+        },
+        {
+          "type": "assert",
+          "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
+          "source": "tests/demo.spec.ts:1014",
+          "duration": 144
+        }
+      ]
+    },
+    {
+      "gap": "Aim the navigator at Playground — push, from this panel"
+    },
+    {
+      "image": "96da50575d62be79",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "A push to the already-open playground goes back to it; the medium page closes",
+          "source": "tests/demo.spec.ts:1016"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1212,
+            "y": 330,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:58",
+          "duration": 216
+        }
+      ]
+    },
+    {
+      "image": "d05fb5a406e960dc",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 489,
+            "y": 79,
+            "width": 1043,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:1019",
+          "duration": 283
+        },
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 470,
+            "y": 60,
+            "width": 1080,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:1020",
+          "duration": 224
+        }
+      ]
+    },
+    {
+      "image": "0efd5303aa08efee",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Browser back and forward replay the arrangements",
+          "source": "tests/demo.spec.ts:1024"
+        },
+        {
+          "type": "page",
+          "message": "goBack",
+          "source": "tests/demo.spec.ts:1025"
+        },
+        {
+          "type": "assert",
+          "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
+          "source": "tests/demo.spec.ts:1027",
+          "duration": 133
+        }
+      ]
+    },
+    {
+      "image": "d05fb5a406e960dc",
+      "viewport": {
+        "width": 1820,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "page",
+          "message": "goForward",
+          "source": "tests/demo.spec.ts:1029"
+        },
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 470,
+            "y": 60,
+            "width": 1080,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:1031",
+          "duration": 194
+        }
+      ]
+    }
+  ]
+}

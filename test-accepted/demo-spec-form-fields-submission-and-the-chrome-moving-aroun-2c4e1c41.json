@@ -1,0 +1,986 @@
+{
+  "version": 4,
+  "file": "tests/demo.spec.ts",
+  "title": "form: fields, submission, and the chrome moving around it",
+  "steps": [
+    {
+      "image": "669a8956a45cddc0",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "console",
+          "consoleType": "debug",
+          "message": "Aberdeen queue took 10ms",
+          "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
+        },
+        {
+          "type": "page",
+          "message": "goto ./form",
+          "source": "tests/demo.spec.ts:108"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 219,
+            "y": 79,
+            "width": 1043,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:109",
+          "duration": 250
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Staffa\"",
+          "box": {
+            "x": 59,
+            "y": 9,
+            "width": 45,
+            "height": 21
+          },
+          "source": "tests/demo.spec.ts:113",
+          "duration": 178
+        },
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 59,
+            "y": 30,
+            "width": 153,
+            "height": 20
+          },
+          "source": "tests/demo.spec.ts:114",
+          "duration": 157
+        },
+        {
+          "type": "describe",
+          "message": "Fill out the account form",
+          "source": "tests/demo.spec.ts:116"
+        },
+        {
+          "type": "action",
+          "message": "fill \"Ada Lovelace\"",
+          "box": {
+            "x": 578,
+            "y": 165,
+            "width": 324,
+            "height": 44
+          },
+          "source": "tests/demo.spec.ts:118",
+          "duration": 182
+        }
+      ]
+    },
+    {
+      "image": "705de37197384292",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "fill \"ada@example.com\"",
+          "box": {
+            "x": 920,
+            "y": 165,
+            "width": 324,
+            "height": 44
+          },
+          "source": "tests/demo.spec.ts:119",
+          "duration": 208
+        }
+      ]
+    },
+    {
+      "image": "4f916c67dedc3753",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "selectOption \"Netherlands\"",
+          "box": {
+            "x": 236,
+            "y": 276,
+            "width": 324,
+            "height": 44
+          },
+          "source": "tests/demo.spec.ts:120",
+          "duration": 189
+        }
+      ]
+    },
+    {
+      "image": "8a7ead14526031d5",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Autocomplete: Escape dismisses only the open list, then falls through to the nav",
+          "source": "tests/demo.spec.ts:122"
+        },
+        {
+          "type": "action",
+          "message": "fill \"Type\"",
+          "box": {
+            "x": 585,
+            "y": 282,
+            "width": 309,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:124",
+          "duration": 189
+        }
+      ]
+    },
+    {
+      "image": "dc73d58180df8cfb",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 583,
+            "y": 329,
+            "width": 313,
+            "height": 38
+          },
+          "source": "tests/demo.spec.ts:125",
+          "duration": 172
+        }
+      ]
+    },
+    {
+      "image": "1c42fb700025d97f",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect focused",
+          "box": {
+            "x": 585,
+            "y": 282,
+            "width": 309,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:131",
+          "duration": 175
+        },
+        {
+          "type": "assert",
+          "message": "expect value \"Type\"",
+          "box": {
+            "x": 585,
+            "y": 282,
+            "width": 309,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:133",
+          "duration": 154
+        }
+      ]
+    },
+    {
+      "image": "373c4d7c9decd050",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect focused",
+          "box": {
+            "x": 18,
+            "y": 78,
+            "width": 164,
+            "height": 45
+          },
+          "source": "tests/demo.spec.ts:137",
+          "duration": 169
+        },
+        {
+          "type": "describe",
+          "message": "Terms match the start of a word, in any order — and no word's middle",
+          "source": "tests/demo.spec.ts:139"
+        },
+        {
+          "type": "action",
+          "message": "fill \"ba vis\"",
+          "box": {
+            "x": 585,
+            "y": 282,
+            "width": 309,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:140",
+          "duration": 176
+        }
+      ]
+    },
+    {
+      "image": "2c186b43a23850c5",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 583,
+            "y": 329,
+            "width": 313,
+            "height": 38
+          },
+          "source": "tests/demo.spec.ts:141",
+          "duration": 174
+        },
+        {
+          "type": "action",
+          "message": "fill \"isual\"",
+          "box": {
+            "x": 585,
+            "y": 282,
+            "width": 309,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:142",
+          "duration": 186
+        }
+      ]
+    },
+    {
+      "image": "d34075e71016b3bb",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 583,
+            "y": 329,
+            "width": 313,
+            "height": 38
+          },
+          "source": "tests/demo.spec.ts:146",
+          "duration": 170
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Add \\\"isual\\\"\"",
+          "box": {
+            "x": 583,
+            "y": 329,
+            "width": 313,
+            "height": 38
+          },
+          "source": "tests/demo.spec.ts:147",
+          "duration": 169
+        },
+        {
+          "type": "describe",
+          "message": "Type ahead again, and pick from the dropdown",
+          "source": "tests/demo.spec.ts:149"
+        },
+        {
+          "type": "action",
+          "message": "fill \"Type\"",
+          "box": {
+            "x": 585,
+            "y": 282,
+            "width": 309,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:150",
+          "duration": 218
+        }
+      ]
+    },
+    {
+      "image": "dc73d58180df8cfb",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 583,
+            "y": 329,
+            "width": 313,
+            "height": 38
+          },
+          "source": "tests/demo.spec.ts:151",
+          "duration": 190
+        }
+      ]
+    },
+    {
+      "image": "ad660387618f3f3a",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Emptying the field clears the selection: free text may be no text",
+          "source": "tests/demo.spec.ts:153"
+        },
+        {
+          "type": "action",
+          "message": "fill \"\"",
+          "box": {
+            "x": 585,
+            "y": 282,
+            "width": 309,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:154",
+          "duration": 239
+        }
+      ]
+    },
+    {
+      "image": "9d93e665345d786e",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 236,
+            "y": 499,
+            "width": 1008,
+            "height": 66
+          },
+          "source": "tests/demo.spec.ts:155",
+          "duration": 196
+        }
+      ]
+    },
+    {
+      "image": "160b7ffc606f337f",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect value \"\"",
+          "box": {
+            "x": 585,
+            "y": 282,
+            "width": 309,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:156",
+          "duration": 260
+        },
+        {
+          "type": "assert",
+          "message": "expect value \"\" (locator('input[name=language]'))",
+          "source": "tests/demo.spec.ts:157",
+          "duration": 1156
+        },
+        {
+          "type": "describe",
+          "message": "Pick it again, so the form has a language to submit",
+          "source": "tests/demo.spec.ts:159"
+        },
+        {
+          "type": "action",
+          "message": "fill \"Type\"",
+          "box": {
+            "x": 585,
+            "y": 282,
+            "width": 309,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:160",
+          "duration": 218
+        }
+      ]
+    },
+    {
+      "image": "dc73d58180df8cfb",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 583,
+            "y": 329,
+            "width": 313,
+            "height": 38
+          },
+          "source": "tests/demo.spec.ts:161",
+          "duration": 241
+        }
+      ]
+    },
+    {
+      "image": "ad660387618f3f3a",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Multi-autocomplete: add a tag as a chip",
+          "source": "tests/demo.spec.ts:163"
+        },
+        {
+          "type": "action",
+          "message": "fill \"css\"",
+          "box": {
+            "x": 380,
+            "y": 393,
+            "width": 856,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:164",
+          "duration": 234
+        }
+      ]
+    },
+    {
+      "image": "cccdbd772a47885b",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 242,
+            "y": 440,
+            "width": 997,
+            "height": 38
+          },
+          "source": "tests/demo.spec.ts:165",
+          "duration": 195
+        }
+      ]
+    },
+    {
+      "image": "ad37f89f3bc1673d",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "fill \"Wrote\\nthe\\nfirst\\nprogram.\"",
+          "box": {
+            "x": 236,
+            "y": 499,
+            "width": 1008,
+            "height": 66
+          },
+          "source": "tests/demo.spec.ts:171",
+          "duration": 212
+        }
+      ]
+    },
+    {
+      "image": "bb21cba991601319",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "fill \"Wrote the first program.\"",
+          "box": {
+            "x": 236,
+            "y": 499,
+            "width": 1008,
+            "height": 112
+          },
+          "source": "tests/demo.spec.ts:175",
+          "duration": 186
+        }
+      ]
+    },
+    {
+      "image": "b8abf3f1ffcd4c62",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "check",
+          "box": {
+            "x": 578,
+            "y": 585,
+            "width": 18,
+            "height": 18
+          },
+          "source": "tests/demo.spec.ts:177",
+          "duration": 187
+        }
+      ]
+    },
+    {
+      "image": "3adf0151c53a8883",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Submit: Save spins while the asynchronous handler runs",
+          "source": "tests/demo.spec.ts:179"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1174,
+            "y": 629,
+            "width": 69,
+            "height": 35
+          },
+          "source": "tests/demo.spec.ts:180",
+          "duration": 213
+        }
+      ]
+    },
+    {
+      "image": "bb1486048c587968",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect class /s-busy/",
+          "box": {
+            "x": 236,
+            "y": 139,
+            "width": 1008,
+            "height": 527
+          },
+          "source": "tests/demo.spec.ts:181",
+          "duration": 175
+        }
+      ]
+    },
+    {
+      "image": "77e7708cbcb9ce30",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Then the echoed data arrives — once",
+          "source": "tests/demo.spec.ts:186"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 461,
+            "y": 199,
+            "width": 358,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:187",
+          "duration": 2004
+        },
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 460,
+            "y": 198,
+            "width": 360,
+            "height": 504
+          },
+          "source": "tests/demo.spec.ts:188",
+          "duration": 174
+        },
+        {
+          "type": "assert",
+          "message": "expect not class /s-busy/",
+          "box": {
+            "x": 236,
+            "y": 139,
+            "width": 1008,
+            "height": 527
+          },
+          "source": "tests/demo.spec.ts:189",
+          "duration": 147
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"ada@example.com\"",
+          "box": {
+            "x": 478,
+            "y": 259,
+            "width": 323,
+            "height": 371
+          },
+          "source": "tests/demo.spec.ts:190",
+          "duration": 144
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 727,
+            "y": 648,
+            "width": 74,
+            "height": 35
+          },
+          "source": "tests/demo.spec.ts:191",
+          "duration": 182
+        }
+      ]
+    },
+    {
+      "image": "bc736dac24a1f9c5",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Insets: a glyph against the field's leading edge, a button against its trailing one",
+          "source": "tests/demo.spec.ts:193"
+        },
+        {
+          "type": "action",
+          "message": "fill \"aberdeen\"",
+          "box": {
+            "x": 236,
+            "y": 814,
+            "width": 1008,
+            "height": 44
+          },
+          "source": "tests/demo.spec.ts:195",
+          "duration": 296
+        }
+      ]
+    },
+    {
+      "image": "0e5bb68cef6adda3",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1213,
+            "y": 823,
+            "width": 26,
+            "height": 26
+          },
+          "source": "tests/demo.spec.ts:198",
+          "duration": 202
+        }
+      ]
+    },
+    {
+      "image": "e36736d957a87558",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect value \"\"",
+          "box": {
+            "x": 236,
+            "y": 814,
+            "width": 1008,
+            "height": 44
+          },
+          "source": "tests/demo.spec.ts:199",
+          "duration": 217
+        },
+        {
+          "type": "assert",
+          "message": "expect count 0 (getByRole('button', { name: 'Clear' }))",
+          "source": "tests/demo.spec.ts:200",
+          "duration": 2166
+        }
+      ]
+    },
+    {
+      "image": "4ec4ec114bfdc768",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "A textarea's inset rides its bottom edge, where a send button belongs",
+          "source": "tests/demo.spec.ts:202"
+        },
+        {
+          "type": "action",
+          "message": "fill \"Hello from inside the field.\"",
+          "box": {
+            "x": 236,
+            "y": 426,
+            "width": 1008,
+            "height": 66
+          },
+          "source": "tests/demo.spec.ts:203",
+          "duration": 239
+        }
+      ]
+    },
+    {
+      "image": "bd620651cc709607",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1213,
+            "y": 461,
+            "width": 26,
+            "height": 26
+          },
+          "source": "tests/demo.spec.ts:204",
+          "duration": 240
+        }
+      ]
+    },
+    {
+      "image": "f4342ff5870168cd",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect text \"Hello from inside the field.\"",
+          "box": {
+            "x": 878,
+            "y": 823,
+            "width": 384,
+            "height": 59
+          },
+          "source": "tests/demo.spec.ts:205",
+          "duration": 214
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1229,
+            "y": 841,
+            "width": 16,
+            "height": 18
+          },
+          "source": "tests/demo.spec.ts:206",
+          "duration": 202
+        }
+      ]
+    },
+    {
+      "image": "4ec4ec114bfdc768",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect count 0 (locator('.s-toast'))",
+          "source": "tests/demo.spec.ts:207",
+          "duration": 2991
+        }
+      ]
+    },
+    {
+      "image": "125ed5b9f173d39a",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Switch the form to the stacked layout",
+          "source": "tests/demo.spec.ts:209"
+        },
+        {
+          "type": "action",
+          "message": "selectOption \"stacked\"",
+          "box": {
+            "x": 236,
+            "y": 165,
+            "width": 324,
+            "height": 44
+          },
+          "source": "tests/demo.spec.ts:210",
+          "duration": 256
+        }
+      ]
+    },
+    {
+      "image": "8109ea2e267fba1b",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Mark the column's body node and scroll it, then cross the narrow threshold",
+          "source": "tests/demo.spec.ts:212"
+        },
+        {
+          "type": "page",
+          "message": "setViewportSize 480×800",
+          "source": "tests/demo.spec.ts:215"
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Staffa\"",
+          "box": {
+            "x": 39,
+            "y": 4,
+            "width": 45,
+            "height": 21
+          },
+          "source": "tests/demo.spec.ts:219",
+          "duration": 135
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"Form\"",
+          "box": {
+            "x": 39,
+            "y": 26,
+            "width": 29,
+            "height": 20
+          },
+          "source": "tests/demo.spec.ts:220",
+          "duration": 123
+        },
+        {
+          "type": "assert",
+          "message": "expect count 0 (locator('header .s-subtitle'))",
+          "source": "tests/demo.spec.ts:221",
+          "duration": 2098
+        },
+        {
+          "type": "assert",
+          "message": "expect value \"Wrote the first program.\"",
+          "box": {
+            "x": 18,
+            "y": 631,
+            "width": 445,
+            "height": 66
+          },
+          "source": "tests/demo.spec.ts:224",
+          "duration": 127
+        }
+      ]
+    },
+    {
+      "image": "19b9b039cc3406fd",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Widen it again: the tagline returns, and the body never moved",
+          "source": "tests/demo.spec.ts:226"
+        },
+        {
+          "type": "page",
+          "message": "setViewportSize 1280×900",
+          "source": "tests/demo.spec.ts:227"
+        },
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 59,
+            "y": 30,
+            "width": 153,
+            "height": 20
+          },
+          "source": "tests/demo.spec.ts:228",
+          "duration": 213
+        },
+        {
+          "type": "assert",
+          "message": "expect value \"Wrote the first program.\"",
+          "box": {
+            "x": 236,
+            "y": 640,
+            "width": 1008,
+            "height": 66
+          },
+          "source": "tests/demo.spec.ts:230",
+          "duration": 180
+        }
+      ]
+    }
+  ]
+}

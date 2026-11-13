@@ -6,10 +6,10 @@ export default defineConfig({
 		screenshot: "off", // ShoTest captures its own screenshots
 		viewport: { width: 1280, height: 900 },
 	},
-	// Each test walks one long session, so several run to 10-14 s (the overlays
-	// one also reloads mid-run, to clear auto-dismissing toasts before its dialog
-	// steps). Give them comfortable headroom.
-	timeout: 30000,
+	// Each test walks one long session, so several run to 15-35 s in ShoTest's
+	// container (the overlays one also reloads mid-run, to clear auto-dismissing
+	// toasts before its dialog steps). Give them comfortable headroom.
+	timeout: 90000,
 	workers: 1,
 	webServer: [
 		{

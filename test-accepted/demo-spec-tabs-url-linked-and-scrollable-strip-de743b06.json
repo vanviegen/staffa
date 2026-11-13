@@ -1,0 +1,287 @@
+{
+  "version": 4,
+  "file": "tests/demo.spec.ts",
+  "title": "tabs: URL-linked and scrollable strip",
+  "steps": [
+    {
+      "image": "08de9146bb17859a",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "page",
+          "message": "goto ./tabs",
+          "source": "tests/demo.spec.ts:309"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 219,
+            "y": 79,
+            "width": 1043,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:310",
+          "duration": 168
+        },
+        {
+          "type": "describe",
+          "message": "Click through the URL-linked tabs",
+          "source": "tests/demo.spec.ts:312"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 331,
+            "y": 172,
+            "width": 78,
+            "height": 46
+          },
+          "source": "tests/demo.spec.ts:313",
+          "duration": 139
+        }
+      ]
+    },
+    {
+      "image": "6ee6b68c6de1ee1b",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 413,
+            "y": 172,
+            "width": 77,
+            "height": 46
+          },
+          "source": "tests/demo.spec.ts:315",
+          "duration": 148
+        }
+      ]
+    },
+    {
+      "image": "d6ca2537cb3f6b66",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 236,
+            "y": 235,
+            "width": 1008,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:316",
+          "duration": 147
+        },
+        {
+          "type": "assert",
+          "message": "expect disabled",
+          "box": {
+            "x": 494,
+            "y": 172,
+            "width": 90,
+            "height": 46
+          },
+          "source": "tests/demo.spec.ts:317",
+          "duration": 136
+        }
+      ]
+    },
+    {
+      "image": "444c69da7cacae23",
+      "viewport": {
+        "width": 640,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Narrow the window until the second strip overflows, and scroll it by button",
+          "source": "tests/demo.spec.ts:319"
+        },
+        {
+          "type": "page",
+          "message": "setViewportSize 640×900",
+          "source": "tests/demo.spec.ts:321"
+        },
+        {
+          "type": "assert",
+          "message": "expect class /s-can-right/",
+          "box": {
+            "x": 36,
+            "y": 372,
+            "width": 568,
+            "height": 46
+          },
+          "source": "tests/demo.spec.ts:324",
+          "duration": 143
+        },
+        {
+          "type": "assert",
+          "message": "expect not class /s-can-left/",
+          "box": {
+            "x": 36,
+            "y": 372,
+            "width": 568,
+            "height": 46
+          },
+          "source": "tests/demo.spec.ts:325",
+          "duration": 113
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 565,
+            "y": 372,
+            "width": 38,
+            "height": 45
+          },
+          "source": "tests/demo.spec.ts:327",
+          "duration": 113
+        }
+      ]
+    },
+    {
+      "image": "3f5973fba4dcb75a",
+      "viewport": {
+        "width": 640,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect class /s-can-left/",
+          "box": {
+            "x": 36,
+            "y": 372,
+            "width": 568,
+            "height": 46
+          },
+          "source": "tests/demo.spec.ts:328",
+          "duration": 136
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 289,
+            "y": 372,
+            "width": 68,
+            "height": 46
+          },
+          "source": "tests/demo.spec.ts:331",
+          "duration": 120
+        }
+      ]
+    },
+    {
+      "image": "2fe7b701e95c3575",
+      "viewport": {
+        "width": 640,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 36,
+            "y": 436,
+            "width": 568,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:332",
+          "duration": 119
+        },
+        {
+          "type": "describe",
+          "message": "The same scroll strip on its own, holding plain chips",
+          "source": "tests/demo.spec.ts:334"
+        },
+        {
+          "type": "assert",
+          "message": "expect class /s-can-right/",
+          "box": {
+            "x": 36,
+            "y": 653,
+            "width": 568,
+            "height": 31
+          },
+          "source": "tests/demo.spec.ts:337",
+          "duration": 107
+        },
+        {
+          "type": "assert",
+          "message": "expect not class /s-can-left/",
+          "box": {
+            "x": 36,
+            "y": 653,
+            "width": 568,
+            "height": 31
+          },
+          "source": "tests/demo.spec.ts:338",
+          "duration": 117
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 565,
+            "y": 653,
+            "width": 38,
+            "height": 31
+          },
+          "source": "tests/demo.spec.ts:339",
+          "duration": 116
+        }
+      ]
+    },
+    {
+      "image": "3dde9451bf8ba325",
+      "viewport": {
+        "width": 640,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect class /s-can-left/",
+          "box": {
+            "x": 36,
+            "y": 653,
+            "width": 568,
+            "height": 31
+          },
+          "source": "tests/demo.spec.ts:340",
+          "duration": 139
+        },
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 542,
+            "y": 656,
+            "width": 62,
+            "height": 26
+          },
+          "source": "tests/demo.spec.ts:341",
+          "duration": 109
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,578 @@
+{
+  "version": 4,
+  "file": "tests/demo.spec.ts",
+  "title": "panels: a page is sized before it draws, and the shell resizes around it",
+  "steps": [
+    {
+      "image": "2d512adffb75fb4f",
+      "viewport": {
+        "width": 1600,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "page",
+          "message": "setViewportSize 1600×900",
+          "source": "tests/demo.spec.ts:1195"
+        },
+        {
+          "type": "console",
+          "consoleType": "debug",
+          "message": "Aberdeen queue took 13ms",
+          "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
+        },
+        {
+          "type": "page",
+          "message": "goto ./panels",
+          "source": "tests/demo.spec.ts:1196"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 452,
+            "y": 79,
+            "width": 896,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:1197",
+          "duration": 198
+        }
+      ]
+    },
+    {
+      "gap": "Aim the navigator at Sizing & lifecycle — push, from this panel"
+    },
+    {
+      "image": "23eeec2ec7a14040",
+      "viewport": {
+        "width": 1600,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1298,
+            "y": 445,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:58",
+          "duration": 151
+        }
+      ]
+    },
+    {
+      "image": "9719adf9ead8e1b0",
+      "viewport": {
+        "width": 1600,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 200,
+            "y": 60,
+            "width": 933,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:1199",
+          "duration": 171
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"1\"",
+          "box": {
+            "x": 236,
+            "y": 387,
+            "width": 17,
+            "height": 21
+          },
+          "source": "tests/demo.spec.ts:1200",
+          "duration": 142
+        },
+        {
+          "type": "describe",
+          "message": "The page knew its real width while it drew, and has not been drawn a second time",
+          "source": "tests/demo.spec.ts:1212"
+        },
+        {
+          "type": "check",
+          "message": "textContent",
+          "box": {
+            "x": 236,
+            "y": 255,
+            "width": 31,
+            "height": 21
+          },
+          "source": "tests/demo.spec.ts:1215",
+          "duration": 126
+        },
+        {
+          "type": "describe",
+          "message": "Asking for a small column reflows it in place — never redrawn",
+          "source": "tests/demo.spec.ts:1217"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 904,
+            "y": 78,
+            "width": 52,
+            "height": 26
+          },
+          "source": "tests/demo.spec.ts:1219",
+          "duration": 133
+        }
+      ]
+    },
+    {
+      "image": "3541be63eaa5ecbe",
+      "viewport": {
+        "width": 1600,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing):not([inert])'))",
+          "source": "tests/demo.spec.ts:1220",
+          "duration": 178
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"1\"",
+          "box": {
+            "x": 1170,
+            "y": 459,
+            "width": 17,
+            "height": 21
+          },
+          "source": "tests/demo.spec.ts:1223",
+          "duration": 176
+        },
+        {
+          "type": "check",
+          "message": "textContent",
+          "box": {
+            "x": 1170,
+            "y": 303,
+            "width": 31,
+            "height": 21
+          },
+          "source": "tests/demo.spec.ts:1224",
+          "duration": 175
+        },
+        {
+          "type": "describe",
+          "message": "Open the display settings: a slider each for the sidebar and the cap",
+          "source": "tests/demo.spec.ts:1226"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1550,
+            "y": 14,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:1227",
+          "duration": 165
+        }
+      ]
+    },
+    {
+      "image": "20935757f45dead2",
+      "viewport": {
+        "width": 1600,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect count 2 (locator('input[type=range]'))",
+          "source": "tests/demo.spec.ts:1229",
+          "duration": 156
+        },
+        {
+          "type": "describe",
+          "message": "A wider sidebar takes its room from the content area beside it",
+          "source": "tests/demo.spec.ts:1231"
+        },
+        {
+          "type": "action",
+          "message": "fill \"320\"",
+          "box": {
+            "x": 1405,
+            "y": 219,
+            "width": 112,
+            "height": 4
+          },
+          "source": "tests/demo.spec.ts:1232",
+          "duration": 177
+        }
+      ]
+    },
+    {
+      "image": "063d2fc4f65007c0",
+      "viewport": {
+        "width": 1600,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Capping the shell narrows sidebar, columns and bars alike — and centres the lot",
+          "source": "tests/demo.spec.ts:1236"
+        },
+        {
+          "type": "action",
+          "message": "fill \"1200\"",
+          "box": {
+            "x": 1405,
+            "y": 252,
+            "width": 112,
+            "height": 4
+          },
+          "source": "tests/demo.spec.ts:1237",
+          "duration": 188
+        }
+      ]
+    },
+    {
+      "image": "9e14dd4b30874436",
+      "viewport": {
+        "width": 1600,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect text \"440\"",
+          "box": {
+            "x": 556,
+            "y": 303,
+            "width": 31,
+            "height": 21
+          },
+          "source": "tests/demo.spec.ts:1242",
+          "duration": 179
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"1\"",
+          "box": {
+            "x": 556,
+            "y": 483,
+            "width": 17,
+            "height": 21
+          },
+          "source": "tests/demo.spec.ts:1243",
+          "duration": 166
+        }
+      ]
+    },
+    {
+      "image": "69958d018f95e9c6",
+      "viewport": {
+        "width": 1600,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Dragging the hairline beside the sidebar resizes it, the columns reflowing in place",
+          "source": "tests/demo.spec.ts:1246"
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"1\"",
+          "box": {
+            "x": 456,
+            "y": 435,
+            "width": 17,
+            "height": 21
+          },
+          "source": "tests/demo.spec.ts:1254",
+          "duration": 151
+        }
+      ]
+    },
+    {
+      "image": "6f35dbf63e3a41d0",
+      "viewport": {
+        "width": 1600,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Focused, the hairline takes the arrow keys too",
+          "source": "tests/demo.spec.ts:1256"
+        },
+        {
+          "type": "describe",
+          "message": "A nav item arriving redraws the sidebar, not the columns",
+          "source": "tests/demo.spec.ts:1261"
+        },
+        {
+          "type": "action",
+          "message": "check",
+          "box": {
+            "x": 466,
+            "y": 654,
+            "width": 18,
+            "height": 18
+          },
+          "source": "tests/demo.spec.ts:1264",
+          "duration": 152
+        }
+      ]
+    },
+    {
+      "image": "10b4958c110073a4",
+      "viewport": {
+        "width": 1600,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 218,
+            "y": 426,
+            "width": 137,
+            "height": 33
+          },
+          "source": "tests/demo.spec.ts:1265",
+          "duration": 148
+        },
+        {
+          "type": "assert",
+          "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
+          "source": "tests/demo.spec.ts:1266",
+          "duration": 112
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"1\"",
+          "box": {
+            "x": 466,
+            "y": 435,
+            "width": 17,
+            "height": 21
+          },
+          "source": "tests/demo.spec.ts:1267",
+          "duration": 153
+        },
+        {
+          "type": "action",
+          "message": "uncheck",
+          "box": {
+            "x": 466,
+            "y": 654,
+            "width": 18,
+            "height": 18
+          },
+          "source": "tests/demo.spec.ts:1268",
+          "duration": 150
+        }
+      ]
+    },
+    {
+      "image": "c02b0faff863221d",
+      "viewport": {
+        "width": 1600,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect count 0 (locator('.s-nav-panel').getByRole('link', { name: 'Scratch' }))",
+          "source": "tests/demo.spec.ts:1269",
+          "duration": 2147
+        },
+        {
+          "type": "assert",
+          "message": "expect text \"1\"",
+          "box": {
+            "x": 466,
+            "y": 435,
+            "width": 17,
+            "height": 21
+          },
+          "source": "tests/demo.spec.ts:1270",
+          "duration": 176
+        },
+        {
+          "type": "describe",
+          "message": "Put the Scratch row back: a custom slot the shell can't see into",
+          "source": "tests/demo.spec.ts:1272"
+        },
+        {
+          "type": "action",
+          "message": "check",
+          "box": {
+            "x": 466,
+            "y": 654,
+            "width": 18,
+            "height": 18
+          },
+          "source": "tests/demo.spec.ts:1273",
+          "duration": 180
+        }
+      ]
+    },
+    {
+      "image": "5f19815c4d66a837",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "page",
+          "message": "setViewportSize 480×800",
+          "source": "tests/demo.spec.ts:1278"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 3,
+            "y": 9,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:1280",
+          "duration": 142
+        }
+      ]
+    },
+    {
+      "image": "8ea78496138d315e",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 0,
+            "y": 51,
+            "width": 480,
+            "height": 706
+          },
+          "source": "tests/demo.spec.ts:1281",
+          "duration": 110
+        },
+        {
+          "type": "describe",
+          "message": "Its button navigates nowhere, so it dismisses the nav itself (S.closeNav)",
+          "source": "tests/demo.spec.ts:1283"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 424,
+            "y": 438,
+            "width": 48,
+            "height": 26
+          },
+          "source": "tests/demo.spec.ts:1284",
+          "duration": 105
+        }
+      ]
+    },
+    {
+      "image": "33384b77371a7906",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect count 0 (locator('.s-nav-page'))",
+          "source": "tests/demo.spec.ts:1285",
+          "duration": 2117
+        },
+        {
+          "type": "describe",
+          "message": "Its link is an ordinary link — a navigation sweeps the nav away by itself",
+          "source": "tests/demo.spec.ts:1288"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 3,
+            "y": 9,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:1289",
+          "duration": 121
+        }
+      ]
+    },
+    {
+      "image": "8ea78496138d315e",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 0,
+            "y": 51,
+            "width": 480,
+            "height": 706
+          },
+          "source": "tests/demo.spec.ts:1290",
+          "duration": 104
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 9,
+            "y": 427,
+            "width": 406,
+            "height": 48
+          },
+          "source": "tests/demo.spec.ts:1291",
+          "duration": 111
+        }
+      ]
+    },
+    {
+      "image": "987ca8bba0888e0b",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect count 0 (locator('.s-nav-page'))",
+          "source": "tests/demo.spec.ts:1293",
+          "duration": 2118
+        }
+      ]
+    }
+  ]
+}

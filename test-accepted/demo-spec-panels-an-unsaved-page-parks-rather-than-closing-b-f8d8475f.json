@@ -1,0 +1,458 @@
+{
+  "version": 4,
+  "file": "tests/demo.spec.ts",
+  "title": "panels: an unsaved page parks rather than closing, by any route",
+  "steps": [
+    {
+      "image": "9bd407300f134c8c",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "page",
+          "message": "goto ./form/guard",
+          "source": "tests/demo.spec.ts:1116"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 236,
+            "y": 188,
+            "width": 1008,
+            "height": 48
+          },
+          "source": "tests/demo.spec.ts:1117",
+          "duration": 150
+        },
+        {
+          "type": "assert",
+          "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
+          "source": "tests/demo.spec.ts:1118",
+          "duration": 94
+        },
+        {
+          "type": "describe",
+          "message": "Dirty the draft: a ● appears on the crumb and in the tab title",
+          "source": "tests/demo.spec.ts:1120"
+        },
+        {
+          "type": "action",
+          "message": "fill \"precious\"",
+          "box": {
+            "x": 236,
+            "y": 262,
+            "width": 1008,
+            "height": 44
+          },
+          "source": "tests/demo.spec.ts:1121",
+          "duration": 130
+        }
+      ]
+    },
+    {
+      "image": "fcb626968304cdba",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 111,
+            "y": 37,
+            "width": 6,
+            "height": 6
+          },
+          "source": "tests/demo.spec.ts:1122",
+          "duration": 133
+        }
+      ]
+    },
+    {
+      "image": "174473ad4d80fb4f",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Escape can't close it: it parks the page instead, work and all",
+          "source": "tests/demo.spec.ts:1125"
+        },
+        {
+          "type": "assert",
+          "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
+          "source": "tests/demo.spec.ts:1128",
+          "duration": 138
+        },
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 1280,
+            "y": 60,
+            "width": 1080,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:1129",
+          "duration": 147
+        },
+        {
+          "type": "describe",
+          "message": "The crumb menu can't close it either: Close is greyed out",
+          "source": "tests/demo.spec.ts:1132"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 111,
+            "y": 30,
+            "width": 98,
+            "height": 20
+          },
+          "source": "tests/demo.spec.ts:1133",
+          "duration": 133
+        }
+      ]
+    },
+    {
+      "image": "ca6e921e9ca04d06",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect attribute value \"aria-disabled\" \"true\"",
+          "box": {
+            "x": 165,
+            "y": 166,
+            "width": 149,
+            "height": 36
+          },
+          "source": "tests/demo.spec.ts:1134",
+          "duration": 144
+        }
+      ]
+    },
+    {
+      "image": "75850345edb6ad34",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Closing the tab runs into the browser's are-you-sure",
+          "source": "tests/demo.spec.ts:1137"
+        },
+        {
+          "type": "describe",
+          "message": "Staying brings the page that held the tab back on screen; Save lets it close",
+          "source": "tests/demo.spec.ts:1143"
+        },
+        {
+          "type": "assert",
+          "message": "expect value \"precious\"",
+          "box": {
+            "x": 236,
+            "y": 262,
+            "width": 1008,
+            "height": 44
+          },
+          "source": "tests/demo.spec.ts:1145",
+          "duration": 159
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1230,
+            "y": 78,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:1146",
+          "duration": 128
+        }
+      ]
+    },
+    {
+      "image": "3bbc3976cdef9b25",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 200,
+            "y": 60,
+            "width": 1080,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:1148",
+          "duration": 180
+        }
+      ]
+    },
+    {
+      "image": "58a120652b634865",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Pushed onto the playground, the browser's back button parks it too",
+          "source": "tests/demo.spec.ts:1150"
+        },
+        {
+          "type": "page",
+          "message": "goto ./panels",
+          "source": "tests/demo.spec.ts:1153"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 219,
+            "y": 79,
+            "width": 1043,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:1154",
+          "duration": 181
+        }
+      ]
+    },
+    {
+      "gap": "Aim the navigator at Unsaved changes — push, from this panel"
+    },
+    {
+      "image": "02c294b0742973e5",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 1212,
+            "y": 421,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:58",
+          "duration": 151
+        }
+      ]
+    },
+    {
+      "image": "114f5b480aff5db6",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "action",
+          "message": "fill \"precious\"",
+          "box": {
+            "x": 236,
+            "y": 262,
+            "width": 1008,
+            "height": 44
+          },
+          "source": "tests/demo.spec.ts:1156",
+          "duration": 161
+        }
+      ]
+    },
+    {
+      "image": "79e33b3073b91122",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "page",
+          "message": "goBack",
+          "source": "tests/demo.spec.ts:1157"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 219,
+            "y": 79,
+            "width": 1043,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:1159",
+          "duration": 185
+        },
+        {
+          "type": "assert",
+          "message": "expect count 2 (locator('.s-panel:not(.s-panel-closing)'))",
+          "source": "tests/demo.spec.ts:1160",
+          "duration": 121
+        },
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 1280,
+            "y": 60,
+            "width": 1080,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:1161",
+          "duration": 150
+        },
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 121,
+            "y": 37,
+            "width": 6,
+            "height": 6
+          },
+          "source": "tests/demo.spec.ts:1162",
+          "duration": 154
+        },
+        {
+          "type": "describe",
+          "message": "Its crumb brings it back, draft intact",
+          "source": "tests/demo.spec.ts:1164"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 121,
+            "y": 30,
+            "width": 98,
+            "height": 20
+          },
+          "source": "tests/demo.spec.ts:1165",
+          "duration": 147
+        }
+      ]
+    },
+    {
+      "image": "dc8147c0f5403f03",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect value \"precious\"",
+          "box": {
+            "x": 236,
+            "y": 262,
+            "width": 1008,
+            "height": 44
+          },
+          "source": "tests/demo.spec.ts:1167",
+          "duration": 158
+        }
+      ]
+    },
+    {
+      "image": "28e70559e7b1923a",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "An origin-less link replaces the whole stack — only the unsaved page rides along",
+          "source": "tests/demo.spec.ts:1169"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 8,
+            "y": 868,
+            "width": 116,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:1181",
+          "duration": 137
+        }
+      ]
+    },
+    {
+      "image": "646749c57bae387c",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 236,
+            "y": 139,
+            "width": 1008,
+            "height": 24
+          },
+          "source": "tests/demo.spec.ts:1183",
+          "duration": 135
+        },
+        {
+          "type": "assert",
+          "message": "expect count 4 (locator('.s-panel:not(.s-panel-closing)'))",
+          "source": "tests/demo.spec.ts:1184",
+          "duration": 92
+        },
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 1280,
+            "y": 60,
+            "width": 1080,
+            "height": 797
+          },
+          "source": "tests/demo.spec.ts:1185",
+          "duration": 118
+        },
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 269,
+            "y": 37,
+            "width": 6,
+            "height": 6
+          },
+          "source": "tests/demo.spec.ts:1186",
+          "duration": 114
+        }
+      ]
+    }
+  ]
+}

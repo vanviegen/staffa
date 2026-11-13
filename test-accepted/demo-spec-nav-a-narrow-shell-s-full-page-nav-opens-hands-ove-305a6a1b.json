@@ -1,0 +1,407 @@
+{
+  "version": 4,
+  "file": "tests/demo.spec.ts",
+  "title": "nav: a narrow shell's full-page nav opens, hands over and remembers its folds",
+  "steps": [
+    {
+      "image": "7b344bbc6586fddd",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "page",
+          "message": "setViewportSize 480×800",
+          "source": "tests/demo.spec.ts:654"
+        },
+        {
+          "type": "page",
+          "message": "goto ./content",
+          "source": "tests/demo.spec.ts:655"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 0,
+            "y": 70,
+            "width": 480,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:656",
+          "duration": 160
+        }
+      ]
+    },
+    {
+      "image": "4e42f9f3af310151",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Escape opens the nav as a full page, the current item focused in its unfolded branch",
+          "source": "tests/demo.spec.ts:662"
+        },
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 0,
+            "y": 51,
+            "width": 480,
+            "height": 706
+          },
+          "source": "tests/demo.spec.ts:664",
+          "duration": 108
+        },
+        {
+          "type": "assert",
+          "message": "expect focused",
+          "box": {
+            "x": 26,
+            "y": 370,
+            "width": 445,
+            "height": 48
+          },
+          "source": "tests/demo.spec.ts:665",
+          "duration": 113
+        },
+        {
+          "type": "assert",
+          "message": "expect attribute value \"aria-current\" \"page\"",
+          "box": {
+            "x": 26,
+            "y": 370,
+            "width": 445,
+            "height": 48
+          },
+          "source": "tests/demo.spec.ts:666",
+          "duration": 113
+        }
+      ]
+    },
+    {
+      "image": "a8673674d00330b7",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Escape again closes it, handing focus back to the ☰",
+          "source": "tests/demo.spec.ts:668"
+        },
+        {
+          "type": "assert",
+          "message": "expect focused",
+          "box": {
+            "x": 3,
+            "y": 9,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:670",
+          "duration": 124
+        }
+      ]
+    },
+    {
+      "image": "4e42f9f3af310151",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "And a third reopens it, ignoring the page still sliding out",
+          "source": "tests/demo.spec.ts:672"
+        },
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 0,
+            "y": 51,
+            "width": 480,
+            "height": 706
+          },
+          "source": "tests/demo.spec.ts:674",
+          "duration": 97
+        },
+        {
+          "type": "describe",
+          "message": "Pick an item: the nav hands over to that screen",
+          "source": "tests/demo.spec.ts:676"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 9,
+            "y": 217,
+            "width": 462,
+            "height": 48
+          },
+          "source": "tests/demo.spec.ts:677",
+          "duration": 134
+        }
+      ]
+    },
+    {
+      "image": "d21bc8c1f79f8e07",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 0,
+            "y": 70,
+            "width": 480,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:678",
+          "duration": 183
+        },
+        {
+          "type": "assert",
+          "message": "expect count 0 (locator('.s-nav-page:not(.s-nav-page-off)'))",
+          "source": "tests/demo.spec.ts:679",
+          "duration": 2093
+        },
+        {
+          "type": "describe",
+          "message": "Reopen, and dismiss with the ✕: the content stays as it was",
+          "source": "tests/demo.spec.ts:681"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 3,
+            "y": 9,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:682",
+          "duration": 165
+        }
+      ]
+    },
+    {
+      "image": "a9e9a8ba328ed560",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect count 1",
+          "box": {
+            "x": 0,
+            "y": 51,
+            "width": 480,
+            "height": 706
+          },
+          "source": "tests/demo.spec.ts:683",
+          "duration": 130
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 3,
+            "y": 9,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:684",
+          "duration": 141
+        }
+      ]
+    },
+    {
+      "image": "9a53e793a97034af",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect count 0 (locator('.s-nav-page:not(.s-nav-page-off)'))",
+          "source": "tests/demo.spec.ts:685",
+          "duration": 2110
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 0,
+            "y": 70,
+            "width": 480,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:686",
+          "duration": 124
+        }
+      ]
+    },
+    {
+      "image": "7b344bbc6586fddd",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Wander off the menu's map: this page has no row (and no match) anywhere",
+          "source": "tests/demo.spec.ts:688"
+        },
+        {
+          "type": "console",
+          "consoleType": "debug",
+          "message": "Aberdeen queue took 15ms",
+          "source": "http://localhost:25841/node_modules/aberdeen/dist/src/aberdeen.js:170:13"
+        },
+        {
+          "type": "page",
+          "message": "goto ./content",
+          "source": "tests/demo.spec.ts:689"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 0,
+            "y": 70,
+            "width": 480,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:690",
+          "duration": 156
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 77,
+            "y": 204,
+            "width": 117,
+            "height": 20
+          },
+          "source": "tests/demo.spec.ts:691",
+          "duration": 149
+        }
+      ]
+    },
+    {
+      "image": "19e47fd2297b8133",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Reopen the nav: the menu mounts afresh, but the folds are remembered",
+          "source": "tests/demo.spec.ts:694"
+        },
+        {
+          "type": "action",
+          "message": "click",
+          "box": {
+            "x": 3,
+            "y": 9,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:695",
+          "duration": 222
+        }
+      ]
+    },
+    {
+      "image": "9361e6fb85079e0e",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 26,
+            "y": 370,
+            "width": 445,
+            "height": 48
+          },
+          "source": "tests/demo.spec.ts:696",
+          "duration": 136
+        },
+        {
+          "type": "assert",
+          "message": "expect visible",
+          "box": {
+            "x": 26,
+            "y": 318,
+            "width": 445,
+            "height": 48
+          },
+          "source": "tests/demo.spec.ts:697",
+          "duration": 114
+        }
+      ]
+    },
+    {
+      "image": "78e6a5c79e253327",
+      "viewport": {
+        "width": 480,
+        "height": 800
+      },
+      "events": [
+        {
+          "type": "describe",
+          "message": "Enter on an item navigates *and* closes the page, returning focus to the trigger",
+          "source": "tests/demo.spec.ts:699"
+        },
+        {
+          "type": "check",
+          "message": "waitFor",
+          "box": {
+            "x": 0,
+            "y": 70,
+            "width": 480,
+            "height": 43
+          },
+          "source": "tests/demo.spec.ts:702",
+          "duration": 144
+        },
+        {
+          "type": "assert",
+          "message": "expect focused",
+          "box": {
+            "x": 3,
+            "y": 9,
+            "width": 32,
+            "height": 32
+          },
+          "source": "tests/demo.spec.ts:703",
+          "duration": 126
+        }
+      ]
+    }
+  ]
+}
